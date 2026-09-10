@@ -1,0 +1,159 @@
+export const theme = {
+  /* =====================================
+     الألوان الرئيسية
+  ===================================== */
+
+  colors: {
+    primary: "#0F5132",
+    primaryLight: "#1B6E46",
+    primaryDark: "#08351F",
+
+    secondary: "#D4AF37",
+    secondaryLight: "#E7C965",
+
+    background: "#F4F7F6",
+    surface: "#FFFFFF",
+    surfaceAlt: "#FAFBFA",
+
+    text: "#1F2937",
+    textSecondary: "#6B7280",
+    textMuted: "#9CA3AF",
+
+    border: "#E5E7EB",
+    borderLight: "#F1F5F9",
+
+    success: "#16A34A",
+    warning: "#F59E0B",
+    danger: "#DC2626",
+    info: "#2563EB",
+
+    overlay: "rgba(0,0,0,0.35)",
+  },
+
+  /* =====================================
+     الحواف
+  ===================================== */
+
+  radius: {
+    xs: "8px",
+    sm: "12px",
+    md: "16px",
+    lg: "22px",
+    xl: "28px",
+    round: "999px",
+  },
+
+  /* =====================================
+     الظلال
+  ===================================== */
+
+  shadow: {
+    xs: "0 2px 6px rgba(0,0,0,0.04)",
+
+    sm: "0 4px 12px rgba(0,0,0,0.06)",
+
+    card: "0 8px 25px rgba(15,81,50,0.08)",
+
+    hover: "0 15px 35px rgba(15,81,50,0.12)",
+
+    modal: "0 25px 60px rgba(0,0,0,0.18)",
+  },
+
+  /* =====================================
+     المسافات
+  ===================================== */
+
+  spacing: {
+    xs: "6px",
+    sm: "12px",
+    md: "16px",
+    lg: "24px",
+    xl: "32px",
+    xxl: "48px",
+  },
+
+  /* =====================================
+     الخطوط
+  ===================================== */
+
+  typography: {
+    fontFamily:
+      "'Tajawal', 'Cairo', sans-serif",
+
+    h1: {
+      fontSize: "40px",
+      fontWeight: 800,
+    },
+
+    h2: {
+      fontSize: "30px",
+      fontWeight: 800,
+    },
+
+    h3: {
+      fontSize: "24px",
+      fontWeight: 700,
+    },
+
+    h4: {
+      fontSize: "20px",
+      fontWeight: 700,
+    },
+
+    body: {
+      fontSize: "15px",
+      fontWeight: 500,
+    },
+
+    small: {
+      fontSize: "13px",
+      fontWeight: 500,
+    },
+  },
+
+  /* =====================================
+     البطاقات
+  ===================================== */
+
+  card: {
+    background: "#FFFFFF",
+
+    border: "1px solid #E5E7EB",
+
+    borderRadius: "22px",
+
+    boxShadow:
+      "0 8px 25px rgba(15,81,50,0.08)",
+
+    padding: "24px",
+  },
+
+  /* =====================================
+     الأزرار
+  ===================================== */
+
+  button: {
+    primary: {
+      background: "#0F5132",
+      color: "#FFFFFF",
+      borderRadius: "14px",
+    },
+
+    secondary: {
+      background: "#FFFFFF",
+      color: "#0F5132",
+      border: "1px solid #D1D5DB",
+      borderRadius: "14px",
+    },
+  },
+
+  /* =====================================
+     الانتقالات
+  ===================================== */
+
+  transition: {
+    fast: "0.15s ease",
+    normal: "0.25s ease",
+    slow: "0.4s ease",
+  },
+};
