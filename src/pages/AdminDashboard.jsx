@@ -21,6 +21,17 @@ import {
   Activity,
 } from "lucide-react";
 
+const todayHijri =
+new Intl.DateTimeFormat(
+  "ar-SA-u-ca-islamic",
+  {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }
+).format(new Date());
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
@@ -122,121 +133,76 @@ export default function AdminDashboard() {
   return (
 
     <AppPage>
+<div className="responsive-container">
    <div
   style={{
     position: "relative",
     overflow: "hidden",
-    borderRadius: "32px",
-    marginBottom: "32px",
+    borderRadius: "24px",
+    marginBottom: "28px",
     background:
-      "linear-gradient(135deg,#0F4C45 0%,#0A2F2A 100%)",
+      "linear-gradient(135deg,#0F4C45,#0A2F2A)",
+    padding: "28px 36px",
     boxShadow:
-      "0 25px 50px rgba(15,76,69,.25)"
+      "0 12px 35px rgba(15,76,69,.18)",
   }}
 >
-  <div
-  style={{
-    position:"absolute",
-    inset:0,
-    opacity:0.08,
-    pointerEvents:"none"
-  }}
->
-  <svg
-    width="100%"
-    height="100%"
-    preserveAspectRatio="none"
-    viewBox="0 0 1200 400"
-  >
-    <defs>
-      <pattern
-        id="islamicPattern"
-        width="120"
-        height="120"
-        patternUnits="userSpaceOnUse"
-      >
-        <path
-          d="
-          M60 0
-          L75 45
-          L120 60
-          L75 75
-          L60 120
-          L45 75
-          L0 60
-          L45 45
-          Z
-          "
-          fill="none"
-          stroke="#D4AF37"
-          strokeWidth="1"
-        />
+  {/* الزخرفة */}
+  <img
+    src="/assets/Z-6.png"
+    alt=""
+    style={{
+      position: "absolute",
+      left: "-40px",
+      top: "-40px",
+      width: "180px",
+      opacity: 0.06,
+      pointerEvents: "none",
+    }}
+  />
 
-        <circle
-          cx="60"
-          cy="60"
-          r="25"
-          fill="none"
-          stroke="#D4AF37"
-          strokeWidth="1"
-        />
-      </pattern>
-    </defs>
-
-    <rect
-      width="100%"
-      height="100%"
-      fill="url(#islamicPattern)"
-    />
-  </svg>
-</div>
+  <img
+    src="/assets/Z-4.png"
+    alt=""
+    style={{
+      position: "absolute",
+      right: "-40px",
+      bottom: "-40px",
+      width: "180px",
+      opacity: 0.06,
+      pointerEvents: "none",
+    }}
+  />
 
   <div
     style={{
-      display: "grid",
-      gridTemplateColumns: "420px 1fr",
-      minHeight: "340px",
       position: "relative",
-      zIndex: 2
+      zIndex: 2,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: "20px",
+      flexWrap: "wrap",
     }}
   >
-    {/* جهة الصورة */}
-    <div
-      style={{
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-        padding: "20px"
-      }}
-    >
-      <img
-        src="/hero-mosque.png"
-        alt="مسجد"
+    <div>
+      <div
         style={{
-          width: "100%",
-          maxWidth: "380px",
-          objectFit: "contain"
+          color: "#D4AF37",
+          fontSize: "14px",
+          fontWeight: "800",
+          marginBottom: "8px",
         }}
-      />
-    </div>
+      >
+        مرحباً بك في
+      </div>
 
-    {/* جهة النص */}
-    <div
-      style={{
-        padding: "60px 70px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        textAlign: "right"
-      }}
-    >
       <h1
         style={{
           margin: 0,
-          fontSize: "72px",
+          color: "#fff",
+          fontSize: "38px",
           fontWeight: "900",
-          color: "#D4AF37",
-          lineHeight: 1
         }}
       >
         الصِّدِيق
@@ -244,42 +210,45 @@ export default function AdminDashboard() {
 
       <div
         style={{
-          marginTop: "20px",
-          fontSize: "30px",
-          fontWeight: "800",
-          color: "#FFFFFF"
+          marginTop: "8px",
+          color: "rgba(255,255,255,.8)",
+          fontSize: "15px",
         }}
       >
-        منصة متكاملة لإدارة حلقات تحفيظ القرآن الكريم
+        منصة إدارة حلقات تحفيظ القرآن الكريم
+      </div>
+    </div>
+
+    <div
+      style={{
+        background: "rgba(255,255,255,.08)",
+        border: "1px solid rgba(255,255,255,.1)",
+        backdropFilter: "blur(10px)",
+        borderRadius: "18px",
+        padding: "14px 18px",
+        color: "#fff",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "13px",
+          opacity: 0.8,
+        }}
+      >
+        اليوم
       </div>
 
       <div
         style={{
-          width: "140px",
-          height: "5px",
-          borderRadius: "999px",
-          background: "#D4AF37",
-          marginTop: "20px",
-          marginBottom: "20px"
-        }}
-      />
-
-      <p
-        style={{
-          margin: 0,
-          color: "rgba(255,255,255,.88)",
-          fontSize: "18px",
-          lineHeight: "2"
+          fontWeight: "800",
+          marginTop: "4px",
         }}
       >
-        نظام مركزي متطور لإدارة المساجد والحلقات
-        والمعلمين والطلاب والحضور والتسميع
-        والاختبارات والتقارير التشغيلية من
-        لوحة تحكم موحدة.
-      </p>
+        {todayHijri}
+      </div>
     </div>
   </div>
-</div> 
+</div>
  <div
   style={{
     background: "#ffffff",
@@ -460,6 +429,7 @@ export default function AdminDashboard() {
 />
         </div>
       </SectionCard>
+    </div>
     </AppPage>
   );
 }

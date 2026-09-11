@@ -24,6 +24,8 @@ import {
 Menu,
 } from "lucide-react";
 
+import ResponsiveContainer from "./ResponsiveContainer";
+
 const sections = [
   {
     title: "النظام",
@@ -126,6 +128,26 @@ useEffect(() => {
 const [search,setSearch] = useState(""); 
 
 
+const [isMobile, setIsMobile] = useState(
+  window.innerWidth < 768
+);
+
+useEffect(() => {
+  const handleResize = () =>
+    setIsMobile(window.innerWidth < 768);
+
+  window.addEventListener(
+    "resize",
+    handleResize
+  );
+
+  return () =>
+    window.removeEventListener(
+      "resize",
+      handleResize
+    );
+}, []);
+
   return (
     <div
       style={{
@@ -150,7 +172,11 @@ const [search,setSearch] = useState("");
       <aside
 
         style={{
-          width: collapsed ? 120 : 320,
+          width: isMobile
+  ? 0
+  : collapsed
+  ? 120
+  : 320,
 transition: "all .3s ease",
           height: "100vh",
           overflowY: "auto",
@@ -159,7 +185,7 @@ transition: "all .3s ease",
           background: "rgba(255,255,255,.88)",
           backdropFilter: "blur(18px)",
           borderLeft: "1px solid rgba(15,118,110,.12)",
-          padding: 24,
+          padding: isMobile ? 12 : 24,
           boxSizing: "border-box",
         }}
       >
@@ -330,7 +356,9 @@ transition: "all .3s ease",
     display:"flex",
     alignItems:"center",
     justifyContent:"space-between",
-    padding:"0 30px"
+    padding: isMobile
+  ? "0 12px"
+  : "0 30px"
   }}
 >
 
@@ -362,7 +390,9 @@ transition: "all .3s ease",
 
       <div
         style={{
-          fontSize:"24px",
+          fontSize: isMobile
+  ? "18px"
+  : "24px",
           fontWeight:"900",
           color:"#0F172A"
         }}
@@ -423,9 +453,11 @@ transition: "all .3s ease",
 
 </div>
 
-        <div style={{ padding: 24 }}>
-          <Outlet />
-        </div>
+       <ResponsiveContainer>
+  <div style={{ padding: 24 }}>
+    <Outlet />
+  </div>
+</ResponsiveContainer>
       </main>
     </div>
   );
