@@ -49,58 +49,30 @@ const [deleteId, setDeleteId] =
 
     setLoading(true);
 
-const {
-  data: { user },
-} = await supabase.auth.getUser();
 
-const { data: profile } =
-  await supabase
-    .from("profiles")
-    .select("id")
-    .eq(
-      "auth_user_id",
-      user.id
+   const { data, error } = await supabase
+  .from("exams")
+  .select(`
+    *,
+    mosques(name),
+    exam_halaqat(
+  halaqa_id,
+  halaqat(name)
+),
+
+exam_students(
+      student_id
+    ),
+
+    exam_teachers(
+  teacher_id
+    ),
+
+    exam_results(
+      score
     )
-    .single();
-
-const teacherId =
-  profile?.id;
-
-
-  const { data, error } =
-  await supabase
-    .from("exams")
-    .select(`
-      *,
-      mosques(name),
-
-      exam_halaqat(
-        halaqa_id,
-        halaqat(name)
-      ),
-
-      exam_students(
-        student_id
-      ),
-
-      exam_teachers(
-        teacher_id
-      ),
-
-      exam_results(
-        score
-      )
-    `)
-    .contains(
-      "teacher_ids",
-      [teacherId]
-    )
-    .order(
-      "created_at",
-      {
-        ascending: false
-      }
-    );
+  `)
+  .order("created_at", { ascending: false });
 
 console.log("EXAMS DATA =", data);
 console.log("EXAMS ERROR =", error);
@@ -108,11 +80,13 @@ console.log("FIRST EXAM =", data?.[0]);
 
 if (error) {
 
-showToast(
+  showToast(
     error.message,
     "error"
   );
 
+  setLoading(false);
+  return;
 }
   const { data: teachersData } = await supabase
     .from("profiles")
@@ -125,43 +99,27 @@ showToast(
     teachersMap[t.id] = t.full_name;
   });
 
-  const formatted = (data || [])
+  const formatted = (data || []).map(exam => ({
 
-.filter(
-  exam =>
-    exam.exam_teachers?.some(
-      t =>
-        Number(t.teacher_id) ===
-        Number(profile.id)
-    )
-)
+    ...exam,
 
-.map(exam => ({
+halaqa_names:
+  exam.exam_halaqat?.length
+    ? exam.exam_halaqat
+        .map(h => h.halaqat?.name)
+        .filter(Boolean)
+        .join("، ")
+    : exam.halaqat?.name || "-",
 
-  ...exam,
+    teacher_name:
+      exam.exam_teachers?.length
+        ? exam.exam_teachers
+            .map(t => teachersMap[t.teacher_id])
+            .filter(Boolean)
+            .join("، ")
+        : "-",
 
-  halaqa_names:
-    exam.exam_halaqat?.length
-      ? exam.exam_halaqat
-          .map(h => h.halaqat?.name)
-          .filter(Boolean)
-          .join("، ")
-      : exam.halaqat?.name || "-",
-
-  teacher_name:
-    exam.exam_teachers?.length
-      ? exam.exam_teachers
-          .map(
-            t =>
-              teachersMap[
-                t.teacher_id
-              ]
-          )
-          .filter(Boolean)
-          .join("، ")
-      : "-",
-
-}));
+  }));
 
   setExams(formatted);
 

@@ -1,359 +1,1737 @@
-import { useState } from "react";
+import {
+  useMemo,
+  useState,
+} from "react";
 
 import {
+  AlertTriangle,
+  Ban,
+  CheckCircle2,
   Gift,
+  Layers3,
   MinusCircle,
   Pencil,
-  Trash2,
-  Power,
   Plus,
+  Power,
+  Search,
+  Sparkles,
+  Trash2,
+  X,
 } from "lucide-react";
 
 import ConfirmModal from "../ConfirmModal";
 
-export default function RewardTypesTab({
+/* =========================================================
+   Helpers
+========================================================= */
 
-  rewardTypes = [],
+function formatNumber(value) {
+  const number =
+    Number(value) || 0;
 
-  onCreate,
+  try {
+    return new Intl.NumberFormat(
+      "ar-SA"
+    ).format(number);
+  } catch {
+    return String(number);
+  }
+}
 
+function getPointsDisplay(
+  item
+) {
+  const amount =
+    Math.abs(
+      Number(
+        item?.points
+      ) || 0
+    );
+
+  return item?.type ===
+    "penalty"
+    ? `-${formatNumber(
+        amount
+      )}`
+    : `+${formatNumber(
+        amount
+      )}`;
+}
+
+/* =========================================================
+   Type Card
+========================================================= */
+
+function TypeCard({
+  item,
+  kind,
+  busy,
   onEdit,
-
-  onDelete,
-
-  onToggleStatus,
-
+  onAskDelete,
+  onAskToggle,
 }) {
+  const isReward =
+    kind === "reward";
 
-  const [
-    confirmDelete,
-    setConfirmDelete
-  ] = useState(null);
+  const TypeIcon =
+    isReward
+      ? Gift
+      : MinusCircle;
 
-  const [
-    confirmToggle,
-    setConfirmToggle
-  ] = useState(null);
+  const active =
+    item.is_active !==
+    false;
 
-  const rewards =
-    rewardTypes.filter(
-      x => x.type === "reward"
-    );
-
-  const penalties =
-    rewardTypes.filter(
-      x => x.type === "penalty"
-    );
-
-  const renderTable =
-  (title, rows, color)=>(
-
-    <div
-      style={{
-        background:"#fff",
-        borderRadius:"22px",
-        border:"1px solid #E2E8F0",
-        overflow:"hidden",
-        marginBottom:"24px"
-      }}
+  return (
+    <article
+      className={`reward-type-card ${kind} ${
+        active
+          ? "active"
+          : "inactive"
+      }`}
     >
+      <div className="reward-type-card-accent" />
 
-      <div
-        style={{
-          padding:"18px 22px",
-          borderBottom:
-            "1px solid #E2E8F0",
-          display:"flex",
-          justifyContent:
-            "space-between",
-          alignItems:"center"
-        }}
-      >
-
-        <div
-          style={{
-            display:"flex",
-            alignItems:"center",
-            gap:"10px"
-          }}
-        >
-
-          {title ===
-          "أنواع المنح"
-
-          ? <Gift size={20}/>
-
-          : <MinusCircle
-              size={20}
+      <div className="reward-type-card-top">
+        <div className="reward-type-card-identity">
+          <span className="reward-type-card-icon">
+            <TypeIcon
+              size={17}
             />
-          }
+          </span>
 
-          <strong>
-            {title}
-          </strong>
+          <div>
+            <small>
+              {isReward
+                ? "نوع منحة"
+                : "نوع خصم"}
+            </small>
 
+            <strong>
+              {item.name ||
+                "بدون اسم"}
+            </strong>
+          </div>
         </div>
 
-    <button
-  onClick={() =>
-    onCreate(
-      title === "أنواع المنح"
-        ? "reward"
-        : "penalty"
-    )
-  }
-  style={{
-    height: "48px",
-    padding: "0 20px",
-    border: "none",
-    borderRadius: "14px",
-    background:
-      "linear-gradient(135deg,#0F766E,#115E59)",
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: "14px",
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    cursor: "pointer",
-    boxShadow:
-      "0 8px 20px rgba(15,118,110,.25)",
-    transition: "all .2s ease",
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.transform =
-      "translateY(-2px)";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.transform =
-      "translateY(0)";
-  }}
->
-  <Plus size={18} />
-
-  <span>إضافة نوع جديد</span>
-</button>
-
-      </div>
-
-      <div
-  style={{
-    display: "grid",
-    gridTemplateColumns:
-      "repeat(auto-fill,minmax(280px,1fr))",
-    gap: "18px",
-    padding: "20px",
-  }}
->
-  {rows.map((item) => (
-    <div
-      key={item.id}
-      style={{
-        border: "1px solid #E2E8F0",
-        borderRadius: "20px",
-        padding: "20px",
-        background: "#fff",
-        transition: ".2s",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "16px",
-        }}
-      >
-        <strong>
-          {item.name}
-        </strong>
-
         <span
-          style={{
-            background:
-              color === "#16A34A"
-                ? "#ECFDF5"
-                : "#FEF2F2",
-            color,
-            padding: "8px 14px",
-            borderRadius: "999px",
-            fontWeight: "800",
-          }}
+          className={`reward-type-status ${
+            active
+              ? "active"
+              : "inactive"
+          }`}
         >
-          {item.points > 0
-            ? `+${item.points}`
-            : item.points}
+          {active ? (
+            <CheckCircle2
+              size={11}
+            />
+          ) : (
+            <Ban
+              size={11}
+            />
+          )}
+
+          {active
+            ? "نشط"
+            : "متوقف"}
         </span>
       </div>
 
-      <div
-        onClick={() =>
-          setConfirmToggle(item)
-        }
-        style={{
-          cursor: "pointer",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "8px 14px",
-          borderRadius: "999px",
-          background: item.is_active
-            ? "#ECFDF5"
-            : "#FEF2F2",
-          color: item.is_active
-            ? "#059669"
-            : "#DC2626",
-          fontWeight: "700",
-          fontSize: "13px",
-        }}
-      >
-        <Power size={14} />
-        {item.is_active
-          ? "فعال"
-          : "معطل"}
+      <div className="reward-type-value-row">
+        <div>
+          <span>
+            قيمة العملية
+          </span>
+
+          <strong>
+            {getPointsDisplay(
+              item
+            )}
+
+            <small>
+              نقطة
+            </small>
+          </strong>
+        </div>
+
+        <span className="reward-type-id">
+          #{item.id}
+        </span>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          marginTop: "18px",
-        }}
-      >
+      <div className="reward-type-card-note">
+        {active
+          ? isReward
+            ? "متاح للمعلم ضمن قائمة المنح الجديدة."
+            : "متاح للمعلم ضمن قائمة الخصومات الجديدة."
+          : "محفوظ في النظام لكنه غير متاح للعمليات الجديدة."}
+      </div>
+
+      <div className="reward-type-card-actions">
         <button
+          type="button"
+          className="reward-type-action edit"
           onClick={() =>
-            onEdit(item)
+            onEdit?.(item)
           }
-          style={{
-            flex: 1,
-            height: "42px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#EEF2FF",
-            color: "#4F46E5",
-            cursor: "pointer",
-          }}
+          disabled={busy}
         >
-          <Pencil size={16}/>
+          <Pencil
+            size={14}
+          />
+
+          تعديل
         </button>
 
         <button
+          type="button"
+          className={`reward-type-action toggle ${
+            active
+              ? "disable"
+              : "enable"
+          }`}
           onClick={() =>
-            setConfirmDelete(item)
+            onAskToggle(item)
           }
-          style={{
-            flex: 1,
-            height: "42px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#FEF2F2",
-            color: "#DC2626",
-            cursor: "pointer",
-          }}
+          disabled={busy}
         >
-          <Trash2 size={16}/>
+          <Power
+            size={14}
+          />
+
+          {active
+            ? "إيقاف"
+            : "تفعيل"}
+        </button>
+
+        <button
+          type="button"
+          className="reward-type-action delete"
+          onClick={() =>
+            onAskDelete(item)
+          }
+          disabled={busy}
+        >
+          <Trash2
+            size={14}
+          />
+
+          حذف
         </button>
       </div>
-    </div>
-  ))}
-</div>
-</div>
+    </article>
   );
+}
+
+/* =========================================================
+   Section
+========================================================= */
+
+function TypesSection({
+  kind,
+  title,
+  description,
+  rows,
+  search,
+  onCreate,
+  onEdit,
+  onAskDelete,
+  onAskToggle,
+  busyId,
+}) {
+  const isReward =
+    kind === "reward";
+
+  const Icon =
+    isReward
+      ? Gift
+      : MinusCircle;
+
+  const activeCount =
+    rows.filter(
+      (item) =>
+        item.is_active !==
+        false
+    ).length;
 
   return (
+    <section
+      className={`reward-types-section ${kind}`}
+    >
+      <header className="reward-types-section-header">
+        <div className="reward-types-section-heading">
+          <span className="reward-types-section-icon">
+            <Icon
+              size={18}
+            />
+          </span>
 
+          <div>
+            <div className="reward-types-section-kicker">
+              {isReward
+                ? "المكافآت"
+                : "الخصومات"}
+            </div>
+
+            <h3>
+              {title}
+            </h3>
+
+            <p>
+              {description}
+            </p>
+          </div>
+        </div>
+
+        <div className="reward-types-section-actions">
+          <div className="reward-types-section-counters">
+            <span>
+              {formatNumber(
+                rows.length
+              )}
+              {" "}
+              إجمالي
+            </span>
+
+            <span className="active">
+              {formatNumber(
+                activeCount
+              )}
+              {" "}
+              نشط
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="reward-types-create"
+            onClick={() =>
+              onCreate?.(kind)
+            }
+          >
+            <Plus
+              size={14}
+            />
+
+            إضافة نوع
+          </button>
+        </div>
+      </header>
+
+      {rows.length > 0 ? (
+        <div className="reward-types-grid">
+          {rows.map(
+            (item) => (
+              <TypeCard
+                key={item.id}
+                item={item}
+                kind={kind}
+                busy={
+                  busyId ===
+                  item.id
+                }
+                onEdit={
+                  onEdit
+                }
+                onAskDelete={
+                  onAskDelete
+                }
+                onAskToggle={
+                  onAskToggle
+                }
+              />
+            )
+          )}
+        </div>
+      ) : (
+        <div className="reward-types-empty">
+          <span className="reward-types-empty-icon">
+            <Icon
+              size={22}
+            />
+          </span>
+
+          <strong>
+            {search
+              ? "لا توجد نتائج مطابقة"
+              : isReward
+                ? "لا توجد أنواع منح"
+                : "لا توجد أنواع خصم"}
+          </strong>
+
+          <p>
+            {search
+              ? "جرّب تغيير عبارة البحث."
+              : "أضف أول نوع حتى يظهر للمعلم عند تسجيل العمليات."}
+          </p>
+
+          {!search && (
+            <button
+              type="button"
+              onClick={() =>
+                onCreate?.(kind)
+              }
+            >
+              <Plus
+                size={13}
+              />
+              إضافة النوع الأول
+            </button>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* =========================================================
+   Main
+========================================================= */
+
+export default function RewardTypesTab({
+  rewardTypes = [],
+  onCreate,
+  onEdit,
+  onDelete,
+  onToggleStatus,
+}) {
+  const [
+    search,
+    setSearch,
+  ] =
+    useState("");
+
+  const [
+    confirmDelete,
+    setConfirmDelete,
+  ] =
+    useState(null);
+
+  const [
+    confirmToggle,
+    setConfirmToggle,
+  ] =
+    useState(null);
+
+  const [
+    busyId,
+    setBusyId,
+  ] =
+    useState(null);
+
+  const normalizedSearch =
+    search
+      .trim()
+      .toLowerCase();
+
+  const filteredTypes =
+    useMemo(() => {
+      if (
+        !normalizedSearch
+      ) {
+        return rewardTypes;
+      }
+
+      return rewardTypes.filter(
+        (item) =>
+          String(
+            item?.name || ""
+          )
+            .toLowerCase()
+            .includes(
+              normalizedSearch
+            ) ||
+          String(
+            item?.id || ""
+          ).includes(
+            normalizedSearch
+          )
+      );
+    }, [
+      rewardTypes,
+      normalizedSearch,
+    ]);
+
+  const rewards =
+    filteredTypes.filter(
+      (item) =>
+        item.type ===
+        "reward"
+    );
+
+  const penalties =
+    filteredTypes.filter(
+      (item) =>
+        item.type ===
+        "penalty"
+    );
+
+  const totalActive =
+    rewardTypes.filter(
+      (item) =>
+        item.is_active !==
+        false
+    ).length;
+
+  const totalInactive =
+    rewardTypes.length -
+    totalActive;
+
+  async function confirmDeleteItem() {
+    const item =
+      confirmDelete;
+
+    if (!item) {
+      return;
+    }
+
+    setConfirmDelete(
+      null
+    );
+
+    try {
+      setBusyId(
+        item.id
+      );
+
+      await onDelete?.(
+        item
+      );
+    } finally {
+      setBusyId(
+        null
+      );
+    }
+  }
+
+  async function confirmToggleItem() {
+    const item =
+      confirmToggle;
+
+    if (!item) {
+      return;
+    }
+
+    setConfirmToggle(
+      null
+    );
+
+    try {
+      setBusyId(
+        item.id
+      );
+
+      await onToggleStatus?.(
+        item
+      );
+    } finally {
+      setBusyId(
+        null
+      );
+    }
+  }
+
+  return (
     <>
+      <div
+        className="reward-types-page"
+        dir="rtl"
+      >
+        {/* =========================================
+            HERO
+        ========================================= */}
 
-      {renderTable(
-        "أنواع المنح",
-        rewards,
-        "#16A34A"
-      )}
+        <section className="reward-types-hero">
+          <div className="reward-types-hero-main">
+            <span className="reward-types-hero-icon">
+              <Layers3
+                size={20}
+              />
+            </span>
 
-      {renderTable(
-        "أنواع الخصومات",
-        penalties,
-        "#DC2626"
-      )}
+            <div>
+              <div className="reward-types-eyebrow">
+                <Sparkles
+                  size={11}
+                />
+                إعدادات نظام النقاط
+              </div>
+
+              <h2>
+                أنواع المنح والخصومات
+              </h2>
+
+              <p>
+                إدارة الأسباب والقيم التي يستخدمها المعلم عند منح النقاط أو خصمها من الطلاب.
+              </p>
+            </div>
+          </div>
+
+          <div className="reward-types-overview">
+            <div>
+              <span>
+                إجمالي الأنواع
+              </span>
+
+              <strong>
+                {formatNumber(
+                  rewardTypes.length
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                الأنواع النشطة
+              </span>
+
+              <strong className="active">
+                {formatNumber(
+                  totalActive
+                )}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                المتوقفة
+              </span>
+
+              <strong className="inactive">
+                {formatNumber(
+                  totalInactive
+                )}
+              </strong>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================
+            TOOLBAR
+        ========================================= */}
+
+        <section className="reward-types-toolbar">
+          <div className="reward-types-search">
+            <Search
+              size={15}
+            />
+
+            <input
+              type="search"
+              value={search}
+              onChange={(
+                event
+              ) =>
+                setSearch(
+                  event.target
+                    .value
+                )
+              }
+              placeholder="ابحث باسم النوع أو رقمه..."
+            />
+
+            {search && (
+              <button
+                type="button"
+                onClick={() =>
+                  setSearch("")
+                }
+                aria-label="مسح البحث"
+              >
+                <X
+                  size={13}
+                />
+              </button>
+            )}
+          </div>
+
+          <div className="reward-types-toolbar-note">
+            <AlertTriangle
+              size={13}
+            />
+
+            يفضّل إيقاف النوع المستخدم سابقًا بدل حذفه للحفاظ على السجل التاريخي.
+          </div>
+        </section>
+
+        {/* =========================================
+            SECTIONS
+        ========================================= */}
+
+        <TypesSection
+          kind="reward"
+          title="أنواع المنح"
+          description="المكافآت الإيجابية التي تضيف نقاطًا إلى رصيد الطالب."
+          rows={rewards}
+          search={
+            normalizedSearch
+          }
+          onCreate={
+            onCreate
+          }
+          onEdit={
+            onEdit
+          }
+          onAskDelete={
+            setConfirmDelete
+          }
+          onAskToggle={
+            setConfirmToggle
+          }
+          busyId={
+            busyId
+          }
+        />
+
+        <TypesSection
+          kind="penalty"
+          title="أنواع الخصومات"
+          description="الأسباب التي يترتب عليها خصم نقاط من رصيد الطالب."
+          rows={penalties}
+          search={
+            normalizedSearch
+          }
+          onCreate={
+            onCreate
+          }
+          onEdit={
+            onEdit
+          }
+          onAskDelete={
+            setConfirmDelete
+          }
+          onAskToggle={
+            setConfirmToggle
+          }
+          busyId={
+            busyId
+          }
+        />
+
+        {/* =========================================
+            STYLES
+        ========================================= */}
+
+        <style>
+          {`
+            .reward-types-page {
+              width: 100%;
+            }
+
+            /* =========================
+               HERO
+            ========================= */
+
+            .reward-types-hero {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+
+              gap: 14px;
+
+              margin-bottom: 12px;
+
+              padding: 14px 16px;
+
+              border:
+                1px solid #E5EBE7;
+
+              border-radius: 17px;
+
+              background:
+                linear-gradient(
+                  135deg,
+                  #FFFFFF 0%,
+                  #F8FCF9 70%,
+                  #FFFDF7 100%
+                );
+
+              box-shadow:
+                0 9px 26px
+                rgba(26,54,41,.045);
+            }
+
+            .reward-types-hero-main {
+              display: flex;
+              align-items: center;
+
+              gap: 10px;
+
+              min-width: 0;
+            }
+
+            .reward-types-hero-icon {
+              width: 42px;
+              height: 42px;
+
+              flex: 0 0 42px;
+
+              border-radius: 12px;
+
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              color: #FFFFFF;
+
+              background:
+                linear-gradient(
+                  145deg,
+                  #0F5132,
+                  #0F766E
+                );
+
+              box-shadow:
+                0 8px 18px
+                rgba(15,81,50,.12);
+            }
+
+            .reward-types-eyebrow {
+              display: flex;
+              align-items: center;
+
+              gap: 3px;
+
+              margin-bottom: 1px;
+
+              color: #98772C;
+
+              font-size: 6.5px;
+              font-weight: 900;
+            }
+
+            .reward-types-hero h2 {
+              margin: 0;
+
+              color: #35463C;
+
+              font-size: 13px;
+              font-weight: 950;
+            }
+
+            .reward-types-hero p {
+              margin: 2px 0 0;
+
+              color: #8D9791;
+
+              font-size: 6.5px;
+              line-height: 1.5;
+            }
+
+            .reward-types-overview {
+              display: grid;
+              grid-template-columns:
+                repeat(
+                  3,
+                  minmax(80px,1fr)
+                );
+
+              gap: 6px;
+
+              flex: 0 0 auto;
+            }
+
+            .reward-types-overview > div {
+              min-width: 88px;
+
+              padding: 7px 9px;
+
+              border:
+                1px solid #E4EAE6;
+
+              border-radius: 10px;
+
+              background: #FFFFFF;
+            }
+
+            .reward-types-overview span,
+            .reward-types-overview strong {
+              display: block;
+            }
+
+            .reward-types-overview span {
+              color: #929B95;
+
+              font-size: 5.5px;
+            }
+
+            .reward-types-overview strong {
+              margin-top: 1px;
+
+              color: #3E4E44;
+
+              font-size: 11px;
+              font-weight: 950;
+            }
+
+            .reward-types-overview strong.active {
+              color: #0F744C;
+            }
+
+            .reward-types-overview strong.inactive {
+              color: #A24639;
+            }
+
+            /* =========================
+               TOOLBAR
+            ========================= */
+
+            .reward-types-toolbar {
+              display: flex;
+              align-items: center;
+              justify-content:
+                space-between;
+
+              gap: 10px;
+
+              margin-bottom: 12px;
+
+              padding: 8px;
+
+              border:
+                1px solid #E7ECE9;
+
+              border-radius: 13px;
+
+              background: #FFFFFF;
+            }
+
+            .reward-types-search {
+              position: relative;
+
+              width: min(
+                360px,
+                100%
+              );
+            }
+
+            .reward-types-search > svg {
+              position: absolute;
+              right: 10px;
+              top: 50%;
+
+              transform:
+                translateY(-50%);
+
+              color: #8D9791;
+
+              pointer-events: none;
+            }
+
+            .reward-types-search input {
+              width: 100%;
+              height: 38px;
+
+              padding:
+                0 32px 0 31px;
+
+              border:
+                1px solid #DDE5E0;
+
+              border-radius: 9px;
+
+              outline: none;
+
+              color: #3D4D43;
+              background: #FBFDFC;
+
+              font-size: 7px;
+            }
+
+            .reward-types-search input:focus {
+              border-color: #A3C6B0;
+
+              box-shadow:
+                0 0 0 3px
+                rgba(15,81,50,.05);
+
+              background: #FFFFFF;
+            }
+
+            .reward-types-search button {
+              position: absolute;
+              left: 8px;
+              top: 50%;
+
+              width: 22px;
+              height: 22px;
+
+              transform:
+                translateY(-50%);
+
+              border: none;
+              border-radius: 6px;
+
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              color: #76827A;
+              background: #EDF2EF;
+
+              cursor: pointer;
+            }
+
+            .reward-types-toolbar-note {
+              display: flex;
+              align-items: center;
+
+              gap: 5px;
+
+              color: #876B2A;
+
+              font-size: 5.8px;
+              line-height: 1.45;
+            }
+
+            /* =========================
+               SECTION
+            ========================= */
+
+            .reward-types-section {
+              margin-bottom: 13px;
+
+              overflow: hidden;
+
+              border:
+                1px solid #E5EBE7;
+
+              border-radius: 16px;
+
+              background: #FFFFFF;
+
+              box-shadow:
+                0 8px 24px
+                rgba(24,50,38,.035);
+            }
+
+            .reward-types-section-header {
+              display: flex;
+              align-items: center;
+              justify-content:
+                space-between;
+
+              gap: 12px;
+
+              padding: 12px 14px;
+
+              border-bottom:
+                1px solid #EDF1EE;
+
+              background:
+                linear-gradient(
+                  135deg,
+                  #FCFDFC,
+                  #FFFFFF
+                );
+            }
+
+            .reward-types-section-heading {
+              display: flex;
+              align-items: center;
+
+              gap: 8px;
+
+              min-width: 0;
+            }
+
+            .reward-types-section-icon {
+              width: 34px;
+              height: 34px;
+
+              flex: 0 0 34px;
+
+              border-radius: 10px;
+
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+
+            .reward-types-section.reward
+            .reward-types-section-icon {
+              color: #0F6D49;
+              background: #EAF6EE;
+            }
+
+            .reward-types-section.penalty
+            .reward-types-section-icon {
+              color: #A44337;
+              background: #FFF0ED;
+            }
+
+            .reward-types-section-kicker {
+              margin-bottom: 1px;
+
+              color: #9A792D;
+
+              font-size: 5.5px;
+              font-weight: 900;
+            }
+
+            .reward-types-section h3 {
+              margin: 0;
+
+              color: #3C4C42;
+
+              font-size: 10px;
+              font-weight: 950;
+            }
+
+            .reward-types-section p {
+              margin: 2px 0 0;
+
+              color: #929B95;
+
+              font-size: 5.7px;
+              line-height: 1.45;
+            }
+
+            .reward-types-section-actions {
+              display: flex;
+              align-items: center;
+
+              gap: 7px;
+
+              flex: 0 0 auto;
+            }
+
+            .reward-types-section-counters {
+              display: flex;
+              align-items: center;
+
+              gap: 4px;
+            }
+
+            .reward-types-section-counters span {
+              min-height: 27px;
+
+              padding: 0 7px;
+
+              border:
+                1px solid #E3E9E5;
+
+              border-radius: 8px;
+
+              display: inline-flex;
+              align-items: center;
+
+              color: #7B877F;
+              background: #FFFFFF;
+
+              font-size: 5.5px;
+              font-weight: 850;
+            }
+
+            .reward-types-section-counters span.active {
+              color: #0F704A;
+              background: #F3FAF5;
+              border-color: #DCEADF;
+            }
+
+            .reward-types-create {
+              min-height: 31px;
+
+              padding: 0 9px;
+
+              border: none;
+              border-radius: 8px;
+
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+
+              gap: 4px;
+
+              color: #FFFFFF;
+
+              background:
+                linear-gradient(
+                  135deg,
+                  #0F5132,
+                  #0F766E
+                );
+
+              font-size: 6px;
+              font-weight: 900;
+
+              cursor: pointer;
+
+              box-shadow:
+                0 7px 15px
+                rgba(15,81,50,.10);
+            }
+
+            .reward-types-section.penalty
+            .reward-types-create {
+              background:
+                linear-gradient(
+                  135deg,
+                  #9F4639,
+                  #BD5745
+                );
+
+              box-shadow:
+                0 7px 15px
+                rgba(159,70,57,.10);
+            }
+
+            /* =========================
+               GRID / CARDS
+            ========================= */
+
+            .reward-types-grid {
+              display: grid;
+
+              grid-template-columns:
+                repeat(
+                  auto-fill,
+                  minmax(
+                    230px,
+                    1fr
+                  )
+                );
+
+              gap: 9px;
+
+              padding: 12px;
+            }
+
+            .reward-type-card {
+              position: relative;
+
+              min-width: 0;
+              overflow: hidden;
+
+              padding: 11px;
+
+              border:
+                1px solid #E5EBE7;
+
+              border-radius: 13px;
+
+              background: #FFFFFF;
+
+              transition:
+                transform .17s ease,
+                box-shadow .17s ease,
+                border-color .17s ease;
+            }
+
+            .reward-type-card:hover {
+              transform:
+                translateY(-2px);
+
+              box-shadow:
+                0 10px 22px
+                rgba(25,51,39,.055);
+            }
+
+            .reward-type-card.reward:hover {
+              border-color: #C7DDCF;
+            }
+
+            .reward-type-card.penalty:hover {
+              border-color: #E8CDC7;
+            }
+
+            .reward-type-card.inactive {
+              background: #FCFDFC;
+              opacity: .78;
+            }
+
+            .reward-type-card-accent {
+              position: absolute;
+              top: 0;
+              right: 0;
+              left: 0;
+
+              height: 2px;
+            }
+
+            .reward-type-card.reward
+            .reward-type-card-accent {
+              background:
+                linear-gradient(
+                  90deg,
+                  transparent,
+                  #0F766E,
+                  transparent
+                );
+            }
+
+            .reward-type-card.penalty
+            .reward-type-card-accent {
+              background:
+                linear-gradient(
+                  90deg,
+                  transparent,
+                  #B64D3D,
+                  transparent
+                );
+            }
+
+            .reward-type-card-top {
+              display: flex;
+              align-items: flex-start;
+              justify-content:
+                space-between;
+
+              gap: 8px;
+            }
+
+            .reward-type-card-identity {
+              display: flex;
+              align-items: center;
+
+              gap: 7px;
+
+              min-width: 0;
+            }
+
+            .reward-type-card-icon {
+              width: 30px;
+              height: 30px;
+
+              flex: 0 0 30px;
+
+              border-radius: 9px;
+
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+
+            .reward-type-card.reward
+            .reward-type-card-icon {
+              color: #0F6D49;
+              background: #EAF6EE;
+            }
+
+            .reward-type-card.penalty
+            .reward-type-card-icon {
+              color: #A44337;
+              background: #FFF0ED;
+            }
+
+            .reward-type-card-identity small,
+            .reward-type-card-identity strong {
+              display: block;
+            }
+
+            .reward-type-card-identity small {
+              color: #99A19C;
+
+              font-size: 5px;
+            }
+
+            .reward-type-card-identity strong {
+              margin-top: 1px;
+
+              overflow: hidden;
+
+              color: #3D4C42;
+
+              font-size: 8px;
+              font-weight: 950;
+
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
+            .reward-type-status {
+              min-height: 23px;
+
+              padding: 0 6px;
+
+              border-radius: 999px;
+
+              display: inline-flex;
+              align-items: center;
+
+              gap: 3px;
+
+              font-size: 5.2px;
+              font-weight: 900;
+
+              white-space: nowrap;
+            }
+
+            .reward-type-status.active {
+              color: #0F704A;
+
+              border:
+                1px solid #D9EADD;
+
+              background: #F0F9F3;
+            }
+
+            .reward-type-status.inactive {
+              color: #9D463A;
+
+              border:
+                1px solid #EED8D3;
+
+              background: #FFF4F1;
+            }
+
+            .reward-type-value-row {
+              display: flex;
+              align-items: flex-end;
+              justify-content:
+                space-between;
+
+              gap: 8px;
+
+              margin-top: 13px;
+            }
+
+            .reward-type-value-row > div > span,
+            .reward-type-value-row > div > strong {
+              display: block;
+            }
+
+            .reward-type-value-row > div > span {
+              color: #98A09B;
+
+              font-size: 5.3px;
+            }
+
+            .reward-type-value-row > div > strong {
+              margin-top: 1px;
+
+              font-size: 20px;
+              font-weight: 950;
+
+              direction: ltr;
+            }
+
+            .reward-type-card.reward
+            .reward-type-value-row > div > strong {
+              color: #0F744C;
+            }
+
+            .reward-type-card.penalty
+            .reward-type-value-row > div > strong {
+              color: #AE4336;
+            }
+
+            .reward-type-value-row strong small {
+              margin-left: 2px;
+
+              color: #8F9992;
+
+              font-size: 5.5px;
+              font-weight: 800;
+            }
+
+            .reward-type-id {
+              color: #9AA29D;
+
+              font-size: 5.4px;
+            }
+
+            .reward-type-card-note {
+              min-height: 30px;
+
+              margin-top: 8px;
+              padding-top: 7px;
+
+              border-top:
+                1px solid #EEF2EF;
+
+              color: #8C9690;
+
+              font-size: 5.5px;
+              line-height: 1.55;
+            }
+
+            /* =========================
+               ACTIONS
+            ========================= */
+
+            .reward-type-card-actions {
+              display: grid;
+
+              grid-template-columns:
+                repeat(
+                  3,
+                  minmax(0,1fr)
+                );
+
+              gap: 5px;
+
+              margin-top: 9px;
+            }
+
+            .reward-type-action {
+              min-height: 32px;
+
+              padding: 0 6px;
+
+              border: none;
+              border-radius: 8px;
+
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+
+              gap: 3px;
+
+              font-size: 5.7px;
+              font-weight: 900;
+
+              cursor: pointer;
+            }
+
+            .reward-type-action.edit {
+              color: #3C6655;
+              background: #EDF6F1;
+            }
+
+            .reward-type-action.enable {
+              color: #0F704A;
+              background: #ECF8F0;
+            }
+
+            .reward-type-action.disable {
+              color: #8A6822;
+              background: #FFF8E8;
+            }
+
+            .reward-type-action.delete {
+              color: #A34236;
+              background: #FFF0ED;
+            }
+
+            .reward-type-action:hover:not(:disabled) {
+              filter: brightness(.975);
+            }
+
+            .reward-type-action:disabled {
+              opacity: .45;
+              cursor: not-allowed;
+            }
+
+            /* =========================
+               EMPTY
+            ========================= */
+
+            .reward-types-empty {
+              min-height: 155px;
+
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-direction: column;
+
+              gap: 4px;
+
+              margin: 12px;
+
+              border:
+                1px dashed #DDE5E0;
+
+              border-radius: 12px;
+
+              color: #929C96;
+              background: #FBFDFC;
+
+              text-align: center;
+            }
+
+            .reward-types-empty-icon {
+              width: 38px;
+              height: 38px;
+
+              margin-bottom: 2px;
+
+              border-radius: 11px;
+
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              color: #0F6B49;
+              background: #EDF7F1;
+            }
+
+            .reward-types-section.penalty
+            .reward-types-empty-icon {
+              color: #A44337;
+              background: #FFF0ED;
+            }
+
+            .reward-types-empty strong {
+              color: #57645C;
+
+              font-size: 7px;
+            }
+
+            .reward-types-empty p {
+              max-width: 320px;
+
+              margin: 0;
+
+              font-size: 5.7px;
+            }
+
+            .reward-types-empty button {
+              min-height: 29px;
+
+              margin-top: 4px;
+              padding: 0 8px;
+
+              border: none;
+              border-radius: 8px;
+
+              display: inline-flex;
+              align-items: center;
+
+              gap: 3px;
+
+              color: #FFFFFF;
+              background: #0F6848;
+
+              font-size: 5.7px;
+              font-weight: 900;
+
+              cursor: pointer;
+            }
+
+            /* =========================
+               RESPONSIVE
+            ========================= */
+
+            @media
+            (max-width: 900px) {
+              .reward-types-hero {
+                align-items:
+                  flex-start;
+                flex-direction:
+                  column;
+              }
+
+              .reward-types-overview {
+                width: 100%;
+              }
+            }
+
+            @media
+            (max-width: 700px) {
+              .reward-types-toolbar {
+                align-items:
+                  stretch;
+                flex-direction:
+                  column;
+              }
+
+              .reward-types-search {
+                width: 100%;
+              }
+
+              .reward-types-section-header {
+                align-items:
+                  flex-start;
+                flex-direction:
+                  column;
+              }
+
+              .reward-types-section-actions {
+                width: 100%;
+
+                justify-content:
+                  space-between;
+              }
+            }
+
+            @media
+            (max-width: 520px) {
+              .reward-types-overview {
+                grid-template-columns:
+                  1fr;
+              }
+
+              .reward-types-grid {
+                grid-template-columns:
+                  1fr;
+              }
+
+              .reward-types-section-counters {
+                display: none;
+              }
+
+              .reward-types-create {
+                width: 100%;
+              }
+
+              .reward-type-card-actions {
+                grid-template-columns:
+                  1fr;
+              }
+            }
+          `}
+        </style>
+      </div>
+
+      {/* =========================================
+          DELETE CONFIRM
+      ========================================= */}
 
       <ConfirmModal
-
         open={
-          !!confirmDelete
+          Boolean(
+            confirmDelete
+          )
         }
-
-        title="
-        حذف النوع
-        "
-
+        title="حذف نوع النقاط"
         message={
           confirmDelete
-
-          ? `هل تريد حذف ${confirmDelete.name} ؟`
-
-          : ""
+            ? `هل تريد حذف "${confirmDelete.name}"؟\n\nإذا كان هذا النوع مستخدمًا في معاملات سابقة فقد تمنع قاعدة البيانات الحذف. للحفاظ على السجل التاريخي يُفضّل إيقاف النوع بدل حذفه.`
+            : ""
         }
-
-        onConfirm={() => {
-
-          onDelete(
-            confirmDelete
-          );
-
-          setConfirmDelete(
-            null
-          );
-
-        }}
-
-        onCancel={()=>
+        onConfirm={
+          confirmDeleteItem
+        }
+        onCancel={() =>
           setConfirmDelete(
             null
           )
         }
-
       />
+
+      {/* =========================================
+          STATUS CONFIRM
+      ========================================= */}
 
       <ConfirmModal
-
         open={
-          !!confirmToggle
+          Boolean(
+            confirmToggle
+          )
         }
-
-        title="
-        تغيير الحالة
-        "
-
+        title={
+          confirmToggle?.is_active !==
+          false
+            ? "إيقاف نوع النقاط"
+            : "تفعيل نوع النقاط"
+        }
         message={
           confirmToggle
-
-          ? `هل تريد تغيير حالة ${confirmToggle.name} ؟`
-
-          : ""
+            ? confirmToggle.is_active !== false
+              ? `سيتم إيقاف "${confirmToggle.name}" ولن يظهر في العمليات الجديدة، مع بقاء السجل السابق محفوظًا. هل تريد المتابعة؟`
+              : `سيتم تفعيل "${confirmToggle.name}" وسيعود للظهور ضمن العمليات الجديدة. هل تريد المتابعة؟`
+            : ""
         }
-
-        onConfirm={() => {
-
-          onToggleStatus(
-            confirmToggle
-          );
-
-          setConfirmToggle(
-            null
-          );
-
-        }}
-
-        onCancel={()=>
+        onConfirm={
+          confirmToggleItem
+        }
+        onCancel={() =>
           setConfirmToggle(
             null
           )
         }
-
       />
-
     </>
-
   );
-
 }

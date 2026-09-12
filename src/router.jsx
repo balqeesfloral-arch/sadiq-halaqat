@@ -45,6 +45,10 @@ import TeacherNotifications from "./pages/teacher/Notifications";
 import TeacherReports from "./pages/teacher/Reports";
 import TeacherProfile from "./pages/teacher/Profile";
 import TeacherSettings from "./pages/teacher/Settings";
+import TeacherHalaqat
+  from "./pages/teacher/Halaqat";
+import TeacherMonthlyPlan from "./pages/teacher/MonthlyPlan";
+import TeacherStudentCare from "./pages/teacher/StudentCare";
 
 const router = createBrowserRouter([
   {
@@ -197,6 +201,11 @@ const router = createBrowserRouter([
       element: <TeacherPoints />,
     },
 
+  {
+  path: "halaqat",
+  element: <TeacherHalaqat />,
+},
+
     {
       path: "monthly-achievement",
       element: <TeacherMonthlyAchievement />,
@@ -205,11 +214,6 @@ const router = createBrowserRouter([
     {
       path: "exams",
       element: <TeacherExams />,
-    },
-
-    {
-      path: "notifications",
-      element: <TeacherNotifications />,
     },
 
     {
@@ -226,6 +230,14 @@ const router = createBrowserRouter([
       path: "settings",
       element: <TeacherSettings />,
     },
+{
+  path: "monthly-plan",
+  element: <TeacherMonthlyPlan />,
+},
+{
+  path: "notifications",
+  element: <TeacherStudentCare />,
+},
   ],
 },
 

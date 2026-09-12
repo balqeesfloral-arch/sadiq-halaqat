@@ -1,3 +1,5 @@
+// src/pages/teacher/Attendance.jsx
+
 import {
   useEffect,
   useMemo,
@@ -10,8 +12,8 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
-  ChevronDown,
-  CircleAlert,
+  CircleSlash2,
+  ClipboardCheck,
   Clock3,
   FileCheck2,
   Filter,
@@ -22,287 +24,757 @@ import {
   UserRound,
   X,
   XCircle,
-  CircleSlash2,
-  ClipboardCheck,
+  Building2,
+  BookOpen,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
-import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { useToast } from "../../components/Toast";
 
-export default function Attendance() {
-  const navigate = useNavigate();
-  const { showToast } = useToast();
+/* =========================================================
+   ثوابت
+========================================================= */
 
-  const [halaqat, setHalaqat] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [attendance, setAttendance] = useState([]);
+const HALAQA_PERIODS = {
+  after_fajr: "بعد الفجر",
+  after_dhuhr: "بعد الظهر",
+  after_asr: "بعد العصر",
+  after_maghrib: "بعد المغرب",
+  after_isha: "بعد العشاء",
+};
 
-  const [selectedHalaqa, setSelectedHalaqa] =
-    useState("");
+const ATTENDANCE_STATUSES = {
+  present: {
+    label: "حاضر",
+    shortLabel: "حاضر",
+  },
 
-  const [selectedDate, setSelectedDate] =
-    useState(getLocalDate());
+  absent: {
+    label: "غائب",
+    shortLabel: "غائب",
+  },
 
-  const [search, setSearch] = useState("");
+  late: {
+    label: "متأخر",
+    shortLabel: "متأخر",
+  },
 
-  const [loading, setLoading] =
-    useState(false);
+  excused: {
+    label: "معتذر",
+    shortLabel: "معتذر",
+  },
+};
 
-  const [initialLoading, setInitialLoading] =
-    useState(true);
+/* =========================================================
+   أدوات التاريخ
 
-  const [savingStudentId, setSavingStudentId] =
-    useState(null);
+   مهم:
+   نخزن ونرسل إلى Supabase التاريخ الميلادي.
+   الهجري للعرض فقط.
+========================================================= */
 
-  const [bulkSaving, setBulkSaving] =
-    useState(false);
+function getLocalDate(
+  date = new Date()
+) {
+  const year =
+    date.getFullYear();
 
-  const [showOnlyUnrecorded, setShowOnlyUnrecorded] =
-    useState(false);
-
-  useEffect(() => {
-    loadHalaqat();
-  }, []);
-
-  useEffect(() => {
-    if (halaqat.length > 0) {
-      loadAttendanceData();
-    }
-  }, [selectedDate, halaqat]);
-
-  // ==========================================
-  // DATE
-  // ==========================================
-
-  function getLocalDate(date = new Date()) {
-    const year = date.getFullYear();
-
-    const month = String(
+  const month =
+    String(
       date.getMonth() + 1
     ).padStart(2, "0");
 
-    const day = String(
+  const day =
+    String(
       date.getDate()
     ).padStart(2, "0");
 
-    return `${year}-${month}-${day}`;
+  return `${year}-${month}-${day}`;
+}
+
+function parseLocalDate(
+  dateString
+) {
+  if (!dateString) {
+    return new Date();
   }
 
-  function formatDateArabic(dateString) {
-    const date = new Date(
-      `${dateString}T00:00:00`
-    );
+  return new Date(
+    `${dateString}T12:00:00`
+  );
+}
 
-    return date.toLocaleDateString(
-      "ar-SA",
+/* التاريخ الميلادي */
+
+function formatGregorianDate(
+  dateString
+) {
+  try {
+    return new Intl.DateTimeFormat(
+      "ar-SA-u-ca-gregory",
       {
         weekday: "long",
         year: "numeric",
         month: "long",
         day: "numeric",
       }
+    ).format(
+      parseLocalDate(
+        dateString
+      )
     );
+  } catch {
+    return dateString;
   }
+}
 
-  function formatShortDate(dateString) {
-    const date = new Date(
-      `${dateString}T00:00:00`
+/* التاريخ الهجري - أم القرى */
+
+function formatHijriDate(
+  dateString
+) {
+  try {
+    return new Intl.DateTimeFormat(
+      "ar-SA-u-ca-islamic-umalqura",
+      {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }
+    ).format(
+      parseLocalDate(
+        dateString
+      )
     );
+  } catch {
+    return "تعذر عرض التاريخ الهجري";
+  }
+}
 
-    return date.toLocaleDateString(
-      "ar-SA",
+function formatShortDate(
+  dateString
+) {
+  try {
+    return new Intl.DateTimeFormat(
+      "ar-SA-u-ca-gregory",
       {
         day: "numeric",
         month: "short",
       }
+    ).format(
+      parseLocalDate(
+        dateString
+      )
     );
+  } catch {
+    return dateString;
   }
+}
 
-  // ==========================================
-  // LOAD HALAQAT
-  // ==========================================
+/* =========================================================
+   الصفحة
+========================================================= */
+
+export default function Attendance() {
+  const { showToast } =
+    useToast();
+
+  /* =====================================================
+     DATA
+  ===================================================== */
+
+  const [
+    teacher,
+    setTeacher,
+  ] = useState(null);
+
+  const [
+    halaqat,
+    setHalaqat,
+  ] = useState([]);
+
+  const [
+    students,
+    setStudents,
+  ] = useState([]);
+
+  const [
+    attendance,
+    setAttendance,
+  ] = useState([]);
+
+  /* =====================================================
+     FILTERS
+  ===================================================== */
+
+  const [
+    selectedHalaqa,
+    setSelectedHalaqa,
+  ] = useState("");
+
+  const [
+    selectedDate,
+    setSelectedDate,
+  ] = useState(
+    getLocalDate()
+  );
+
+  const [
+    search,
+    setSearch,
+  ] = useState("");
+
+  const [
+    showOnlyUnrecorded,
+    setShowOnlyUnrecorded,
+  ] = useState(false);
+
+  /* =====================================================
+     LOADING STATES
+  ===================================================== */
+
+  const [
+    initialLoading,
+    setInitialLoading,
+  ] = useState(true);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const [
+    savingStudentId,
+    setSavingStudentId,
+  ] = useState(null);
+
+  const [
+    bulkSaving,
+    setBulkSaving,
+  ] = useState(false);
+
+  /* =====================================================
+     INITIAL LOAD
+  ===================================================== */
+
+  useEffect(() => {
+    loadHalaqat();
+  }, []);
+
+  /*
+    بعد تحميل حلقات المعلم،
+    أو عند تغيير التاريخ،
+    نحمل سجل الحضور.
+  */
+
+  useEffect(() => {
+    if (
+      halaqat.length > 0
+    ) {
+      loadAttendanceData();
+    }
+  }, [
+    selectedDate,
+    halaqat,
+  ]);
+
+  /* =====================================================
+     LOAD TEACHER HALAQAT
+  ===================================================== */
 
   async function loadHalaqat() {
     setInitialLoading(true);
 
     try {
+      /* -----------------------------------------
+         Auth
+      ----------------------------------------- */
+
       const {
-  data: { user },
-} = await supabase.auth.getUser();
+        data: authData,
+        error: authError,
+      } =
+        await supabase.auth.getUser();
 
-const { data: profile } =
-  await supabase
-    .from("profiles")
-    .select("id")
-    .eq("auth_user_id", user.id)
-    .single();
-
-const { data, error } =
-  await supabase
-    .from("teacher_halaqat")
-    .select(`
-      halaqa_id,
-      halaqat(*)
-    `)
-    .eq(
-      "teacher_id",
-      profile.id
-    );
-
-      if (error) {
-        throw error;
+      if (authError) {
+        throw authError;
       }
 
+      const user =
+        authData?.user;
 
-      const halaqatData =
-      data?.map(
-        (item) => item.halaqat
-      ) || [];
-
-      setHalaqat(halaqatData);
-
-      if (
-        halaqatData.length > 0 &&
-        !selectedHalaqa
-      ) {
-        setSelectedHalaqa(
-          String(halaqatData[0].id)
+      if (!user) {
+        throw new Error(
+          "تعذر التحقق من المستخدم الحالي"
         );
       }
+
+      /* -----------------------------------------
+         Teacher profile
+      ----------------------------------------- */
+
+      const {
+        data: teacherProfile,
+        error: profileError,
+      } =
+        await supabase
+          .from("profiles")
+          .select(`
+            id,
+            full_name,
+            user_number
+          `)
+          .eq(
+            "auth_user_id",
+            user.id
+          )
+          .eq(
+            "role",
+            "teacher"
+          )
+          .single();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      setTeacher(
+        teacherProfile
+      );
+
+      /* -----------------------------------------
+         Teacher halaqat فقط
+      ----------------------------------------- */
+
+      const {
+        data: links,
+        error: linksError,
+      } =
+        await supabase
+          .from(
+            "teacher_halaqat"
+          )
+          .select(`
+            halaqa_id,
+            role,
+
+            halaqat!teacher_halaqat_halaqa_id_fkey(
+              id,
+              name,
+              mosque_id,
+              capacity,
+              status,
+              halaqa_period,
+
+              mosques!halaqat_mosque_id_fkey(
+                id,
+                name
+              )
+            )
+          `)
+          .eq(
+            "teacher_id",
+            teacherProfile.id
+          );
+
+      if (linksError) {
+        throw linksError;
+      }
+
+      /*
+        منع تكرار الحلقة لو حصل
+        ربط مكرر بالخطأ.
+      */
+
+      const halaqaMap =
+        new Map();
+
+      (
+        links || []
+      ).forEach(
+        (link) => {
+          if (!link.halaqat) {
+            return;
+          }
+
+          const id =
+            Number(
+              link.halaqat.id
+            );
+
+          const old =
+            halaqaMap.get(id);
+
+          /*
+            إذا كان لديه main و assistant
+            لنفس الحلقة نفضل main.
+          */
+
+          if (
+            !old ||
+            link.role ===
+              "main"
+          ) {
+            halaqaMap.set(
+              id,
+              {
+                ...link.halaqat,
+
+                teacher_role:
+                  link.role,
+
+                mosque_name:
+                  link.halaqat
+                    .mosques
+                    ?.name ||
+                  "مسجد غير محدد",
+              }
+            );
+          }
+        }
+      );
+
+      const halaqatData =
+        Array.from(
+          halaqaMap.values()
+        ).sort(
+          (a, b) =>
+            String(
+              a.name || ""
+            ).localeCompare(
+              String(
+                b.name || ""
+              ),
+              "ar"
+            )
+        );
+
+      setHalaqat(
+        halaqatData
+      );
+
+      if (
+        halaqatData.length ===
+        0
+      ) {
+        setSelectedHalaqa(
+          ""
+        );
+
+        setStudents([]);
+        setAttendance([]);
+
+        setInitialLoading(
+          false
+        );
+
+        return;
+      }
+
+      /*
+        إذا الحلقة الحالية ليست
+        من حلقات المعلم نختار الأولى.
+      */
+
+      const currentExists =
+        halaqatData.some(
+          (item) =>
+            Number(
+              item.id
+            ) ===
+            Number(
+              selectedHalaqa
+            )
+        );
+
+      if (
+        !currentExists
+      ) {
+        setSelectedHalaqa(
+          String(
+            halaqatData[0].id
+          )
+        );
+      }
+
     } catch (error) {
-      console.error(error);
+      console.error(
+        "LOAD ATTENDANCE HALAQAT:",
+        error
+      );
 
       showToast(
         error.message ||
-          "تعذر تحميل الحلقات",
+          "تعذر تحميل حلقات المعلم",
         "error"
       );
-    } finally {
-      setInitialLoading(false);
+
+      setHalaqat([]);
+      setStudents([]);
+      setAttendance([]);
+
+      setInitialLoading(
+        false
+      );
     }
   }
 
-  // ==========================================
-  // LOAD ATTENDANCE
-  // ==========================================
+  /* =====================================================
+     LOAD STUDENTS + ATTENDANCE
+  ===================================================== */
 
   async function loadAttendanceData() {
+    if (
+      halaqat.length === 0
+    ) {
+      setStudents([]);
+      setAttendance([]);
+
+      setInitialLoading(
+        false
+      );
+
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const teacherHalaqaIds =
-  halaqat.map((h) => h.id);
+      const halaqaIds =
+        halaqat.map(
+          (halaqa) =>
+            Number(
+              halaqa.id
+            )
+        );
 
-if (!teacherHalaqaIds.length) {
-  setStudents([]);
-  setAttendance([]);
-  setLoading(false);
-  return;
-}
+      /* -----------------------------------------
+         Current students
+      ----------------------------------------- */
 
-const {
-  data: assignments,
-  error: assignmentsError,
-} = await supabase
-  .from("student_halaqat")
-  .select("*")
-  .in(
-    "halaqa_id",
-    teacherHalaqaIds
-  );
+      const {
+        data: assignments,
+        error:
+          assignmentsError,
+      } =
+        await supabase
+          .from(
+            "student_halaqat"
+          )
+          .select(`
+            id,
+            student_id,
+            halaqa_id,
+            teacher_id,
+            is_current
+          `)
+          .in(
+            "halaqa_id",
+            halaqaIds
+          )
+          .eq(
+            "is_current",
+            true
+          );
 
-      if (assignmentsError) {
+      if (
+        assignmentsError
+      ) {
         throw assignmentsError;
       }
 
-      if (!assignments?.length) {
+      if (
+        !assignments?.length
+      ) {
         setStudents([]);
+
+        /*
+          مع ذلك نحمّل الحضور
+          حتى تنظف الحالة السابقة.
+        */
+
         setAttendance([]);
+
         return;
       }
 
       const studentIds = [
         ...new Set(
           assignments.map(
-            (item) => item.student_id
+            (item) =>
+              Number(
+                item.student_id
+              )
           )
         ),
       ];
 
+      /* -----------------------------------------
+         Student profiles
+      ----------------------------------------- */
+
       const {
         data: profiles,
-        error: profilesError,
-      } = await supabase
-        .from("profiles")
-        .select(
-          "id, full_name, user_number, phone, status"
-        )
-        .in("id", studentIds);
+        error:
+          profilesError,
+      } =
+        await supabase
+          .from("profiles")
+          .select(`
+            id,
+            full_name,
+            user_number,
+            phone,
+            status,
+            is_active
+          `)
+          .in(
+            "id",
+            studentIds
+          )
+          .eq(
+            "role",
+            "student"
+          );
 
       if (profilesError) {
         throw profilesError;
       }
 
-      const {
-  data: attendanceData,
-  error: attendanceError,
-} = await supabase
-  .from("attendance")
-  .select("*")
-  .in(
-    "halaqa_id",
-    teacherHalaqaIds
-  )
-  .eq(
-    "attendance_date",
-    selectedDate
-  );
+      /* -----------------------------------------
+         Attendance for date
+      ----------------------------------------- */
 
-      if (attendanceError) {
+      const {
+        data: attendanceData,
+        error:
+          attendanceError,
+      } =
+        await supabase
+          .from("attendance")
+          .select(`
+            id,
+            student_id,
+            halaqa_id,
+            attendance_date,
+            status
+          `)
+          .in(
+            "halaqa_id",
+            halaqaIds
+          )
+          .eq(
+            "attendance_date",
+            selectedDate
+          );
+
+      if (
+        attendanceError
+      ) {
         throw attendanceError;
       }
 
-      const studentsWithHalaqa =
-        (assignments || [])
-          .filter(
-            (assignment) =>
-              assignment.is_current !== false
+      /* -----------------------------------------
+         Map students
+      ----------------------------------------- */
+
+      const profileMap =
+        new Map(
+          (
+            profiles || []
+          ).map(
+            (profile) => [
+              Number(
+                profile.id
+              ),
+              profile,
+            ]
           )
-          .map((assignment) => {
-            const profile =
-              (profiles || []).find(
-                (student) =>
-                  Number(student.id) ===
+        );
+
+      const studentsData =
+        (
+          assignments || []
+        )
+          .map(
+            (
+              assignment
+            ) => {
+              const profile =
+                profileMap.get(
                   Number(
-                    assignment.student_id
+                    assignment
+                      .student_id
                   )
-              );
+                );
 
-            return {
-              ...(profile || {}),
+              if (!profile) {
+                return null;
+              }
 
-              student_id:
-                assignment.student_id,
+              /*
+                الطالب غير النشط
+                لا يظهر في سجل الحضور.
+              */
 
-              halaqa_id:
-                assignment.halaqa_id,
-            };
-          })
-          .filter(
-            (student) =>
-              student.id
+              if (
+                profile.status !==
+                  "active" ||
+                profile.is_active ===
+                  false
+              ) {
+                return null;
+              }
+
+              return {
+                ...profile,
+
+                student_id:
+                  Number(
+                    assignment
+                      .student_id
+                  ),
+
+                halaqa_id:
+                  Number(
+                    assignment
+                      .halaqa_id
+                  ),
+              };
+            }
+          )
+          .filter(Boolean)
+          .sort(
+            (a, b) =>
+              String(
+                a.full_name ||
+                  ""
+              ).localeCompare(
+                String(
+                  b.full_name ||
+                    ""
+                ),
+                "ar"
+              )
           );
 
       setStudents(
-        studentsWithHalaqa
+        studentsData
       );
 
       setAttendance(
-        attendanceData || []
+        attendanceData ||
+          []
       );
+
     } catch (error) {
-      console.error(error);
+      console.error(
+        "LOAD ATTENDANCE DATA:",
+        error
+      );
 
       showToast(
         error.message ||
@@ -311,12 +783,32 @@ const {
       );
     } finally {
       setLoading(false);
+
+      setInitialLoading(
+        false
+      );
     }
   }
 
-  // ==========================================
-  // STUDENTS
-  // ==========================================
+  /* =====================================================
+     Halaqa access
+  ===================================================== */
+
+  function isTeacherHalaqa(
+    halaqaId
+  ) {
+    return halaqat.some(
+      (halaqa) =>
+        Number(
+          halaqa.id
+        ) ===
+        Number(halaqaId)
+    );
+  }
+
+  /* =====================================================
+     STUDENTS
+  ===================================================== */
 
   function getStudentsForHalaqa(
     halaqaId
@@ -325,9 +817,14 @@ const {
       (student) =>
         Number(
           student.halaqa_id
-        ) === Number(halaqaId)
+        ) ===
+        Number(halaqaId)
     );
   }
+
+  /* =====================================================
+     ATTENDANCE RECORD
+  ===================================================== */
 
   function getAttendanceRecord(
     studentId,
@@ -337,18 +834,20 @@ const {
       (record) =>
         Number(
           record.student_id
-        ) === Number(studentId) &&
+        ) ===
+          Number(studentId) &&
         Number(
           record.halaqa_id
-        ) === Number(halaqaId) &&
+        ) ===
+          Number(halaqaId) &&
         record.attendance_date ===
           selectedDate
     );
   }
 
-  // ==========================================
-  // STATS
-  // ==========================================
+  /* =====================================================
+     HALAQA STATS
+  ===================================================== */
 
   function getHalaqaStats(
     halaqaId
@@ -374,34 +873,31 @@ const {
             halaqaId
           );
 
-        if (!record) return;
-
-        if (
-          record.status ===
-          "present"
-        ) {
-          present++;
+        if (!record) {
+          return;
         }
 
-        if (
-          record.status ===
-          "absent"
+        switch (
+          record.status
         ) {
-          absent++;
-        }
+          case "present":
+            present++;
+            break;
 
-        if (
-          record.status ===
-          "late"
-        ) {
-          late++;
-        }
+          case "absent":
+            absent++;
+            break;
 
-        if (
-          record.status ===
-          "excused"
-        ) {
-          excused++;
+          case "late":
+            late++;
+            break;
+
+          case "excused":
+            excused++;
+            break;
+
+          default:
+            break;
         }
       }
     );
@@ -418,11 +914,32 @@ const {
         0
       );
 
+    /*
+      المتأخر يعتبر حاضرًا
+      في نسبة الالتزام بالحضور.
+    */
+
     const attendancePercentage =
       total > 0
         ? Math.round(
-            ((present + late) /
-              total) *
+            (
+              (
+                present +
+                late
+              ) /
+              total
+            ) *
+              100
+          )
+        : 0;
+
+    const completionPercentage =
+      total > 0
+        ? Math.round(
+            (
+              recorded /
+              total
+            ) *
               100
           )
         : 0;
@@ -436,24 +953,33 @@ const {
       recorded,
       unrecorded,
       attendancePercentage,
+      completionPercentage,
     };
   }
 
-  // ==========================================
-  // SELECTED HALAQA
-  // ==========================================
+  /* =====================================================
+     SELECTED HALAQA
+  ===================================================== */
 
   const selectedHalaqaData =
     useMemo(() => {
       return halaqat.find(
-        (h) =>
-          Number(h.id) ===
-          Number(selectedHalaqa)
+        (halaqa) =>
+          Number(
+            halaqa.id
+          ) ===
+          Number(
+            selectedHalaqa
+          )
       );
     }, [
       halaqat,
       selectedHalaqa,
     ]);
+
+  /* =====================================================
+     SELECTED HALAQA STATS
+  ===================================================== */
 
   const selectedStats =
     useMemo(() => {
@@ -466,7 +992,10 @@ const {
           excused: 0,
           recorded: 0,
           unrecorded: 0,
-          attendancePercentage: 0,
+          attendancePercentage:
+            0,
+          completionPercentage:
+            0,
         };
       }
 
@@ -480,9 +1009,9 @@ const {
       selectedDate,
     ]);
 
-  // ==========================================
-  // FILTER STUDENTS
-  // ==========================================
+  /* =====================================================
+     FILTERED STUDENTS
+  ===================================================== */
 
   const filteredStudents =
     useMemo(() => {
@@ -497,29 +1026,45 @@ const {
           .toLowerCase();
 
       if (text) {
-        result = result.filter(
-          (student) => {
-            const name =
-              (
-                student.full_name ||
-                ""
-              ).toLowerCase();
+        result =
+          result.filter(
+            (student) => {
+              const name =
+                String(
+                  student.full_name ||
+                    ""
+                ).toLowerCase();
 
-            const number =
-              String(
-                student.user_number ||
-                  ""
-              ).toLowerCase();
+              const number =
+                String(
+                  student.user_number ||
+                    ""
+                ).toLowerCase();
 
-            return (
-              name.includes(text) ||
-              number.includes(text)
-            );
-          }
-        );
+              const phone =
+                String(
+                  student.phone ||
+                    ""
+                ).toLowerCase();
+
+              return (
+                name.includes(
+                  text
+                ) ||
+                number.includes(
+                  text
+                ) ||
+                phone.includes(
+                  text
+                )
+              );
+            }
+          );
       }
 
-      if (showOnlyUnrecorded) {
+      if (
+        showOnlyUnrecorded
+      ) {
         result =
           result.filter(
             (student) =>
@@ -540,9 +1085,9 @@ const {
       selectedDate,
     ]);
 
-  // ==========================================
-  // GLOBAL STATS
-  // ==========================================
+  /* =====================================================
+     GLOBAL STATS
+  ===================================================== */
 
   const globalStats =
     useMemo(() => {
@@ -560,10 +1105,18 @@ const {
             );
 
           total += stats.total;
-          present += stats.present;
-          absent += stats.absent;
-          late += stats.late;
-          excused += stats.excused;
+
+          present +=
+            stats.present;
+
+          absent +=
+            stats.absent;
+
+          late +=
+            stats.late;
+
+          excused +=
+            stats.excused;
         }
       );
 
@@ -573,6 +1126,37 @@ const {
         late +
         excused;
 
+      const unrecorded =
+        Math.max(
+          total - recorded,
+          0
+        );
+
+      const percentage =
+        total > 0
+          ? Math.round(
+              (
+                (
+                  present +
+                  late
+                ) /
+                total
+              ) *
+                100
+            )
+          : 0;
+
+      const completion =
+        total > 0
+          ? Math.round(
+              (
+                recorded /
+                total
+              ) *
+                100
+            )
+          : 0;
+
       return {
         total,
         present,
@@ -580,19 +1164,9 @@ const {
         late,
         excused,
         recorded,
-        unrecorded:
-          Math.max(
-            total - recorded,
-            0
-          ),
-        percentage:
-          total > 0
-            ? Math.round(
-                ((present + late) /
-                  total) *
-                  100
-              )
-            : 0,
+        unrecorded,
+        percentage,
+        completion,
       };
     }, [
       halaqat,
@@ -601,9 +1175,9 @@ const {
       selectedDate,
     ]);
 
-  // ==========================================
-  // SAVE ONE STUDENT
-  // ==========================================
+  /* =====================================================
+     SAVE SINGLE ATTENDANCE
+  ===================================================== */
 
   async function saveAttendance(
     studentId,
@@ -614,6 +1188,40 @@ const {
         "اختر الحلقة أولًا",
         "error"
       );
+
+      return;
+    }
+
+    if (
+      !isTeacherHalaqa(
+        selectedHalaqa
+      )
+    ) {
+      showToast(
+        "هذه الحلقة ليست ضمن حلقاتك",
+        "error"
+      );
+
+      return;
+    }
+
+    const studentExists =
+      getStudentsForHalaqa(
+        selectedHalaqa
+      ).some(
+        (student) =>
+          Number(
+            student.student_id
+          ) ===
+          Number(studentId)
+      );
+
+    if (!studentExists) {
+      showToast(
+        "هذا الطالب غير مرتبط بهذه الحلقة",
+        "error"
+      );
+
       return;
     }
 
@@ -622,34 +1230,53 @@ const {
     );
 
     try {
+      /*
+        نستخدم limit بدل maybeSingle
+        حتى لا تفشل العملية لو كانت
+        هناك بيانات مكررة قديمة.
+      */
+
       const {
-        data: existingRecord,
+        data:
+          existingRows,
         error: findError,
-      } = await supabase
-        .from("attendance")
-        .select("id")
-        .eq(
-          "student_id",
-          studentId
-        )
-        .eq(
-          "halaqa_id",
-          Number(selectedHalaqa)
-        )
-        .eq(
-          "attendance_date",
-          selectedDate
-        )
-        .maybeSingle();
+      } =
+        await supabase
+          .from("attendance")
+          .select("id")
+          .eq(
+            "student_id",
+            studentId
+          )
+          .eq(
+            "halaqa_id",
+            Number(
+              selectedHalaqa
+            )
+          )
+          .eq(
+            "attendance_date",
+            selectedDate
+          )
+          .order(
+            "id",
+            {
+              ascending: false,
+            }
+          )
+          .limit(1);
 
       if (findError) {
         throw findError;
       }
 
-      let error = null;
+      const existingRecord =
+        existingRows?.[0];
 
       if (existingRecord) {
-        const result =
+        const {
+          error,
+        } =
           await supabase
             .from("attendance")
             .update({
@@ -660,15 +1287,21 @@ const {
               existingRecord.id
             );
 
-        error = result.error;
+        if (error) {
+          throw error;
+        }
       } else {
-        const result =
+        const {
+          error,
+        } =
           await supabase
             .from("attendance")
             .insert([
               {
                 student_id:
-                  studentId,
+                  Number(
+                    studentId
+                  ),
 
                 halaqa_id:
                   Number(
@@ -682,36 +1315,94 @@ const {
               },
             ]);
 
-        error = result.error;
+        if (error) {
+          throw error;
+        }
       }
 
-      if (error) {
-        throw error;
-      }
+      /*
+        تحديث محلي مباشر
+        بدل تحميل الصفحة كاملة
+        في كل ضغطة.
+      */
 
-      const student =
-        students.find(
-          (item) =>
-            Number(
-              item.student_id
-            ) ===
-            Number(studentId)
-        );
+      setAttendance(
+        (current) => {
+          const exists =
+            current.find(
+              (record) =>
+                Number(
+                  record.student_id
+                ) ===
+                  Number(
+                    studentId
+                  ) &&
+                Number(
+                  record.halaqa_id
+                ) ===
+                  Number(
+                    selectedHalaqa
+                  ) &&
+                record.attendance_date ===
+                  selectedDate
+            );
 
-      showToast(
-        `${student?.full_name || "الطالب"} — ${getStatusLabel(
-          status
-        )}`,
-        "success"
+          if (exists) {
+            return current.map(
+              (record) =>
+                Number(
+                  record.student_id
+                ) ===
+                  Number(
+                    studentId
+                  ) &&
+                Number(
+                  record.halaqa_id
+                ) ===
+                  Number(
+                    selectedHalaqa
+                  ) &&
+                record.attendance_date ===
+                  selectedDate
+                  ? {
+                      ...record,
+                      status,
+                    }
+                  : record
+            );
+          }
+
+          return [
+            ...current,
+            {
+              student_id:
+                Number(
+                  studentId
+                ),
+
+              halaqa_id:
+                Number(
+                  selectedHalaqa
+                ),
+
+              attendance_date:
+                selectedDate,
+
+              status,
+            },
+          ];
+        }
       );
 
-      await loadAttendanceData();
     } catch (error) {
-      console.error(error);
+      console.error(
+        "SAVE ATTENDANCE:",
+        error
+      );
 
       showToast(
         error.message ||
-          "تعذر حفظ الحضور",
+          "تعذر حفظ حالة الطالب",
         "error"
       );
     } finally {
@@ -721,57 +1412,130 @@ const {
     }
   }
 
-  // ==========================================
-  // BULK ATTENDANCE
-  // ==========================================
+  /* =====================================================
+     BULK ATTENDANCE
+  ===================================================== */
 
   async function markAll(
-    status
+    status,
+    onlyUnrecorded = false
   ) {
     if (!selectedHalaqa) {
       showToast(
         "اختر الحلقة أولًا",
         "error"
       );
+
       return;
     }
 
-    const halaqaStudents =
+    if (
+      !isTeacherHalaqa(
+        selectedHalaqa
+      )
+    ) {
+      showToast(
+        "هذه الحلقة ليست ضمن حلقاتك",
+        "error"
+      );
+
+      return;
+    }
+
+    let halaqaStudents =
       getStudentsForHalaqa(
         selectedHalaqa
       );
+
+    /*
+      الخيار الآمن:
+      تسجيل غير المسجلين فقط
+      بدون تعديل حالة الطلاب
+      المسجلين مسبقًا.
+    */
+
+    if (onlyUnrecorded) {
+      halaqaStudents =
+        halaqaStudents.filter(
+          (student) =>
+            !getAttendanceRecord(
+              student.student_id,
+              selectedHalaqa
+            )
+        );
+    }
 
     if (
       halaqaStudents.length ===
       0
     ) {
       showToast(
-        "لا يوجد طلاب في هذه الحلقة",
+        onlyUnrecorded
+          ? "لا يوجد طلاب غير مسجلين"
+          : "لا يوجد طلاب في هذه الحلقة",
         "info"
       );
+
       return;
     }
 
     const label =
-      getStatusLabel(status);
+      getStatusLabel(
+        status
+      );
+
+    const actionText =
+      onlyUnrecorded
+        ? `تسجيل الطلاب غير المسجلين كـ "${label}"`
+        : `تسجيل جميع طلاب الحلقة كـ "${label}"`;
 
     const confirmed =
       window.confirm(
-        `هل تريد تسجيل جميع طلاب الحلقة "${selectedHalaqaData?.name || ""}" كـ "${label}" ليوم ${formatShortDate(
+        `${actionText}\n\nالحلقة: ${
+          selectedHalaqaData
+            ?.name || ""
+        }\nالتاريخ: ${formatGregorianDate(
           selectedDate
-        )}؟`
+        )}\n\nهل تريد المتابعة؟`
       );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     setBulkSaving(true);
 
     try {
+      const existingForHalaqa =
+        attendance.filter(
+          (record) =>
+            Number(
+              record.halaqa_id
+            ) ===
+              Number(
+                selectedHalaqa
+              ) &&
+            record.attendance_date ===
+              selectedDate
+        );
+
+      const existingIds =
+        new Set(
+          existingForHalaqa.map(
+            (record) =>
+              Number(
+                record.student_id
+              )
+          )
+        );
+
       const rows =
         halaqaStudents.map(
           (student) => ({
             student_id:
-              student.student_id,
+              Number(
+                student.student_id
+              ),
 
             halaqa_id:
               Number(
@@ -783,33 +1547,6 @@ const {
 
             status,
           })
-        );
-
-      /*
-       * نحاول التحديث أولًا للسجلات الموجودة،
-       * ثم نضيف السجلات غير الموجودة.
-       */
-
-      const existingIds =
-        new Set(
-          attendance
-            .filter(
-              (record) =>
-                Number(
-                  record.halaqa_id
-                ) ===
-                  Number(
-                    selectedHalaqa
-                  ) &&
-                record.attendance_date ===
-                  selectedDate
-            )
-            .map(
-              (record) =>
-                Number(
-                  record.student_id
-                )
-            )
         );
 
       const existingRows =
@@ -832,9 +1569,14 @@ const {
             )
         );
 
+      /*
+        تحديث الموجود
+      */
+
       if (
         existingRows.length >
-        0
+          0 &&
+        !onlyUnrecorded
       ) {
         const studentIds =
           existingRows.map(
@@ -843,58 +1585,73 @@ const {
           );
 
         const {
-          error: updateError,
-        } = await supabase
-          .from("attendance")
-          .update({
-            status,
-          })
-          .eq(
-            "halaqa_id",
-            Number(selectedHalaqa)
-          )
-          .eq(
-            "attendance_date",
-            selectedDate
-          )
-          .in(
-            "student_id",
-            studentIds
-          );
+          error,
+        } =
+          await supabase
+            .from("attendance")
+            .update({
+              status,
+            })
+            .eq(
+              "halaqa_id",
+              Number(
+                selectedHalaqa
+              )
+            )
+            .eq(
+              "attendance_date",
+              selectedDate
+            )
+            .in(
+              "student_id",
+              studentIds
+            );
 
-        if (updateError) {
-          throw updateError;
+        if (error) {
+          throw error;
         }
       }
 
+      /*
+        إضافة الجديد
+      */
+
       if (
-        newRows.length > 0
+        newRows.length >
+        0
       ) {
         const {
-          error: insertError,
-        } = await supabase
-          .from("attendance")
-          .insert(
-            newRows
-          );
+          error,
+        } =
+          await supabase
+            .from("attendance")
+            .insert(
+              newRows
+            );
 
-        if (insertError) {
-          throw insertError;
+        if (error) {
+          throw error;
         }
       }
 
       showToast(
-        `تم تسجيل ${label} لجميع طلاب الحلقة`,
+        onlyUnrecorded
+          ? `تم تسجيل ${halaqaStudents.length} طالب غير مسجل`
+          : `تم تسجيل ${label} لجميع طلاب الحلقة`,
         "success"
       );
 
       await loadAttendanceData();
+
     } catch (error) {
-      console.error(error);
+      console.error(
+        "BULK ATTENDANCE:",
+        error
+      );
 
       showToast(
         error.message ||
-          "تعذر تسجيل الحضور الجماعي",
+          "تعذر تنفيذ التسجيل الجماعي",
         "error"
       );
     } finally {
@@ -902,14 +1659,16 @@ const {
     }
   }
 
-  // ==========================================
-  // DATE NAVIGATION
-  // ==========================================
+  /* =====================================================
+     DATE NAVIGATION
+  ===================================================== */
 
-  function changeDate(days) {
+  function changeDate(
+    days
+  ) {
     const current =
-      new Date(
-        `${selectedDate}T00:00:00`
+      parseLocalDate(
+        selectedDate
       );
 
     current.setDate(
@@ -918,16 +1677,21 @@ const {
     );
 
     const newDate =
-      getLocalDate(current);
+      getLocalDate(
+        current
+      );
 
     const today =
       getLocalDate();
 
-    if (newDate > today) {
+    if (
+      newDate > today
+    ) {
       showToast(
         "لا يمكن تسجيل حضور لتاريخ مستقبلي",
         "info"
       );
+
       return;
     }
 
@@ -942,171 +1706,191 @@ const {
     );
   }
 
-  // ==========================================
-  // RENDER
-  // ==========================================
+  /* =====================================================
+     REFRESH
+  ===================================================== */
+
+  async function refreshData() {
+    await loadAttendanceData();
+
+    showToast(
+      "تم تحديث سجل الحضور",
+      "success"
+    );
+  }
+
+  /* =====================================================
+     RENDER
+  ===================================================== */
 
   if (initialLoading) {
     return (
-      <PageShell>
+      <div
+        className="attendance-page"
+        dir="rtl"
+      >
+        <PageStyles />
+
         <LoadingScreen />
-      </PageShell>
+      </div>
     );
   }
 
   return (
-    <PageShell>
-      {/* ================================== */}
-      {/* HEADER */}
-      {/* ================================== */}
+    <div
+      className="attendance-page"
+      dir="rtl"
+    >
+      <PageStyles />
 
-      <div
-        style={headerStyle}
+      {/* =================================================
+          HERO
+      ================================================= */}
+
+      <section
+        className="attendance-hero"
       >
         <div
-          style={{
-            display: "flex",
-            alignItems:
-              "center",
-            gap: "13px",
-          }}
+          className="attendance-hero-content"
         >
-          <button
-            type="button"
-            onClick={() =>
-              navigate("/admin")
-            }
-            style={
-              backButtonStyle
-            }
-          >
-            <ArrowRight
-              size={18}
-            />
-
-            <span>
-              لوحة المشرف
-            </span>
-          </button>
-
           <div
-            style={
-              headerIconStyle
-            }
+            className="attendance-hero-icon"
           >
             <ClipboardCheck
-              size={25}
-              strokeWidth={1.8}
+              size={23}
             />
           </div>
 
           <div>
+            <div
+              className="attendance-eyebrow"
+            >
+              <ShieldCheck
+                size={13}
+              />
+
+              بوابة المعلم
+            </div>
+
             <h1
-              style={
-                pageTitleStyle
-              }
+              className="attendance-title"
             >
               الحضور والغياب
             </h1>
 
             <p
-              style={
-                pageSubtitleStyle
-              }
+              className="attendance-subtitle"
             >
-              إدارة حضور الطلاب ومتابعة الالتزام اليومي
+              تسجيل حضور طلاب
+              حلقاتك ومتابعة
+              الالتزام اليومي
+              بسهولة ودقة.
+              {teacher?.full_name
+                ? ` أهلاً ${teacher.full_name}.`
+                : ""}
             </p>
           </div>
         </div>
 
         <button
           type="button"
+          className="attendance-refresh"
           onClick={
-            loadAttendanceData
+            refreshData
           }
           disabled={loading}
-          style={{
-            ...refreshButtonStyle,
-            opacity:
-              loading ? 0.65 : 1,
-          }}
         >
           <RefreshCw
-            size={16}
-            style={{
-              animation:
-                loading
-                  ? "spin .8s linear infinite"
-                  : "none",
-            }}
+            size={17}
+            className={
+              loading
+                ? "spin"
+                : ""
+            }
           />
 
-          تحديث
+          <span
+            className="refresh-text"
+          >
+            تحديث البيانات
+          </span>
         </button>
-      </div>
+      </section>
 
-      {/* ================================== */}
-      {/* DATE CONTROL */}
-      {/* ================================== */}
+      {/* =================================================
+          DATE PANEL
+      ================================================= */}
 
       <section
-        style={
-          datePanelStyle
-        }
+        className="date-panel"
       >
         <div
-          style={
-            dateNavigationStyle
-          }
+          className="date-panel-top"
         >
           <button
             type="button"
+            className="date-nav-btn"
             onClick={() =>
               changeDate(-1)
             }
-            style={
-              dateArrowButton
-            }
           >
             <ArrowRight
-              size={17}
+              size={16}
             />
 
-            اليوم السابق
+            <span>
+              اليوم السابق
+            </span>
           </button>
 
           <div
-            style={{
-              textAlign:
-                "center",
-              flex: 1,
-            }}
+            className="date-display"
           >
             <div
-              style={
-                dateSmallLabel
-              }
+              className="date-icon"
             >
               <CalendarDays
-                size={14}
+                size={20}
               />
-
-              تاريخ التسجيل
             </div>
 
-            <div
-              style={
-                dateMainText
-              }
-            >
-              {formatDateArabic(
-                selectedDate
-              )}
+            <div>
+              <div
+                className="date-label"
+              >
+                تاريخ تسجيل
+                الحضور
+              </div>
+
+              {/* Gregorian */}
+
+              <div
+                className="gregorian-date"
+              >
+                {formatGregorianDate(
+                  selectedDate
+                )}
+              </div>
+
+              {/* Hijri */}
+
+              <div
+                className="hijri-date"
+              >
+                <Sparkles
+                  size={12}
+                />
+
+                {formatHijriDate(
+                  selectedDate
+                )}
+              </div>
             </div>
           </div>
 
           <button
             type="button"
+            className="date-nav-btn"
             onClick={() =>
               changeDate(1)
             }
@@ -1114,193 +1898,199 @@ const {
               selectedDate ===
               getLocalDate()
             }
-            style={{
-              ...dateArrowButton,
-              opacity:
-                selectedDate ===
-                getLocalDate()
-                  ? 0.35
-                  : 1,
-              cursor:
-                selectedDate ===
-                getLocalDate()
-                  ? "not-allowed"
-                  : "pointer",
-            }}
           >
-            اليوم التالي
+            <span>
+              اليوم التالي
+            </span>
 
             <ArrowLeft
-              size={17}
+              size={16}
             />
           </button>
         </div>
 
         <div
-          style={
-            dateBottomControls
-          }
+          className="date-panel-bottom"
         >
           <input
             type="date"
+            className="date-input"
             value={
               selectedDate
             }
             max={getLocalDate()}
-            onChange={(e) =>
-              setSelectedDate(
+            onChange={(e) => {
+              if (
                 e.target.value
-              )
-            }
-            style={
-              dateInputStyle
-            }
+              ) {
+                setSelectedDate(
+                  e.target.value
+                );
+              }
+            }}
           />
 
           <button
             type="button"
+            className={
+              selectedDate ===
+              getLocalDate()
+                ? "today-btn active"
+                : "today-btn"
+            }
             onClick={
               goToToday
-            }
-            style={
-              todayButtonStyle
             }
           >
             اليوم
           </button>
+
+          <div
+            className="date-status"
+          >
+            {selectedDate ===
+            getLocalDate() ? (
+              <>
+                <span
+                  className="live-dot"
+                />
+
+                سجل اليوم
+              </>
+            ) : (
+              <>
+                <Clock3
+                  size={12}
+                />
+
+                سجل سابق
+              </>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* ================================== */}
-      {/* GLOBAL STATS */}
-      {/* ================================== */}
+      {/* =================================================
+          GLOBAL STATS
+      ================================================= */}
 
-      <div
-        style={
-          statsGridStyle
-        }
+      <section
+        className="attendance-stats"
       >
         <SummaryCard
-          icon={
-            <Users
-              size={21}
-            />
-          }
+          icon={Users}
           title="إجمالي الطلاب"
           value={
             globalStats.total
           }
-          description="في جميع الحلقات"
+          subtitle="طلاب حلقاتك"
+          tone="primary"
         />
 
         <SummaryCard
           icon={
-            <CheckCircle2
-              size={21}
-            />
+            CheckCircle2
           }
-          title="حاضر"
+          title="الحاضرون"
           value={
             globalStats.present
           }
-          description="حضور فعلي"
+          subtitle="حضور فعلي"
           tone="success"
         />
 
         <SummaryCard
-          icon={
-            <XCircle
-              size={21}
-            />
-          }
-          title="غائب"
+          icon={XCircle}
+          title="الغائبون"
           value={
             globalStats.absent
           }
-          description="غياب مسجل"
+          subtitle="غياب مسجل"
           tone="danger"
         />
 
         <SummaryCard
-          icon={
-            <Clock3
-              size={21}
-            />
-          }
-          title="متأخر"
+          icon={Clock3}
+          title="المتأخرون"
           value={
             globalStats.late
           }
-          description="حضور متأخر"
+          subtitle="حضور متأخر"
           tone="warning"
         />
 
         <SummaryCard
           icon={
-            <CircleSlash2
-              size={21}
-            />
+            CircleSlash2
           }
-          title="لم يسجل"
+          title="المعتذرون"
+          value={
+            globalStats.excused
+          }
+          subtitle="غياب بعذر"
+          tone="neutral"
+        />
+
+        <SummaryCard
+          icon={
+            FileCheck2
+          }
+          title="بانتظار التسجيل"
           value={
             globalStats.unrecorded
           }
-          description="بانتظار التسجيل"
-          tone="neutral"
+          subtitle={`${globalStats.completion}% مكتمل`}
+          tone="pending"
         />
-      </div>
+      </section>
 
-      {/* ================================== */}
-      {/* HALAQAT */}
-      {/* ================================== */}
+      {/* =================================================
+          HALAQAT HEADER
+      ================================================= */}
 
       <section>
         <div
-          style={
-            sectionHeaderStyle
-          }
+          className="section-head"
         >
           <div>
-            <h2
-              style={
-                sectionTitleStyle
-              }
-            >
-              الحلقات
+            <h2>
+              حلقاتي
             </h2>
 
-            <p
-              style={
-                sectionSubtitleStyle
-              }
-            >
-              اختر الحلقة لبدء تسجيل الحضور
+            <p>
+              اختر الحلقة لعرض
+              طلابها وتسجيل
+              الحضور.
             </p>
           </div>
 
           <div
-            style={
-              overallPercentageStyle
-            }
+            className="global-rate"
           >
-            <span>
-              نسبة الحضور العامة
-            </span>
+            <div>
+              نسبة الحضور
+              العامة
+            </div>
 
             <strong>
-              {globalStats.percentage}%
+              {
+                globalStats.percentage
+              }
+              %
             </strong>
           </div>
         </div>
+
+        {/* =================================================
+            HALAQAT
+        ================================================= */}
 
         {halaqat.length ===
         0 ? (
           <EmptyHalaqat />
         ) : (
           <div
-            style={
-              halaqaGridStyle
-            }
+            className="halaqat-grid"
           >
             {halaqat.map(
               (halaqa) => {
@@ -1331,13 +2121,19 @@ const {
                     selected={
                       selected
                     }
-                    onClick={() =>
+                    onClick={() => {
                       setSelectedHalaqa(
                         String(
                           halaqa.id
                         )
-                      )
-                    }
+                      );
+
+                      setSearch("");
+
+                      setShowOnlyUnrecorded(
+                        false
+                      );
+                    }}
                   />
                 );
               }
@@ -1346,423 +2142,353 @@ const {
         )}
       </section>
 
-      {/* ================================== */}
-      {/* SELECTED HALAQA */}
-      {/* ================================== */}
+      {/* =================================================
+          ATTENDANCE PANEL
+      ================================================= */}
 
-      {selectedHalaqa && (
-        <section
-          style={
-            attendancePanelStyle
-          }
-        >
-          {/* PANEL HEADER */}
-
-          <div
-            style={
-              panelHeaderStyle
-            }
+      {selectedHalaqa &&
+        selectedHalaqaData && (
+          <section
+            className="register-panel"
           >
-            <div>
-              <div
-                style={
-                  panelEyebrowStyle
-                }
-              >
-                <span
-                  style={
-                    liveDotStyle
-                  }
-                />
+            {/* HEADER */}
 
-                سجل الحضور
+            <div
+              className="register-header"
+            >
+              <div>
+                <div
+                  className="register-eyebrow"
+                >
+                  <span
+                    className="live-dot"
+                  />
+
+                  سجل الحضور
+                </div>
+
+                <h2>
+                  {
+                    selectedHalaqaData.name
+                  }
+                </h2>
+
+                <div
+                  className="halaqa-meta"
+                >
+                  <span>
+                    <Building2
+                      size={12}
+                    />
+
+                    {
+                      selectedHalaqaData.mosque_name
+                    }
+                  </span>
+
+                  {selectedHalaqaData.halaqa_period && (
+                    <span>
+                      <Clock3
+                        size={12}
+                      />
+
+                      {HALAQA_PERIODS[
+                        selectedHalaqaData
+                          .halaqa_period
+                      ] ||
+                        "غير محدد"}
+                    </span>
+                  )}
+
+                  <span>
+                    <CalendarDays
+                      size={12}
+                    />
+
+                    {formatHijriDate(
+                      selectedDate
+                    )}
+                  </span>
+                </div>
               </div>
 
-              <h2
-                style={
-                  panelTitleStyle
-                }
+              <div
+                className="register-rate"
               >
-                {selectedHalaqaData?.name ||
-                  "الحلقة"}
-              </h2>
+                <strong>
+                  {
+                    selectedStats.attendancePercentage
+                  }
+                  %
+                </strong>
 
-              <p
-                style={
-                  panelSubtitleStyle
-                }
-              >
-                {formatDateArabic(
-                  selectedDate
-                )}
-              </p>
+                <span>
+                  نسبة الحضور
+                </span>
+              </div>
             </div>
+
+            {/* COMPLETION */}
 
             <div
-              style={
-                panelPercentageStyle
-              }
+              className="completion-block"
             >
-              <strong>
-                {
-                  selectedStats.attendancePercentage
-                }
-                %
-              </strong>
+              <div
+                className="completion-head"
+              >
+                <span>
+                  اكتمال تسجيل
+                  الحلقة
+                </span>
 
-              <span>
-                نسبة الحضور
-              </span>
-            </div>
-          </div>
+                <strong>
+                  {
+                    selectedStats.recorded
+                  }
+                  {" / "}
+                  {
+                    selectedStats.total
+                  }
+                </strong>
+              </div>
 
-          {/* QUICK ACTIONS */}
-
-          <div
-            style={
-              quickActionsStyle
-            }
-          >
-            <button
-              type="button"
-              disabled={
-                bulkSaving ||
-                selectedStats.total ===
-                  0
-              }
-              onClick={() =>
-                markAll(
-                  "present"
-                )
-              }
-              style={
-                bulkPresentButton
-              }
-            >
-              {bulkSaving ? (
-                <Loader2
-                  size={17}
+              <div
+                className="completion-track"
+              >
+                <div
+                  className="completion-fill"
                   style={{
-                    animation:
-                      "spin .8s linear infinite",
+                    width:
+                      `${selectedStats.completionPercentage}%`,
                   }}
                 />
-              ) : (
-                <Check
-                  size={17}
-                />
-              )}
+              </div>
+            </div>
 
-              تسجيل الجميع حاضر
-            </button>
+            {/* QUICK ACTIONS */}
 
-            <button
-              type="button"
-              disabled={
-                bulkSaving ||
-                selectedStats.total ===
-                  0
-              }
-              onClick={() =>
-                markAll(
-                  "absent"
-                )
-              }
-              style={
-                bulkAbsentButton
-              }
-            >
-              <X
-                size={17}
-              />
-
-              تسجيل الجميع غائب
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowOnlyUnrecorded(
-                  !showOnlyUnrecorded
-                )
-              }
-              style={{
-                ...filterButtonStyle,
-                ...(showOnlyUnrecorded
-                  ? filterButtonActiveStyle
-                  : {}),
-              }}
-            >
-              <Filter
-                size={16}
-              />
-
-              {showOnlyUnrecorded
-                ? "عرض الجميع"
-                : "غير المسجلين فقط"}
-            </button>
-          </div>
-
-          {/* SEARCH */}
-
-          <div
-            style={
-              searchRowStyle
-            }
-          >
             <div
-              style={
-                searchBoxStyle
-              }
+              className="quick-actions"
             >
-              <Search
-                size={18}
-                style={
-                  searchIconStyle
+              <button
+                type="button"
+                className="bulk-btn safe"
+                disabled={
+                  bulkSaving ||
+                  selectedStats.unrecorded ===
+                    0
                 }
-              />
-
-              <input
-                value={search}
-                onChange={(e) =>
-                  setSearch(
-                    e.target.value
+                onClick={() =>
+                  markAll(
+                    "present",
+                    true
                   )
                 }
-                placeholder="ابحث باسم الطالب أو رقم الطالب..."
-                style={
-                  searchInputStyle
-                }
-              />
-
-              {search && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSearch("")
-                  }
-                  style={
-                    clearSearchButton
-                  }
-                >
-                  <X
+              >
+                {bulkSaving ? (
+                  <Loader2
+                    size={15}
+                    className="spin"
+                  />
+                ) : (
+                  <Check
                     size={15}
                   />
-                </button>
-              )}
+                )}
+
+                غير المسجلين
+                حاضر
+              </button>
+
+              <button
+                type="button"
+                className="bulk-btn present"
+                disabled={
+                  bulkSaving ||
+                  selectedStats.total ===
+                    0
+                }
+                onClick={() =>
+                  markAll(
+                    "present"
+                  )
+                }
+              >
+                <CheckCircle2
+                  size={15}
+                />
+
+                الجميع حاضر
+              </button>
+
+              <button
+                type="button"
+                className="bulk-btn absent"
+                disabled={
+                  bulkSaving ||
+                  selectedStats.total ===
+                    0
+                }
+                onClick={() =>
+                  markAll(
+                    "absent"
+                  )
+                }
+              >
+                <XCircle
+                  size={15}
+                />
+
+                الجميع غائب
+              </button>
+
+              <button
+                type="button"
+                className={
+                  showOnlyUnrecorded
+                    ? "bulk-btn filter active"
+                    : "bulk-btn filter"
+                }
+                onClick={() =>
+                  setShowOnlyUnrecorded(
+                    (current) =>
+                      !current
+                  )
+                }
+              >
+                <Filter
+                  size={15}
+                />
+
+                {showOnlyUnrecorded
+                  ? "عرض الجميع"
+                  : "غير المسجلين"}
+              </button>
             </div>
 
+            {/* SEARCH */}
+
             <div
-              style={
-                resultCountStyle
-              }
+              className="students-search-row"
             >
-              <strong>
-                {
-                  filteredStudents.length
-                }
-              </strong>
+              <div
+                className="attendance-search"
+              >
+                <Search
+                  size={16}
+                />
+
+                <input
+                  value={search}
+                  onChange={(e) =>
+                    setSearch(
+                      e.target.value
+                    )
+                  }
+                  placeholder="ابحث باسم الطالب أو رقمه أو جواله..."
+                />
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearch("")
+                    }
+                  >
+                    <X
+                      size={14}
+                    />
+                  </button>
+                )}
+              </div>
+
+              <div
+                className="results-count"
+              >
+                <strong>
+                  {
+                    filteredStudents.length
+                  }
+                </strong>
+
+                <span>
+                  طالب
+                </span>
+              </div>
+            </div>
+
+            {/* TABLE HEADER */}
+
+            <div
+              className="students-table-head"
+            >
+              <span>
+                الطالب
+              </span>
 
               <span>
-                طالب معروض
+                حالة الحضور
               </span>
             </div>
-          </div>
 
-          {/* STUDENTS */}
+            {/* STUDENTS */}
 
-          <div
-            style={
-              studentListStyle
-            }
-          >
-            {filteredStudents.length ===
-            0 ? (
-              <EmptyStudents
-                search={
-                  search
-                }
-                onlyUnrecorded={
-                  showOnlyUnrecorded
-                }
-              />
-            ) : (
-              filteredStudents.map(
-                (
-                  student,
-                  index
-                ) => {
-                  const record =
-                    getAttendanceRecord(
-                      student.student_id,
-                      selectedHalaqa
-                    );
-
-                  return (
-                    <StudentAttendanceRow
-                      key={
-                        student.student_id
-                      }
-                      student={
-                        student
-                      }
-                      record={
-                        record
-                      }
-                      index={
-                        index
-                      }
-                      saving={
-                        savingStudentId ===
-                        student.student_id
-                      }
-                      onSave={
-                        saveAttendance
-                      }
-                    />
-                  );
-                }
-              )
-            )}
-          </div>
-        </section>
-      )}
-
-      {!selectedHalaqa &&
-        halaqat.length > 0 && (
-          <div
-            style={
-              selectHalaqaHint
-            }
-          >
             <div
-              style={
-                hintIconStyle
-              }
+              className="students-list"
             >
-              <ClipboardCheck
-                size={25}
-              />
+              {loading ? (
+                <InlineLoading />
+              ) : filteredStudents.length ===
+                0 ? (
+                <EmptyStudents
+                  search={
+                    search
+                  }
+                  onlyUnrecorded={
+                    showOnlyUnrecorded
+                  }
+                />
+              ) : (
+                filteredStudents.map(
+                  (
+                    student,
+                    index
+                  ) => {
+                    const record =
+                      getAttendanceRecord(
+                        student.student_id,
+                        selectedHalaqa
+                      );
+
+                    return (
+                      <StudentAttendanceRow
+                        key={
+                          student.student_id
+                        }
+                        student={
+                          student
+                        }
+                        record={
+                          record
+                        }
+                        index={
+                          index
+                        }
+                        saving={
+                          savingStudentId ===
+                          student.student_id
+                        }
+                        onSave={
+                          saveAttendance
+                        }
+                      />
+                    );
+                  }
+                )
+              )}
             </div>
-
-            <h3>
-              اختر حلقة للبدء
-            </h3>
-
-            <p>
-              اختر إحدى الحلقات أعلاه لعرض الطلاب وتسجيل حضورهم.
-            </p>
-          </div>
+          </section>
         )}
-
-      <style>
-        {`
-          @keyframes spin {
-            from {
-              transform: rotate(0deg);
-            }
-            to {
-              transform: rotate(360deg);
-            }
-          }
-
-          @keyframes fadeUp {
-            from {
-              opacity: 0;
-              transform: translateY(8px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
-          .attendance-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px rgba(15,81,50,.09) !important;
-          }
-
-          .student-row:hover {
-            background: #fbfcfb !important;
-          }
-
-          button {
-            font-family: inherit;
-          }
-
-          input,
-          select {
-            font-family: inherit;
-          }
-        `}
-      </style>
-    </PageShell>
-  );
-}
-
-/* =========================================================
-   PAGE SHELL
-========================================================= */
-
-function PageShell({
-  children,
-}) {
-  return (
-    <div
-      dir="rtl"
-      style={{
-        minHeight: "100vh",
-        padding: "28px",
-        boxSizing: "border-box",
-        background:
-          "radial-gradient(circle at 10% 10%, rgba(15,81,50,.045), transparent 25%), radial-gradient(circle at 90% 80%, rgba(184,145,72,.045), transparent 25%), #f7f5ef",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1380px",
-          margin: "0 auto",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-/* =========================================================
-   LOADING
-========================================================= */
-
-function LoadingScreen() {
-  return (
-    <div
-      style={{
-        minHeight:
-          "70vh",
-        display: "flex",
-        alignItems:
-          "center",
-        justifyContent:
-          "center",
-        flexDirection:
-          "column",
-        gap: "14px",
-        color: "#69746d",
-      }}
-    >
-      <Loader2
-        size={35}
-        style={{
-          color: "#0f5132",
-          animation:
-            "spin .8s linear infinite",
-        }}
-      />
-
-      <strong>
-        جارٍ تجهيز سجل الحضور...
-      </strong>
     </div>
   );
 }
@@ -1772,127 +2498,39 @@ function LoadingScreen() {
 ========================================================= */
 
 function SummaryCard({
-  icon,
+  icon: Icon,
   title,
   value,
-  description,
-  tone = "primary",
+  subtitle,
+  tone,
 }) {
-  const tones = {
-    primary: {
-      background:
-        "#edf5ef",
-      color: "#0f5132",
-    },
-
-    success: {
-      background:
-        "#eaf7ef",
-      color: "#198754",
-    },
-
-    danger: {
-      background:
-        "#fff0ef",
-      color: "#b42318",
-    },
-
-    warning: {
-      background:
-        "#fff8e7",
-      color: "#9a741f",
-    },
-
-    neutral: {
-      background:
-        "#f1f3f2",
-      color: "#68736c",
-    },
-  };
-
-  const current =
-    tones[tone];
-
   return (
     <div
-      style={{
-        background:
-          "#fff",
-        border:
-          "1px solid #e5e9e6",
-        borderRadius:
-          "17px",
-        padding:
-          "17px",
-        boxShadow:
-          "0 5px 18px rgba(0,0,0,.035)",
-        display:
-          "flex",
-        alignItems:
-          "center",
-        gap: "12px",
-      }}
+      className={`summary-card ${tone}`}
     >
       <div
-        style={{
-          width: "44px",
-          height: "44px",
-          borderRadius:
-            "13px",
-          background:
-            current.background,
-          color:
-            current.color,
-          display:
-            "flex",
-          alignItems:
-            "center",
-          justifyContent:
-            "center",
-          flexShrink: 0,
-        }}
+        className="summary-icon"
       >
-        {icon}
+        <Icon size={18} />
       </div>
 
       <div>
         <div
-          style={{
-            color:
-              "#808a83",
-            fontSize:
-              "11px",
-            marginBottom:
-              "3px",
-          }}
+          className="summary-label"
         >
           {title}
         </div>
 
-        <div
-          style={{
-            color:
-              "#173d2b",
-            fontSize:
-              "23px",
-            fontWeight:
-              "850",
-          }}
+        <strong
+          className="summary-value"
         >
           {value}
-        </div>
+        </strong>
 
         <div
-          style={{
-            color:
-              "#9aa19c",
-            fontSize:
-              "9px",
-            marginTop:
-              "2px",
-          }}
+          className="summary-subtitle"
         >
-          {description}
+          {subtitle}
         </div>
       </div>
     </div>
@@ -1909,172 +2547,91 @@ function HalaqaCard({
   selected,
   onClick,
 }) {
-  const percentage =
-    stats.attendancePercentage;
-
   return (
     <button
       type="button"
+      className={
+        selected
+          ? "halaqa-card selected"
+          : "halaqa-card"
+      }
       onClick={onClick}
-      className="attendance-hover"
-      style={{
-        width: "100%",
-        textAlign: "right",
-        background:
-          "#fff",
-        border: selected
-          ? "2px solid #0f5132"
-          : "1px solid #e2e7e3",
-        borderRadius:
-          "18px",
-        padding:
-          "18px",
-        cursor:
-          "pointer",
-        boxShadow: selected
-          ? "0 12px 28px rgba(15,81,50,.10)"
-          : "0 5px 17px rgba(0,0,0,.035)",
-        transition:
-          "all .2s ease",
-        position:
-          "relative",
-        overflow:
-          "hidden",
-      }}
     >
-      {selected && (
-        <div
-          style={{
-            position:
-              "absolute",
-            top: 0,
-            right: 0,
-            left: 0,
-            height: "3px",
-            background:
-              "#0f5132",
-          }}
-        />
-      )}
-
       <div
-        style={{
-          display:
-            "flex",
-          justifyContent:
-            "space-between",
-          alignItems:
-            "center",
-          gap: "13px",
-        }}
+        className="halaqa-card-top"
       >
         <div
-          style={{
-            minWidth: 0,
-          }}
+          className="halaqa-card-identity"
         >
           <div
-            style={{
-              display:
-                "flex",
-              alignItems:
-                "center",
-              gap: "8px",
-              marginBottom:
-                "8px",
-            }}
+            className="halaqa-icon"
           >
-            <div
-              style={{
-                width: "38px",
-                height: "38px",
-                borderRadius:
-                  "11px",
-                background:
-                  "#edf5ef",
-                color:
-                  "#0f5132",
-                display:
-                  "flex",
-                alignItems:
-                  "center",
-                justifyContent:
-                  "center",
-              }}
-            >
-              <Users
-                size={18}
-              />
-            </div>
-
-            <div
-              style={{
-                fontSize:
-                  "16px",
-                fontWeight:
-                  "850",
-                color:
-                  "#173d2b",
-                whiteSpace:
-                  "nowrap",
-                overflow:
-                  "hidden",
-                textOverflow:
-                  "ellipsis",
-              }}
-            >
-              {halaqa.name}
-            </div>
+            <BookOpen
+              size={17}
+            />
           </div>
 
-          <div
-            style={{
-              display:
-                "flex",
-              alignItems:
-                "center",
-              gap: "6px",
-              color:
-                "#8a938d",
-              fontSize:
-                "11px",
-            }}
-          >
-            <Users
-              size={13}
-            />
+          <div>
+            <h3>
+              {halaqa.name}
+            </h3>
 
-            {stats.total} طالب
+            <div
+              className="halaqa-mosque"
+            >
+              <Building2
+                size={11}
+              />
 
-            <span>
-              •
-            </span>
-
-            <FileCheck2
-              size={13}
-            />
-
-            {stats.recorded} مسجل
+              {
+                halaqa.mosque_name
+              }
+            </div>
           </div>
         </div>
 
         <AttendanceCircle
           percentage={
-            percentage
+            stats.attendancePercentage
           }
         />
       </div>
 
       <div
-        style={{
-          display:
-            "grid",
-          gridTemplateColumns:
-            "repeat(4,1fr)",
-          gap: "7px",
-          marginTop:
-            "17px",
-        }}
+        className="halaqa-card-meta"
+      >
+        <span>
+          <Users
+            size={11}
+          />
+
+          {stats.total} طالب
+        </span>
+
+        <span>
+          <FileCheck2
+            size={11}
+          />
+
+          {stats.recorded} مسجل
+        </span>
+
+        {halaqa.halaqa_period && (
+          <span>
+            <Clock3
+              size={11}
+            />
+
+            {HALAQA_PERIODS[
+              halaqa.halaqa_period
+            ] ||
+              "غير محدد"}
+          </span>
+        )}
+      </div>
+
+      <div
+        className="halaqa-mini-stats"
       >
         <MiniStat
           value={
@@ -2121,58 +2678,21 @@ function AttendanceCircle({
 }) {
   return (
     <div
+      className="attendance-circle"
       style={{
-        width: "68px",
-        height: "68px",
-        borderRadius:
-          "50%",
-        background: `conic-gradient(#0f5132 ${percentage}%, #edf0ee ${percentage}% 100%)`,
-        display:
-          "flex",
-        alignItems:
-          "center",
-        justifyContent:
-          "center",
-        flexShrink: 0,
+        background:
+          `conic-gradient(
+            #0f5132 ${percentage}%,
+            #edf1ee ${percentage}% 100%
+          )`,
       }}
     >
-      <div
-        style={{
-          width: "52px",
-          height: "52px",
-          borderRadius:
-            "50%",
-          background:
-            "#fff",
-          display:
-            "flex",
-          alignItems:
-            "center",
-          justifyContent:
-            "center",
-          flexDirection:
-            "column",
-        }}
-      >
-        <strong
-          style={{
-            color:
-              "#0f5132",
-            fontSize:
-              "14px",
-          }}
-        >
+      <div>
+        <strong>
           {percentage}%
         </strong>
 
-        <span
-          style={{
-            color:
-              "#8c958f",
-            fontSize:
-              "8px",
-          }}
-        >
+        <span>
           حضور
         </span>
       </div>
@@ -2189,83 +2709,23 @@ function MiniStat({
   label,
   tone,
 }) {
-  const styles = {
-    success: {
-      background:
-        "#f0f8f3",
-      color:
-        "#198754",
-    },
-
-    danger: {
-      background:
-        "#fff3f2",
-      color:
-        "#b42318",
-    },
-
-    warning: {
-      background:
-        "#fff9ea",
-      color:
-        "#927536",
-    },
-
-    neutral: {
-      background:
-        "#f4f5f4",
-      color:
-        "#737d76",
-    },
-  };
-
-  const current =
-    styles[tone];
-
   return (
     <div
-      style={{
-        background:
-          current.background,
-        borderRadius:
-          "9px",
-        padding:
-          "8px 4px",
-        textAlign:
-          "center",
-      }}
+      className={`halaqa-mini-stat ${tone}`}
     >
-      <div
-        style={{
-          color:
-            current.color,
-          fontSize:
-            "14px",
-          fontWeight:
-            "850",
-        }}
-      >
+      <strong>
         {value}
-      </div>
+      </strong>
 
-      <div
-        style={{
-          color:
-            "#8d958f",
-          fontSize:
-            "8px",
-          marginTop:
-            "2px",
-        }}
-      >
+      <span>
         {label}
-      </div>
+      </span>
     </div>
   );
 }
 
 /* =========================================================
-   STUDENT ROW
+   STUDENT ATTENDANCE ROW
 ========================================================= */
 
 function StudentAttendanceRow({
@@ -2277,119 +2737,60 @@ function StudentAttendanceRow({
 }) {
   return (
     <div
-      className="student-row"
+      className="attendance-student-row"
       style={{
-        display:
-          "grid",
-        gridTemplateColumns:
-          "minmax(210px,1fr) auto",
-        gap: "18px",
-        alignItems:
-          "center",
-        padding:
-          "13px 14px",
-        borderBottom:
-          "1px solid #edf0ee",
-        background:
-          index % 2 === 0
-            ? "#fff"
-            : "#fdfefd",
-        transition:
-          "background .15s ease",
+        animationDelay:
+          `${Math.min(
+            index * 20,
+            200
+          )}ms`,
       }}
     >
-      {/* STUDENT */}
+      {/* Student */}
 
       <div
-        style={{
-          display:
-            "flex",
-          alignItems:
-            "center",
-          gap: "11px",
-          minWidth: 0,
-        }}
+        className="attendance-student-info"
       >
         <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius:
-              "12px",
-            background:
-              "#edf5ef",
-            color:
-              "#0f5132",
-            display:
-              "flex",
-            alignItems:
-              "center",
-            justifyContent:
-              "center",
-            flexShrink: 0,
-          }}
+          className="student-avatar"
         >
           <UserRound
-            size={19}
-            strokeWidth={1.7}
+            size={18}
           />
         </div>
 
         <div
-          style={{
-            minWidth: 0,
-          }}
+          className="student-name-wrap"
         >
           <div
-            style={{
-              color:
-                "#26332c",
-              fontSize:
-                "13px",
-              fontWeight:
-                "800",
-              whiteSpace:
-                "nowrap",
-              overflow:
-                "hidden",
-              textOverflow:
-                "ellipsis",
-            }}
+            className="student-name"
           >
-            {student.full_name}
+            {
+              student.full_name
+            }
           </div>
 
           <div
-            style={{
-              color:
-                "#929a94",
-              fontSize:
-                "10px",
-              marginTop:
-                "3px",
-            }}
+            className="student-number"
           >
             رقم الطالب:{" "}
             {student.user_number ||
-              "-"}
+              "—"}
+
+            {student.phone && (
+              <>
+                {" • "}
+                {student.phone}
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* STATUS + ACTIONS */}
+      {/* Actions */}
 
       <div
-        style={{
-          display:
-            "flex",
-          alignItems:
-            "center",
-          justifyContent:
-            "flex-end",
-          gap: "8px",
-          flexWrap:
-            "wrap",
-        }}
+        className="attendance-status-actions"
       >
         <StatusBadge
           status={
@@ -2399,18 +2800,12 @@ function StudentAttendanceRow({
 
         <AttendanceButton
           label="حاضر"
-          icon={
-            <Check
-              size={14}
-            />
-          }
+          icon={Check}
           active={
             record?.status ===
             "present"
           }
-          disabled={
-            saving
-          }
+          disabled={saving}
           onClick={() =>
             onSave(
               student.student_id,
@@ -2422,18 +2817,12 @@ function StudentAttendanceRow({
 
         <AttendanceButton
           label="غائب"
-          icon={
-            <X
-              size={14}
-            />
-          }
+          icon={X}
           active={
             record?.status ===
             "absent"
           }
-          disabled={
-            saving
-          }
+          disabled={saving}
           onClick={() =>
             onSave(
               student.student_id,
@@ -2445,18 +2834,12 @@ function StudentAttendanceRow({
 
         <AttendanceButton
           label="متأخر"
-          icon={
-            <Clock3
-              size={14}
-            />
-          }
+          icon={Clock3}
           active={
             record?.status ===
             "late"
           }
-          disabled={
-            saving
-          }
+          disabled={saving}
           onClick={() =>
             onSave(
               student.student_id,
@@ -2468,18 +2851,12 @@ function StudentAttendanceRow({
 
         <AttendanceButton
           label="معتذر"
-          icon={
-            <CircleSlash2
-              size={14}
-            />
-          }
+          icon={CircleSlash2}
           active={
             record?.status ===
             "excused"
           }
-          disabled={
-            saving
-          }
+          disabled={saving}
           onClick={() =>
             onSave(
               student.student_id,
@@ -2491,13 +2868,8 @@ function StudentAttendanceRow({
 
         {saving && (
           <Loader2
-            size={16}
-            style={{
-              color:
-                "#0f5132",
-              animation:
-                "spin .8s linear infinite",
-            }}
+            size={15}
+            className="spin saving-indicator"
           />
         )}
       </div>
@@ -2511,104 +2883,24 @@ function StudentAttendanceRow({
 
 function AttendanceButton({
   label,
-  icon,
+  icon: Icon,
   active,
   disabled,
   onClick,
   tone,
 }) {
-  const tones = {
-    success: {
-      activeBg:
-        "#e8f6ed",
-      activeColor:
-        "#0f5132",
-      activeBorder:
-        "#0f5132",
-    },
-
-    danger: {
-      activeBg:
-        "#fff0ef",
-      activeColor:
-        "#b42318",
-      activeBorder:
-        "#b42318",
-    },
-
-    warning: {
-      activeBg:
-        "#fff8e6",
-      activeColor:
-        "#927536",
-      activeBorder:
-        "#c79d43",
-    },
-
-    neutral: {
-      activeBg:
-        "#eef0ef",
-      activeColor:
-        "#59635d",
-      activeBorder:
-        "#7d8780",
-    },
-  };
-
-  const current =
-    tones[tone];
-
   return (
     <button
       type="button"
-      onClick={
-        onClick
+      className={
+        active
+          ? `attendance-status-btn ${tone} active`
+          : `attendance-status-btn ${tone}`
       }
-      disabled={
-        disabled
-      }
-      style={{
-        display:
-          "inline-flex",
-        alignItems:
-          "center",
-        justifyContent:
-          "center",
-        gap: "5px",
-        minWidth:
-          "76px",
-        padding:
-          "7px 9px",
-        borderRadius:
-          "8px",
-        border: active
-          ? `1.5px solid ${current.activeBorder}`
-          : "1px solid #dfe3e0",
-        background:
-          active
-            ? current.activeBg
-            : "#fff",
-        color:
-          active
-            ? current.activeColor
-            : "#6f7872",
-        cursor:
-          disabled
-            ? "wait"
-            : "pointer",
-        fontSize:
-          "10px",
-        fontWeight:
-          active
-            ? "850"
-            : "650",
-        opacity:
-          disabled
-            ? 0.6
-            : 1,
-      }}
+      disabled={disabled}
+      onClick={onClick}
     >
-      {icon}
+      <Icon size={13} />
 
       {label}
     </button>
@@ -2622,98 +2914,73 @@ function AttendanceButton({
 function StatusBadge({
   status,
 }) {
-  const data = {
-    present: {
-      label:
-        "حاضر",
-      background:
-        "#e8f6ed",
-      color:
-        "#0f5132",
-    },
-
-    absent: {
-      label:
-        "غائب",
-      background:
-        "#fff0ef",
-      color:
-        "#b42318",
-    },
-
-    late: {
-      label:
-        "متأخر",
-      background:
-        "#fff8e6",
-      color:
-        "#927536",
-    },
-
-    excused: {
-      label:
-        "معتذر",
-      background:
-        "#eef0ef",
-      color:
-        "#59635d",
-    },
-  };
-
   if (!status) {
     return (
       <span
-        style={{
-          minWidth:
-            "70px",
-          textAlign:
-            "center",
-          padding:
-            "6px 9px",
-          borderRadius:
-            "18px",
-          background:
-            "#f5f6f5",
-          color:
-            "#929993",
-          fontSize:
-            "9px",
-          fontWeight:
-            "700",
-        }}
+        className="status-badge unrecorded"
       >
         لم يسجل
       </span>
     );
   }
 
-  const current =
-    data[status] ||
-    data.excused;
-
   return (
     <span
-      style={{
-        minWidth:
-          "70px",
-        textAlign:
-          "center",
-        padding:
-          "6px 9px",
-        borderRadius:
-          "18px",
-        background:
-          current.background,
-        color:
-          current.color,
-        fontSize:
-          "9px",
-        fontWeight:
-          "850",
-      }}
+      className={`status-badge ${status}`}
     >
-      {current.label}
+      {
+        ATTENDANCE_STATUSES[
+          status
+        ]?.label
+      }
     </span>
+  );
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+function LoadingScreen() {
+  return (
+    <div
+      className="attendance-loading-screen"
+    >
+      <div
+        className="loading-icon"
+      >
+        <Loader2
+          size={27}
+          className="spin"
+        />
+      </div>
+
+      <h3>
+        جارٍ تجهيز سجل
+        الحضور
+      </h3>
+
+      <p>
+        يتم تحميل حلقاتك
+        وطلابك وبيانات الحضور...
+      </p>
+    </div>
+  );
+}
+
+function InlineLoading() {
+  return (
+    <div
+      className="inline-loading"
+    >
+      <Loader2
+        size={22}
+        className="spin"
+      />
+
+      جاري تحديث سجل
+      الحضور...
+    </div>
   );
 }
 
@@ -2724,22 +2991,26 @@ function StatusBadge({
 function EmptyHalaqat() {
   return (
     <div
-      style={
-        emptyBoxStyle
-      }
+      className="empty-attendance"
     >
-      <Users
-        size={30}
-        strokeWidth={1.5}
-      />
+      <div
+        className="empty-icon"
+      >
+        <BookOpen
+          size={26}
+        />
+      </div>
 
-      <strong>
+      <h3>
         لا توجد حلقات
-      </strong>
+        مرتبطة بك
+      </h3>
 
-      <span>
-        أضف الحلقات أولًا حتى تتمكن من تسجيل الحضور.
-      </span>
+      <p>
+        يجب أن تقوم الإدارة
+        بربط حساب المعلم بإحدى
+        الحلقات أولًا.
+      </p>
     </div>
   );
 }
@@ -2750,82 +3021,52 @@ function EmptyStudents({
 }) {
   return (
     <div
-      style={{
-        padding:
-          "50px 20px",
-        textAlign:
-          "center",
-        color:
-          "#8a938d",
-      }}
+      className="empty-attendance students-empty"
     >
-      <Search
-        size={31}
-        strokeWidth={1.5}
-        style={{
-          marginBottom:
-            "10px",
-          color:
-            "#0f5132",
-        }}
-      />
-
       <div
-        style={{
-          color:
-            "#465149",
-          fontWeight:
-            "800",
-          fontSize:
-            "14px",
-          marginBottom:
-            "5px",
-        }}
+        className="empty-icon"
       >
+        {onlyUnrecorded ? (
+          <CheckCircle2
+            size={25}
+          />
+        ) : (
+          <Users
+            size={25}
+          />
+        )}
+      </div>
+
+      <h3>
         {search
-          ? "لا توجد نتائج للبحث"
+          ? "لا توجد نتائج"
           : onlyUnrecorded
-          ? "تم تسجيل جميع الطلاب"
+          ? "اكتمل تسجيل الحضور"
           : "لا يوجد طلاب"}
-      </div>
+      </h3>
 
-      <div
-        style={{
-          fontSize:
-            "11px",
-        }}
-      >
+      <p>
         {search
-          ? "جرب اسمًا أو رقمًا مختلفًا."
+          ? "لم نجد طالبًا مطابقًا للبحث."
           : onlyUnrecorded
-          ? "جميع طلاب الحلقة لديهم حالة مسجلة لهذا اليوم."
-          : "لا يوجد طلاب مرتبطون بهذه الحلقة."}
-      </div>
+          ? "تم تسجيل حالة جميع طلاب هذه الحلقة."
+          : "لا يوجد طلاب نشطون مرتبطون بهذه الحلقة."}
+      </p>
     </div>
   );
 }
 
 /* =========================================================
-   HELPERS
+   STATUS LABEL
 ========================================================= */
 
 function getStatusLabel(
   status
 ) {
-  const labels = {
-    present:
-      "حاضر",
-    absent:
-      "غائب",
-    late:
-      "متأخر",
-    excused:
-      "معتذر",
-  };
-
   return (
-    labels[status] ||
-    status
+    ATTENDANCE_STATUSES[
+      status
+    ]?.label || status
   );
 }
 
@@ -2833,637 +3074,1901 @@ function getStatusLabel(
    STYLES
 ========================================================= */
 
-const headerStyle = {
-  display:
-    "flex",
-  justifyContent:
-    "space-between",
-  alignItems:
-    "center",
-  gap: "15px",
-  flexWrap:
-    "wrap",
-  marginBottom:
-    "22px",
-};
+function PageStyles() {
+  return (
+    <style>
+      {`
+        .attendance-page {
+          width: 100%;
+          max-width: 1600px;
+          margin: 0 auto;
+          color: #0f172a;
+        }
 
-const backButtonStyle = {
-  display:
-    "inline-flex",
-  alignItems:
-    "center",
-  gap: "6px",
-  padding:
-    "10px 13px",
-  border:
-    "1px solid #dce1dd",
-  borderRadius:
-    "10px",
-  background:
-    "#fff",
-  color:
-    "#59635d",
-  cursor:
-    "pointer",
-  fontSize:
-    "11px",
-  fontWeight:
-    "750",
-};
+        .attendance-page * {
+          box-sizing: border-box;
+        }
 
-const headerIconStyle = {
-  width: "48px",
-  height: "48px",
-  borderRadius:
-    "14px",
-  background:
-    "#0f5132",
-  color:
-    "#fff",
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "center",
-  boxShadow:
-    "0 8px 20px rgba(15,81,50,.14)",
-};
+        .attendance-page button,
+        .attendance-page input {
+          font-family: inherit;
+        }
 
-const pageTitleStyle = {
-  margin: 0,
-  color:
-    "#173d2b",
-  fontSize:
-    "27px",
-  fontWeight:
-    "850",
-};
+        /* =============================================
+           HERO
+        ============================================= */
 
-const pageSubtitleStyle = {
-  margin:
-    "4px 0 0",
-  color:
-    "#7e8781",
-  fontSize:
-    "11px",
-};
+        .attendance-hero {
+          position: relative;
+          overflow: hidden;
 
-const refreshButtonStyle = {
-  display:
-    "inline-flex",
-  alignItems:
-    "center",
-  gap: "7px",
-  padding:
-    "10px 14px",
-  border:
-    "1px solid #d9dfdb",
-  borderRadius:
-    "10px",
-  background:
-    "#fff",
-  color:
-    "#173d2b",
-  cursor:
-    "pointer",
-  fontSize:
-    "11px",
-  fontWeight:
-    "750",
-};
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
 
-const datePanelStyle = {
-  background:
-    "#fff",
-  border:
-    "1px solid #e2e7e3",
-  borderRadius:
-    "19px",
-  padding:
-    "18px",
-  marginBottom:
-    "20px",
-  boxShadow:
-    "0 5px 18px rgba(0,0,0,.035)",
-};
+          gap: 18px;
 
-const dateNavigationStyle = {
-  display:
-    "flex",
-  alignItems:
-    "center",
-  gap: "15px",
-};
+          margin-bottom: 18px;
+          padding: 22px 24px;
 
-const dateArrowButton = {
-  display:
-    "inline-flex",
-  alignItems:
-    "center",
-  gap: "7px",
-  padding:
-    "10px 13px",
-  border:
-    "1px solid #dfe4e1",
-  borderRadius:
-    "10px",
-  background:
-    "#fff",
-  color:
-    "#4e5952",
-  cursor:
-    "pointer",
-  fontSize:
-    "10px",
-  fontWeight:
-    "750",
-};
+          border:
+            1px solid
+            rgba(15,81,50,.1);
 
-const dateSmallLabel = {
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "center",
-  gap: "5px",
-  color:
-    "#8a938d",
-  fontSize:
-    "10px",
-  marginBottom:
-    "5px",
-};
+          border-radius: 23px;
 
-const dateMainText = {
-  color:
-    "#0f5132",
-  fontSize:
-    "17px",
-  fontWeight:
-    "850",
-};
+          background:
+            linear-gradient(
+              135deg,
+              #ffffff 0%,
+              #f5faf7 100%
+            );
 
-const dateBottomControls = {
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "center",
-  gap: "8px",
-  marginTop:
-    "14px",
-};
+          box-shadow:
+            0 12px 35px
+            rgba(15,81,50,.05);
+        }
 
-const dateInputStyle = {
-  height: "39px",
-  padding:
-    "0 10px",
-  border:
-    "1px solid #d9dfdb",
-  borderRadius:
-    "9px",
-  background:
-    "#fff",
-  color:
-    "#36423b",
-  outline:
-    "none",
-  fontSize:
-    "11px",
-  fontFamily:
-    "inherit",
-};
+        .attendance-hero::after {
+          content: "";
 
-const todayButtonStyle = {
-  height: "39px",
-  padding:
-    "0 15px",
-  border:
-    "none",
-  borderRadius:
-    "9px",
-  background:
-    "#0f5132",
-  color:
-    "#fff",
-  cursor:
-    "pointer",
-  fontSize:
-    "11px",
-  fontWeight:
-    "800",
-};
+          position: absolute;
 
-const statsGridStyle = {
-  display:
-    "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit,minmax(175px,1fr))",
-  gap: "12px",
-  marginBottom:
-    "25px",
-};
+          width: 240px;
+          height: 240px;
 
-const sectionHeaderStyle = {
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "space-between",
-  gap: "15px",
-  marginBottom:
-    "13px",
-};
+          left: -130px;
+          top: -140px;
 
-const sectionTitleStyle = {
-  margin: 0,
-  color:
-    "#173d2b",
-  fontSize:
-    "19px",
-  fontWeight:
-    "850",
-};
+          border-radius: 50%;
 
-const sectionSubtitleStyle = {
-  margin:
-    "4px 0 0",
-  color:
-    "#8b938d",
-  fontSize:
-    "10px",
-};
+          background:
+            radial-gradient(
+              circle,
+              rgba(201,162,39,.13),
+              transparent 68%
+            );
 
-const overallPercentageStyle = {
-  display:
-    "flex",
-  alignItems:
-    "center",
-  gap: "8px",
-  color:
-    "#8a938d",
-  fontSize:
-    "10px",
-};
+          pointer-events: none;
+        }
 
-const halaqaGridStyle = {
-  display:
-    "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit,minmax(270px,1fr))",
-  gap: "13px",
-  marginBottom:
-    "25px",
-};
+        .attendance-hero-content {
+          position: relative;
+          z-index: 2;
 
-const attendancePanelStyle = {
-  background:
-    "#fff",
-  border:
-    "1px solid #e1e6e2",
-  borderRadius:
-    "20px",
-  overflow:
-    "hidden",
-  boxShadow:
-    "0 7px 24px rgba(0,0,0,.045)",
-  animation:
-    "fadeUp .25s ease",
-};
+          display: flex;
+          align-items: center;
 
-const panelHeaderStyle = {
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "space-between",
-  gap: "15px",
-  padding:
-    "20px",
-  borderBottom:
-    "1px solid #edf0ee",
-};
+          gap: 12px;
 
-const panelEyebrowStyle = {
-  display:
-    "flex",
-  alignItems:
-    "center",
-  gap: "6px",
-  color:
-    "#0f5132",
-  fontSize:
-    "9px",
-  fontWeight:
-    "850",
-  marginBottom:
-    "4px",
-};
+          min-width: 0;
+        }
 
-const liveDotStyle = {
-  width: "6px",
-  height: "6px",
-  borderRadius:
-    "50%",
-  background:
-    "#2e9f62",
-};
+        .attendance-hero-icon {
+          width: 48px;
+          height: 48px;
 
-const panelTitleStyle = {
-  margin: 0,
-  color:
-    "#173d2b",
-  fontSize:
-    "21px",
-  fontWeight:
-    "850",
-};
+          flex: 0 0 48px;
 
-const panelSubtitleStyle = {
-  margin:
-    "4px 0 0",
-  color:
-    "#8c958f",
-  fontSize:
-    "10px",
-};
+          border-radius: 15px;
 
-const panelPercentageStyle = {
-  width: "75px",
-  height: "75px",
-  borderRadius:
-    "50%",
-  background:
-    "#edf5ef",
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "center",
-  flexDirection:
-    "column",
-  color:
-    "#0f5132",
-  flexShrink: 0,
-};
+          display: flex;
+          align-items: center;
+          justify-content: center;
 
-const quickActionsStyle = {
-  display:
-    "flex",
-  gap: "8px",
-  flexWrap:
-    "wrap",
-  padding:
-    "14px 20px",
-  background:
-    "#fbfcfb",
-  borderBottom:
-    "1px solid #edf0ee",
-};
+          color: #ffffff;
 
-const bulkPresentButton = {
-  display:
-    "inline-flex",
-  alignItems:
-    "center",
-  gap: "6px",
-  padding:
-    "9px 12px",
-  border:
-    "1px solid #cfe5d7",
-  borderRadius:
-    "9px",
-  background:
-    "#edf8f1",
-  color:
-    "#0f5132",
-  cursor:
-    "pointer",
-  fontSize:
-    "10px",
-  fontWeight:
-    "800",
-};
+          background:
+            linear-gradient(
+              135deg,
+              #0f5132,
+              #0f766e
+            );
 
-const bulkAbsentButton = {
-  display:
-    "inline-flex",
-  alignItems:
-    "center",
-  gap: "6px",
-  padding:
-    "9px 12px",
-  border:
-    "1px solid #efd0cd",
-  borderRadius:
-    "9px",
-  background:
-    "#fff5f4",
-  color:
-    "#b42318",
-  cursor:
-    "pointer",
-  fontSize:
-    "10px",
-  fontWeight:
-    "800",
-};
+          box-shadow:
+            0 9px 22px
+            rgba(15,81,50,.17);
+        }
 
-const filterButtonStyle = {
-  display:
-    "inline-flex",
-  alignItems:
-    "center",
-  gap: "6px",
-  padding:
-    "9px 12px",
-  border:
-    "1px solid #dfe4e1",
-  borderRadius:
-    "9px",
-  background:
-    "#fff",
-  color:
-    "#69736d",
-  cursor:
-    "pointer",
-  fontSize:
-    "10px",
-  fontWeight:
-    "750",
-};
+        .attendance-eyebrow {
+          display: flex;
+          align-items: center;
 
-const filterButtonActiveStyle = {
-  background:
-    "#edf5ef",
-  color:
-    "#0f5132",
-  borderColor:
-    "#bcd8c6",
-};
+          gap: 5px;
 
-const searchRowStyle = {
-  display:
-    "flex",
-  alignItems:
-    "center",
-  gap: "12px",
-  padding:
-    "15px 20px",
-  borderBottom:
-    "1px solid #edf0ee",
-};
+          margin-bottom: 3px;
 
-const searchBoxStyle = {
-  position:
-    "relative",
-  flex: 1,
-};
+          color: #0f766e;
 
-const searchIconStyle = {
-  position:
-    "absolute",
-  right: "13px",
-  top: "50%",
-  transform:
-    "translateY(-50%)",
-  color:
-    "#89938c",
-  pointerEvents:
-    "none",
-};
+          font-size: 9px;
+          font-weight: 900;
+        }
 
-const searchInputStyle = {
-  width: "100%",
-  height: "42px",
-  boxSizing:
-    "border-box",
-  padding:
-    "0 40px 0 38px",
-  border:
-    "1px solid #dce2de",
-  borderRadius:
-    "10px",
-  outline:
-    "none",
-  background:
-    "#fff",
-  color:
-    "#354139",
-  fontSize:
-    "11px",
-  fontFamily:
-    "inherit",
-};
+        .attendance-title {
+          margin: 0;
 
-const clearSearchButton = {
-  position:
-    "absolute",
-  left: "7px",
-  top: "50%",
-  transform:
-    "translateY(-50%)",
-  width: "27px",
-  height: "27px",
-  border:
-    "none",
-  borderRadius:
-    "7px",
-  background:
-    "#f0f2f1",
-  color:
-    "#7a837d",
-  cursor:
-    "pointer",
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "center",
-};
+          color: #173d2b;
 
-const resultCountStyle = {
-  display:
-    "flex",
-  alignItems:
-    "center",
-  gap: "5px",
-  whiteSpace:
-    "nowrap",
-  color:
-    "#929a94",
-  fontSize:
-    "9px",
-};
+          font-size: 25px;
+          font-weight: 950;
 
-const studentListStyle = {
-  minHeight:
-    "100px",
-};
+          line-height: 1.25;
+        }
 
-const selectHalaqaHint = {
-  background:
-    "#fff",
-  border:
-    "1px solid #e2e7e3",
-  borderRadius:
-    "18px",
-  padding:
-    "45px 20px",
-  textAlign:
-    "center",
-  color:
-    "#89928c",
-  marginTop:
-    "5px",
-};
+        .attendance-subtitle {
+          margin: 5px 0 0;
 
-const hintIconStyle = {
-  width: "58px",
-  height: "58px",
-  borderRadius:
-    "16px",
-  background:
-    "#edf5ef",
-  color:
-    "#0f5132",
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "center",
-  margin:
-    "0 auto 12px",
-};
+          color: #7a867f;
 
-const emptyBoxStyle = {
-  background:
-    "#fff",
-  border:
-    "1px solid #e2e7e3",
-  borderRadius:
-    "18px",
-  padding:
-    "50px 20px",
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "center",
-  flexDirection:
-    "column",
-  gap: "8px",
-  color:
-    "#87908a",
-  fontSize:
-    "11px",
-};
+          font-size: 11px;
+          line-height: 1.7;
+        }
+
+        .attendance-refresh {
+          position: relative;
+          z-index: 2;
+
+          height: 43px;
+
+          padding: 0 14px;
+
+          border:
+            1px solid #e0e7e3;
+
+          border-radius: 12px;
+
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 6px;
+
+          color: #0f5132;
+          background: #ffffff;
+
+          font-size: 10px;
+          font-weight: 850;
+
+          cursor: pointer;
+        }
+
+        .attendance-refresh:hover {
+          background: #f4faf6;
+        }
+
+        .attendance-refresh:disabled {
+          opacity: .6;
+          cursor: wait;
+        }
+
+        /* =============================================
+           DATE
+        ============================================= */
+
+        .date-panel {
+          overflow: hidden;
+
+          margin-bottom: 18px;
+
+          border:
+            1px solid #e2e9e5;
+
+          border-radius: 21px;
+
+          background: #ffffff;
+
+          box-shadow:
+            0 7px 25px
+            rgba(15,23,42,.035);
+        }
+
+        .date-panel-top {
+          min-height: 118px;
+
+          display: grid;
+
+          grid-template-columns:
+            150px
+            minmax(0,1fr)
+            150px;
+
+          align-items: center;
+
+          gap: 14px;
+
+          padding: 16px 18px;
+        }
+
+        .date-nav-btn {
+          min-height: 42px;
+
+          border:
+            1px solid #dfe6e2;
+
+          border-radius: 12px;
+
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 6px;
+
+          color: #59645d;
+          background: #ffffff;
+
+          font-size: 9px;
+          font-weight: 850;
+
+          cursor: pointer;
+
+          transition:
+            background .18s ease,
+            transform .18s ease;
+        }
+
+        .date-nav-btn:hover:not(:disabled) {
+          background: #f5faf7;
+
+          transform:
+            translateY(-1px);
+        }
+
+        .date-nav-btn:disabled {
+          opacity: .3;
+          cursor: not-allowed;
+        }
+
+        .date-display {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 11px;
+
+          min-width: 0;
+        }
+
+        .date-icon {
+          width: 46px;
+          height: 46px;
+
+          flex: 0 0 46px;
+
+          border-radius: 14px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .date-label {
+          margin-bottom: 4px;
+
+          color: #8c9690;
+
+          font-size: 8px;
+          font-weight: 750;
+        }
+
+        .gregorian-date {
+          color: #173d2b;
+
+          font-size: 15px;
+          font-weight: 950;
+        }
+
+        .hijri-date {
+          display: flex;
+          align-items: center;
+
+          gap: 5px;
+
+          margin-top: 5px;
+
+          color: #9a741f;
+
+          font-size: 10px;
+          font-weight: 850;
+        }
+
+        .date-panel-bottom {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 7px;
+
+          padding: 11px 16px;
+
+          border-top:
+            1px solid #edf1ef;
+
+          background: #fbfdfc;
+        }
+
+        .date-input {
+          height: 36px;
+
+          padding: 0 9px;
+
+          border:
+            1px solid #dce4df;
+
+          border-radius: 9px;
+
+          outline: none;
+
+          color: #33443a;
+          background: #ffffff;
+
+          font-size: 9px;
+        }
+
+        .today-btn {
+          height: 36px;
+
+          padding: 0 14px;
+
+          border:
+            1px solid #0f5132;
+
+          border-radius: 9px;
+
+          color: #0f5132;
+          background: #ffffff;
+
+          font-size: 9px;
+          font-weight: 900;
+
+          cursor: pointer;
+        }
+
+        .today-btn.active {
+          color: #ffffff;
+          background: #0f5132;
+        }
+
+        .date-status {
+          min-height: 30px;
+
+          display: inline-flex;
+          align-items: center;
+
+          gap: 5px;
+
+          padding: 0 9px;
+
+          border-radius: 999px;
+
+          color: #647168;
+          background: #f1f5f3;
+
+          font-size: 8px;
+          font-weight: 800;
+        }
+
+        .live-dot {
+          width: 6px;
+          height: 6px;
+
+          flex: 0 0 6px;
+
+          border-radius: 50%;
+
+          background: #22a06b;
+
+          box-shadow:
+            0 0 0 4px
+            rgba(34,160,107,.09);
+        }
+
+        /* =============================================
+           STATS
+        ============================================= */
+
+        .attendance-stats {
+          display: grid;
+
+          grid-template-columns:
+            repeat(
+              6,
+              minmax(0,1fr)
+            );
+
+          gap: 10px;
+
+          margin-bottom: 23px;
+        }
+
+        .summary-card {
+          min-width: 0;
+
+          display: flex;
+          align-items: center;
+
+          gap: 10px;
+
+          padding: 14px;
+
+          border:
+            1px solid #e6ebe8;
+
+          border-radius: 17px;
+
+          background: #ffffff;
+
+          box-shadow:
+            0 6px 20px
+            rgba(15,23,42,.035);
+        }
+
+        .summary-icon {
+          width: 38px;
+          height: 38px;
+
+          flex: 0 0 38px;
+
+          border-radius: 11px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .summary-card.primary
+        .summary-icon {
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .summary-card.success
+        .summary-icon {
+          color: #198754;
+          background: #eaf7ef;
+        }
+
+        .summary-card.danger
+        .summary-icon {
+          color: #b42318;
+          background: #fff0ef;
+        }
+
+        .summary-card.warning
+        .summary-icon {
+          color: #927536;
+          background: #fff8e7;
+        }
+
+        .summary-card.neutral
+        .summary-icon {
+          color: #64748b;
+          background: #f1f3f2;
+        }
+
+        .summary-card.pending
+        .summary-icon {
+          color: #7c5b16;
+          background: #fbf5e7;
+        }
+
+        .summary-label {
+          color: #808a83;
+
+          font-size: 8px;
+          font-weight: 750;
+        }
+
+        .summary-value {
+          display: block;
+
+          margin-top: 2px;
+
+          color: #173d2b;
+
+          font-size: 20px;
+          font-weight: 950;
+        }
+
+        .summary-subtitle {
+          margin-top: 2px;
+
+          color: #a0a7a2;
+
+          font-size: 7px;
+        }
+
+        /* =============================================
+           SECTION HEADER
+        ============================================= */
+
+        .section-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          gap: 12px;
+
+          margin-bottom: 11px;
+        }
+
+        .section-head h2 {
+          margin: 0;
+
+          color: #173d2b;
+
+          font-size: 17px;
+          font-weight: 950;
+        }
+
+        .section-head p {
+          margin: 3px 0 0;
+
+          color: #8a948e;
+
+          font-size: 9px;
+        }
+
+        .global-rate {
+          display: flex;
+          align-items: center;
+
+          gap: 7px;
+
+          color: #89948d;
+
+          font-size: 8px;
+        }
+
+        .global-rate strong {
+          color: #0f5132;
+
+          font-size: 15px;
+          font-weight: 950;
+        }
+
+        /* =============================================
+           HALAQAT
+        ============================================= */
+
+        .halaqat-grid {
+          display: grid;
+
+          grid-template-columns:
+            repeat(
+              auto-fit,
+              minmax(
+                min(100%,280px),
+                1fr
+              )
+            );
+
+          gap: 12px;
+
+          margin-bottom: 23px;
+        }
+
+        .halaqa-card {
+          width: 100%;
+
+          overflow: hidden;
+
+          position: relative;
+
+          padding: 15px;
+
+          border:
+            1px solid #e2e8e4;
+
+          border-radius: 18px;
+
+          text-align: right;
+
+          background: #ffffff;
+
+          box-shadow:
+            0 5px 18px
+            rgba(15,23,42,.035);
+
+          cursor: pointer;
+
+          transition:
+            transform .2s ease,
+            border-color .2s ease,
+            box-shadow .2s ease;
+        }
+
+        .halaqa-card:hover {
+          transform:
+            translateY(-2px);
+
+          border-color:
+            rgba(15,81,50,.2);
+
+          box-shadow:
+            0 12px 28px
+            rgba(15,81,50,.075);
+        }
+
+        .halaqa-card.selected {
+          border:
+            1.5px solid #0f5132;
+
+          box-shadow:
+            0 12px 30px
+            rgba(15,81,50,.1);
+        }
+
+        .halaqa-card.selected::before {
+          content: "";
+
+          position: absolute;
+
+          top: 0;
+          right: 0;
+          left: 0;
+
+          height: 3px;
+
+          background:
+            linear-gradient(
+              90deg,
+              #0f5132,
+              #c9a227
+            );
+        }
+
+        .halaqa-card-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          gap: 10px;
+        }
+
+        .halaqa-card-identity {
+          min-width: 0;
+
+          display: flex;
+          align-items: center;
+
+          gap: 9px;
+        }
+
+        .halaqa-icon {
+          width: 37px;
+          height: 37px;
+
+          flex: 0 0 37px;
+
+          border-radius: 11px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .halaqa-card h3 {
+          margin: 0;
+
+          max-width: 180px;
+
+          overflow: hidden;
+
+          color: #173d2b;
+
+          font-size: 13px;
+          font-weight: 950;
+
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        .halaqa-mosque {
+          display: flex;
+          align-items: center;
+
+          gap: 4px;
+
+          margin-top: 3px;
+
+          color: #909993;
+
+          font-size: 8px;
+        }
+
+        .attendance-circle {
+          width: 58px;
+          height: 58px;
+
+          flex: 0 0 58px;
+
+          border-radius: 50%;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .attendance-circle > div {
+          width: 45px;
+          height: 45px;
+
+          border-radius: 50%;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+
+          background: #ffffff;
+        }
+
+        .attendance-circle strong {
+          color: #0f5132;
+
+          font-size: 11px;
+          font-weight: 950;
+        }
+
+        .attendance-circle span {
+          margin-top: 1px;
+
+          color: #8c958f;
+
+          font-size: 6px;
+        }
+
+        .halaqa-card-meta {
+          display: flex;
+          flex-wrap: wrap;
+
+          gap: 5px 10px;
+
+          margin-top: 11px;
+
+          color: #7d8881;
+
+          font-size: 7px;
+        }
+
+        .halaqa-card-meta span {
+          display: inline-flex;
+          align-items: center;
+
+          gap: 3px;
+        }
+
+        .halaqa-mini-stats {
+          display: grid;
+
+          grid-template-columns:
+            repeat(
+              4,
+              minmax(0,1fr)
+            );
+
+          gap: 5px;
+
+          margin-top: 11px;
+        }
+
+        .halaqa-mini-stat {
+          padding: 6px 3px;
+
+          border-radius: 8px;
+
+          text-align: center;
+        }
+
+        .halaqa-mini-stat.success {
+          background: #f0f8f3;
+        }
+
+        .halaqa-mini-stat.danger {
+          background: #fff3f2;
+        }
+
+        .halaqa-mini-stat.warning {
+          background: #fff9ea;
+        }
+
+        .halaqa-mini-stat.neutral {
+          background: #f4f5f4;
+        }
+
+        .halaqa-mini-stat strong {
+          display: block;
+
+          color: #36443b;
+
+          font-size: 11px;
+          font-weight: 950;
+        }
+
+        .halaqa-mini-stat span {
+          display: block;
+
+          margin-top: 1px;
+
+          color: #8d958f;
+
+          font-size: 6px;
+        }
+
+        /* =============================================
+           REGISTER PANEL
+        ============================================= */
+
+        .register-panel {
+          overflow: hidden;
+
+          border:
+            1px solid #e2e8e4;
+
+          border-radius: 20px;
+
+          background: #ffffff;
+
+          box-shadow:
+            0 9px 30px
+            rgba(15,23,42,.045);
+
+          animation:
+            attendanceFadeUp
+            .25s ease;
+        }
+
+        .register-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          gap: 14px;
+
+          padding: 18px;
+
+          border-bottom:
+            1px solid #edf1ef;
+        }
+
+        .register-eyebrow {
+          display: flex;
+          align-items: center;
+
+          gap: 5px;
+
+          margin-bottom: 4px;
+
+          color: #0f766e;
+
+          font-size: 8px;
+          font-weight: 900;
+        }
+
+        .register-header h2 {
+          margin: 0;
+
+          color: #173d2b;
+
+          font-size: 19px;
+          font-weight: 950;
+        }
+
+        .halaqa-meta {
+          display: flex;
+          flex-wrap: wrap;
+
+          gap: 5px 12px;
+
+          margin-top: 6px;
+
+          color: #838e87;
+
+          font-size: 8px;
+        }
+
+        .halaqa-meta span {
+          display: inline-flex;
+          align-items: center;
+
+          gap: 4px;
+        }
+
+        .register-rate {
+          width: 70px;
+          height: 70px;
+
+          flex: 0 0 70px;
+
+          border-radius: 50%;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .register-rate strong {
+          font-size: 17px;
+          font-weight: 950;
+        }
+
+        .register-rate span {
+          margin-top: 1px;
+
+          color: #7e8a82;
+
+          font-size: 6px;
+        }
+
+        /* =============================================
+           COMPLETION
+        ============================================= */
+
+        .completion-block {
+          padding: 12px 18px;
+
+          border-bottom:
+            1px solid #edf1ef;
+
+          background: #fbfdfc;
+        }
+
+        .completion-head {
+          display: flex;
+          justify-content: space-between;
+
+          gap: 10px;
+
+          margin-bottom: 7px;
+
+          color: #77837b;
+
+          font-size: 8px;
+        }
+
+        .completion-head strong {
+          color: #0f5132;
+        }
+
+        .completion-track {
+          width: 100%;
+          height: 6px;
+
+          overflow: hidden;
+
+          border-radius: 999px;
+
+          background: #e7eeea;
+        }
+
+        .completion-fill {
+          height: 100%;
+
+          border-radius: 999px;
+
+          background:
+            linear-gradient(
+              90deg,
+              #0f5132,
+              #18a06b
+            );
+
+          transition:
+            width .3s ease;
+        }
+
+        /* =============================================
+           QUICK ACTIONS
+        ============================================= */
+
+        .quick-actions {
+          display: flex;
+          flex-wrap: wrap;
+
+          gap: 7px;
+
+          padding: 12px 18px;
+
+          border-bottom:
+            1px solid #edf1ef;
+        }
+
+        .bulk-btn {
+          min-height: 36px;
+
+          padding: 0 11px;
+
+          border-radius: 9px;
+
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 5px;
+
+          font-size: 8px;
+          font-weight: 850;
+
+          cursor: pointer;
+        }
+
+        .bulk-btn.safe {
+          border:
+            1px solid #b9dcc7;
+
+          color: #0f5132;
+          background: #eaf7ef;
+        }
+
+        .bulk-btn.present {
+          border:
+            1px solid #cfe5d7;
+
+          color: #166534;
+          background: #f1faf4;
+        }
+
+        .bulk-btn.absent {
+          border:
+            1px solid #efcfcc;
+
+          color: #b42318;
+          background: #fff4f3;
+        }
+
+        .bulk-btn.filter {
+          border:
+            1px solid #dfe5e1;
+
+          color: #667169;
+          background: #ffffff;
+        }
+
+        .bulk-btn.filter.active {
+          border-color:
+            #a9cfba;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .bulk-btn:disabled {
+          opacity: .4;
+          cursor: not-allowed;
+        }
+
+        /* =============================================
+           SEARCH
+        ============================================= */
+
+        .students-search-row {
+          display: flex;
+          align-items: center;
+
+          gap: 11px;
+
+          padding: 13px 18px;
+
+          border-bottom:
+            1px solid #edf1ef;
+
+          background: #ffffff;
+        }
+
+        .attendance-search {
+          position: relative;
+
+          flex: 1;
+        }
+
+        .attendance-search > svg {
+          position: absolute;
+
+          right: 12px;
+          top: 50%;
+
+          transform:
+            translateY(-50%);
+
+          color: #8c9690;
+
+          pointer-events: none;
+        }
+
+        .attendance-search input {
+          width: 100%;
+          height: 40px;
+
+          padding:
+            0 38px 0 35px;
+
+          border:
+            1px solid #dce4df;
+
+          border-radius: 10px;
+
+          outline: none;
+
+          color: #33443a;
+          background: #fbfdfc;
+
+          font-size: 9px;
+        }
+
+        .attendance-search input:focus {
+          border-color:
+            rgba(15,81,50,.42);
+
+          box-shadow:
+            0 0 0 3px
+            rgba(15,81,50,.05);
+        }
+
+        .attendance-search button {
+          position: absolute;
+
+          left: 6px;
+          top: 50%;
+
+          width: 27px;
+          height: 27px;
+
+          transform:
+            translateY(-50%);
+
+          border: none;
+          border-radius: 7px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #6f7a73;
+          background: #edf1ef;
+
+          cursor: pointer;
+        }
+
+        .results-count {
+          min-width: 60px;
+
+          text-align: center;
+
+          color: #8a958e;
+
+          font-size: 7px;
+        }
+
+        .results-count strong {
+          display: block;
+
+          color: #173d2b;
+
+          font-size: 15px;
+        }
+
+        /* =============================================
+           STUDENTS TABLE
+        ============================================= */
+
+        .students-table-head {
+          display: grid;
+
+          grid-template-columns:
+            minmax(220px,1fr)
+            minmax(470px,auto);
+
+          gap: 15px;
+
+          padding: 8px 14px;
+
+          color: #9aa39d;
+          background: #f8faf9;
+
+          border-bottom:
+            1px solid #edf1ef;
+
+          font-size: 7px;
+          font-weight: 850;
+        }
+
+        .students-table-head span:last-child {
+          text-align: left;
+        }
+
+        .students-list {
+          min-height: 100px;
+        }
+
+        .attendance-student-row {
+          display: grid;
+
+          grid-template-columns:
+            minmax(220px,1fr)
+            minmax(470px,auto);
+
+          gap: 15px;
+
+          align-items: center;
+
+          padding: 11px 14px;
+
+          border-bottom:
+            1px solid #eef1ef;
+
+          background: #ffffff;
+
+          animation:
+            attendanceFadeUp
+            .25s ease both;
+
+          transition:
+            background .15s ease;
+        }
+
+        .attendance-student-row:last-child {
+          border-bottom: none;
+        }
+
+        .attendance-student-row:hover {
+          background: #fbfdfc;
+        }
+
+        .attendance-student-info {
+          display: flex;
+          align-items: center;
+
+          gap: 9px;
+
+          min-width: 0;
+        }
+
+        .student-avatar {
+          width: 38px;
+          height: 38px;
+
+          flex: 0 0 38px;
+
+          border-radius: 11px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .student-name-wrap {
+          min-width: 0;
+        }
+
+        .student-name {
+          overflow: hidden;
+
+          color: #26382e;
+
+          font-size: 11px;
+          font-weight: 900;
+
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        .student-number {
+          overflow: hidden;
+
+          margin-top: 2px;
+
+          color: #969e99;
+
+          font-size: 7px;
+
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        .attendance-status-actions {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+
+          gap: 5px;
+        }
+
+        .status-badge {
+          min-width: 61px;
+
+          padding: 5px 7px;
+
+          border-radius: 999px;
+
+          text-align: center;
+
+          font-size: 7px;
+          font-weight: 900;
+        }
+
+        .status-badge.present {
+          color: #047857;
+          background: #e9f8ef;
+        }
+
+        .status-badge.absent {
+          color: #b42318;
+          background: #fff0ef;
+        }
+
+        .status-badge.late {
+          color: #927536;
+          background: #fff8e7;
+        }
+
+        .status-badge.excused {
+          color: #64748b;
+          background: #f1f3f2;
+        }
+
+        .status-badge.unrecorded {
+          color: #89938c;
+          background: #f4f5f4;
+        }
+
+        .attendance-status-btn {
+          min-width: 65px;
+          min-height: 32px;
+
+          padding: 0 7px;
+
+          border:
+            1px solid #dfe5e1;
+
+          border-radius: 8px;
+
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 4px;
+
+          color: #6d7871;
+          background: #ffffff;
+
+          font-size: 7px;
+          font-weight: 800;
+
+          cursor: pointer;
+
+          transition:
+            transform .15s ease,
+            background .15s ease;
+        }
+
+        .attendance-status-btn:hover:not(:disabled) {
+          transform:
+            translateY(-1px);
+        }
+
+        .attendance-status-btn.success.active {
+          border-color: #0f5132;
+
+          color: #0f5132;
+          background: #e8f6ed;
+        }
+
+        .attendance-status-btn.danger.active {
+          border-color: #b42318;
+
+          color: #b42318;
+          background: #fff0ef;
+        }
+
+        .attendance-status-btn.warning.active {
+          border-color: #c79d43;
+
+          color: #927536;
+          background: #fff8e6;
+        }
+
+        .attendance-status-btn.neutral.active {
+          border-color: #78847d;
+
+          color: #59635d;
+          background: #eef0ef;
+        }
+
+        .attendance-status-btn:disabled {
+          opacity: .55;
+          cursor: wait;
+        }
+
+        .saving-indicator {
+          color: #0f5132;
+        }
+
+        /* =============================================
+           EMPTY / LOADING
+        ============================================= */
+
+        .attendance-loading-screen {
+          min-height: 60vh;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+
+          text-align: center;
+        }
+
+        .loading-icon {
+          width: 60px;
+          height: 60px;
+
+          margin-bottom: 12px;
+
+          border-radius: 17px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .attendance-loading-screen h3 {
+          margin: 0;
+
+          color: #173d2b;
+
+          font-size: 14px;
+        }
+
+        .attendance-loading-screen p {
+          margin: 5px 0 0;
+
+          color: #8d9690;
+
+          font-size: 9px;
+        }
+
+        .inline-loading {
+          min-height: 140px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 8px;
+
+          color: #738078;
+
+          font-size: 9px;
+          font-weight: 800;
+        }
+
+        .empty-attendance {
+          padding: 45px 20px;
+
+          border:
+            1px dashed #cad7cf;
+
+          border-radius: 18px;
+
+          text-align: center;
+
+          background: #ffffff;
+        }
+
+        .students-empty {
+          border: none;
+          border-radius: 0;
+        }
+
+        .empty-icon {
+          width: 54px;
+          height: 54px;
+
+          margin:
+            0 auto 11px;
+
+          border-radius: 16px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .empty-attendance h3 {
+          margin: 0;
+
+          color: #37463d;
+
+          font-size: 13px;
+        }
+
+        .empty-attendance p {
+          margin: 5px 0 0;
+
+          color: #8b958f;
+
+          font-size: 9px;
+        }
+
+        /* =============================================
+           ANIMATION
+        ============================================= */
+
+        @keyframes attendanceSpin {
+          to {
+            transform:
+              rotate(360deg);
+          }
+        }
+
+        .spin {
+          animation:
+            attendanceSpin
+            .8s linear infinite;
+        }
+
+        @keyframes attendanceFadeUp {
+          from {
+            opacity: 0;
+
+            transform:
+              translateY(5px);
+          }
+
+          to {
+            opacity: 1;
+
+            transform:
+              translateY(0);
+          }
+        }
+
+        /* =============================================
+           TABLET
+        ============================================= */
+
+        @media (
+          max-width: 1150px
+        ) {
+          .attendance-stats {
+            grid-template-columns:
+              repeat(
+                3,
+                minmax(0,1fr)
+              );
+          }
+
+          .students-table-head {
+            display: none;
+          }
+
+          .attendance-student-row {
+            grid-template-columns:
+              1fr;
+
+            gap: 10px;
+          }
+
+          .attendance-status-actions {
+            justify-content:
+              flex-start;
+
+            flex-wrap: wrap;
+          }
+        }
+
+        /* =============================================
+           MOBILE
+        ============================================= */
+
+        @media (
+          max-width: 720px
+        ) {
+          .attendance-hero {
+            padding: 17px;
+
+            border-radius: 19px;
+          }
+
+          .attendance-hero-icon {
+            width: 42px;
+            height: 42px;
+
+            flex-basis: 42px;
+          }
+
+          .attendance-title {
+            font-size: 20px;
+          }
+
+          .attendance-subtitle {
+            display: none;
+          }
+
+          .attendance-refresh {
+            width: 42px;
+
+            padding: 0;
+          }
+
+          .refresh-text {
+            display: none;
+          }
+
+          /* DATE */
+
+          .date-panel-top {
+            grid-template-columns:
+              42px
+              minmax(0,1fr)
+              42px;
+
+            gap: 6px;
+
+            padding: 13px 10px;
+          }
+
+          .date-nav-btn {
+            width: 42px;
+            min-height: 42px;
+
+            padding: 0;
+          }
+
+          .date-nav-btn span {
+            display: none;
+          }
+
+          .date-display {
+            gap: 7px;
+
+            justify-content:
+              flex-start;
+          }
+
+          .date-icon {
+            width: 39px;
+            height: 39px;
+
+            flex-basis: 39px;
+          }
+
+          .gregorian-date {
+            font-size: 11px;
+          }
+
+          .hijri-date {
+            font-size: 8px;
+          }
+
+          .date-panel-bottom {
+            flex-wrap: wrap;
+          }
+
+          /* STATS */
+
+          .attendance-stats {
+            grid-template-columns:
+              repeat(
+                2,
+                minmax(0,1fr)
+              );
+
+            gap: 7px;
+          }
+
+          .summary-card {
+            padding: 11px;
+
+            gap: 8px;
+          }
+
+          .summary-icon {
+            width: 34px;
+            height: 34px;
+
+            flex-basis: 34px;
+          }
+
+          .summary-value {
+            font-size: 17px;
+          }
+
+          /* SECTION */
+
+          .section-head {
+            align-items:
+              flex-end;
+          }
+
+          /* REGISTER */
+
+          .register-header {
+            align-items:
+              flex-start;
+
+            padding: 15px;
+          }
+
+          .register-rate {
+            width: 60px;
+            height: 60px;
+
+            flex-basis: 60px;
+          }
+
+          .register-rate strong {
+            font-size: 14px;
+          }
+
+          .halaqa-meta {
+            flex-direction: column;
+
+            gap: 4px;
+          }
+
+          .quick-actions {
+            display: grid;
+
+            grid-template-columns:
+              1fr 1fr;
+
+            padding:
+              11px 14px;
+          }
+
+          .bulk-btn {
+            width: 100%;
+          }
+
+          .students-search-row {
+            padding:
+              11px 14px;
+          }
+
+          .attendance-student-row {
+            padding:
+              13px 12px;
+          }
+
+          .attendance-status-actions {
+            display: grid;
+
+            grid-template-columns:
+              repeat(
+                2,
+                minmax(0,1fr)
+              );
+
+            gap: 6px;
+          }
+
+          .status-badge {
+            grid-column:
+              1 / -1;
+
+            width: 100%;
+          }
+
+          .attendance-status-btn {
+            width: 100%;
+
+            min-height: 36px;
+          }
+
+          .saving-indicator {
+            grid-column:
+              1 / -1;
+
+            margin: auto;
+          }
+        }
+
+        /* =============================================
+           SMALL MOBILE
+        ============================================= */
+
+        @media (
+          max-width: 430px
+        ) {
+          .attendance-title {
+            font-size: 18px;
+          }
+
+          .attendance-eyebrow {
+            font-size: 8px;
+          }
+
+          .date-display {
+            min-width: 0;
+          }
+
+          .date-icon {
+            display: none;
+          }
+
+          .date-label {
+            font-size: 7px;
+          }
+
+          .gregorian-date {
+            overflow: hidden;
+
+            font-size: 9px;
+
+            white-space: nowrap;
+            text-overflow: ellipsis;
+          }
+
+          .hijri-date {
+            overflow: hidden;
+
+            font-size: 7px;
+
+            white-space: nowrap;
+            text-overflow: ellipsis;
+          }
+
+          .attendance-stats {
+            grid-template-columns:
+              repeat(
+                2,
+                minmax(0,1fr)
+              );
+          }
+
+          .global-rate div {
+            display: none;
+          }
+
+          .halaqa-card {
+            padding: 13px;
+          }
+
+          .halaqa-mini-stats {
+            gap: 4px;
+          }
+        }
+      `}
+    </style>
+  );
+}

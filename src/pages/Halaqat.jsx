@@ -4,6 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/Toast";
 
 import {
+  HALAQA_PERIODS,
+} from "../data/halaqaPeriods";
+
+import {
   BookOpen,
   Building2,
   Users,
@@ -32,6 +36,9 @@ export default function Halaqat() {
   const [mosques, setMosques] = useState([]);
 
   const [teachers, setTeachers] = useState([]);
+
+const [halaqaPeriod, setHalaqaPeriod] =
+  useState("");
 
   const [
     studentAssignments,
@@ -311,6 +318,9 @@ function onTeachers(halaqaId) {
   assistant_teacher_id:
     assistantTeacherId || null,
 
+halaqa_period:
+  halaqaPeriod || null,
+
   status: "active",
 };
 
@@ -329,6 +339,7 @@ function onTeachers(halaqaId) {
             "update halaqa:",
             error
           );
+
 
           showToast(
             `تعذر تعديل الحلقة: ${error.message}`,
@@ -417,6 +428,10 @@ function onTeachers(halaqaId) {
         : ""
     );
 
+setHalaqaPeriod(
+  halaqa.halaqa_period || ""
+);
+
     setShowForm(true);
 
     window.scrollTo({
@@ -439,6 +454,7 @@ function onTeachers(halaqaId) {
     setName("");
     setCapacity("");
     setMosqueId("");
+setHalaqaPeriod("");
     setShowForm(false);
   }
 
@@ -1137,6 +1153,59 @@ function getTeacherCount(halaqa) {
                   />
                 </div>
               </div>
+
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  }}
+>
+  <label
+    style={{
+      fontSize: "14px",
+      fontWeight: "800",
+      color: "#334155",
+    }}
+  >
+    موعد الحلقة
+  </label>
+
+  <select
+    value={halaqaPeriod}
+    onChange={(e) =>
+      setHalaqaPeriod(e.target.value)
+    }
+    style={{
+      width: "100%",
+      height: "48px",
+      borderRadius: "14px",
+      border: "1px solid #DCE5E1",
+      background: "#FFFFFF",
+      padding: "0 14px",
+      fontSize: "14px",
+      fontWeight: "700",
+      color: "#0F172A",
+      outline: "none",
+      cursor: "pointer",
+    }}
+  >
+    <option value="">
+      اختر موعد الحلقة
+    </option>
+
+    {HALAQA_PERIODS.map(
+      (period) => (
+        <option
+          key={period.value}
+          value={period.value}
+        >
+          {period.label}
+        </option>
+      )
+    )}
+  </select>
+</div>
 
               <div
                 style={{

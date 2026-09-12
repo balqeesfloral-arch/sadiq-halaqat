@@ -1,14 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
-import { surahs, evaluations } from "../../data/surahList";
-import { useToast } from "../../components/Toast";
+// src/pages/teacher/Recitations.jsx
 
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import AppSelect from "../../components/AppSelect";
 import {
-  ArrowRight,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
   BookOpen,
   CalendarDays,
   CheckCircle2,
@@ -17,6 +15,7 @@ import {
   Edit3,
   FileText,
   GraduationCap,
+  Layers3,
   Loader2,
   MessageSquareText,
   Plus,
@@ -28,2065 +27,4740 @@ import {
   Trophy,
   UserRound,
   X,
-  XCircle,
+  BookMarked,
+  Hash,
+  Save,
+  LibraryBig,
+  History,
+  ShieldCheck,
+  Building2,
 } from "lucide-react";
 
-export default function RecitationsNew() {
-  const navigate = useNavigate();
-  const { showToast } = useToast();
+import {
+  supabase,
+} from "../../lib/supabase";
 
-  const [students, setStudents] = useState([]);
-  const [records, setRecords] = useState([]);
+import {
+  surahs,
+  evaluations,
+} from "../../data/surahList";
 
-  const [studentId, setStudentId] = useState("");
-   const [showStudentList, setShowStudentList] = useState(false);
-const [showDatePicker, setShowDatePicker] =
-  useState(false);
-const [selectedDate, setSelectedDate] =
-  useState(getLocalDate());
-  const [halaqaId, setHalaqaId] = useState("");
-  const [halaqaName, setHalaqaName] = useState("");
+import {
+  useToast,
+} from "../../components/Toast";
 
-  const [fromSurah, setFromSurah] = useState("");
-  const [fromAyah, setFromAyah] = useState("");
-  const [toSurah, setToSurah] = useState("");
-  const [toAyah, setToAyah] = useState("");
+/* =========================================================
+   ثوابت
+========================================================= */
 
-  const [lessonEvaluation, setLessonEvaluation] =
-    useState("");
+const LESSON_AMOUNTS = [
+  {
+    value: "three_lines",
+    label: "3 أسطر",
+    faces: 0.2,
+    hint: "3 من 15 سطر",
+  },
+  {
+    value: "half_page",
+    label: "نصف صفحة",
+    faces: 0.5,
+    hint: "0.50 وجه",
+  },
+  {
+    value: "one_page",
+    label: "صفحة",
+    faces: 1,
+    hint: "1.00 وجه",
+  },
+  {
+    value: "two_pages",
+    label: "صفحتان",
+    faces: 2,
+    hint: "2.00 وجه",
+  },
+];
 
-  const [nextSurah, setNextSurah] = useState("");
-  const [nextFromAyah, setNextFromAyah] =
-    useState("");
-  const [nextToSurah, setNextToSurah] =
-    useState("");
-  const [nextToAyah, setNextToAyah] =
-    useState("");
+const HALAQA_PERIODS = {
+  after_fajr: "بعد الفجر",
+  after_dhuhr: "بعد الظهر",
+  after_asr: "بعد العصر",
+  after_maghrib: "بعد المغرب",
+  after_isha: "بعد العشاء",
+};
 
-  const [nextEvaluation, setNextEvaluation] =
-    useState("");
+/* =========================================================
+   Initial Forms
+========================================================= */
 
-  const [next2Surah, setNext2Surah] =
-    useState("");
-  const [next2FromAyah, setNext2FromAyah] =
-    useState("");
-  const [next2ToSurah, setNext2ToSurah] =
-    useState("");
-  const [next2ToAyah, setNext2ToAyah] =
-    useState("");
+function createCommonForm() {
+  return {
+    halaqa_id: "",
+    student_id: "",
+    recitation_date:
+      getLocalDate(),
+    notes: "",
+  };
+}
 
-  const [reviewSurah, setReviewSurah] =
-    useState("");
-  const [reviewFromAyah, setReviewFromAyah] =
-    useState("");
-  const [reviewToSurah, setReviewToSurah] =
-    useState("");
-  const [reviewToAyah, setReviewToAyah] =
-    useState("");
+function createQuranForm() {
+  return {
+    from_surah: "",
+    from_ayah: "",
+    to_surah: "",
+    to_ayah: "",
 
-  const [reviewEvaluation, setReviewEvaluation] =
-    useState("");
+    lesson_evaluation: "",
+    lesson_amount_type: "",
 
-  const [notes, setNotes] = useState("");
+    next_surah: "",
+    next_from_ayah: "",
+    next_to_surah: "",
+    next_to_ayah: "",
+    next_evaluation: "",
 
-  const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [recordsLoading, setRecordsLoading] =
-    useState(false);
+    next2_surah: "",
+    next2_from_ayah: "",
+    next2_to_surah: "",
+    next2_to_ayah: "",
+    next2_evaluation: "",
 
-  const [recordsSearch, setRecordsSearch] =
-    useState("");
+    review_surah: "",
+    review_from_ayah: "",
+    review_to_surah: "",
+    review_to_ayah: "",
+    review_evaluation: "",
+    review_faces: "",
+  };
+}
 
-const [
-  studentSearch,
-  setStudentSearch,
-] = useState("");
+function createNooraniaForm() {
+  return {
+    lesson: "",
+    lesson_evaluation: "",
+    lesson_faces: "",
 
+    side_lesson: "",
+    side_lesson_evaluation: "",
 
-  const [evaluationFilter, setEvaluationFilter] =
-    useState("all");
+    revision: "",
+    revision_evaluation: "",
+    revision_faces: "",
+  };
+}
 
-const [showRecitationModal,
-  setShowRecitationModal] =
-  useState(false);
+/* =========================================================
+   الصفحة
+========================================================= */
+
+export default function Recitations() {
+  const {
+    showToast,
+  } = useToast();
+
+  /* =====================================================
+     بيانات المستخدم
+  ===================================================== */
+
+  const [
+    teacher,
+    setTeacher,
+  ] = useState(null);
+
+  const [
+    halaqat,
+    setHalaqat,
+  ] = useState([]);
+
+  /*
+    الطلاب الحاليون فقط
+    لاستخدامهم عند إنشاء تسميع جديد.
+  */
+
+  const [
+    students,
+    setStudents,
+  ] = useState([]);
+
+  /*
+    جميع ملفات الطلاب المرتبطين
+    بالسجلات القديمة أو الحالية.
+
+    الهدف:
+    إظهار اسم الطالب حتى لو
+    انتقل لاحقًا من الحلقة.
+  */
+
+  const [
+    profiles,
+    setProfiles,
+  ] = useState([]);
+
+  /* =====================================================
+     السجلات
+  ===================================================== */
+
+  const [
+    quranRecords,
+    setQuranRecords,
+  ] = useState([]);
+
+  const [
+    nooraniaRecords,
+    setNooraniaRecords,
+  ] = useState([]);
+
+  /* =====================================================
+     حالات الصفحة
+  ===================================================== */
+
+  const [
+    initialLoading,
+    setInitialLoading,
+  ] = useState(true);
+
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
+
+  const [
+    saving,
+    setSaving,
+  ] = useState(false);
+
+  const [
+    deletingKey,
+    setDeletingKey,
+  ] = useState("");
+
+  /* =====================================================
+     Modal
+  ===================================================== */
+
+  const [
+    formOpen,
+    setFormOpen,
+  ] = useState(false);
+
+  /*
+    quran
+    noorania
+  */
+
+  const [
+    formType,
+    setFormType,
+  ] = useState("quran");
+
+  /*
+    {
+      type: "quran" | "noorania",
+      id: number
+    }
+  */
+
+  const [
+    editing,
+    setEditing,
+  ] = useState(null);
+
+  const [
+    commonForm,
+    setCommonForm,
+  ] = useState(
+    createCommonForm
+  );
+
+  const [
+    quranForm,
+    setQuranForm,
+  ] = useState(
+    createQuranForm
+  );
+
+  const [
+    nooraniaForm,
+    setNooraniaForm,
+  ] = useState(
+    createNooraniaForm
+  );
+
+  /* =====================================================
+     سجل العمليات - Filters
+  ===================================================== */
+
+  const [
+    recordsSearch,
+    setRecordsSearch,
+  ] = useState("");
+
+  const [
+    recordTypeFilter,
+    setRecordTypeFilter,
+  ] = useState("all");
+
+  const [
+    halaqaFilter,
+    setHalaqaFilter,
+  ] = useState("all");
+
+  const [
+    dateFilter,
+    setDateFilter,
+  ] = useState("all");
+
+  /* =====================================================
+     التحميل
+  ===================================================== */
 
   useEffect(() => {
     loadData();
   }, []);
 
+  /* =====================================================
+     منع Scroll خلف Modal
+  ===================================================== */
+
   useEffect(() => {
-    if (!studentId) {
-      setHalaqaId("");
-      setHalaqaName("");
+    if (!formOpen) {
+      document.body.style.overflow =
+        "";
+
       return;
     }
 
-    loadStudentHalaqa(studentId);
-  }, [studentId]);
+    document.body.style.overflow =
+      "hidden";
 
-  const selectedStudent = useMemo(
-    () =>
-      students.find(
-        (student) =>
-          Number(student.id) === Number(studentId)
-      ),
-    [students, studentId]
-  );
-
-  
-
-  const filteredRecords = useMemo(() => {
-    const text = recordsSearch
-      .trim()
-      .toLowerCase();
-
-    return records.filter((record) => {
-      const name = studentName(
-        record.student_id
-      ).toLowerCase();
-
-      const matchesSearch =
-        !text || name.includes(text);
-
-      const matchesEvaluation =
-        evaluationFilter === "all" ||
-        record.lesson_evaluation ===
-          evaluationFilter;
-
-      return (
-        matchesSearch &&
-        matchesEvaluation
-      );
-    });
-  }, [
-    records,
-    recordsSearch,
-    evaluationFilter,
-    students,
-  ]);
-
-  const totalPoints = useMemo(() => {
-    return (
-      calculatePoints(lessonEvaluation) +
-      calculatePoints(nextEvaluation) +
-      calculatePoints(reviewEvaluation)
-    );
-  }, [
-    lessonEvaluation,
-    nextEvaluation,
-    reviewEvaluation,
-  ]);
-
-  const stats = useMemo(() => {
-    const total = records.length;
-
-    const points = records.reduce(
-      (sum, item) =>
-        sum + Number(item.points || 0),
-      0
-    );
-
-    const excellent = records.filter(
-      (item) =>
-        item.lesson_evaluation === "ممتاز"
-    ).length;
-
-    return {
-      total,
-      points,
-      excellent,
+    return () => {
+      document.body.style.overflow =
+        "";
     };
-  }, [records]);
+  }, [formOpen]);
 
-  async function loadData() {
-    setRecordsLoading(true);
+  /* =====================================================
+     تحميل البيانات
+  ===================================================== */
 
-const {
-  data: { user },
-} = await supabase.auth.getUser();
-
-const { data: profile } =
-  await supabase
-    .from("profiles")
-    .select("id")
-    .eq(
-      "auth_user_id",
-      user.id
-    )
-    .single();
-
-const {
-  data: teacherHalaqat,
-} = await supabase
-  .from("teacher_halaqat")
-  .select("halaqa_id")
-  .eq(
-    "teacher_id",
-    profile.id
-  );
-
-const halaqaIds =
-  teacherHalaqat?.map(
-    (h) => h.halaqa_id
-  ) || [];
-
-const {
-  data: assignments,
-} = await supabase
-  .from("student_halaqat")
-  .select("student_id")
-  .in(
-    "halaqa_id",
-    halaqaIds
-  );
-
-const studentIds =
-  assignments?.map(
-    (a) => a.student_id
-  ) || [];
-
-const [
-  studentsResult,
-  recordsResult,
-] = await Promise.all([
-  supabase
-    .from("profiles")
-    .select(
-      "id, full_name, user_number, phone, status"
-    )
-    .in(
-      "id",
-      studentIds
-    )
-    .order("full_name"),
-
-  supabase
-    .from("recitations")
-    .select("*")
-    .in(
-      "halaqa_id",
-      halaqaIds
-    )
-    .order("id", {
-      ascending: false,
-    }),
-]);
-    if (studentsResult.error) {
-      showToast(
-        studentsResult.error.message,
-        "error"
-      );
-      setRecordsLoading(false);
-      return;
+  async function loadData(
+    silent = false
+  ) {
+    if (silent) {
+      setRefreshing(true);
+    } else {
+      setInitialLoading(true);
     }
-
-    if (recordsResult.error) {
-      showToast(
-        recordsResult.error.message,
-        "error"
-      );
-      setRecordsLoading(false);
-      return;
-    }
-
-    setStudents(
-      studentsResult.data || []
-    );
-
-    setRecords(
-      recordsResult.data || []
-    );
-
-    setRecordsLoading(false);
-  }
-
-  async function loadStudentHalaqa(id) {
-    const { data, error } =
-      await supabase
-        .from("student_halaqat")
-        .select("halaqa_id")
-        .eq(
-          "student_id",
-          Number(id)
-        )
-        .eq("is_current", true)
-        .maybeSingle();
-
-    if (error) {
-      showToast(
-        "تعذر تحميل حلقة الطالب",
-        "error"
-      );
-
-      setHalaqaId("");
-      setHalaqaName("");
-      return;
-    }
-
-    if (!data) {
-      setHalaqaId("");
-      setHalaqaName("");
-      return;
-    }
-
-    setHalaqaId(data.halaqa_id);
-
-    const { data: halaqa } =
-      await supabase
-        .from("halaqat")
-        .select("name")
-        .eq("id", data.halaqa_id)
-        .maybeSingle();
-
-    setHalaqaName(
-      halaqa?.name || ""
-    );
-  }
-
-  function chooseStudent(student) {
-    setStudentId(String(student.id));
-    setStudentSearch(
-      student.full_name || ""
-    );
-    setShowStudentList(false);
-  }
-
-  
-  function clearForm() {
-    setStudentId("");
-    setStudentSearch("");
-    setShowStudentList(false);
-
-    setSelectedDate(getLocalDate());
-
-    setHalaqaId("");
-    setHalaqaName("");
-
-    setFromSurah("");
-    setFromAyah("");
-    setToSurah("");
-    setToAyah("");
-    setLessonEvaluation("");
-
-    setNextSurah("");
-    setNextFromAyah("");
-    setNextToSurah("");
-    setNextToAyah("");
-    setNextEvaluation("");
-
-    setNext2Surah("");
-    setNext2FromAyah("");
-    setNext2ToSurah("");
-    setNext2ToAyah("");
-
-    setReviewSurah("");
-    setReviewFromAyah("");
-    setReviewToSurah("");
-    setReviewToAyah("");
-    setReviewEvaluation("");
-
-    setNotes("");
-
-    setEditingId(null);
-  }
-
-  function editRecord(record) {
-    setEditingId(record.id);
-setShowRecitationModal(true);
-
-    const student = students.find(
-      (item) =>
-        Number(item.id) ===
-        Number(record.student_id)
-    );
-
-    setStudentId(
-      String(record.student_id)
-    );
-
-    setStudentSearch(
-      student?.full_name || ""
-    );
-
-    setSelectedDate(
-      record.recitation_date ||
-        getLocalDate()
-    );
-
-    setFromSurah(
-      record.from_surah || ""
-    );
-
-    setFromAyah(
-      record.from_ayah || ""
-    );
-
-    setToSurah(
-      record.to_surah || ""
-    );
-
-    setToAyah(
-      record.to_ayah || ""
-    );
-
-    setLessonEvaluation(
-      record.lesson_evaluation || ""
-    );
-
-    setNextSurah(
-      record.next_surah || ""
-    );
-
-    setNextFromAyah(
-      record.next_from_ayah || ""
-    );
-
-    setNextToSurah(
-      record.next_to_surah || ""
-    );
-
-    setNextToAyah(
-      record.next_to_ayah || ""
-    );
-
-    setNextEvaluation(
-      record.next_evaluation || ""
-    );
-
-    setNext2Surah(
-      record.next2_surah || ""
-    );
-
-    setNext2FromAyah(
-      record.next2_from_ayah || ""
-    );
-
-    setNext2ToSurah(
-      record.next2_to_surah || ""
-    );
-
-    setNext2ToAyah(
-      record.next2_to_ayah || ""
-    );
-
-    setReviewSurah(
-      record.review_surah || ""
-    );
-
-    setReviewFromAyah(
-      record.review_from_ayah || ""
-    );
-
-    setReviewToSurah(
-      record.review_to_surah || ""
-    );
-
-    setReviewToAyah(
-      record.review_to_ayah || ""
-    );
-
-    setReviewEvaluation(
-      record.review_evaluation || ""
-    );
-
-    setNotes(record.notes || "");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-
-    showToast(
-      "تم تحميل التسميع للتعديل",
-      "info"
-    );
-  }
-
-  async function saveRecitation() {
-    if (!studentId) {
-      showToast(
-        "اختر الطالب أولاً",
-        "error"
-      );
-      return;
-    }
-
-    if (!halaqaId) {
-      showToast(
-        "الطالب غير مرتبط بحلقة حالية",
-        "error"
-      );
-      return;
-    }
-
-    if (!selectedDate) {
-      showToast(
-        "حدد تاريخ التسميع",
-        "error"
-      );
-      return;
-    }
-
-    if (
-      !fromSurah &&
-      !toSurah &&
-      !reviewSurah
-    ) {
-      showToast(
-        "أدخل مقدار التسميع أو المراجعة",
-        "error"
-      );
-      return;
-    }
-
-    setLoading(true);
 
     try {
-      const points = totalPoints;
+      /* -----------------------------------------
+         Auth
+      ----------------------------------------- */
 
-      const recordData = {
-        student_id: Number(studentId),
-        halaqa_id: Number(halaqaId),
-
-        recitation_date:
-          selectedDate,
-
-        from_surah:
-          fromSurah || null,
-
-        from_ayah:
-          fromAyah
-            ? Number(fromAyah)
-            : null,
-
-        to_surah:
-          toSurah || null,
-
-        to_ayah:
-          toAyah
-            ? Number(toAyah)
-            : null,
-
-        lesson_evaluation:
-          lessonEvaluation || null,
-
-        next_surah:
-          nextSurah || null,
-
-        next_from_ayah:
-          nextFromAyah
-            ? Number(nextFromAyah)
-            : null,
-
-        next_to_surah:
-          nextToSurah || null,
-
-        next_to_ayah:
-          nextToAyah
-            ? Number(nextToAyah)
-            : null,
-
-        next_evaluation:
-          nextEvaluation || null,
-
-        next2_surah:
-          next2Surah || null,
-
-        next2_from_ayah:
-          next2FromAyah
-            ? Number(next2FromAyah)
-            : null,
-
-        next2_to_surah:
-          next2ToSurah || null,
-
-        next2_to_ayah:
-          next2ToAyah
-            ? Number(next2ToAyah)
-            : null,
-
-        review_surah:
-          reviewSurah || null,
-
-        review_from_ayah:
-          reviewFromAyah
-            ? Number(reviewFromAyah)
-            : null,
-
-        review_to_surah:
-          reviewToSurah || null,
-
-        review_to_ayah:
-          reviewToAyah
-            ? Number(reviewToAyah)
-            : null,
-
-        review_evaluation:
-          reviewEvaluation || null,
-
-        notes:
-          notes.trim() || null,
-
-        points,
-      };
-
-      if (editingId) {
-        await updateRecitation(
-          recordData,
-          points
-        );
-      } else {
-        await createRecitation(
-          recordData,
-          points
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function createRecitation(
-    recordData,
-    points
-  ) {
-    const {
-      data: existing,
-      error: duplicateError,
-    } = await supabase
-      .from("recitations")
-      .select("id")
-      .eq(
-        "student_id",
-        Number(studentId)
-      )
-      .eq(
-        "recitation_date",
-        selectedDate
-      )
-      .limit(1);
-
-    if (duplicateError) {
-      showToast(
-        duplicateError.message,
-        "error"
-      );
-      return;
-    }
-
-    if (
-      existing &&
-      existing.length > 0
-    ) {
-      showToast(
-        "يوجد تسميع مسجل لهذا الطالب في نفس التاريخ",
-        "error"
-      );
-      return;
-    }
-
-    const {
-      error,
-    } = await supabase
-      .from("recitations")
-      .insert([recordData]);
-
-    if (error) {
-      showToast(
-        "تعذر حفظ التسميع: " +
-          error.message,
-        "error"
-      );
-      return;
-    }
-
-    if (points !== 0) {
       const {
-        error: pointsError,
-      } = await supabase
-        .from(
-          "points_transactions"
-        )
-        .insert([
-          {
-            student_id:
-              Number(studentId),
+        data: authData,
+        error: authError,
+      } =
+        await supabase.auth.getUser();
 
-            points,
+      if (authError) {
+        throw authError;
+      }
 
-            reason:
-              "نقاط التسميع",
+      const user =
+        authData?.user;
 
-            category:
-              "recitation",
-
-            transaction_date:
-              selectedDate,
-          },
-        ]);
-
-      if (pointsError) {
-        showToast(
-          "تم حفظ التسميع لكن تعذر تسجيل النقاط",
-          "error"
+      if (!user) {
+        throw new Error(
+          "تعذر التحقق من المستخدم الحالي"
         );
       }
-    }
 
-    showToast(
-      "تم حفظ التسميع بنجاح",
-      "success"
-    );
+      /* -----------------------------------------
+         Teacher profile
+      ----------------------------------------- */
 
-    clearForm();
-setShowRecitationModal(false);
-    await loadData();
-  }
-
-  async function updateRecitation(
-    recordData,
-    points
-  ) {
-    const oldRecord =
-      records.find(
-        (record) =>
-          Number(record.id) ===
-          Number(editingId)
-      );
-
-    const oldPoints =
-      Number(oldRecord?.points || 0);
-
-    const {
-      error,
-    } = await supabase
-      .from("recitations")
-      .update(recordData)
-      .eq("id", editingId);
-
-    if (error) {
-      showToast(
-        "تعذر تعديل التسميع: " +
-          error.message,
-        "error"
-      );
-      return;
-    }
-
-    const difference =
-      Number(points) -
-      oldPoints;
-
-    if (difference !== 0) {
       const {
-        error: pointsError,
-      } = await supabase
-        .from(
-          "points_transactions"
-        )
-        .insert([
-          {
-            student_id:
-              Number(studentId),
+        data:
+          teacherProfile,
+        error:
+          teacherError,
+      } =
+        await supabase
+          .from("profiles")
+          .select(`
+            id,
+            full_name,
+            user_number
+          `)
+          .eq(
+            "auth_user_id",
+            user.id
+          )
+          .eq(
+            "role",
+            "teacher"
+          )
+          .single();
 
-            points: difference,
-
-            reason:
-              "تعديل نقاط التسميع",
-
-            category:
-              "recitation_edit",
-
-            transaction_date:
-              selectedDate,
-          },
-        ]);
-
-      if (pointsError) {
-        showToast(
-          "تم تعديل التسميع لكن تعذر تحديث سجل النقاط",
-          "error"
-        );
-        return;
+      if (teacherError) {
+        throw teacherError;
       }
-    }
 
-    showToast(
-      "تم تعديل التسميع بنجاح",
-      "success"
-    );
-
-    clearForm();
-setShowRecitationModal(false);
-    await loadData();
-  }
-
-  async function deleteRecitation(
-    record
-  ) {
-    const name = studentName(
-      record.student_id
-    );
-
-    const confirmed =
-      window.confirm(
-        `هل أنت متأكد من حذف تسميع ${name} بتاريخ ${formatShortDate(
-          record.recitation_date
-        )}؟`
+      setTeacher(
+        teacherProfile
       );
 
-    if (!confirmed) return;
+      /* -----------------------------------------
+         Teacher Halaqat
+      ----------------------------------------- */
 
-    setLoading(true);
-
-    try {
       const {
-        error,
-      } = await supabase
-        .from("recitations")
-        .delete()
-        .eq("id", record.id);
+        data: teacherLinks,
+        error: linksError,
+      } =
+        await supabase
+          .from(
+            "teacher_halaqat"
+          )
+          .select(`
+            halaqa_id,
+            role
+          `)
+          .eq(
+            "teacher_id",
+            teacherProfile.id
+          );
 
-      if (error) {
-        showToast(
-          "تعذر حذف التسميع: " +
-            error.message,
-          "error"
-        );
-        return;
+      if (linksError) {
+        throw linksError;
       }
+
+      const teacherHalaqaIds = [
+        ...new Set(
+          (
+            teacherLinks ||
+            []
+          ).map(
+            (item) =>
+              Number(
+                item.halaqa_id
+              )
+          )
+        ),
+      ];
 
       if (
-        Number(record.points || 0) !==
+        teacherHalaqaIds.length ===
         0
       ) {
-        const {
-          error: pointsError,
-        } = await supabase
-          .from(
-            "points_transactions"
-          )
-          .insert([
-            {
-              student_id:
-                Number(
-                  record.student_id
-                ),
+        setHalaqat([]);
+        setStudents([]);
+        setProfiles([]);
+        setQuranRecords([]);
+        setNooraniaRecords([]);
 
-              points:
-                -Number(
-                  record.points
-                ),
+        return;
+      }
 
-              reason:
-                "إلغاء تسميع",
+      const roleMap =
+        new Map();
 
-              category:
-                "recitation_delete",
+      (
+        teacherLinks || []
+      ).forEach(
+        (item) => {
+          const id =
+            Number(
+              item.halaqa_id
+            );
 
-              transaction_date:
-                getLocalDate(),
-            },
-          ]);
+          /*
+            إذا وجد main و assistant
+            نفضل main.
+          */
 
-        if (pointsError) {
-          showToast(
-            "تم حذف التسميع لكن تعذر تصحيح النقاط",
-            "error"
-          );
-          return;
+          if (
+            !roleMap.has(id) ||
+            item.role === "main"
+          ) {
+            roleMap.set(
+              id,
+              item.role
+            );
+          }
         }
-      }
-
-      if (
-        Number(editingId) ===
-        Number(record.id)
-      ) {
-        clearForm();
-setShowRecitationModal(false);
-      }
-
-      showToast(
-        "تم حذف التسميع بنجاح",
-        "success"
       );
 
-      await loadData();
+      /* -----------------------------------------
+         Halaqat
+      ----------------------------------------- */
+
+      const {
+        data: halaqatRows,
+        error:
+          halaqatError,
+      } =
+        await supabase
+          .from("halaqat")
+          .select(`
+            id,
+            name,
+            mosque_id,
+            halaqa_period,
+            capacity,
+            status
+          `)
+          .in(
+            "id",
+            teacherHalaqaIds
+          )
+          .order(
+            "name",
+            {
+              ascending:
+                true,
+            }
+          );
+
+      if (halaqatError) {
+        throw halaqatError;
+      }
+
+      /* -----------------------------------------
+         Mosques
+      ----------------------------------------- */
+
+      const mosqueIds = [
+        ...new Set(
+          (
+            halaqatRows ||
+            []
+          )
+            .map(
+              (item) =>
+                item.mosque_id
+            )
+            .filter(Boolean)
+            .map(Number)
+        ),
+      ];
+
+      let mosqueRows = [];
+
+      if (
+        mosqueIds.length > 0
+      ) {
+        const {
+          data,
+          error,
+        } =
+          await supabase
+            .from("mosques")
+            .select(`
+              id,
+              name
+            `)
+            .in(
+              "id",
+              mosqueIds
+            );
+
+        if (error) {
+          throw error;
+        }
+
+        mosqueRows =
+          data || [];
+      }
+
+      const mosqueMap =
+        new Map(
+          mosqueRows.map(
+            (mosque) => [
+              Number(
+                mosque.id
+              ),
+              mosque.name,
+            ]
+          )
+        );
+
+      const preparedHalaqat =
+        (
+          halaqatRows ||
+          []
+        ).map(
+          (halaqa) => ({
+            ...halaqa,
+
+            mosque_name:
+              mosqueMap.get(
+                Number(
+                  halaqa.mosque_id
+                )
+              ) ||
+              "مسجد غير محدد",
+
+            teacher_role:
+              roleMap.get(
+                Number(
+                  halaqa.id
+                )
+              ) ||
+              "assistant",
+          })
+        );
+
+      setHalaqat(
+        preparedHalaqat
+      );
+
+      /* -----------------------------------------
+         Current student assignments
+      ----------------------------------------- */
+
+      const {
+        data:
+          assignments,
+        error:
+          assignmentsError,
+      } =
+        await supabase
+          .from(
+            "student_halaqat"
+          )
+          .select(`
+            id,
+            student_id,
+            halaqa_id,
+            is_current
+          `)
+          .in(
+            "halaqa_id",
+            teacherHalaqaIds
+          )
+          .eq(
+            "is_current",
+            true
+          );
+
+      if (
+        assignmentsError
+      ) {
+        throw assignmentsError;
+      }
+
+      /* -----------------------------------------
+         Quran Records
+
+         مهم:
+         نجيب بالسحلقة وليس teacher_id
+         حتى تظهر السجلات القديمة التي
+         teacher_id فيها null.
+      ----------------------------------------- */
+
+      const {
+        data:
+          quranRows,
+        error:
+          quranError,
+      } =
+        await supabase
+          .from("recitations")
+          .select("*")
+          .in(
+            "halaqa_id",
+            teacherHalaqaIds
+          )
+          .order(
+            "recitation_date",
+            {
+              ascending:
+                false,
+            }
+          )
+          .order(
+            "id",
+            {
+              ascending:
+                false,
+            }
+          );
+
+      if (quranError) {
+        throw quranError;
+      }
+
+      /* -----------------------------------------
+         Noorania Records
+      ----------------------------------------- */
+
+      const {
+        data:
+          nooraniaRows,
+        error:
+          nooraniaError,
+      } =
+        await supabase
+          .from(
+            "noorania_recitations"
+          )
+          .select("*")
+          .in(
+            "halaqa_id",
+            teacherHalaqaIds
+          )
+          .order(
+            "recitation_date",
+            {
+              ascending:
+                false,
+            }
+          )
+          .order(
+            "id",
+            {
+              ascending:
+                false,
+            }
+          );
+
+      if (
+        nooraniaError
+      ) {
+        throw nooraniaError;
+      }
+
+      setQuranRecords(
+        quranRows || []
+      );
+
+      setNooraniaRecords(
+        nooraniaRows || []
+      );
+
+      /* -----------------------------------------
+         Profile IDs
+
+         الحاليون + أصحاب السجلات القديمة.
+      ----------------------------------------- */
+
+      const studentIds = [
+        ...new Set([
+          ...(
+            assignments || []
+          ).map(
+            (item) =>
+              Number(
+                item.student_id
+              )
+          ),
+
+          ...(
+            quranRows || []
+          ).map(
+            (item) =>
+              Number(
+                item.student_id
+              )
+          ),
+
+          ...(
+            nooraniaRows || []
+          ).map(
+            (item) =>
+              Number(
+                item.student_id
+              )
+          ),
+        ]),
+      ].filter(Boolean);
+
+      let profileRows = [];
+
+      if (
+        studentIds.length > 0
+      ) {
+        const {
+          data,
+          error,
+        } =
+          await supabase
+            .from("profiles")
+            .select(`
+              id,
+              full_name,
+              user_number,
+              phone,
+              status,
+              learning_goal,
+              recitation_mode
+            `)
+            .in(
+              "id",
+              studentIds
+            );
+
+        if (error) {
+          throw error;
+        }
+
+        profileRows =
+          data || [];
+      }
+
+      setProfiles(
+        profileRows
+      );
+
+      const profileMap =
+        new Map(
+          profileRows.map(
+            (profile) => [
+              Number(
+                profile.id
+              ),
+              profile,
+            ]
+          )
+        );
+
+      /*
+        الطلاب النشطون والحاليون
+        فقط عند إضافة سجل جديد.
+      */
+
+      const currentStudents =
+        (
+          assignments || []
+        )
+          .map(
+            (
+              assignment
+            ) => {
+              const profile =
+                profileMap.get(
+                  Number(
+                    assignment
+                      .student_id
+                  )
+                );
+
+              if (!profile) {
+                return null;
+              }
+
+              if (
+                profile.status !==
+                "active"
+              ) {
+                return null;
+              }
+
+              return {
+                ...profile,
+
+                student_id:
+                  Number(
+                    profile.id
+                  ),
+
+                halaqa_id:
+                  Number(
+                    assignment
+                      .halaqa_id
+                  ),
+              };
+            }
+          )
+          .filter(Boolean);
+
+      setStudents(
+        currentStudents
+      );
+
+    } catch (error) {
+      console.error(
+        "LOAD RECITATIONS:",
+        error
+      );
+
+      showToast(
+        error.message ||
+          "تعذر تحميل بيانات التسميع",
+        "error"
+      );
     } finally {
-      setLoading(false);
+      setInitialLoading(
+        false
+      );
+
+      setRefreshing(
+        false
+      );
     }
   }
 
-  function studentName(id) {
+  /* =====================================================
+     أسماء
+  ===================================================== */
+
+  function studentName(
+    id
+  ) {
     return (
-      students.find(
-        (student) =>
-          Number(student.id) ===
+      profiles.find(
+        (profile) =>
+          Number(
+            profile.id
+          ) ===
           Number(id)
       )?.full_name ||
       "طالب غير معروف"
     );
   }
 
-  
+  function halaqaName(
+    id
+  ) {
+    return (
+      halaqat.find(
+        (halaqa) =>
+          Number(
+            halaqa.id
+          ) ===
+          Number(id)
+      )?.name ||
+      "حلقة غير معروفة"
+    );
+  }
 
-  return (
-    <>
-      <style>{pageCss}</style>
+  /* =====================================================
+     Combined Records
+  ===================================================== */
 
+  const allRecords =
+    useMemo(() => {
+      const merged = [
+        ...quranRecords.map(
+          (record) => ({
+            ...record,
+            record_type:
+              "quran",
+          })
+        ),
+
+        ...nooraniaRecords.map(
+          (record) => ({
+            ...record,
+            record_type:
+              "noorania",
+          })
+        ),
+      ];
+
+      return merged.sort(
+        (a, b) => {
+          const dateCompare =
+            String(
+              b.recitation_date ||
+                ""
+            ).localeCompare(
+              String(
+                a.recitation_date ||
+                  ""
+              )
+            );
+
+          if (
+            dateCompare !== 0
+          ) {
+            return dateCompare;
+          }
+
+          return (
+            Number(b.id) -
+            Number(a.id)
+          );
+        }
+      );
+    }, [
+      quranRecords,
+      nooraniaRecords,
+    ]);
+
+  /* =====================================================
+     Record filters
+  ===================================================== */
+
+  const filteredRecords =
+    useMemo(() => {
+      const text =
+        recordsSearch
+          .trim()
+          .toLowerCase();
+
+      const monthPrefix =
+        getLocalDate().slice(
+          0,
+          7
+        );
+
+      return allRecords.filter(
+        (record) => {
+          const name =
+            studentName(
+              record.student_id
+            ).toLowerCase();
+
+          const hName =
+            halaqaName(
+              record.halaqa_id
+            ).toLowerCase();
+
+          const matchesSearch =
+            !text ||
+            name.includes(
+              text
+            ) ||
+            hName.includes(
+              text
+            );
+
+          const matchesType =
+            recordTypeFilter ===
+              "all" ||
+            record.record_type ===
+              recordTypeFilter;
+
+          const matchesHalaqa =
+            halaqaFilter ===
+              "all" ||
+            Number(
+              record.halaqa_id
+            ) ===
+              Number(
+                halaqaFilter
+              );
+
+          const matchesDate =
+            dateFilter ===
+              "all" ||
+            (
+              dateFilter ===
+                "month" &&
+              String(
+                record.recitation_date ||
+                  ""
+              ).startsWith(
+                monthPrefix
+              )
+            );
+
+          return (
+            matchesSearch &&
+            matchesType &&
+            matchesHalaqa &&
+            matchesDate
+          );
+        }
+      );
+    }, [
+      allRecords,
+      recordsSearch,
+      recordTypeFilter,
+      halaqaFilter,
+      dateFilter,
+      profiles,
+      halaqat,
+    ]);
+
+  /* =====================================================
+     إحصائيات الشهر الحالي
+  ===================================================== */
+
+  const stats =
+    useMemo(() => {
+      const month =
+        getLocalDate().slice(
+          0,
+          7
+        );
+
+      const monthQuran =
+        quranRecords.filter(
+          (record) =>
+            String(
+              record.recitation_date ||
+                ""
+            ).startsWith(
+              month
+            )
+        );
+
+      const monthNoorania =
+        nooraniaRecords.filter(
+          (record) =>
+            String(
+              record.recitation_date ||
+                ""
+            ).startsWith(
+              month
+            )
+        );
+
+      const lessonFaces =
+        monthQuran.reduce(
+          (sum, record) =>
+            sum +
+            Number(
+              record.lesson_faces ||
+                0
+            ),
+          0
+        );
+
+      const reviewFaces =
+        monthQuran.reduce(
+          (sum, record) =>
+            sum +
+            Number(
+              record.review_faces ||
+                0
+            ),
+          0
+        );
+
+      return {
+        total:
+          allRecords.length,
+
+        quran:
+          monthQuran.length,
+
+        noorania:
+          monthNoorania.length,
+
+        lessonFaces,
+
+        reviewFaces,
+      };
+    }, [
+      allRecords,
+      quranRecords,
+      nooraniaRecords,
+    ]);
+
+  /* =====================================================
+     Students for form
+  ===================================================== */
+
+  const studentsForForm =
+    useMemo(() => {
+      if (
+        !commonForm.halaqa_id
+      ) {
+        return [];
+      }
+
+      let result =
+        students.filter(
+          (student) =>
+            Number(
+              student.halaqa_id
+            ) ===
+            Number(
+              commonForm.halaqa_id
+            )
+        );
+
+      /*
+        أثناء تعديل سجل قديم،
+        ربما الطالب انتقل إلى
+        حلقة أخرى لاحقًا.
+
+        نضيفه للقائمة حتى يظهر
+        اسمه بشكل صحيح.
+      */
+
+      if (
+        editing &&
+        commonForm.student_id &&
+        !result.some(
+          (student) =>
+            Number(
+              student.id
+            ) ===
+            Number(
+              commonForm.student_id
+            )
+        )
+      ) {
+        const oldStudent =
+          profiles.find(
+            (profile) =>
+              Number(
+                profile.id
+              ) ===
+              Number(
+                commonForm.student_id
+              )
+          );
+
+        if (oldStudent) {
+          result = [
+            {
+              ...oldStudent,
+
+              student_id:
+                oldStudent.id,
+
+              halaqa_id:
+                Number(
+                  commonForm.halaqa_id
+                ),
+            },
+
+            ...result,
+          ];
+        }
+      }
+
+      return result;
+    }, [
+      students,
+      profiles,
+      commonForm.halaqa_id,
+      commonForm.student_id,
+      editing,
+    ]);
+
+  /* =====================================================
+     مقدار الدرس الحالي
+  ===================================================== */
+
+  const lessonFaces =
+    useMemo(() => {
+      return (
+        LESSON_AMOUNTS.find(
+          (item) =>
+            item.value ===
+            quranForm
+              .lesson_amount_type
+        )?.faces || 0
+      );
+    }, [
+      quranForm
+        .lesson_amount_type,
+    ]);
+
+  /* =====================================================
+     النقاط
+  ===================================================== */
+
+  const quranPoints =
+    useMemo(() => {
+      return (
+        calculatePoints(
+          quranForm
+            .lesson_evaluation
+        ) +
+        calculatePoints(
+          quranForm
+            .next_evaluation
+        ) +
+        calculatePoints(
+          quranForm
+            .next2_evaluation
+        ) +
+        calculatePoints(
+          quranForm
+            .review_evaluation
+        )
+      );
+    }, [quranForm]);
+
+  const nooraniaPoints =
+    useMemo(() => {
+      return (
+        calculatePoints(
+          nooraniaForm
+            .lesson_evaluation
+        ) +
+        calculatePoints(
+          nooraniaForm
+            .side_lesson_evaluation
+        ) +
+        calculatePoints(
+          nooraniaForm
+            .revision_evaluation
+        )
+      );
+    }, [nooraniaForm]);
+
+  /* =====================================================
+     تحديث Form
+  ===================================================== */
+
+  function setCommon(
+    key,
+    value
+  ) {
+    setCommonForm(
+      (current) => ({
+        ...current,
+        [key]: value,
+      })
+    );
+  }
+
+  function setQuran(
+    key,
+    value
+  ) {
+    setQuranForm(
+      (current) => ({
+        ...current,
+        [key]: value,
+      })
+    );
+  }
+
+  function setNoorania(
+    key,
+    value
+  ) {
+    setNooraniaForm(
+      (current) => ({
+        ...current,
+        [key]: value,
+      })
+    );
+  }
+
+  /* =====================================================
+     Reset
+  ===================================================== */
+
+  function resetForms(
+    close = true
+  ) {
+    setEditing(null);
+
+    setCommonForm(
+      createCommonForm()
+    );
+
+    setQuranForm(
+      createQuranForm()
+    );
+
+    setNooraniaForm(
+      createNooraniaForm()
+    );
+
+    if (close) {
+      setFormOpen(false);
+    }
+  }
+
+  /* =====================================================
+     إنشاء جديد
+  ===================================================== */
+
+  function openCreate(
+    type
+  ) {
+    setEditing(null);
+
+    setFormType(type);
+
+    const defaultHalaqa =
+      halaqat.length === 1
+        ? String(
+            halaqat[0].id
+          )
+        : "";
+
+    setCommonForm({
+      ...createCommonForm(),
+
+      halaqa_id:
+        defaultHalaqa,
+    });
+
+    setQuranForm(
+      createQuranForm()
+    );
+
+    setNooraniaForm(
+      createNooraniaForm()
+    );
+
+    setFormOpen(true);
+  }
+
+  /* =====================================================
+     تعديل سجل قرآن قديم أو جديد
+  ===================================================== */
+
+  function editQuranRecord(
+    record
+  ) {
+    setFormType(
+      "quran"
+    );
+
+    setEditing({
+      type: "quran",
+      id: record.id,
+    });
+
+    setCommonForm({
+      halaqa_id:
+        String(
+          record.halaqa_id
+        ),
+
+      student_id:
+        String(
+          record.student_id
+        ),
+
+      recitation_date:
+        record.recitation_date ||
+        getLocalDate(),
+
+      notes:
+        record.notes || "",
+    });
+
+    setQuranForm({
+      from_surah:
+        record.from_surah ||
+        "",
+
+      from_ayah:
+        valueToString(
+          record.from_ayah
+        ),
+
+      to_surah:
+        record.to_surah ||
+        "",
+
+      to_ayah:
+        valueToString(
+          record.to_ayah
+        ),
+
+      lesson_evaluation:
+        record.lesson_evaluation ||
+        "",
+
+      lesson_amount_type:
+        record.lesson_amount_type ||
+        "",
+
+      next_surah:
+        record.next_surah ||
+        "",
+
+      next_from_ayah:
+        valueToString(
+          record.next_from_ayah
+        ),
+
+      next_to_surah:
+        record.next_to_surah ||
+        "",
+
+      next_to_ayah:
+        valueToString(
+          record.next_to_ayah
+        ),
+
+      next_evaluation:
+        record.next_evaluation ||
+        "",
+
+      next2_surah:
+        record.next2_surah ||
+        "",
+
+      next2_from_ayah:
+        valueToString(
+          record.next2_from_ayah
+        ),
+
+      next2_to_surah:
+        record.next2_to_surah ||
+        "",
+
+      next2_to_ayah:
+        valueToString(
+          record.next2_to_ayah
+        ),
+
+      next2_evaluation:
+        record.next2_evaluation ||
+        "",
+
+      review_surah:
+        record.review_surah ||
+        "",
+
+      review_from_ayah:
+        valueToString(
+          record.review_from_ayah
+        ),
+
+      review_to_surah:
+        record.review_to_surah ||
+        "",
+
+      review_to_ayah:
+        valueToString(
+          record.review_to_ayah
+        ),
+
+      review_evaluation:
+        record.review_evaluation ||
+        "",
+
+      review_faces:
+        valueToString(
+          record.review_faces
+        ),
+    });
+
+    setFormOpen(true);
+  }
+
+  /* =====================================================
+     تعديل سجل نورانية
+  ===================================================== */
+
+  function editNooraniaRecord(
+    record
+  ) {
+    setFormType(
+      "noorania"
+    );
+
+    setEditing({
+      type:
+        "noorania",
+
+      id:
+        record.id,
+    });
+
+    setCommonForm({
+      halaqa_id:
+        String(
+          record.halaqa_id
+        ),
+
+      student_id:
+        String(
+          record.student_id
+        ),
+
+      recitation_date:
+        record.recitation_date ||
+        getLocalDate(),
+
+      notes:
+        record.notes || "",
+    });
+
+    setNooraniaForm({
+      lesson:
+        record.lesson || "",
+
+      lesson_evaluation:
+        record.lesson_evaluation ||
+        "",
+
+      lesson_faces:
+        valueToString(
+          record.lesson_faces
+        ),
+
+      side_lesson:
+        record.side_lesson ||
+        "",
+
+      side_lesson_evaluation:
+        record.side_lesson_evaluation ||
+        "",
+
+      revision:
+        record.revision ||
+        "",
+
+      revision_evaluation:
+        record.revision_evaluation ||
+        "",
+
+      revision_faces:
+        valueToString(
+          record.revision_faces
+        ),
+    });
+
+    setFormOpen(true);
+  }
+
+  /* =====================================================
+     Validation Common
+  ===================================================== */
+
+  function validateCommon() {
+    if (!teacher?.id) {
+      showToast(
+        "تعذر تحديد حساب المعلم",
+        "error"
+      );
+
+      return false;
+    }
+
+    if (
+      !commonForm.halaqa_id
+    ) {
+      showToast(
+        "اختر الحلقة",
+        "error"
+      );
+
+      return false;
+    }
+
+    const allowed =
+      halaqat.some(
+        (halaqa) =>
+          Number(
+            halaqa.id
+          ) ===
+          Number(
+            commonForm.halaqa_id
+          )
+      );
+
+    if (!allowed) {
+      showToast(
+        "الحلقة ليست ضمن حلقاتك",
+        "error"
+      );
+
+      return false;
+    }
+
+    if (
+      !commonForm.student_id
+    ) {
+      showToast(
+        "اختر الطالب",
+        "error"
+      );
+
+      return false;
+    }
+
+    if (
+      !commonForm.recitation_date
+    ) {
+      showToast(
+        "حدد تاريخ التسميع",
+        "error"
+      );
+
+      return false;
+    }
+
+    if (
+      commonForm.recitation_date >
+      getLocalDate()
+    ) {
+      showToast(
+        "لا يمكن تسجيل تسميع بتاريخ مستقبلي",
+        "error"
+      );
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /* =====================================================
+     SAVE
+  ===================================================== */
+
+  async function saveRecord() {
+    if (
+      !validateCommon()
+    ) {
+      return;
+    }
+
+    if (
+      formType === "quran"
+    ) {
+      await saveQuran();
+    } else {
+      await saveNoorania();
+    }
+  }
+
+  /* =====================================================
+     SAVE QURAN
+  ===================================================== */
+
+  async function saveQuran() {
+    const hasLesson =
+      Boolean(
+        quranForm.from_surah ||
+        quranForm.to_surah
+      );
+
+    const hasReview =
+      Boolean(
+        quranForm.review_surah ||
+        quranForm.review_to_surah
+      );
+
+    if (
+      !hasLesson &&
+      !hasReview
+    ) {
+      showToast(
+        "أدخل الدرس أو المراجعة أولًا",
+        "error"
+      );
+
+      return;
+    }
+
+    /*
+      للسجلات الجديدة:
+      مقدار الدرس إلزامي عند وجود درس.
+
+      السجلات القديمة:
+      نسمح بالتعديل حتى لو كانت
+      القيمة القديمة غير موجودة.
+    */
+
+    if (
+      hasLesson &&
+      !quranForm
+        .lesson_amount_type &&
+      !editing
+    ) {
+      showToast(
+        "حدد مقدار الدرس",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      hasReview &&
+      (
+        quranForm.review_faces ===
+          "" ||
+        Number(
+          quranForm.review_faces
+        ) < 0
+      ) &&
+      !editing
+    ) {
+      showToast(
+        "أدخل عدد أوجه المراجعة",
+        "error"
+      );
+
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const payload = {
+        student_id:
+          Number(
+            commonForm.student_id
+          ),
+
+        halaqa_id:
+          Number(
+            commonForm.halaqa_id
+          ),
+
+        teacher_id:
+          teacher.id,
+
+        recitation_date:
+          commonForm.recitation_date,
+
+        from_surah:
+          textOrNull(
+            quranForm.from_surah
+          ),
+
+        from_ayah:
+          numberOrNull(
+            quranForm.from_ayah
+          ),
+
+        to_surah:
+          textOrNull(
+            quranForm.to_surah
+          ),
+
+        to_ayah:
+          numberOrNull(
+            quranForm.to_ayah
+          ),
+
+        lesson_evaluation:
+          textOrNull(
+            quranForm
+              .lesson_evaluation
+          ),
+
+        lesson_amount_type:
+          textOrNull(
+            quranForm
+              .lesson_amount_type
+          ),
+
+        /*
+          lesson_faces لا نرسله.
+          PostgreSQL يحسبه تلقائيًا.
+        */
+
+        next_surah:
+          textOrNull(
+            quranForm.next_surah
+          ),
+
+        next_from_ayah:
+          numberOrNull(
+            quranForm
+              .next_from_ayah
+          ),
+
+        next_to_surah:
+          textOrNull(
+            quranForm
+              .next_to_surah
+          ),
+
+        next_to_ayah:
+          numberOrNull(
+            quranForm
+              .next_to_ayah
+          ),
+
+        next_evaluation:
+          textOrNull(
+            quranForm
+              .next_evaluation
+          ),
+
+        next2_surah:
+          textOrNull(
+            quranForm
+              .next2_surah
+          ),
+
+        next2_from_ayah:
+          numberOrNull(
+            quranForm
+              .next2_from_ayah
+          ),
+
+        next2_to_surah:
+          textOrNull(
+            quranForm
+              .next2_to_surah
+          ),
+
+        next2_to_ayah:
+          numberOrNull(
+            quranForm
+              .next2_to_ayah
+          ),
+
+        next2_evaluation:
+          textOrNull(
+            quranForm
+              .next2_evaluation
+          ),
+
+        review_surah:
+          textOrNull(
+            quranForm
+              .review_surah
+          ),
+
+        review_from_ayah:
+          numberOrNull(
+            quranForm
+              .review_from_ayah
+          ),
+
+        review_to_surah:
+          textOrNull(
+            quranForm
+              .review_to_surah
+          ),
+
+        review_to_ayah:
+          numberOrNull(
+            quranForm
+              .review_to_ayah
+          ),
+
+        review_evaluation:
+          textOrNull(
+            quranForm
+              .review_evaluation
+          ),
+
+        review_faces:
+          numberOrNull(
+            quranForm
+              .review_faces
+          ),
+
+        notes:
+          textOrNull(
+            commonForm.notes
+          ),
+
+        points:
+          quranPoints,
+      };
+
+      await saveToTable({
+        table:
+          "recitations",
+
+        type:
+          "quran",
+
+        payload,
+
+        points:
+          quranPoints,
+
+        reason:
+          "تسميع القرآن الكريم",
+      });
+
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /* =====================================================
+     SAVE NOORANIA
+  ===================================================== */
+
+  async function saveNoorania() {
+    if (
+      !nooraniaForm
+        .lesson
+        .trim()
+    ) {
+      showToast(
+        "اكتب درس القاعدة النورانية",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      !nooraniaForm
+        .lesson_evaluation
+    ) {
+      showToast(
+        "حدد تقييم الدرس",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      nooraniaForm
+        .lesson_faces ===
+        "" ||
+      Number(
+        nooraniaForm
+          .lesson_faces
+      ) < 0
+    ) {
+      showToast(
+        "أدخل عدد أوجه تسميع الدرس",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      nooraniaForm
+        .side_lesson
+        .trim() &&
+      !nooraniaForm
+        .side_lesson_evaluation
+    ) {
+      showToast(
+        "حدد تقييم جنب الدرس",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      nooraniaForm
+        .revision
+        .trim()
+    ) {
+      if (
+        !nooraniaForm
+          .revision_evaluation
+      ) {
+        showToast(
+          "حدد تقييم المراجعة",
+          "error"
+        );
+
+        return;
+      }
+
+      if (
+        nooraniaForm
+          .revision_faces ===
+          "" ||
+        Number(
+          nooraniaForm
+            .revision_faces
+        ) < 0
+      ) {
+        showToast(
+          "أدخل عدد أوجه المراجعة",
+          "error"
+        );
+
+        return;
+      }
+    }
+
+    setSaving(true);
+
+    try {
+      const payload = {
+        student_id:
+          Number(
+            commonForm.student_id
+          ),
+
+        halaqa_id:
+          Number(
+            commonForm.halaqa_id
+          ),
+
+        teacher_id:
+          teacher.id,
+
+        recitation_date:
+          commonForm.recitation_date,
+
+        lesson:
+          nooraniaForm
+            .lesson
+            .trim(),
+
+        lesson_evaluation:
+          textOrNull(
+            nooraniaForm
+              .lesson_evaluation
+          ),
+
+        lesson_faces:
+          numberOrNull(
+            nooraniaForm
+              .lesson_faces
+          ),
+
+        side_lesson:
+          textOrNull(
+            nooraniaForm
+              .side_lesson
+          ),
+
+        side_lesson_evaluation:
+          textOrNull(
+            nooraniaForm
+              .side_lesson_evaluation
+          ),
+
+        revision:
+          textOrNull(
+            nooraniaForm
+              .revision
+          ),
+
+        revision_evaluation:
+          textOrNull(
+            nooraniaForm
+              .revision_evaluation
+          ),
+
+        revision_faces:
+          numberOrNull(
+            nooraniaForm
+              .revision_faces
+          ),
+
+        notes:
+          textOrNull(
+            commonForm.notes
+          ),
+
+        points:
+          nooraniaPoints,
+      };
+
+      await saveToTable({
+        table:
+          "noorania_recitations",
+
+        type:
+          "noorania",
+
+        payload,
+
+        points:
+          nooraniaPoints,
+
+        reason:
+          "تسميع القاعدة النورانية",
+      });
+
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /* =====================================================
+     INSERT / UPDATE المشترك
+  ===================================================== */
+
+  async function saveToTable({
+    table,
+    type,
+    payload,
+    points,
+    reason,
+  }) {
+    /*
+      ============================================
+      UPDATE
+      ============================================
+    */
+
+    if (
+      editing &&
+      editing.type ===
+        type
+    ) {
+      const source =
+        type === "quran"
+          ? quranRecords
+          : nooraniaRecords;
+
+      const oldRecord =
+        source.find(
+          (record) =>
+            Number(
+              record.id
+            ) ===
+            Number(
+              editing.id
+            )
+        );
+
+      if (!oldRecord) {
+        throw new Error(
+          "تعذر العثور على السجل القديم"
+        );
+      }
+
+      const {
+        error,
+      } =
+        await supabase
+          .from(table)
+          .update(payload)
+          .eq(
+            "id",
+            editing.id
+          )
+          .eq(
+            "halaqa_id",
+            oldRecord.halaqa_id
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      const oldPoints =
+        Number(
+          oldRecord.points ||
+            0
+        );
+
+      const difference =
+        Number(points) -
+        oldPoints;
+
+      if (
+        difference !== 0
+      ) {
+        await addPointsTransaction({
+          studentId:
+            payload.student_id,
+
+          points:
+            difference,
+
+          date:
+            payload.recitation_date,
+
+          reason:
+            `تعديل ${reason}`,
+        });
+      }
+
+      showToast(
+        "تم تعديل السجل بنجاح",
+        "success"
+      );
+    }
+
+    /*
+      ============================================
+      INSERT
+
+      لا يوجد منع لتكرار اليوم.
+      الطالب يمكن أن يكون لديه أكثر
+      من جلسة في اليوم نفسه.
+      ============================================
+    */
+
+    else {
+      const {
+        error,
+      } =
+        await supabase
+          .from(table)
+          .insert([
+            payload,
+          ]);
+
+      if (error) {
+        throw error;
+      }
+
+      if (
+        Number(points) !== 0
+      ) {
+        await addPointsTransaction({
+          studentId:
+            payload.student_id,
+
+          points,
+
+          date:
+            payload.recitation_date,
+
+          reason,
+        });
+      }
+
+      showToast(
+        type === "quran"
+          ? "تم حفظ تسميع القرآن بنجاح"
+          : "تم حفظ تسميع القاعدة النورانية بنجاح",
+        "success"
+      );
+    }
+
+    resetForms();
+
+    await loadData(true);
+  }
+
+  /* =====================================================
+     POINTS
+  ===================================================== */
+
+  async function addPointsTransaction({
+    studentId,
+    points,
+    date,
+    reason,
+  }) {
+    if (
+      Number(points) === 0
+    ) {
+      return;
+    }
+
+    const {
+      error,
+    } =
+      await supabase
+        .from(
+          "points_transactions"
+        )
+        .insert([
+          {
+            student_id:
+              Number(
+                studentId
+              ),
+
+            points:
+              Number(
+                points
+              ),
+
+            reason,
+
+            /*
+              نحافظ على category
+              المستخدمة سابقًا
+              حتى لا نصطدم بقيود DB.
+            */
+
+            category:
+              "recitation",
+
+            transaction_date:
+              date,
+          },
+        ]);
+
+    if (error) {
+      console.error(
+        "POINTS TRANSACTION:",
+        error
+      );
+
+      showToast(
+        "تم حفظ التسميع، لكن تعذر تحديث سجل النقاط",
+        "error"
+      );
+    }
+  }
+
+  /* =====================================================
+     DELETE
+  ===================================================== */
+
+  async function deleteRecord(
+    record
+  ) {
+    const type =
+      record.record_type;
+
+    const table =
+      type === "quran"
+        ? "recitations"
+        : "noorania_recitations";
+
+    const typeName =
+      type === "quran"
+        ? "تسميع القرآن"
+        : "تسميع القاعدة النورانية";
+
+    const confirmed =
+      window.confirm(
+        `هل تريد حذف ${typeName} للطالب "${studentName(
+          record.student_id
+        )}"؟\n\nالتاريخ: ${formatHijriDate(
+          record.recitation_date
+        )}\n${formatGregorianDate(
+          record.recitation_date
+        )}\n\nلا يمكن التراجع عن الحذف.`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const key =
+      `${type}-${record.id}`;
+
+    setDeletingKey(key);
+
+    try {
+      const {
+        error,
+      } =
+        await supabase
+          .from(table)
+          .delete()
+          .eq(
+            "id",
+            record.id
+          )
+          .eq(
+            "halaqa_id",
+            record.halaqa_id
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      const oldPoints =
+        Number(
+          record.points ||
+            0
+        );
+
+      if (
+        oldPoints !== 0
+      ) {
+        await addPointsTransaction({
+          studentId:
+            record.student_id,
+
+          points:
+            -oldPoints,
+
+          date:
+            getLocalDate(),
+
+          reason:
+            `إلغاء ${typeName}`,
+        });
+      }
+
+      if (
+        editing &&
+        editing.type ===
+          type &&
+        Number(
+          editing.id
+        ) ===
+          Number(
+            record.id
+          )
+      ) {
+        resetForms();
+      }
+
+      showToast(
+        "تم حذف السجل",
+        "success"
+      );
+
+      await loadData(true);
+
+    } catch (error) {
+      console.error(
+        "DELETE RECITATION:",
+        error
+      );
+
+      showToast(
+        error.message ||
+          "تعذر حذف السجل",
+        "error"
+      );
+    } finally {
+      setDeletingKey("");
+    }
+  }
+
+  /* =====================================================
+     فتح Edit
+  ===================================================== */
+
+  function editRecord(
+    record
+  ) {
+    if (
+      record.record_type ===
+      "quran"
+    ) {
+      editQuranRecord(
+        record
+      );
+    } else {
+      editNooraniaRecord(
+        record
+      );
+    }
+  }
+
+  /* =====================================================
+     Render
+  ===================================================== */
+
+  if (initialLoading) {
+    return (
       <div
-        className="recitation-page"
+        className="recitations-page"
         dir="rtl"
       >
-        <div className="page-shell">
-          {/* HEADER */}
+        <PageStyles />
 
-          <header className="page-header">
-            <div className="header-main">
-              <div className="header-icon">
-                <BookOpen size={26} />
-              </div>
+        <LoadingState />
+      </div>
+    );
+  }
 
-              <div>
-                <div className="eyebrow">
-                  نظام الصديق
-                </div>
+  return (
+    <div
+      className="recitations-page"
+      dir="rtl"
+    >
+      <PageStyles />
 
-                <h1>
-                  التسميع اليومي
-                </h1>
+      {/* =================================================
+          HERO
+      ================================================= */}
 
-                <p>
-                  تسجيل ومتابعة حفظ ومراجعة
-                  القرآن الكريم للطلاب
-                </p>
-              </div>
+      <section
+        className="recitations-hero"
+      >
+        <div
+          className="hero-main"
+        >
+          <div
+            className="hero-icon"
+          >
+            <BookOpen
+              size={24}
+            />
+          </div>
+
+          <div>
+            <div
+              className="hero-eyebrow"
+            >
+              <ShieldCheck
+                size={13}
+              />
+
+              بوابة المعلم
             </div>
 
+            <h1>
+              التسميع
+            </h1>
+
+            <p>
+              تسجيل ومتابعة القرآن
+              الكريم والقاعدة
+              النورانية وربط الإنجاز
+              الفعلي بالطالب.
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="hero-actions"
+        >
+          <button
+            type="button"
+            className="refresh-button"
+            onClick={() =>
+              loadData(true)
+            }
+            disabled={
+              refreshing
+            }
+          >
+            <RefreshCw
+              size={16}
+              className={
+                refreshing
+                  ? "spin"
+                  : ""
+              }
+            />
+
+            <span>
+              تحديث
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="create-button quran"
+            onClick={() =>
+              openCreate(
+                "quran"
+              )
+            }
+            disabled={
+              halaqat.length ===
+              0
+            }
+          >
+            <BookOpen
+              size={16}
+            />
+
+            <span>
+              إضافة تسميع قرآن
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="create-button noorania"
+            onClick={() =>
+              openCreate(
+                "noorania"
+              )
+            }
+            disabled={
+              halaqat.length ===
+              0
+            }
+          >
+            <LibraryBig
+              size={16}
+            />
+
+            <span>
+              إضافة تسميع نورانية
+            </span>
+          </button>
+        </div>
+      </section>
+
+      {/* =================================================
+          INFO
+      ================================================= */}
+
+      <div
+        className="recitation-scope"
+      >
+        <Sparkles
+          size={14}
+        />
+
+        تعرض الصفحة طلاب
+        وحلقات المعلم الحالي فقط،
+        بينما تبقى السجلات القديمة
+        للحلقات متاحة للتعديل حتى
+        لو لم يكن حقل المعلم مسجلًا
+        فيها سابقًا.
+      </div>
+
+      {/* =================================================
+          STATS
+      ================================================= */}
+
+      <section
+        className="recitation-stats"
+      >
+        <StatCard
+          icon={History}
+          title="إجمالي السجلات"
+          value={
+            stats.total
+          }
+          subtitle="قرآن + نورانية"
+        />
+
+        <StatCard
+          icon={BookOpen}
+          title="تسميعات القرآن"
+          value={
+            stats.quran
+          }
+          subtitle="هذا الشهر"
+        />
+
+        <StatCard
+          icon={LibraryBig}
+          title="تسميعات النورانية"
+          value={
+            stats.noorania
+          }
+          subtitle="هذا الشهر"
+        />
+
+        <StatCard
+          icon={Target}
+          title="أوجه الدرس"
+          value={formatFaces(
+            stats.lessonFaces
+          )}
+          subtitle="قرآن هذا الشهر"
+        />
+
+        <StatCard
+          icon={RefreshCw}
+          title="أوجه المراجعة"
+          value={formatFaces(
+            stats.reviewFaces
+          )}
+          subtitle="قرآن هذا الشهر"
+        />
+      </section>
+
+      {/* =================================================
+          FILTERS
+      ================================================= */}
+
+      <section
+        className="records-toolbar"
+      >
+        <div
+          className="records-search"
+        >
+          <Search
+            size={16}
+          />
+
+          <input
+            value={
+              recordsSearch
+            }
+            onChange={(e) =>
+              setRecordsSearch(
+                e.target.value
+              )
+            }
+            placeholder="ابحث باسم الطالب أو الحلقة..."
+          />
+
+          {recordsSearch && (
             <button
-              className="ghost-button"
+              type="button"
               onClick={() =>
-                navigate("/admin")
+                setRecordsSearch("")
               }
             >
-              <ArrowRight size={18} />
-              لوحة المشرف
+              <X
+                size={13}
+              />
             </button>
-          </header>
+          )}
+        </div>
 
-          {/* STATS */}
+        <select
+          value={
+            recordTypeFilter
+          }
+          onChange={(e) =>
+            setRecordTypeFilter(
+              e.target.value
+            )
+          }
+        >
+          <option value="all">
+            جميع أنواع التسميع
+          </option>
 
-          <section className="stats-grid">
-            <Stat
-              icon={<FileText size={21} />}
-              title="إجمالي التسميعات"
-              value={stats.total}
-            />
+          <option value="quran">
+            القرآن الكريم
+          </option>
 
-            <Stat
-              icon={<Trophy size={21} />}
-              title="إجمالي النقاط"
-              value={
-                stats.points > 0
-                  ? `+${stats.points}`
-                  : stats.points
-              }
-            />
+          <option value="noorania">
+            القاعدة النورانية
+          </option>
+        </select>
 
-            <Stat
-              icon={
-                <Sparkles size={21} />
-              }
-              title="تقييمات ممتاز"
-              value={stats.excellent}
-            />
+        <select
+          value={
+            halaqaFilter
+          }
+          onChange={(e) =>
+            setHalaqaFilter(
+              e.target.value
+            )
+          }
+        >
+          <option value="all">
+            جميع حلقاتي
+          </option>
 
-            <Stat
-              icon={
-                <CalendarDays size={21} />
-              }
-              title="تاريخ اليوم"
-              value={formatShortDate(
-                getLocalDate()
-              )}
-              small
-            />
-          </section>
+          {halaqat.map(
+            (halaqa) => (
+              <option
+                key={
+                  halaqa.id
+                }
+                value={
+                  halaqa.id
+                }
+              >
+                {halaqa.name}
+              </option>
+            )
+          )}
+        </select>
 
-          {/* EDIT BAR */}
+        <select
+          value={
+            dateFilter
+          }
+          onChange={(e) =>
+            setDateFilter(
+              e.target.value
+            )
+          }
+        >
+          <option value="all">
+            كل التواريخ
+          </option>
 
-          {editingId && (
-            <div className="edit-banner">
-              <div>
-                <Edit3 size={19} />
+          <option value="month">
+            هذا الشهر
+          </option>
+        </select>
+      </section>
+
+      {/* =================================================
+          RECORDS HEADER
+      ================================================= */}
+
+      <div
+        className="records-title-row"
+      >
+        <div>
+          <h2>
+            سجل التسميع
+          </h2>
+
+          <p>
+            عرض{" "}
+            {
+              filteredRecords.length
+            }{" "}
+            من{" "}
+            {allRecords.length}
+            {" "}
+            سجل
+          </p>
+        </div>
+      </div>
+
+      {/* =================================================
+          RECORDS
+      ================================================= */}
+
+      {halaqat.length ===
+      0 ? (
+        <EmptyState
+          icon={Layers3}
+          title="لا توجد حلقات مرتبطة بك"
+          description="يجب أن تقوم الإدارة بربط المعلم بحلقة أولًا."
+        />
+      ) : filteredRecords.length ===
+        0 ? (
+        <EmptyState
+          icon={FileText}
+          title="لا توجد سجلات"
+          description="لم يتم العثور على سجلات مطابقة للفلاتر الحالية."
+        />
+      ) : (
+        <section
+          className="records-grid"
+        >
+          {filteredRecords.map(
+            (record) => (
+              <RecordCard
+                key={`${record.record_type}-${record.id}`}
+                record={
+                  record
+                }
+                studentName={
+                  studentName(
+                    record.student_id
+                  )
+                }
+                halaqa={
+                  halaqat.find(
+                    (item) =>
+                      Number(
+                        item.id
+                      ) ===
+                      Number(
+                        record.halaqa_id
+                      )
+                  )
+                }
+                deleting={
+                  deletingKey ===
+                  `${record.record_type}-${record.id}`
+                }
+                onEdit={() =>
+                  editRecord(
+                    record
+                  )
+                }
+                onDelete={() =>
+                  deleteRecord(
+                    record
+                  )
+                }
+              />
+            )
+          )}
+        </section>
+      )}
+
+      {/* =================================================
+          FORM MODAL
+      ================================================= */}
+
+      {formOpen && (
+        <div
+          className="recitation-modal-overlay"
+          onMouseDown={(
+            event
+          ) => {
+            if (
+              event.target ===
+                event.currentTarget &&
+              !saving
+            ) {
+              resetForms();
+            }
+          }}
+        >
+          <div
+            className="recitation-modal"
+          >
+            {/* ===========================================
+                MODAL HEADER
+            =========================================== */}
+
+            <div
+              className="modal-header"
+            >
+              <div
+                className="modal-heading"
+              >
+                <div
+                  className={
+                    formType ===
+                    "quran"
+                      ? "modal-icon quran"
+                      : "modal-icon noorania"
+                  }
+                >
+                  {formType ===
+                  "quran" ? (
+                    <BookOpen
+                      size={18}
+                    />
+                  ) : (
+                    <LibraryBig
+                      size={18}
+                    />
+                  )}
+                </div>
+
                 <div>
-                  <strong>
-                    وضع تعديل التسميع
-                  </strong>
+                  <div
+                    className="modal-eyebrow"
+                  >
+                    {editing
+                      ? "تعديل سجل"
+                      : "جلسة جديدة"}
+                  </div>
 
-                  <span>
-                    عدّل البيانات ثم احفظ
-                    التغييرات
-                  </span>
+                  <h2>
+                    {formType ===
+                    "quran"
+                      ? "تسميع القرآن الكريم"
+                      : "تسميع القاعدة النورانية"}
+                  </h2>
                 </div>
               </div>
 
               <button
-                onClick={clearForm}
+                type="button"
+                className="modal-close"
+                onClick={() =>
+                  resetForms()
+                }
+                disabled={
+                  saving
+                }
               >
-                <X size={16} />
-                إلغاء التعديل
+                <X
+                  size={18}
+                />
               </button>
             </div>
-          )}
 
-          {/* BASIC DATA */}
+            {/* ===========================================
+                EDIT NOTICE
+            =========================================== */}
 
-          <section className="panel">
-            <SectionHeader
-              icon={
-                <UserRound size={19} />
-              }
-              title="بيانات الجلسة"
-              subtitle="اختر الطالب والتاريخ والحلقة"
-            />
+            {editing && (
+              <div
+                className="edit-notice"
+              >
+                <Edit3
+                  size={14}
+                />
 
-            <div className="form-grid three">
-              {/* STUDENT */}
+                أنت تعدّل سجلًا
+                موجودًا. يمكنك تعديل
+                التاريخ والتسميع
+                والتقييم والمقادير ثم
+                حفظ التغييرات.
+              </div>
+            )}
 
-              <div className="field">
+            {/* ===========================================
+                COMMON
+            =========================================== */}
 
-  <AppSelect
-    label="الطالب"
-    value={studentId}
-    onChange={setStudentId}
-    options={students.map(student => ({
-      value: student.id,
-      label: student.full_name
-    }))}
-  />
+            <div
+              className="modal-body"
+            >
+              <FormSection
+                icon={
+                  <GraduationCap
+                    size={16}
+                  />
+                }
+                title="بيانات الجلسة"
+                subtitle="الحلقة، الطالب والتاريخ"
+              >
+                <div
+                  className="form-grid three"
+                >
+                  <SelectField
+                    label="الحلقة"
+                    required
+                    value={
+                      commonForm
+                        .halaqa_id
+                    }
+                    disabled={
+                      Boolean(
+                        editing
+                      )
+                    }
+                    onChange={(
+                      value
+                    ) => {
+                      setCommonForm(
+                        (current) => ({
+                          ...current,
+                          halaqa_id:
+                            value,
+                          student_id:
+                            "",
+                        })
+                      );
+                    }}
+                    options={[
+                      {
+                        value: "",
+                        label:
+                          "اختر الحلقة",
+                      },
 
-  {selectedStudent && (
-    <div
-      style={{
-        marginTop:"10px",
-        padding:"12px 14px",
-        borderRadius:"12px",
-        background:"#ECFDF5",
-        border:"1px solid #A7F3D0",
-        color:"#065F46",
-        fontWeight:"700"
-      }}
-    >
-      تم اختيار:
-      {" "}
-      {selectedStudent.full_name}
-    </div>
-  )}
+                      ...halaqat.map(
+                        (halaqa) => ({
+                          value:
+                            String(
+                              halaqa.id
+                            ),
 
-</div>
-              
+                          label:
+                            `${halaqa.name} — ${halaqa.mosque_name}`,
+                        })
+                      ),
+                    ]}
+                  />
 
-{/* DATE */}
+                  <SelectField
+                    label="الطالب"
+                    required
+                    value={
+                      commonForm
+                        .student_id
+                    }
+                    disabled={
+                      Boolean(
+                        editing
+                      ) ||
+                      !commonForm
+                        .halaqa_id
+                    }
+                    onChange={(
+                      value
+                    ) =>
+                      setCommon(
+                        "student_id",
+                        value
+                      )
+                    }
+                    options={[
+                      {
+                        value: "",
+                        label:
+                          commonForm
+                            .halaqa_id
+                            ? "اختر الطالب"
+                            : "اختر الحلقة أولًا",
+                      },
 
-<div className="field">
+                      ...studentsForForm.map(
+                        (
+                          student
+                        ) => ({
+                          value:
+                            String(
+                              student.id
+                            ),
 
-  <label>
-    تاريخ التسميع
-  </label>
+                          label:
+                            `${student.full_name}${
+                              student.user_number
+                                ? ` — ${student.user_number}`
+                                : ""
+                            }`,
+                        })
+                      ),
+                    ]}
+                  />
 
-  <div
-    onClick={() =>
-      setShowDatePicker(true)
-    }
-    style={{
-      background:"#FFFFFF",
-      border:"1px solid #E2E8F0",
-      borderRadius:"14px",
-      padding:"10px 12px",
-      display:"flex",
-      alignItems:"center",
-      gap:"10px",
-      cursor:"pointer",
-      minHeight:"58px",
-      transition:"0.2s",
-      boxShadow:
-        "0 2px 8px rgba(15,118,110,0.05)"
-    }}
-  >
+                  <DateField
+                    value={
+                      commonForm
+                        .recitation_date
+                    }
+                    onChange={(
+                      value
+                    ) =>
+                      setCommon(
+                        "recitation_date",
+                        value
+                      )
+                    }
+                  />
+                </div>
 
-    <div
-      style={{
-        width:"42px",
-        height:"42px",
-        borderRadius:"12px",
-        background:
-          "linear-gradient(135deg,#0F766E,#115E59)",
-        display:"flex",
-        alignItems:"center",
-        justifyContent:"center",
-        color:"#fff",
-        flexShrink:0
-      }}
-    >
-      <CalendarDays size={18}/>
-    </div>
+                {commonForm
+                  .recitation_date && (
+                  <div
+                    className="dual-date"
+                  >
+                    <div>
+                      <span>
+                        هجري — أم القرى
+                      </span>
 
-    <div
-      style={{
-        flex:1,
-        overflow:"hidden"
-      }}
-    >
+                      <strong>
+                        {formatHijriDate(
+                          commonForm
+                            .recitation_date
+                        )}
+                      </strong>
+                    </div>
 
-      <div
-        style={{
-          fontSize:"11px",
-          color:"#64748B",
-          fontWeight:"700",
-          marginBottom:"2px"
-        }}
-      >
-        تاريخ التسميع
-      </div>
+                    <div>
+                      <span>
+                        ميلادي
+                      </span>
 
-      <div
-        style={{
-          fontSize:"14px",
-          fontWeight:"800",
-          color:"#0F172A",
-          whiteSpace:"nowrap",
-          overflow:"hidden",
-          textOverflow:"ellipsis"
-        }}
-      >
-        {formatHijriDate(selectedDate)}
-      </div>
+                      <strong>
+                        {formatGregorianDate(
+                          commonForm
+                            .recitation_date
+                        )}
+                      </strong>
+                    </div>
+                  </div>
+                )}
+              </FormSection>
 
-      <div
-        style={{
-          color:"#0F766E",
-          fontSize:"12px",
-          fontWeight:"700",
-          marginTop:"2px"
-        }}
-      >
-        {formatGregorianDate(selectedDate)}
-      </div>
+              {/* =========================================
+                  QURAN
+              ========================================= */}
 
-    </div>
+              {formType ===
+                "quran" && (
+                <>
+                  {/* LESSON */}
 
-  </div>
+                  <FormSection
+                    icon={
+                      <BookOpen
+                        size={16}
+                      />
+                    }
+                    title="الدرس"
+                    subtitle="المقدار الجديد الذي تم تسميعه"
+                  >
+                    <QuranRange
+                      prefix=""
+                      form={
+                        quranForm
+                      }
+                      setValue={
+                        setQuran
+                      }
+                    />
 
-</div>              {/* HALAQA */}
+                    <EvaluationSelector
+                      label="تقييم الدرس"
+                      value={
+                        quranForm
+                          .lesson_evaluation
+                      }
+                      onChange={(
+                        value
+                      ) =>
+                        setQuran(
+                          "lesson_evaluation",
+                          value
+                        )
+                      }
+                    />
 
-              <div className="field">
-                <label>
-                  الحلقة الحالية
-                </label>
+                    {/* مقدار الدرس */}
 
-                <div className="halaqa-box">
-                  <div className="halaqa-icon">
-                    <GraduationCap
-                      size={19}
+                    <div
+                      className="lesson-amount-block"
+                    >
+                      <label
+                        className="field-label"
+                      >
+                        مقدار الدرس
+                      </label>
+
+                      <div
+                        className="lesson-amount-grid"
+                      >
+                        {LESSON_AMOUNTS.map(
+                          (
+                            item
+                          ) => {
+                            const active =
+                              quranForm
+                                .lesson_amount_type ===
+                              item.value;
+
+                            return (
+                              <button
+                                key={
+                                  item.value
+                                }
+                                type="button"
+                                className={
+                                  active
+                                    ? "amount-option active"
+                                    : "amount-option"
+                                }
+                                onClick={() =>
+                                  setQuran(
+                                    "lesson_amount_type",
+                                    active
+                                      ? ""
+                                      : item.value
+                                  )
+                                }
+                              >
+                                <strong>
+                                  {
+                                    item.label
+                                  }
+                                </strong>
+
+                                <span>
+                                  {
+                                    item.hint
+                                  }
+                                </span>
+                              </button>
+                            );
+                          }
+                        )}
+                      </div>
+
+                      <div
+                        className="faces-preview"
+                      >
+                        <Target
+                          size={14}
+                        />
+
+                        {quranForm
+                          .lesson_amount_type ? (
+                          <>
+                            سيُحتسب في
+                            الإنجاز الشهري:
+                            <strong>
+                              {" "}
+                              {formatFaces(
+                                lessonFaces
+                              )}{" "}
+                              وجه
+                            </strong>
+                          </>
+                        ) : editing ? (
+                          <>
+                            هذا قد يكون
+                            سجلًا قديمًا.
+                            يمكنك ترك
+                            المقدار فارغًا
+                            أو تحديده الآن
+                            ليُحتسب مستقبلًا.
+                          </>
+                        ) : (
+                          "اختر مقدار الدرس ليتم احتساب الأوجه تلقائيًا."
+                        )}
+                      </div>
+                    </div>
+                  </FormSection>
+
+                  {/* NEXT */}
+
+                  <FormSection
+                    icon={
+                      <Target
+                        size={16}
+                      />
+                    }
+                    title="جنب الدرس الأول"
+                    subtitle="المقدار المرتبط بالدرس إن وجد"
+                  >
+                    <QuranRange
+                      prefix="next"
+                      form={
+                        quranForm
+                      }
+                      setValue={
+                        setQuran
+                      }
+                    />
+
+                    <EvaluationSelector
+                      label="تقييم جنب الدرس"
+                      value={
+                        quranForm
+                          .next_evaluation
+                      }
+                      onChange={(
+                        value
+                      ) =>
+                        setQuran(
+                          "next_evaluation",
+                          value
+                        )
+                      }
+                    />
+                  </FormSection>
+
+                  {/* NEXT 2 */}
+
+                  <FormSection
+                    icon={
+                      <Plus
+                        size={16}
+                      />
+                    }
+                    title="جنب الدرس الثاني"
+                    subtitle="مقدار إضافي اختياري"
+                  >
+                    <QuranRange
+                      prefix="next2"
+                      form={
+                        quranForm
+                      }
+                      setValue={
+                        setQuran
+                      }
+                    />
+
+                    <EvaluationSelector
+                      label="تقييم جنب الدرس الثاني"
+                      value={
+                        quranForm
+                          .next2_evaluation
+                      }
+                      onChange={(
+                        value
+                      ) =>
+                        setQuran(
+                          "next2_evaluation",
+                          value
+                        )
+                      }
+                    />
+                  </FormSection>
+
+                  {/* REVIEW */}
+
+                  <FormSection
+                    icon={
+                      <RefreshCw
+                        size={16}
+                      />
+                    }
+                    title="المراجعة"
+                    subtitle="المقدار السابق الذي تمت مراجعته"
+                  >
+                    <QuranRange
+                      prefix="review"
+                      form={
+                        quranForm
+                      }
+                      setValue={
+                        setQuran
+                      }
+                    />
+
+                    <div
+                      className="form-grid two evaluation-faces-grid"
+                    >
+                      <EvaluationSelector
+                        label="تقييم المراجعة"
+                        value={
+                          quranForm
+                            .review_evaluation
+                        }
+                        onChange={(
+                          value
+                        ) =>
+                          setQuran(
+                            "review_evaluation",
+                            value
+                          )
+                        }
+                      />
+
+                      <NumberField
+                        label="عدد أوجه المراجعة"
+                        value={
+                          quranForm
+                            .review_faces
+                        }
+                        onChange={(
+                          value
+                        ) =>
+                          setQuran(
+                            "review_faces",
+                            value
+                          )
+                        }
+                        min="0"
+                        step="0.5"
+                        placeholder="مثال: 4"
+                        suffix="وجه"
+                      />
+                    </div>
+                  </FormSection>
+                </>
+              )}
+
+              {/* =========================================
+                  NOORANIA
+              ========================================= */}
+
+              {formType ===
+                "noorania" && (
+                <>
+                  {/* LESSON */}
+
+                  <FormSection
+                    icon={
+                      <LibraryBig
+                        size={16}
+                      />
+                    }
+                    title="الدرس"
+                    subtitle="الدرس الأساسي في القاعدة النورانية"
+                  >
+                    <div
+                      className="form-grid two"
+                    >
+                      <TextField
+                        label="الدرس"
+                        required
+                        value={
+                          nooraniaForm
+                            .lesson
+                        }
+                        onChange={(
+                          value
+                        ) =>
+                          setNoorania(
+                            "lesson",
+                            value
+                          )
+                        }
+                        placeholder="مثال: الدرس العاشر"
+                      />
+
+                      <NumberField
+                        label="عدد أوجه التسميع"
+                        required
+                        value={
+                          nooraniaForm
+                            .lesson_faces
+                        }
+                        onChange={(
+                          value
+                        ) =>
+                          setNoorania(
+                            "lesson_faces",
+                            value
+                          )
+                        }
+                        min="0"
+                        step="0.5"
+                        placeholder="مثال: 2"
+                        suffix="وجه"
+                      />
+                    </div>
+
+                    <EvaluationSelector
+                      label="تقييم الدرس"
+                      value={
+                        nooraniaForm
+                          .lesson_evaluation
+                      }
+                      onChange={(
+                        value
+                      ) =>
+                        setNoorania(
+                          "lesson_evaluation",
+                          value
+                        )
+                      }
+                    />
+                  </FormSection>
+
+                  {/* SIDE LESSON */}
+
+                  <FormSection
+                    icon={
+                      <Target
+                        size={16}
+                      />
+                    }
+                    title="جنب الدرس"
+                    subtitle="لا يتم احتساب أوجه لهذا الجزء"
+                  >
+                    <TextField
+                      label="جنب الدرس"
+                      value={
+                        nooraniaForm
+                          .side_lesson
+                      }
+                      onChange={(
+                        value
+                      ) =>
+                        setNoorania(
+                          "side_lesson",
+                          value
+                        )
+                      }
+                      placeholder="مثال: الدرس التاسع"
+                    />
+
+                    <EvaluationSelector
+                      label="تقييم جنب الدرس"
+                      value={
+                        nooraniaForm
+                          .side_lesson_evaluation
+                      }
+                      onChange={(
+                        value
+                      ) =>
+                        setNoorania(
+                          "side_lesson_evaluation",
+                          value
+                        )
+                      }
+                    />
+                  </FormSection>
+
+                  {/* REVISION */}
+
+                  <FormSection
+                    icon={
+                      <RefreshCw
+                        size={16}
+                      />
+                    }
+                    title="المراجعة"
+                    subtitle="المادة السابقة التي تمت مراجعتها"
+                  >
+                    <div
+                      className="form-grid two"
+                    >
+                      <TextField
+                        label="المراجعة"
+                        value={
+                          nooraniaForm
+                            .revision
+                        }
+                        onChange={(
+                          value
+                        ) =>
+                          setNoorania(
+                            "revision",
+                            value
+                          )
+                        }
+                        placeholder="مثال: من الدرس الأول إلى الخامس"
+                      />
+
+                      <NumberField
+                        label="عدد أوجه المراجعة"
+                        value={
+                          nooraniaForm
+                            .revision_faces
+                        }
+                        onChange={(
+                          value
+                        ) =>
+                          setNoorania(
+                            "revision_faces",
+                            value
+                          )
+                        }
+                        min="0"
+                        step="0.5"
+                        placeholder="مثال: 6"
+                        suffix="وجه"
+                      />
+                    </div>
+
+                    <EvaluationSelector
+                      label="تقييم المراجعة"
+                      value={
+                        nooraniaForm
+                          .revision_evaluation
+                      }
+                      onChange={(
+                        value
+                      ) =>
+                        setNoorania(
+                          "revision_evaluation",
+                          value
+                        )
+                      }
+                    />
+                  </FormSection>
+                </>
+              )}
+
+              {/* =========================================
+                  POINTS + NOTES
+              ========================================= */}
+
+              <div
+                className="bottom-form-grid"
+              >
+                <div
+                  className="points-preview"
+                >
+                  <div
+                    className="points-icon"
+                  >
+                    <Trophy
+                      size={21}
                     />
                   </div>
 
-                  <div>
-                    <span>
-                      الحلقة
-                    </span>
+                  <span>
+                    نقاط الجلسة
+                  </span>
 
-                    <strong>
-                      {halaqaName ||
-                        "سيتم تحديدها تلقائيًا"}
-                    </strong>
-                  </div>
+                  <strong>
+                    {(formType ===
+                    "quran"
+                      ? quranPoints
+                      : nooraniaPoints) >
+                    0
+                      ? `+${
+                          formType ===
+                          "quran"
+                            ? quranPoints
+                            : nooraniaPoints
+                        }`
+                      : formType ===
+                        "quran"
+                      ? quranPoints
+                      : nooraniaPoints}
+                  </strong>
+
+                  <small>
+                    تحسب تلقائيًا من
+                    التقييمات
+                  </small>
                 </div>
-              </div>
-            </div>
-          </section>
 
-{showDatePicker && (
+                <div
+                  className="notes-box"
+                >
+                  <label
+                    className="field-label"
+                  >
+                    <MessageSquareText
+                      size={14}
+                    />
 
-  <div
-    onClick={() =>
-      setShowDatePicker(false)
-    }
-    style={{
-      position:"fixed",
-      inset:0,
-      background:"rgba(0,0,0,.35)",
-      display:"flex",
-      alignItems:"center",
-      justifyContent:"center",
-      zIndex:9999
-    }}
-  >
+                    ملاحظات المعلم
+                  </label>
 
-    <div
-      onClick={(e)=>
-        e.stopPropagation()
-      }
-      style={{
-        background:"#fff",
-        borderRadius:"18px",
-        padding:"14px",
-        width:"fit-content",
-        boxShadow:
-          "0 20px 50px rgba(0,0,0,.15)"
-      }}
-    >
-
-      <DatePicker
-        selected={
-          selectedDate
-            ? new Date(selectedDate)
-            : new Date()
-        }
-        onChange={(date) => {
-
-          if (!date) return;
-
-          const year =
-            date.getFullYear();
-
-          const month = String(
-            date.getMonth() + 1
-          ).padStart(2, "0");
-
-          const day = String(
-            date.getDate()
-          ).padStart(2, "0");
-
-          setSelectedDate(
-            `${year}-${month}-${day}`
-          );
-
-          setShowDatePicker(false);
-
-        }}
-        inline
-      />
-
-    </div>
-
-  </div>
-
-)}
-
-
-<div
-  style={{
-    display: "flex",
-    justifyContent: "flex-end",
-    marginBottom: "28px",
-  }}
->
-  <button
-    onClick={() => {
-      clearForm();
-      setShowRecitationModal(true);
-    }}
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "12px",
-      padding: "14px 24px",
-      border: "none",
-      borderRadius: "18px",
-      background:
-        "linear-gradient(135deg,#0F5132,#166534)",
-      color: "#fff",
-      fontSize: "15px",
-      fontWeight: "700",
-      cursor: "pointer",
-      boxShadow:
-        "0 12px 30px rgba(15,81,50,.25)",
-      transition: "all .25s ease",
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform =
-        "translateY(-3px)";
-      e.currentTarget.style.boxShadow =
-        "0 18px 40px rgba(15,81,50,.35)";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform =
-        "translateY(0)";
-      e.currentTarget.style.boxShadow =
-        "0 12px 30px rgba(15,81,50,.25)";
-    }}
-  >
-    <div
-      style={{
-        width: "34px",
-        height: "34px",
-        borderRadius: "10px",
-        background:
-          "rgba(255,255,255,.15)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Plus size={18} />
-    </div>
-
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        lineHeight: 1.2,
-      }}
-    >
-      <span>إضافة تسميع</span>
-
-      <small
-        style={{
-          color:
-            "rgba(255,255,255,.75)",
-          fontWeight: 500,
-          fontSize: "11px",
-        }}
-      >
-        إنشاء جلسة تسميع جديدة
-      </small>
-    </div>
-  </button>
-</div>
-
-
-          {/* LESSON */}
-{(showRecitationModal || editingId) && (
-  <div className="modal-overlay">
-
-    <div className="modal-container">
-
-      <div className="modal-header">
-
-        <h2>
-          {editingId
-            ? "تعديل التسميع"
-            : "إضافة تسميع"}
-        </h2>
-
-        <button
-  type="button"
-  onClick={() => {
-    clearForm();
-    setShowRecitationModal(false);
-  }}
-  style={{
-    width: "44px",
-    height: "44px",
-    border: "none",
-    borderRadius: "14px",
-    background:
-      "linear-gradient(135deg,#F8FAFC,#E2E8F0)",
-    color: "#334155",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow:
-      "0 8px 20px rgba(15,23,42,.08)",
-    transition: "all .25s ease",
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.transform =
-      "translateY(-2px) rotate(90deg)";
-    e.currentTarget.style.background =
-      "linear-gradient(135deg,#DC2626,#EF4444)";
-    e.currentTarget.style.color =
-      "#FFFFFF";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.transform =
-      "translateY(0) rotate(0)";
-    e.currentTarget.style.background =
-      "linear-gradient(135deg,#F8FAFC,#E2E8F0)";
-    e.currentTarget.style.color =
-      "#334155";
-  }}
->
-  <X size={20} strokeWidth={2.5} />
-</button>
-
-      </div>
-
-          <RecitationSection
-            icon={
-              <BookOpen size={19} />
-            }
-            title="الدرس"
-            subtitle="المقدار الجديد الذي تم تسميعه"
-          >
-            <QuranRange
-              fromSurah={fromSurah}
-              setFromSurah={
-                setFromSurah
-              }
-              fromAyah={fromAyah}
-              setFromAyah={
-                setFromAyah
-              }
-              toSurah={toSurah}
-              setToSurah={
-                setToSurah
-              }
-              toAyah={toAyah}
-              setToAyah={
-                setToAyah
-              }
-            />
-
-            <EvaluationSelect
-              label="تقييم الدرس"
-              value={
-                lessonEvaluation
-              }
-              setValue={
-                setLessonEvaluation
-              }
-            />
-          </RecitationSection>
-
-          {/* NEXT */}
-
-          <RecitationSection
-            icon={
-              <Target size={19} />
-            }
-            title="جنب الدرس الأول"
-            subtitle="المقدار المطلوب للجلسة القادمة"
-          >
-            <QuranRange
-              fromSurah={nextSurah}
-              setFromSurah={
-                setNextSurah
-              }
-              fromAyah={
-                nextFromAyah
-              }
-              setFromAyah={
-                setNextFromAyah
-              }
-              toSurah={
-                nextToSurah
-              }
-              setToSurah={
-                setNextToSurah
-              }
-              toAyah={
-                nextToAyah
-              }
-              setToAyah={
-                setNextToAyah
-              }
-            />
-
-            <EvaluationSelect
-              label="تقييم جنب الدرس"
-              value={
-                nextEvaluation
-              }
-              setValue={
-                setNextEvaluation
-              }
-            />
-          </RecitationSection>
-
-          {/* NEXT 2 */}
-
-          <RecitationSection
-            icon={
-              <Plus size={19} />
-            }
-            title="جنب الدرس الثاني"
-            subtitle="مقدار إضافي إن وجد"
-          >
-            <QuranRange
-              fromSurah={
-                next2Surah
-              }
-              setFromSurah={
-                setNext2Surah
-              }
-              fromAyah={
-                next2FromAyah
-              }
-              setFromAyah={
-                setNext2FromAyah
-              }
-              toSurah={
-                next2ToSurah
-              }
-              setToSurah={
-                setNext2ToSurah
-              }
-              toAyah={
-                next2ToAyah
-              }
-              setToAyah={
-                setNext2ToAyah
-              }
-            />
-          </RecitationSection>
-
-          {/* REVIEW */}
-
-          <RecitationSection
-            icon={
-              <RefreshCw size={19} />
-            }
-            title="المراجعة"
-            subtitle="المقرر السابق الذي تمت مراجعته"
-          >
-            <QuranRange
-              fromSurah={
-                reviewSurah
-              }
-              setFromSurah={
-                setReviewSurah
-              }
-              fromAyah={
-                reviewFromAyah
-              }
-              setFromAyah={
-                setReviewFromAyah
-              }
-              toSurah={
-                reviewToSurah
-              }
-              setToSurah={
-                setReviewToSurah
-              }
-              toAyah={
-                reviewToAyah
-              }
-              setToAyah={
-                setReviewToAyah
-              }
-            />
-
-            <EvaluationSelect
-              label="تقييم المراجعة"
-              value={
-                reviewEvaluation
-              }
-              setValue={
-                setReviewEvaluation
-              }
-            />
-          </RecitationSection>
-
-          {/* SCORE + NOTES */}
-
-          <section className="bottom-grid">
-            <div className="score-card">
-              <div className="score-icon">
-                <Trophy size={24} />
-              </div>
-
-              <span>
-                نقاط هذه الجلسة
-              </span>
-
-              <strong
-                className={
-                  totalPoints > 0
-                    ? "positive"
-                    : totalPoints <
-                      0
-                    ? "negative"
-                    : ""
-                }
-              >
-                {totalPoints > 0
-                  ? `+${totalPoints}`
-                  : totalPoints}
-              </strong>
-
-              <small>
-                يتم احتساب النقاط من
-                التقييمات المختارة
-              </small>
-            </div>
-
-            <div className="panel notes-panel">
-              <SectionHeader
-                icon={
-                  <MessageSquareText
-                    size={19}
-                  />
-                }
-                title="ملاحظات المعلم"
-                subtitle="أضف أي ملاحظات مهمة عن الجلسة"
-              />
-
-              <textarea
-                value={notes}
-                onChange={(e) =>
-                  setNotes(
-                    e.target.value
-                  )
-                }
-                placeholder="مثال: يحتاج إلى مراجعة الآيات الأخيرة..."
-                rows={5}
-              />
-            </div>
-          </section>
-
-          {/* SAVE */}
-
-          <div className="save-bar">
-            <button
-              className="save-button"
-              onClick={
-                saveRecitation
-              }
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2
-                  size={19}
-                  className="spin"
-                />
-              ) : editingId ? (
-                <CheckCircle2 size={19} />
-              ) : (
-                <Plus size={19} />
-              )}
-
-              {loading
-                ? "جارٍ الحفظ..."
-                : editingId
-                ? "حفظ التعديلات"
-                : "حفظ التسميع"}
-            </button>
-
-            <button
-              className="cancel-button"
-              onClick={clearForm}
-              disabled={loading}
-            >
-              <X size={18} />
-              تفريغ النموذج
-            </button>
-          </div>
-
-    </div>
-  </div>
-)}
-
-
-
-
-          {/* RECORDS */}
-
-          <section className="panel records-panel">
-            <div className="records-header">
-              <SectionHeader
-                icon={
-                  <Clock3 size={19} />
-                }
-                title="سجل التسميع"
-                subtitle={`عرض ${filteredRecords.length} من ${records.length} سجل`}
-              />
-
-              <div className="records-tools">
-                <div className="input-with-icon search-records">
-                  <Search size={17} />
-
-                  <input
+                  <textarea
                     value={
-                      recordsSearch
+                      commonForm.notes
                     }
                     onChange={(e) =>
-                      setRecordsSearch(
+                      setCommon(
+                        "notes",
                         e.target.value
                       )
                     }
-                    placeholder="ابحث باسم الطالب..."
+                    placeholder="أي ملاحظات مهمة عن جلسة الطالب..."
+                    rows={5}
                   />
                 </div>
-
-                <select
-                  value={
-                    evaluationFilter
-                  }
-                  onChange={(e) =>
-                    setEvaluationFilter(
-                      e.target.value
-                    )
-                  }
-                >
-                  <option value="all">
-                    كل التقييمات
-                  </option>
-
-                  {evaluations.map(
-                    (item) => (
-                      <option
-                        key={item}
-                        value={item}
-                      >
-                        {item}
-                      </option>
-                    )
-                  )}
-                </select>
               </div>
             </div>
 
-            {recordsLoading ? (
-              <div className="loading-state">
-                <Loader2
-                  className="spin"
-                  size={28}
+            {/* ===========================================
+                FOOTER
+            =========================================== */}
+
+            <div
+              className="modal-footer"
+            >
+              <button
+                type="button"
+                className="modal-cancel"
+                onClick={() =>
+                  resetForms()
+                }
+                disabled={
+                  saving
+                }
+              >
+                <X
+                  size={15}
                 />
-                جاري تحميل السجلات...
-              </div>
-            ) : filteredRecords.length ===
-              0 ? (
-              <div className="empty-state">
-                <div>
-                  <FileText size={28} />
-                </div>
 
-                <strong>
-                  لا توجد سجلات
-                </strong>
+                إلغاء
+              </button>
 
-                <span>
-                  لم يتم العثور على
-                  تسميعات مطابقة
-                </span>
-              </div>
-            ) : (
-              <div className="table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>
-                        التاريخ
-                      </th>
+              <button
+                type="button"
+                className="modal-save"
+                onClick={
+                  saveRecord
+                }
+                disabled={
+                  saving
+                }
+              >
+                {saving ? (
+                  <>
+                    <Loader2
+                      size={16}
+                      className="spin"
+                    />
 
-                      <th>
-                        الطالب
-                      </th>
+                    جارٍ الحفظ...
+                  </>
+                ) : (
+                  <>
+                    <Save
+                      size={16}
+                    />
 
-                      <th>
-                        الدرس
-                      </th>
-
-                      <th>
-                        التقييم
-                      </th>
-
-                      <th>
-                        جنب الدرس
-                      </th>
-
-                      <th>
-                        المراجعة
-                      </th>
-
-                      <th>
-                        النقاط
-                      </th>
-
-                      <th>
-                        إجراء
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {filteredRecords.map(
-                      (record) => (
-                        <tr
-                          key={
-                            record.id
-                          }
-                        >
-                          <td>
-                            <span className="date-cell">
-                              {formatShortDate(
-                                record.recitation_date
-                              )}
-                            </span>
-                          </td>
-
-                          <td>
-                            <div className="record-student">
-                              <span>
-                                <UserRound
-                                  size={
-                                    15
-                                  }
-                                />
-                              </span>
-
-                              <strong>
-                                {studentName(
-                                  record.student_id
-                                )}
-                              </strong>
-                            </div>
-                          </td>
-
-                          <td>
-                            <QuranText
-                              from={
-                                record.from_surah
-                              }
-                              fromAyah={
-                                record.from_ayah
-                              }
-                              to={
-                                record.to_surah
-                              }
-                              toAyah={
-                                record.to_ayah
-                              }
-                            />
-                          </td>
-
-                          <td>
-                            <EvaluationBadge
-                              value={
-                                record.lesson_evaluation
-                              }
-                            />
-                          </td>
-
-                          <td>
-                            <QuranText
-                              from={
-                                record.next_surah
-                              }
-                              fromAyah={
-                                record.next_from_ayah
-                              }
-                              to={
-                                record.next_to_surah
-                              }
-                              toAyah={
-                                record.next_to_ayah
-                              }
-                            />
-                          </td>
-
-                          <td>
-                            <QuranText
-                              from={
-                                record.review_surah
-                              }
-                              fromAyah={
-                                record.review_from_ayah
-                              }
-                              to={
-                                record.review_to_surah
-                              }
-                              toAyah={
-                                record.review_to_ayah
-                              }
-                            />
-                          </td>
-
-                          <td>
-                            <strong
-                              className={
-                                Number(
-                                  record.points
-                                ) > 0
-                                  ? "points-positive"
-                                  : Number(
-                                      record.points
-                                    ) <
-                                    0
-                                  ? "points-negative"
-                                  : "points-zero"
-                              }
-                            >
-                              {Number(
-                                record.points
-                              ) > 0
-                                ? `+${record.points}`
-                                : record.points ??
-                                  0}
-                            </strong>
-                          </td>
-
-                          <td>
-                            <div className="row-actions">
-                              <button
-                                className="edit-action"
-                                onClick={() =>
-                                  editRecord(
-                                    record
-                                  )
-                                }
-                                disabled={
-                                  loading
-                                }
-                              >
-                                <Edit3
-                                  size={
-                                    15
-                                  }
-                                />
-                                تعديل
-                              </button>
-
-                              <button
-                                className="delete-action"
-                                onClick={() =>
-                                  deleteRecitation(
-                                    record
-                                  )
-                                }
-                                disabled={
-                                  loading
-                                }
-                              >
-                                <Trash2
-                                  size={
-                                    15
-                                  }
-                                />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+                    {editing
+                      ? "حفظ التعديلات"
+                      : "حفظ التسميع"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 }
 
-/* ================================================= */
-/* SECTION */
-/* ================================================= */
+/* =========================================================
+   Record Card
+========================================================= */
 
-function RecitationSection({
+function RecordCard({
+  record,
+  studentName,
+  halaqa,
+  deleting,
+  onEdit,
+  onDelete,
+}) {
+  const quran =
+    record.record_type ===
+    "quran";
+
+  return (
+    <article
+      className="record-card"
+    >
+      <div
+        className={
+          quran
+            ? "record-accent quran"
+            : "record-accent noorania"
+        }
+      />
+
+      {/* HEADER */}
+
+      <div
+        className="record-card-header"
+      >
+        <div
+          className="record-student"
+        >
+          <div
+            className={
+              quran
+                ? "record-avatar quran"
+                : "record-avatar noorania"
+            }
+          >
+            {quran ? (
+              <BookOpen
+                size={18}
+              />
+            ) : (
+              <LibraryBig
+                size={18}
+              />
+            )}
+          </div>
+
+          <div
+            style={{
+              minWidth: 0,
+            }}
+          >
+            <h3>
+              {studentName}
+            </h3>
+
+            <div
+              className="record-type-label"
+            >
+              {quran
+                ? "القرآن الكريم"
+                : "القاعدة النورانية"}
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="record-badges"
+        >
+          {!record.teacher_id && (
+            <span
+              className="legacy-badge"
+            >
+              سجل قديم
+            </span>
+          )}
+
+          <span
+            className={
+              quran
+                ? "type-badge quran"
+                : "type-badge noorania"
+            }
+          >
+            {quran
+              ? "قرآن"
+              : "نورانية"}
+          </span>
+        </div>
+      </div>
+
+      {/* DATE */}
+
+      <div
+        className="record-date"
+      >
+        <CalendarDays
+          size={14}
+        />
+
+        <div>
+          <strong>
+            {formatHijriDate(
+              record.recitation_date
+            )}
+          </strong>
+
+          <span>
+            {formatGregorianDate(
+              record.recitation_date
+            )}
+          </span>
+        </div>
+      </div>
+
+      {/* HALAQA */}
+
+      <div
+        className="record-halaqa"
+      >
+        <div>
+          <GraduationCap
+            size={13}
+          />
+
+          {halaqa?.name ||
+            "حلقة غير معروفة"}
+        </div>
+
+        {halaqa?.mosque_name && (
+          <div>
+            <Building2
+              size={13}
+            />
+
+            {
+              halaqa.mosque_name
+            }
+          </div>
+        )}
+
+        {halaqa?.halaqa_period && (
+          <div>
+            <Clock3
+              size={13}
+            />
+
+            {HALAQA_PERIODS[
+              halaqa.halaqa_period
+            ] ||
+              "غير محدد"}
+          </div>
+        )}
+      </div>
+
+      {/* QURAN */}
+
+      {quran ? (
+        <>
+          <RecordSection
+            title="الدرس"
+            icon={
+              <BookOpen
+                size={13}
+              />
+            }
+          >
+            <QuranText
+              from={
+                record.from_surah
+              }
+              fromAyah={
+                record.from_ayah
+              }
+              to={
+                record.to_surah
+              }
+              toAyah={
+                record.to_ayah
+              }
+            />
+
+            <div
+              className="record-values"
+            >
+              <EvaluationBadge
+                value={
+                  record.lesson_evaluation
+                }
+              />
+
+              <FaceBadge
+                label={
+                  getLessonAmountLabel(
+                    record.lesson_amount_type
+                  )
+                }
+                value={
+                  record.lesson_faces
+                }
+              />
+            </div>
+          </RecordSection>
+
+          {(record.next_surah ||
+            record.next2_surah) && (
+            <RecordSection
+              title="جنب الدرس"
+              icon={
+                <Target
+                  size={13}
+                />
+              }
+            >
+              {record.next_surah && (
+                <div
+                  className="sub-record-line"
+                >
+                  <QuranText
+                    from={
+                      record.next_surah
+                    }
+                    fromAyah={
+                      record.next_from_ayah
+                    }
+                    to={
+                      record.next_to_surah
+                    }
+                    toAyah={
+                      record.next_to_ayah
+                    }
+                  />
+
+                  <EvaluationBadge
+                    value={
+                      record.next_evaluation
+                    }
+                  />
+                </div>
+              )}
+
+              {record.next2_surah && (
+                <div
+                  className="sub-record-line"
+                >
+                  <QuranText
+                    from={
+                      record.next2_surah
+                    }
+                    fromAyah={
+                      record.next2_from_ayah
+                    }
+                    to={
+                      record.next2_to_surah
+                    }
+                    toAyah={
+                      record.next2_to_ayah
+                    }
+                  />
+
+                  <EvaluationBadge
+                    value={
+                      record.next2_evaluation
+                    }
+                  />
+                </div>
+              )}
+            </RecordSection>
+          )}
+
+          <RecordSection
+            title="المراجعة"
+            icon={
+              <RefreshCw
+                size={13}
+              />
+            }
+          >
+            <QuranText
+              from={
+                record.review_surah
+              }
+              fromAyah={
+                record.review_from_ayah
+              }
+              to={
+                record.review_to_surah
+              }
+              toAyah={
+                record.review_to_ayah
+              }
+            />
+
+            <div
+              className="record-values"
+            >
+              <EvaluationBadge
+                value={
+                  record.review_evaluation
+                }
+              />
+
+              <FaceBadge
+                label="أوجه المراجعة"
+                value={
+                  record.review_faces
+                }
+              />
+            </div>
+          </RecordSection>
+        </>
+      ) : (
+        <>
+          <RecordSection
+            title="الدرس"
+            icon={
+              <LibraryBig
+                size={13}
+              />
+            }
+          >
+            <strong
+              className="text-record-value"
+            >
+              {record.lesson ||
+                "—"}
+            </strong>
+
+            <div
+              className="record-values"
+            >
+              <EvaluationBadge
+                value={
+                  record.lesson_evaluation
+                }
+              />
+
+              <FaceBadge
+                label="أوجه التسميع"
+                value={
+                  record.lesson_faces
+                }
+              />
+            </div>
+          </RecordSection>
+
+          {record.side_lesson && (
+            <RecordSection
+              title="جنب الدرس"
+              icon={
+                <Target
+                  size={13}
+                />
+              }
+            >
+              <strong
+                className="text-record-value"
+              >
+                {
+                  record.side_lesson
+                }
+              </strong>
+
+              <EvaluationBadge
+                value={
+                  record.side_lesson_evaluation
+                }
+              />
+            </RecordSection>
+          )}
+
+          {record.revision && (
+            <RecordSection
+              title="المراجعة"
+              icon={
+                <RefreshCw
+                  size={13}
+                />
+              }
+            >
+              <strong
+                className="text-record-value"
+              >
+                {record.revision}
+              </strong>
+
+              <div
+                className="record-values"
+              >
+                <EvaluationBadge
+                  value={
+                    record.revision_evaluation
+                  }
+                />
+
+                <FaceBadge
+                  label="أوجه المراجعة"
+                  value={
+                    record.revision_faces
+                  }
+                />
+              </div>
+            </RecordSection>
+          )}
+        </>
+      )}
+
+      {/* NOTES */}
+
+      {record.notes && (
+        <div
+          className="record-notes"
+        >
+          <MessageSquareText
+            size={12}
+          />
+
+          {record.notes}
+        </div>
+      )}
+
+      {/* FOOTER */}
+
+      <div
+        className="record-footer"
+      >
+        <div
+          className="record-points"
+        >
+          <Trophy
+            size={14}
+          />
+
+          {Number(
+            record.points ||
+              0
+          ) > 0
+            ? `+${record.points}`
+            : record.points || 0}
+
+          <span>
+            نقطة
+          </span>
+        </div>
+
+        <div
+          className="record-actions"
+        >
+          <button
+            type="button"
+            className="record-edit"
+            onClick={onEdit}
+            disabled={
+              deleting
+            }
+          >
+            <Edit3
+              size={13}
+            />
+
+            تعديل
+          </button>
+
+          <button
+            type="button"
+            className="record-delete"
+            onClick={
+              onDelete
+            }
+            disabled={
+              deleting
+            }
+          >
+            {deleting ? (
+              <Loader2
+                size={13}
+                className="spin"
+              />
+            ) : (
+              <Trash2
+                size={13}
+              />
+            )}
+
+            حذف
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/* =========================================================
+   Record section
+========================================================= */
+
+function RecordSection({
+  title,
+  icon,
+  children,
+}) {
+  return (
+    <div
+      className="record-section"
+    >
+      <div
+        className="record-section-title"
+      >
+        {icon}
+
+        {title}
+      </div>
+
+      <div
+        className="record-section-content"
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   Stat
+========================================================= */
+
+function StatCard({
+  icon: Icon,
+  title,
+  value,
+  subtitle,
+}) {
+  return (
+    <div
+      className="recitation-stat"
+    >
+      <div
+        className="recitation-stat-icon"
+      >
+        <Icon
+          size={17}
+        />
+      </div>
+
+      <div>
+        <span>
+          {title}
+        </span>
+
+        <strong>
+          {value}
+        </strong>
+
+        <small>
+          {subtitle}
+        </small>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   Form Section
+========================================================= */
+
+function FormSection({
   icon,
   title,
   subtitle,
   children,
 }) {
   return (
-    <section className="panel">
-      <SectionHeader
-        icon={icon}
-        title={title}
-        subtitle={subtitle}
-      />
+    <section
+      className="form-section"
+    >
+      <div
+        className="form-section-header"
+      >
+        <div
+          className="form-section-icon"
+        >
+          {icon}
+        </div>
+
+        <div>
+          <h3>
+            {title}
+          </h3>
+
+          <p>
+            {subtitle}
+          </p>
+        </div>
+      </div>
 
       {children}
     </section>
   );
 }
 
-function SectionHeader({
-  icon,
-  title,
-  subtitle,
+/* =========================================================
+   Select
+========================================================= */
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  required = false,
+  disabled = false,
 }) {
   return (
-    <div className="section-header">
-      <div className="section-icon">
-        {icon}
-      </div>
+    <div
+      className="field"
+    >
+      <label
+        className="field-label"
+      >
+        {label}
 
-      <div>
-        <h2>{title}</h2>
-        <p>{subtitle}</p>
+        {required && (
+          <span
+            className="required"
+          >
+            *
+          </span>
+        )}
+      </label>
+
+      <div
+        className="select-wrap"
+      >
+        <select
+          value={value}
+          disabled={
+            disabled
+          }
+          onChange={(e) =>
+            onChange(
+              e.target.value
+            )
+          }
+        >
+          {options.map(
+            (option) => (
+              <option
+                key={
+                  option.value
+                }
+                value={
+                  option.value
+                }
+              >
+                {option.label}
+              </option>
+            )
+          )}
+        </select>
+
+        <ChevronDown
+          size={15}
+        />
       </div>
     </div>
   );
 }
 
-/* ================================================= */
-/* QURAN RANGE */
-/* ================================================= */
+/* =========================================================
+   Text
+========================================================= */
 
-function QuranRange({
-  fromSurah,
-  setFromSurah,
-  fromAyah,
-  setFromAyah,
-  toSurah,
-  setToSurah,
-  toAyah,
-  setToAyah,
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  required = false,
 }) {
   return (
-    <div className="quran-range">
-      <QuranSelect
-        label="من سورة"
-        value={fromSurah}
-        onChange={setFromSurah}
+    <div
+      className="field"
+    >
+      <label
+        className="field-label"
+      >
+        {label}
+
+        {required && (
+          <span
+            className="required"
+          >
+            *
+          </span>
+        )}
+      </label>
+
+      <input
+        value={value}
+        onChange={(e) =>
+          onChange(
+            e.target.value
+          )
+        }
+        placeholder={
+          placeholder
+        }
       />
+    </div>
+  );
+}
 
-      <div className="field">
-        <label>
-          من آية
-        </label>
+/* =========================================================
+   Number
+========================================================= */
 
+function NumberField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  min,
+  step,
+  suffix,
+  required = false,
+}) {
+  return (
+    <div
+      className="field"
+    >
+      <label
+        className="field-label"
+      >
+        {label}
+
+        {required && (
+          <span
+            className="required"
+          >
+            *
+          </span>
+        )}
+      </label>
+
+      <div
+        className="number-wrap"
+      >
         <input
           type="number"
-          min="1"
-          value={fromAyah}
+          value={value}
+          min={min}
+          step={step}
           onChange={(e) =>
-            setFromAyah(
+            onChange(
               e.target.value
             )
           }
-          placeholder="رقم الآية"
+          placeholder={
+            placeholder
+          }
+        />
+
+        {suffix && (
+          <span>
+            {suffix}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   Date
+========================================================= */
+
+function DateField({
+  value,
+  onChange,
+}) {
+  return (
+    <div
+      className="field"
+    >
+      <label
+        className="field-label"
+      >
+        التاريخ
+        <span
+          className="required"
+        >
+          *
+        </span>
+      </label>
+
+      <div
+        className="date-input-wrap"
+      >
+        <CalendarDays
+          size={15}
+        />
+
+        <input
+          type="date"
+          value={value}
+          max={getLocalDate()}
+          onChange={(e) =>
+            onChange(
+              e.target.value
+            )
+          }
         />
       </div>
+    </div>
+  );
+}
 
-      <div className="range-arrow">
-        <ArrowRight size={17} />
+/* =========================================================
+   Quran Range
+========================================================= */
+
+function QuranRange({
+  prefix,
+  form,
+  setValue,
+}) {
+  const fromSurahKey =
+    prefix
+      ? `${prefix}_surah`
+      : "from_surah";
+
+  const fromAyahKey =
+    prefix
+      ? `${prefix}_from_ayah`
+      : "from_ayah";
+
+  const toSurahKey =
+    prefix
+      ? `${prefix}_to_surah`
+      : "to_surah";
+
+  const toAyahKey =
+    prefix
+      ? `${prefix}_to_ayah`
+      : "to_ayah";
+
+  return (
+    <div
+      className="quran-range"
+    >
+      <QuranSelect
+        label="من سورة"
+        value={
+          form[
+            fromSurahKey
+          ]
+        }
+        onChange={(
+          value
+        ) =>
+          setValue(
+            fromSurahKey,
+            value
+          )
+        }
+      />
+
+      <NumberField
+        label="من آية"
+        value={
+          form[
+            fromAyahKey
+          ]
+        }
+        onChange={(
+          value
+        ) =>
+          setValue(
+            fromAyahKey,
+            value
+          )
+        }
+        min="1"
+        step="1"
+        placeholder="رقم الآية"
+      />
+
+      <div
+        className="range-divider"
+      >
+        ←
       </div>
 
       <QuranSelect
         label="إلى سورة"
-        value={toSurah}
-        onChange={setToSurah}
+        value={
+          form[
+            toSurahKey
+          ]
+        }
+        onChange={(
+          value
+        ) =>
+          setValue(
+            toSurahKey,
+            value
+          )
+        }
       />
 
-      <div className="field">
-        <label>
-          إلى آية
-        </label>
-
-        <input
-          type="number"
-          min="1"
-          value={toAyah}
-          onChange={(e) =>
-            setToAyah(
-              e.target.value
-            )
-          }
-          placeholder="رقم الآية"
-        />
-      </div>
+      <NumberField
+        label="إلى آية"
+        value={
+          form[
+            toAyahKey
+          ]
+        }
+        onChange={(
+          value
+        ) =>
+          setValue(
+            toAyahKey,
+            value
+          )
+        }
+        min="1"
+        step="1"
+        placeholder="رقم الآية"
+      />
     </div>
   );
 }
+
+/* =========================================================
+   Quran Select
+========================================================= */
 
 function QuranSelect({
   label,
@@ -2094,10 +4768,18 @@ function QuranSelect({
   onChange,
 }) {
   return (
-    <div className="field">
-      <label>{label}</label>
+    <div
+      className="field"
+    >
+      <label
+        className="field-label"
+      >
+        {label}
+      </label>
 
-      <div className="select-wrap">
+      <div
+        className="select-wrap"
+      >
         <select
           value={value}
           onChange={(e) =>
@@ -2110,61 +4792,78 @@ function QuranSelect({
             اختر السورة
           </option>
 
-          {surahs.map((surah) => (
-            <option
-              key={surah}
-              value={surah}
-            >
-              {surah}
-            </option>
-          ))}
+          {surahs.map(
+            (surah) => (
+              <option
+                key={surah}
+                value={surah}
+              >
+                {surah}
+              </option>
+            )
+          )}
         </select>
 
-        <ChevronDown size={16} />
+        <ChevronDown
+          size={15}
+        />
       </div>
     </div>
   );
 }
 
-/* ================================================= */
-/* EVALUATION */
-/* ================================================= */
+/* =========================================================
+   Evaluation
+========================================================= */
 
-function EvaluationSelect({
+function EvaluationSelector({
   label,
   value,
-  setValue,
+  onChange,
 }) {
   return (
-    <div className="evaluation-area">
-      <label>{label}</label>
+    <div
+      className="evaluation-area"
+    >
+      <label
+        className="field-label"
+      >
+        {label}
+      </label>
 
-      <div className="evaluation-grid">
+      <div
+        className="evaluation-grid"
+      >
         {evaluations.map(
-          (evaluation) => {
+          (
+            evaluation
+          ) => {
+            const active =
+              value ===
+              evaluation;
+
             const points =
               calculatePoints(
                 evaluation
               );
 
-            const active =
-              value === evaluation;
-
             return (
               <button
-                type="button"
                 key={
                   evaluation
                 }
-                className={`evaluation-option ${getEvaluationClass(
-                  evaluation
-                )} ${
-                  active
-                    ? "active"
-                    : ""
-                }`}
+                type="button"
+                className={
+                  `evaluation-option ${getEvaluationClass(
+                    evaluation
+                  )} ${
+                    active
+                      ? "active"
+                      : ""
+                  }`
+                }
                 onClick={() =>
-                  setValue(
+                  onChange(
                     active
                       ? ""
                       : evaluation
@@ -2172,7 +4871,9 @@ function EvaluationSelect({
                 }
               >
                 <span>
-                  {evaluation}
+                  {
+                    evaluation
+                  }
                 </span>
 
                 <small>
@@ -2189,68 +4890,9 @@ function EvaluationSelect({
   );
 }
 
-/* ================================================= */
-/* BADGES */
-/* ================================================= */
-
-function EvaluationBadge({
-  value,
-}) {
-  if (!value) {
-    return (
-      <span className="evaluation-badge neutral">
-        -
-      </span>
-    );
-  }
-
-  return (
-    <span
-      className={`evaluation-badge ${getEvaluationClass(
-        value
-      )}`}
-    >
-      {value}
-    </span>
-  );
-}
-
-/* ================================================= */
-/* STAT */
-/* ================================================= */
-
-function Stat({
-  icon,
-  title,
-  value,
-  small = false,
-}) {
-  return (
-    <div className="stat-card">
-      <div className="stat-icon">
-        {icon}
-      </div>
-
-      <div>
-        <span>
-          {title}
-        </span>
-
-        <strong
-          className={
-            small ? "small-value" : ""
-          }
-        >
-          {value}
-        </strong>
-      </div>
-    </div>
-  );
-}
-
-/* ================================================= */
-/* QURAN TEXT */
-/* ================================================= */
+/* =========================================================
+   Quran Text
+========================================================= */
 
 function QuranText({
   from,
@@ -2260,131 +4902,285 @@ function QuranText({
 }) {
   if (!from && !to) {
     return (
-      <span className="muted">
-        -
+      <span
+        className="muted"
+      >
+        غير مسجل
       </span>
     );
   }
 
   return (
-    <span className="quran-text">
-      {from || "-"}{" "}
+    <span
+      className="quran-text"
+    >
+      {from || "—"}
+
       {fromAyah
-        ? `(${fromAyah})`
+        ? ` (${fromAyah})`
         : ""}
 
-      {" → "}
+      <span
+        className="quran-arrow"
+      >
+        ←
+      </span>
 
-      {to || "-"}{" "}
+      {to || "—"}
+
       {toAyah
-        ? `(${toAyah})`
+        ? ` (${toAyah})`
         : ""}
     </span>
   );
 }
 
-/* ================================================= */
-/* DATE */
-/* ================================================= */
+/* =========================================================
+   Badges
+========================================================= */
 
-function getLocalDate() {
-  const date = new Date();
+function EvaluationBadge({
+  value,
+}) {
+  if (!value) {
+    return (
+      <span
+        className="evaluation-badge neutral"
+      >
+        بدون تقييم
+      </span>
+    );
+  }
 
+  return (
+    <span
+      className={
+        `evaluation-badge ${getEvaluationClass(
+          value
+        )}`
+      }
+    >
+      {value}
+    </span>
+  );
+}
+
+function FaceBadge({
+  label,
+  value,
+}) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return (
+      <span
+        className="face-badge legacy"
+      >
+        {label || "المقدار"}:
+        {" "}
+        غير محدد
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="face-badge"
+    >
+      <Hash
+        size={11}
+      />
+
+      {label && (
+        <>
+          {label}
+          {" • "}
+        </>
+      )}
+
+      {formatFaces(
+        value
+      )}{" "}
+      وجه
+    </span>
+  );
+}
+
+/* =========================================================
+   Empty
+========================================================= */
+
+function EmptyState({
+  icon: Icon,
+  title,
+  description,
+}) {
+  return (
+    <div
+      className="records-empty"
+    >
+      <div
+        className="empty-icon"
+      >
+        <Icon
+          size={25}
+        />
+      </div>
+
+      <h3>
+        {title}
+      </h3>
+
+      <p>
+        {description}
+      </p>
+    </div>
+  );
+}
+
+/* =========================================================
+   Loading
+========================================================= */
+
+function LoadingState() {
+  return (
+    <div
+      className="recitations-loading"
+    >
+      <PageStyles />
+
+      <div
+        className="loading-icon"
+      >
+        <Loader2
+          size={27}
+          className="spin"
+        />
+      </div>
+
+      <h3>
+        جارٍ تجهيز نظام
+        التسميع
+      </h3>
+
+      <p>
+        يتم تحميل حلقات المعلم،
+        الطلاب والسجلات...
+      </p>
+    </div>
+  );
+}
+
+/* =========================================================
+   Helpers
+========================================================= */
+
+function getLocalDate(
+  date = new Date()
+) {
   const year =
     date.getFullYear();
 
-  const month = String(
-    date.getMonth() + 1
-  ).padStart(2, "0");
+  const month =
+    String(
+      date.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    );
 
-  const day = String(
-    date.getDate()
-  ).padStart(2, "0");
+  const day =
+    String(
+      date.getDate()
+    ).padStart(
+      2,
+      "0"
+    );
 
   return `${year}-${month}-${day}`;
 }
 
-function formatDate(dateString) {
-  if (!dateString) return "-";
-
+function parseDate(
+  dateString
+) {
   return new Date(
-    `${dateString}T00:00:00`
-  ).toLocaleDateString(
-    "ar-SA",
-    {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }
+    `${dateString}T12:00:00`
   );
 }
 
-function formatShortDate(
+/*
+  تقويم أم القرى
+*/
+
+function formatHijriDate(
   dateString
 ) {
-  if (!dateString) return "-";
+  if (!dateString) {
+    return "—";
+  }
 
-  return new Date(
-    `${dateString}T00:00:00`
-  ).toLocaleDateString(
-    "ar-SA",
-    {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  try {
+    return new Intl.DateTimeFormat(
+      "ar-SA-u-ca-islamic-umalqura",
+      {
+        weekday:
+          "long",
+
+        year:
+          "numeric",
+
+        month:
+          "long",
+
+        day:
+          "numeric",
+      }
+    ).format(
+      parseDate(
+        dateString
+      )
+    );
+  } catch {
+    return dateString;
+  }
 }
 
 function formatGregorianDate(
   dateString
 ) {
+  if (!dateString) {
+    return "—";
+  }
 
-  if (!dateString)
-    return "-";
+  try {
+    return new Intl.DateTimeFormat(
+      "ar-SA-u-ca-gregory",
+      {
+        year:
+          "numeric",
 
-  return new Date(
-    `${dateString}T00:00:00`
-  ).toLocaleDateString(
-    "ar",
-    {
-      weekday:"long",
-      day:"numeric",
-      month:"long",
-      year:"numeric"
-    }
-  );
+        month:
+          "long",
 
+        day:
+          "numeric",
+      }
+    ).format(
+      parseDate(
+        dateString
+      )
+    );
+  } catch {
+    return dateString;
+  }
 }
 
-function formatHijriDate(
-  dateString
+function calculatePoints(
+  value
 ) {
-
-  if (!dateString)
-    return "-";
-
-  return new Intl.DateTimeFormat(
-    "ar-SA-u-ca-islamic",
-    {
-      weekday:"long",
-      day:"numeric",
-      month:"long",
-      year:"numeric"
-    }
-  ).format(
-    new Date(
-      `${dateString}T00:00:00`
-    )
-  );
-
-}
-
-function calculatePoints(value) {
-
   switch (value) {
-
     case "ممتاز":
       return 2;
 
@@ -2402,1024 +5198,2170 @@ function calculatePoints(value) {
   }
 }
 
-function getEvaluationClass(value) {
-
-  if (value === "ممتاز")
+function getEvaluationClass(
+  value
+) {
+  if (
+    value === "ممتاز"
+  ) {
     return "excellent";
+  }
 
-  if (value === "جيد جداً")
+  if (
+    value === "جيد جداً"
+  ) {
     return "very-good";
+  }
 
-  if (value === "جيد")
+  if (
+    value === "جيد"
+  ) {
     return "good";
+  }
 
-  if (value === "إعادة")
+  if (
+    value === "إعادة"
+  ) {
     return "bad";
+  }
 
   return "neutral";
 }
-/* ================================================= */
-/* CSS */
-/* ================================================= */
 
-const pageCss = `
-* {
-  box-sizing: border-box;
-}
-
-.recitation-page {
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(15,81,50,.07), transparent 28%),
-    radial-gradient(circle at 0% 100%, rgba(15,81,50,.045), transparent 25%),
-    #f7f5ef;
-  color: #26332c;
-}
-
-.page-shell {
-  width: min(1500px, calc(100% - 40px));
-  margin: auto;
-  padding: 30px 0 60px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.header-main {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.header-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 17px;
-  background: linear-gradient(145deg, #0f5132, #174f37);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 12px 25px rgba(15,81,50,.16);
-}
-
-.eyebrow {
-  color: #0f5132;
-  font-size: 11px;
-  font-weight: 800;
-  margin-bottom: 3px;
-}
-
-.page-header h1 {
-  margin: 0;
-  color: #173d2b;
-  font-size: 29px;
-  font-weight: 900;
-}
-
-.page-header p {
-  margin: 5px 0 0;
-  color: #7d8580;
-  font-size: 13px;
-}
-
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-}
-
-button {
-  transition:
-    transform .15s ease,
-    box-shadow .15s ease,
-    border-color .15s ease,
-    background .15s ease;
-}
-
-button:not(:disabled):hover {
-  transform: translateY(-1px);
-}
-
-button:disabled {
-  opacity: .65;
-  cursor: not-allowed !important;
-}
-
-.ghost-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #dfe4df;
-  background: #fff;
-  color: #173d2b;
-  border-radius: 11px;
-  padding: 11px 16px;
-  cursor: pointer;
-  font-weight: 800;
-  box-shadow: 0 4px 15px rgba(0,0,0,.035);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-  gap: 13px;
-  margin-bottom: 18px;
-}
-
-.stat-card {
-  background: rgba(255,255,255,.9);
-  border: 1px solid #e4e8e4;
-  border-radius: 16px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 5px 18px rgba(0,0,0,.035);
-}
-
-.stat-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
-  background: #edf5ef;
-  color: #0f5132;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.stat-card span {
-  display: block;
-  color: #858c87;
-  font-size: 11px;
-  margin-bottom: 4px;
-}
-
-.stat-card strong {
-  color: #173d2b;
-  font-size: 22px;
-  font-weight: 900;
-}
-
-.stat-card .small-value {
-  font-size: 14px;
-}
-
-.edit-banner {
-  background: #fff9e8;
-  border: 1px solid #ead9a3;
-  border-radius: 14px;
-  padding: 12px 15px;
-  margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.edit-banner > div {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #876b1c;
-}
-
-.edit-banner strong,
-.edit-banner span {
-  display: block;
-}
-
-.edit-banner strong {
-  color: #5e4c19;
-  font-size: 13px;
-}
-
-.edit-banner span {
-  color: #8d805c;
-  font-size: 11px;
-  margin-top: 2px;
-}
-
-.edit-banner button {
-  border: 1px solid #e4d6ad;
-  background: #fff;
-  color: #756126;
-  border-radius: 8px;
-  padding: 8px 11px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.panel {
-  background: rgba(255,255,255,.96);
-  border: 1px solid #e4e8e4;
-  border-radius: 18px;
-  padding: 21px;
-  margin-bottom: 18px;
-  box-shadow: 0 5px 20px rgba(0,0,0,.035);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  margin-bottom: 19px;
-}
-
-.section-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  background: #edf5ef;
-  color: #0f5132;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.section-header h2 {
-  margin: 0;
-  color: #173d2b;
-  font-size: 17px;
-  font-weight: 900;
-}
-
-.section-header p {
-  margin: 4px 0 0;
-  color: #8a928d;
-  font-size: 11px;
-}
-
-.form-grid {
-  display: grid;
-  gap: 14px;
-}
-
-.form-grid.three {
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-}
-
-.field label,
-.evaluation-area > label {
-  display: block;
-  margin-bottom: 7px;
-  color: #4a554e;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.field input,
-.field select,
-.records-tools select,
-.notes-panel textarea {
-  width: 100%;
-  border: 1px solid #d9ded9;
-  background: #fff;
-  border-radius: 10px;
-  outline: none;
-  color: #29352f;
-  font-size: 13px;
-  padding: 11px 12px;
-}
-
-.field input:focus,
-.field select:focus,
-.records-tools select:focus,
-.notes-panel textarea:focus {
-  border-color: #0f5132;
-  box-shadow: 0 0 0 3px rgba(15,81,50,.08);
-}
-
-.input-with-icon {
-  min-height: 43px;
-  border: 1px solid #d9ded9;
-  border-radius: 10px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 11px;
-  color: #87908a;
-}
-
-.input-with-icon:focus-within {
-  border-color: #0f5132;
-  box-shadow: 0 0 0 3px rgba(15,81,50,.08);
-}
-
-.input-with-icon input {
-  border: none !important;
-  box-shadow: none !important;
-  padding: 10px 0 !important;
-  min-width: 0;
-  flex: 1;
-  outline: none;
-}
-
-.clear-input {
-  border: none;
-  background: #f1f3f1;
-  color: #7c847f;
-  width: 25px;
-  height: 25px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.student-picker {
-  position: relative;
-}
-
-.student-dropdown {
-  position: absolute;
-  z-index: 50;
-  top: calc(100% + 6px);
-  right: 0;
-  left: 0;
-  background: #fff;
-  border: 1px solid #dfe5e0;
-  border-radius: 13px;
-  box-shadow: 0 18px 45px rgba(0,0,0,.12);
-  padding: 6px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.student-option {
-  width: 100%;
-  border: none;
-  background: transparent;
-  padding: 9px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  text-align: right;
-  cursor: pointer;
-  color: #26332c;
-}
-
-.student-option:hover,
-.student-option.selected {
-  background: #f1f7f3;
-}
-
-.student-option > span:nth-child(2) {
-  flex: 1;
-}
-
-.student-option strong,
-.student-option small {
-  display: block;
-}
-
-.student-option strong {
-  font-size: 12px;
-}
-
-.student-option small {
-  color: #929a95;
-  margin-top: 2px;
-  font-size: 10px;
-}
-
-.student-option > svg {
-  color: #0f5132;
-}
-
-.student-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: #edf5ef;
-  color: #0f5132;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dropdown-empty {
-  padding: 20px;
-  text-align: center;
-  color: #888;
-  font-size: 12px;
-}
-
-.selected-student {
-  margin-top: 7px;
-  color: #0f5132;
-  background: #edf7ef;
-  border-radius: 8px;
-  padding: 6px 8px;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.halaqa-box {
-  min-height: 43px;
-  border-radius: 10px;
-  border: 1px solid #e0e5e1;
-  background: #f8faf8;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 10px;
-}
-
-.halaqa-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: #eaf3ed;
-  color: #0f5132;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.halaqa-box span,
-.halaqa-box strong {
-  display: block;
-}
-
-.halaqa-box span {
-  color: #919892;
-  font-size: 9px;
-}
-
-.halaqa-box strong {
-  color: #304039;
-  font-size: 12px;
-  margin-top: 2px;
-}
-
-.field-hint {
-  color: #858d88;
-  font-size: 10px;
-  margin-top: 6px;
-}
-
-.quran-range {
-  display: grid;
-  grid-template-columns:
-    minmax(180px, 1fr)
-    125px
-    32px
-    minmax(180px, 1fr)
-    125px;
-  align-items: end;
-  gap: 10px;
-}
-
-.range-arrow {
-  height: 43px;
-  border-radius: 10px;
-  background: #edf5ef;
-  color: #0f5132;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.select-wrap {
-  position: relative;
-}
-
-.select-wrap select {
-  appearance: none;
-  padding-left: 34px;
-}
-
-.select-wrap > svg {
-  position: absolute;
-  left: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #818b84;
-  pointer-events: none;
-}
-
-.evaluation-area {
-  margin-top: 17px;
-}
-
-.evaluation-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
-}
-
-.evaluation-option {
-  border: 1px solid #e0e4e1;
-  background: #fafbfa;
-  color: #59645e;
-  border-radius: 10px;
-  padding: 11px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 7px;
-  font-weight: 800;
-  font-size: 11px;
-}
-
-.evaluation-option small {
-  border-radius: 7px;
-  padding: 3px 6px;
-  background: #eef0ee;
-  color: #69736d;
-  font-size: 10px;
-}
-
-.evaluation-option.active.excellent {
-  background: #eaf7ee;
-  border-color: #8dc7a1;
-  color: #0f5132;
-}
-
-.evaluation-option.active.very-good,
-.evaluation-option.active.good {
-  background: #eef7ff;
-  border-color: #a8c9e2;
-  color: #185c8b;
-}
-
-.evaluation-option.active.bad {
-  background: #fff1ef;
-  border-color: #e5aaa4;
-  color: #a3261b;
-}
-
-.bottom-grid {
-  display: grid;
-  grid-template-columns: .65fr 2fr;
-  gap: 18px;
-  margin-bottom: 18px;
-}
-
-.score-card {
-  background:
-    linear-gradient(145deg, #fff, #f8fbf9);
-  border: 1px solid #e0e7e2;
-  border-radius: 18px;
-  padding: 23px;
-  min-height: 190px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.score-icon {
-  width: 43px;
-  height: 43px;
-  border-radius: 12px;
-  background: #fff5dc;
-  color: #a57816;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
-}
-
-.score-card > span {
-  color: #808983;
-  font-size: 11px;
-}
-
-.score-card > strong {
-  color: #173d2b;
-  font-size: 45px;
-  line-height: 1.1;
-  margin: 5px 0;
-}
-
-.score-card > strong.positive {
-  color: #0f5132;
-}
-
-.score-card > strong.negative {
-  color: #b42318;
-}
-
-.score-card small {
-  color: #969d98;
-  font-size: 10px;
-}
-
-.notes-panel {
-  margin: 0;
-}
-
-.notes-panel textarea {
-  resize: vertical;
-  min-height: 125px;
-}
-
-.save-bar {
-  display: flex;
-  gap: 9px;
-  margin-bottom: 20px;
-}
-
-.save-button,
-.cancel-button {
-  border-radius: 11px;
-  padding: 13px 20px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 900;
-  font-size: 13px;
-}
-
-.save-button {
-  flex: 1;
-  border: none;
-  background: linear-gradient(135deg, #0f5132, #174f37);
-  color: #fff;
-  box-shadow: 0 9px 22px rgba(15,81,50,.14);
-}
-
-.cancel-button {
-  border: 1px solid #dce1dd;
-  background: #fff;
-  color: #59635d;
-}
-
-.spin {
-  animation: spin .8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.records-panel {
-  overflow: hidden;
-}
-
-.records-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.records-tools {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.records-tools select {
-  width: 170px;
-  min-height: 42px;
-}
-
-.search-records {
-  width: 260px;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  margin: 0 -21px -21px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 1100px;
-}
-
-thead {
-  background: #f6f8f6;
-}
-
-th {
-  color: #657069;
-  font-size: 11px;
-  font-weight: 900;
-  padding: 12px 10px;
-  border-bottom: 1px solid #e4e8e4;
-  white-space: nowrap;
-}
-
-td {
-  padding: 12px 10px;
-  border-bottom: 1px solid #eef0ee;
-  text-align: center;
-  color: #4f5953;
-  font-size: 11px;
-}
-
-tbody tr:hover {
-  background: #fbfcfb;
-}
-
-.date-cell {
-  color: #68726c;
-  white-space: nowrap;
-}
-
-.record-student {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  color: #26332c;
-  white-space: nowrap;
-}
-
-.record-student > span {
-  width: 27px;
-  height: 27px;
-  border-radius: 8px;
-  background: #edf5ef;
-  color: #0f5132;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.quran-text {
-  color: #4d5b53;
-  white-space: nowrap;
-}
-
-.muted {
-  color: #a1a7a3;
-}
-
-.evaluation-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 20px;
-  padding: 5px 9px;
-  font-weight: 800;
-  white-space: nowrap;
-  font-size: 10px;
-}
-
-.evaluation-badge.excellent {
-  background: #e8f6ed;
-  color: #0f5132;
-}
-
-.evaluation-badge.very-good,
-.evaluation-badge.good {
-  background: #edf6ff;
-  color: #21628f;
-}
-
-.evaluation-badge.bad {
-  background: #fff0ee;
-  color: #a3261b;
-}
-
-.evaluation-badge.neutral {
-  background: #f0f2f0;
-  color: #77817b;
-}
-
-.points-positive {
-  color: #0f5132;
-}
-
-.points-negative {
-  color: #b42318;
-}
-
-.points-zero {
-  color: #7d8580;
-}
-
-.row-actions {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.edit-action,
-.delete-action {
-  height: 32px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-
-.edit-action {
-  border: 1px solid #d7e2da;
-  background: #f7fbf8;
-  color: #0f5132;
-  padding: 0 9px;
-  font-weight: 800;
-  font-size: 10px;
-}
-
-.delete-action {
-  width: 32px;
-  border: 1px solid #f0d9d5;
-  background: #fff8f7;
-  color: #b42318;
-}
-
-.loading-state,
-.empty-state {
-  min-height: 230px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  color: #89918b;
-}
-
-.empty-state > div {
-  width: 58px;
-  height: 58px;
-  border-radius: 17px;
-  background: #edf5ef;
-  color: #0f5132;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-state strong {
-  color: #4d5952;
-  font-size: 14px;
-}
-
-.empty-state span {
-  color: #929993;
-  font-size: 11px;
-}
-
-@media (max-width: 1050px) {
-  .stats-grid {
-    grid-template-columns:
-      repeat(2, 1fr);
+function getLessonAmountLabel(
+  value
+) {
+  return (
+    LESSON_AMOUNTS.find(
+      (item) =>
+        item.value ===
+        value
+    )?.label ||
+    "مقدار الدرس"
+  );
+}
+
+function formatFaces(
+  value
+) {
+  const number =
+    Number(
+      value || 0
+    );
+
+  if (
+    Number.isInteger(
+      number
+    )
+  ) {
+    return String(
+      number
+    );
   }
 
-  .form-grid.three {
-    grid-template-columns:
-      1fr 1fr;
-  }
-
-  .bottom-grid {
-    grid-template-columns: 1fr;
-  }
+  return Number(
+    number.toFixed(2)
+  ).toString();
 }
 
-@media (max-width: 760px) {
-  .page-shell {
-    width: min(100% - 22px, 1500px);
-    padding-top: 18px;
+function textOrNull(
+  value
+) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return null;
   }
 
-  .page-header {
-    align-items: flex-start;
-  }
+  const text =
+    String(
+      value
+    ).trim();
 
-  .page-header h1 {
-    font-size: 24px;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .form-grid.three {
-    grid-template-columns: 1fr;
-  }
-
-  .quran-range {
-    grid-template-columns:
-      1fr 1fr;
-  }
-
-  .range-arrow {
-    display: none;
-  }
-
-  .evaluation-grid {
-    grid-template-columns:
-      1fr 1fr;
-  }
-
-  .records-tools {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .search-records,
-  .records-tools select {
-    width: 100%;
-  }
-
-  .save-bar {
-    flex-direction: column;
-  }
+  return text ||
+    null;
 }
 
-@media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+function numberOrNull(
+  value
+) {
+  if (
+    value === "" ||
+    value === null ||
+    value === undefined
+  ) {
+    return null;
   }
 
-  .panel {
-    padding: 16px;
+  const number =
+    Number(value);
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : null;
+}
+
+function valueToString(
+  value
+) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "";
   }
 
-  .evaluation-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .header-main {
-    align-items: flex-start;
-  }
-
-  .header-icon {
-    width: 48px;
-    height: 48px;
-  }
-.react-datepicker {
-  width: 100% !important;
-  border: none !important;
-  font-family: inherit !important;
+  return String(
+    value
+  );
 }
 
-.react-datepicker__month-container {
-  width: 100% !important;
-}
+/* =========================================================
+   CSS
+========================================================= */
 
-.react-datepicker__month {
-  width: 100% !important;
-}
+function PageStyles() {
+  return (
+    <style>
+      {`
+        .recitations-page {
+          width: 100%;
+          max-width: 1600px;
+          margin: 0 auto;
+          color: #0f172a;
+        }
 
-.react-datepicker__day-name,
-.react-datepicker__day {
-  width: 4rem !important;
-  line-height: 4rem !important;
-  margin: 0.25rem !important;
-  font-size: 18px !important;
-}
+        .recitations-page * {
+          box-sizing: border-box;
+        }
 
-.react-datepicker__current-month {
-  font-size: 24px !important;
-  font-weight: 900 !important;
-  margin-bottom: 20px !important;
-}
+        .recitations-page button,
+        .recitations-page input,
+        .recitations-page select,
+        .recitations-page textarea {
+          font-family: inherit;
+        }
 
-.react-datepicker__navigation {
-  top: 20px !important;
-}
+        /* =============================================
+           HERO
+        ============================================= */
 
-.react-datepicker__header {
-  background: #fff !important;
-  border-bottom: 1px solid #E2E8F0 !important;
-  padding-bottom: 20px !important;
-}
+        .recitations-hero {
+          position: relative;
+          overflow: hidden;
 
-.react-datepicker__day--selected {
-  background: #0F766E !important;
-  border-radius: 12px !important;
-}
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
 
-.react-datepicker__day:hover {
-  border-radius: 12px !important;
+          gap: 18px;
+
+          padding: 22px 24px;
+          margin-bottom: 16px;
+
+          border:
+            1px solid
+            rgba(15,81,50,.1);
+
+          border-radius: 23px;
+
+          background:
+            linear-gradient(
+              135deg,
+              #ffffff,
+              #f5faf7
+            );
+
+          box-shadow:
+            0 12px 34px
+            rgba(15,81,50,.05);
+        }
+
+        .recitations-hero::after {
+          content: "";
+
+          position: absolute;
+
+          width: 260px;
+          height: 260px;
+
+          left: -130px;
+          top: -150px;
+
+          border-radius: 50%;
+
+          background:
+            radial-gradient(
+              circle,
+              rgba(201,162,39,.14),
+              transparent 68%
+            );
+
+          pointer-events: none;
+        }
+
+        .hero-main {
+          position: relative;
+          z-index: 2;
+
+          display: flex;
+          align-items: center;
+
+          gap: 12px;
+
+          min-width: 0;
+        }
+
+        .hero-icon {
+          width: 49px;
+          height: 49px;
+
+          flex: 0 0 49px;
+
+          border-radius: 15px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #fff;
+
+          background:
+            linear-gradient(
+              135deg,
+              #0f5132,
+              #0f766e
+            );
+
+          box-shadow:
+            0 10px 23px
+            rgba(15,81,50,.17);
+        }
+
+        .hero-eyebrow {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+
+          margin-bottom: 3px;
+
+          color: #0f766e;
+
+          font-size: 9px;
+          font-weight: 900;
+        }
+
+        .hero-main h1 {
+          margin: 0;
+
+          color: #173d2b;
+
+          font-size: 25px;
+          font-weight: 950;
+        }
+
+        .hero-main p {
+          margin: 5px 0 0;
+
+          color: #78857e;
+
+          font-size: 11px;
+          line-height: 1.7;
+        }
+
+        .hero-actions {
+          position: relative;
+          z-index: 2;
+
+          display: flex;
+          align-items: center;
+
+          gap: 7px;
+        }
+
+        .refresh-button,
+        .create-button {
+          min-height: 42px;
+
+          padding: 0 13px;
+
+          border-radius: 12px;
+
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 6px;
+
+          font-size: 9px;
+          font-weight: 900;
+
+          cursor: pointer;
+        }
+
+        .refresh-button {
+          border:
+            1px solid #dfe7e2;
+
+          color: #0f5132;
+          background: #fff;
+        }
+
+        .create-button {
+          border: none;
+
+          color: #fff;
+        }
+
+        .create-button.quran {
+          background:
+            linear-gradient(
+              135deg,
+              #0f5132,
+              #0f766e
+            );
+        }
+
+        .create-button.noorania {
+          background:
+            linear-gradient(
+              135deg,
+              #9a741f,
+              #b18a31
+            );
+        }
+
+        .refresh-button:disabled,
+        .create-button:disabled {
+          opacity: .45;
+          cursor: not-allowed;
+        }
+
+        /* =============================================
+           SCOPE
+        ============================================= */
+
+        .recitation-scope {
+          display: flex;
+          align-items: center;
+
+          gap: 7px;
+
+          margin-bottom: 16px;
+          padding: 10px 13px;
+
+          border:
+            1px solid #dcebe3;
+
+          border-radius: 13px;
+
+          color: #37624c;
+          background: #f4faf6;
+
+          font-size: 9px;
+          line-height: 1.7;
+        }
+
+        /* =============================================
+           STATS
+        ============================================= */
+
+        .recitation-stats {
+          display: grid;
+
+          grid-template-columns:
+            repeat(
+              5,
+              minmax(0,1fr)
+            );
+
+          gap: 9px;
+
+          margin-bottom: 18px;
+        }
+
+        .recitation-stat {
+          min-width: 0;
+
+          display: flex;
+          align-items: center;
+
+          gap: 9px;
+
+          padding: 13px;
+
+          border:
+            1px solid #e6ece8;
+
+          border-radius: 16px;
+
+          background: #fff;
+
+          box-shadow:
+            0 6px 20px
+            rgba(15,23,42,.03);
+        }
+
+        .recitation-stat-icon {
+          width: 36px;
+          height: 36px;
+
+          flex: 0 0 36px;
+
+          border-radius: 11px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .recitation-stat span {
+          display: block;
+
+          color: #7f8b83;
+
+          font-size: 8px;
+          font-weight: 750;
+        }
+
+        .recitation-stat strong {
+          display: block;
+
+          margin-top: 1px;
+
+          color: #173d2b;
+
+          font-size: 18px;
+          font-weight: 950;
+        }
+
+        .recitation-stat small {
+          display: block;
+
+          margin-top: 1px;
+
+          color: #9ba39e;
+
+          font-size: 7px;
+        }
+
+        /* =============================================
+           FILTERS
+        ============================================= */
+
+        .records-toolbar {
+          display: grid;
+
+          grid-template-columns:
+            minmax(230px,1fr)
+            175px
+            175px
+            150px;
+
+          gap: 8px;
+
+          padding: 12px;
+          margin-bottom: 18px;
+
+          border:
+            1px solid #e5ebe7;
+
+          border-radius: 17px;
+
+          background: #fff;
+
+          box-shadow:
+            0 6px 20px
+            rgba(15,23,42,.025);
+        }
+
+        .records-toolbar select,
+        .records-search input {
+          width: 100%;
+          height: 41px;
+
+          border:
+            1px solid #dce4df;
+
+          border-radius: 10px;
+
+          outline: none;
+
+          color: #33443a;
+          background: #fbfdfc;
+
+          font-size: 9px;
+          font-weight: 700;
+        }
+
+        .records-toolbar select {
+          padding: 0 9px;
+        }
+
+        .records-search {
+          position: relative;
+        }
+
+        .records-search > svg {
+          position: absolute;
+
+          right: 12px;
+          top: 50%;
+
+          transform:
+            translateY(-50%);
+
+          color: #8c9690;
+
+          pointer-events: none;
+        }
+
+        .records-search input {
+          padding:
+            0 37px 0 34px;
+        }
+
+        .records-search button {
+          position: absolute;
+
+          left: 6px;
+          top: 50%;
+
+          width: 26px;
+          height: 26px;
+
+          transform:
+            translateY(-50%);
+
+          border: none;
+          border-radius: 7px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #667169;
+          background: #edf1ef;
+
+          cursor: pointer;
+        }
+
+        /* =============================================
+           RECORDS HEADER
+        ============================================= */
+
+        .records-title-row {
+          margin-bottom: 11px;
+        }
+
+        .records-title-row h2 {
+          margin: 0;
+
+          color: #173d2b;
+
+          font-size: 17px;
+          font-weight: 950;
+        }
+
+        .records-title-row p {
+          margin: 3px 0 0;
+
+          color: #909993;
+
+          font-size: 8px;
+        }
+
+        /* =============================================
+           RECORD GRID
+        ============================================= */
+
+        .records-grid {
+          display: grid;
+
+          grid-template-columns:
+            repeat(
+              auto-fit,
+              minmax(
+                min(100%,340px),
+                1fr
+              )
+            );
+
+          gap: 13px;
+        }
+
+        .record-card {
+          position: relative;
+          overflow: hidden;
+
+          min-width: 0;
+
+          border:
+            1px solid #e4eae6;
+
+          border-radius: 19px;
+
+          background: #fff;
+
+          box-shadow:
+            0 7px 24px
+            rgba(15,23,42,.035);
+
+          transition:
+            transform .2s ease,
+            box-shadow .2s ease;
+        }
+
+        .record-card:hover {
+          transform:
+            translateY(-2px);
+
+          box-shadow:
+            0 13px 32px
+            rgba(15,81,50,.07);
+        }
+
+        .record-accent {
+          height: 3px;
+        }
+
+        .record-accent.quran {
+          background:
+            linear-gradient(
+              90deg,
+              #0f5132,
+              #0f766e
+            );
+        }
+
+        .record-accent.noorania {
+          background:
+            linear-gradient(
+              90deg,
+              #9a741f,
+              #d1ab4d
+            );
+        }
+
+        .record-card-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+
+          gap: 8px;
+
+          padding: 14px 14px 10px;
+        }
+
+        .record-student {
+          display: flex;
+          align-items: center;
+
+          gap: 8px;
+
+          min-width: 0;
+        }
+
+        .record-avatar {
+          width: 38px;
+          height: 38px;
+
+          flex: 0 0 38px;
+
+          border-radius: 11px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .record-avatar.quran {
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .record-avatar.noorania {
+          color: #927536;
+          background: #fff8e7;
+        }
+
+        .record-student h3 {
+          margin: 0;
+
+          overflow: hidden;
+
+          color: #26382e;
+
+          font-size: 12px;
+          font-weight: 950;
+
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        .record-type-label {
+          margin-top: 2px;
+
+          color: #929b95;
+
+          font-size: 7px;
+        }
+
+        .record-badges {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+
+          gap: 4px;
+        }
+
+        .type-badge,
+        .legacy-badge {
+          padding: 4px 7px;
+
+          border-radius: 999px;
+
+          font-size: 7px;
+          font-weight: 900;
+        }
+
+        .type-badge.quran {
+          color: #047857;
+          background: #ecfdf5;
+        }
+
+        .type-badge.noorania {
+          color: #8a681e;
+          background: #fff8e7;
+        }
+
+        .legacy-badge {
+          color: #64748b;
+          background: #f1f5f9;
+        }
+
+        /* DATE */
+
+        .record-date {
+          display: flex;
+          align-items: flex-start;
+
+          gap: 6px;
+
+          margin: 0 14px 9px;
+          padding: 8px 9px;
+
+          border-radius: 10px;
+
+          color: #0f5132;
+          background: #f5faf7;
+        }
+
+        .record-date strong {
+          display: block;
+
+          font-size: 8px;
+          font-weight: 900;
+        }
+
+        .record-date span {
+          display: block;
+
+          margin-top: 2px;
+
+          color: #87928b;
+
+          font-size: 7px;
+        }
+
+        /* HALAQA */
+
+        .record-halaqa {
+          display: flex;
+          flex-wrap: wrap;
+
+          gap: 4px 10px;
+
+          margin:
+            0 14px 10px;
+
+          color: #78857d;
+
+          font-size: 7px;
+        }
+
+        .record-halaqa div {
+          display: inline-flex;
+          align-items: center;
+
+          gap: 3px;
+        }
+
+        /* SECTION */
+
+        .record-section {
+          margin:
+            0 14px 8px;
+          padding: 9px;
+
+          border:
+            1px solid #edf1ef;
+
+          border-radius: 11px;
+
+          background: #fbfdfc;
+        }
+
+        .record-section-title {
+          display: flex;
+          align-items: center;
+
+          gap: 4px;
+
+          margin-bottom: 6px;
+
+          color: #78847c;
+
+          font-size: 7px;
+          font-weight: 850;
+        }
+
+        .record-section-content {
+          color: #33443a;
+
+          font-size: 9px;
+        }
+
+        .quran-text {
+          display: inline-flex;
+          align-items: center;
+
+          gap: 4px;
+
+          color: #33443a;
+
+          font-size: 9px;
+          font-weight: 800;
+        }
+
+        .quran-arrow {
+          color: #a0aaa3;
+        }
+
+        .muted {
+          color: #a0a7a2;
+        }
+
+        .record-values {
+          display: flex;
+          flex-wrap: wrap;
+
+          gap: 5px;
+
+          margin-top: 7px;
+        }
+
+        .evaluation-badge,
+        .face-badge {
+          display: inline-flex;
+          align-items: center;
+
+          gap: 3px;
+
+          padding: 4px 7px;
+
+          border-radius: 999px;
+
+          font-size: 7px;
+          font-weight: 850;
+        }
+
+        .evaluation-badge.excellent {
+          color: #047857;
+          background: #e9f9ef;
+        }
+
+        .evaluation-badge.very-good {
+          color: #0f766e;
+          background: #edf8f7;
+        }
+
+        .evaluation-badge.good {
+          color: #927536;
+          background: #fff8e7;
+        }
+
+        .evaluation-badge.bad {
+          color: #b42318;
+          background: #fff0ef;
+        }
+
+        .evaluation-badge.neutral {
+          color: #64748b;
+          background: #f1f3f2;
+        }
+
+        .face-badge {
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .face-badge.legacy {
+          color: #64748b;
+          background: #f1f5f9;
+        }
+
+        .sub-record-line {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          gap: 7px;
+
+          padding: 4px 0;
+        }
+
+        .text-record-value {
+          color: #33443a;
+
+          font-size: 9px;
+        }
+
+        /* NOTES */
+
+        .record-notes {
+          display: flex;
+          align-items: flex-start;
+
+          gap: 5px;
+
+          margin:
+            0 14px 10px;
+          padding: 8px 9px;
+
+          border-radius: 10px;
+
+          color: #756843;
+          background: #fffaf0;
+
+          font-size: 7px;
+          line-height: 1.6;
+        }
+
+        /* FOOTER */
+
+        .record-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          gap: 8px;
+
+          padding:
+            10px 14px 13px;
+
+          border-top:
+            1px solid #edf1ef;
+        }
+
+        .record-points {
+          display: flex;
+          align-items: center;
+
+          gap: 4px;
+
+          color: #927536;
+
+          font-size: 10px;
+          font-weight: 950;
+        }
+
+        .record-points span {
+          color: #9aa39d;
+
+          font-size: 6px;
+          font-weight: 700;
+        }
+
+        .record-actions {
+          display: flex;
+
+          gap: 5px;
+        }
+
+        .record-edit,
+        .record-delete {
+          min-height: 31px;
+
+          padding: 0 9px;
+
+          border-radius: 8px;
+
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 4px;
+
+          font-size: 7px;
+          font-weight: 850;
+
+          cursor: pointer;
+        }
+
+        .record-edit {
+          border:
+            1px solid #b9d6c5;
+
+          color: #0f5132;
+          background: #f5faf7;
+        }
+
+        .record-delete {
+          border:
+            1px solid #f1d1ce;
+
+          color: #b42318;
+          background: #fff5f4;
+        }
+
+        /* =============================================
+           MODAL
+        ============================================= */
+
+        .recitation-modal-overlay {
+          position: fixed;
+          inset: 0;
+
+          z-index: 5000;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          padding: 16px;
+
+          background:
+            rgba(15,23,42,.58);
+
+          backdrop-filter:
+            blur(5px);
+        }
+
+        .recitation-modal {
+          width:
+            min(
+              980px,
+              100%
+            );
+
+          max-height:
+            calc(
+              100dvh - 32px
+            );
+
+          overflow-y: auto;
+
+          border-radius: 24px;
+
+          background: #f8faf9;
+
+          box-shadow:
+            0 32px 90px
+            rgba(15,23,42,.3);
+        }
+
+        .modal-header {
+          position: sticky;
+          top: 0;
+
+          z-index: 20;
+
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          gap: 10px;
+
+          padding: 15px 17px;
+
+          border-bottom:
+            1px solid #e8eeea;
+
+          background:
+            rgba(255,255,255,.97);
+
+          backdrop-filter:
+            blur(14px);
+        }
+
+        .modal-heading {
+          display: flex;
+          align-items: center;
+
+          gap: 9px;
+        }
+
+        .modal-icon {
+          width: 39px;
+          height: 39px;
+
+          flex: 0 0 39px;
+
+          border-radius: 12px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .modal-icon.quran {
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .modal-icon.noorania {
+          color: #927536;
+          background: #fff8e7;
+        }
+
+        .modal-eyebrow {
+          color: #909993;
+
+          font-size: 7px;
+          font-weight: 800;
+        }
+
+        .modal-heading h2 {
+          margin: 1px 0 0;
+
+          color: #173d2b;
+
+          font-size: 15px;
+          font-weight: 950;
+        }
+
+        .modal-close {
+          width: 37px;
+          height: 37px;
+
+          border: none;
+          border-radius: 10px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #64748b;
+          background: #f1f5f3;
+
+          cursor: pointer;
+        }
+
+        .edit-notice {
+          display: flex;
+          align-items: center;
+
+          gap: 6px;
+
+          padding: 9px 16px;
+
+          border-bottom:
+            1px solid #f0dfb7;
+
+          color: #84651e;
+          background: #fff8e7;
+
+          font-size: 8px;
+          line-height: 1.6;
+        }
+
+        .modal-body {
+          padding: 15px;
+        }
+
+        /* =============================================
+           FORM SECTION
+        ============================================= */
+
+        .form-section {
+          padding: 15px;
+          margin-bottom: 12px;
+
+          border:
+            1px solid #e5ebe7;
+
+          border-radius: 17px;
+
+          background: #fff;
+
+          box-shadow:
+            0 4px 14px
+            rgba(15,23,42,.02);
+        }
+
+        .form-section-header {
+          display: flex;
+          align-items: center;
+
+          gap: 8px;
+
+          margin-bottom: 13px;
+        }
+
+        .form-section-icon {
+          width: 34px;
+          height: 34px;
+
+          flex: 0 0 34px;
+
+          border-radius: 10px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .form-section-header h3 {
+          margin: 0;
+
+          color: #26382e;
+
+          font-size: 11px;
+          font-weight: 950;
+        }
+
+        .form-section-header p {
+          margin: 2px 0 0;
+
+          color: #939c96;
+
+          font-size: 7px;
+        }
+
+        /* =============================================
+           INPUTS
+        ============================================= */
+
+        .form-grid {
+          display: grid;
+
+          gap: 10px;
+        }
+
+        .form-grid.three {
+          grid-template-columns:
+            repeat(
+              3,
+              minmax(0,1fr)
+            );
+        }
+
+        .form-grid.two {
+          grid-template-columns:
+            repeat(
+              2,
+              minmax(0,1fr)
+            );
+        }
+
+        .field {
+          min-width: 0;
+        }
+
+        .field-label {
+          display: flex;
+          align-items: center;
+
+          gap: 4px;
+
+          margin-bottom: 5px;
+
+          color: #566259;
+
+          font-size: 8px;
+          font-weight: 850;
+        }
+
+        .required {
+          color: #b42318;
+
+          margin-right: 2px;
+        }
+
+        .field input,
+        .field select,
+        .notes-box textarea {
+          width: 100%;
+
+          box-sizing: border-box;
+
+          border:
+            1px solid #dce4df;
+
+          border-radius: 10px;
+
+          outline: none;
+
+          color: #33443a;
+          background: #fbfdfc;
+
+          font-size: 9px;
+          font-weight: 650;
+        }
+
+        .field input,
+        .field select {
+          height: 40px;
+
+          padding: 0 9px;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .notes-box textarea:focus {
+          border-color:
+            rgba(15,81,50,.45);
+
+          box-shadow:
+            0 0 0 3px
+            rgba(15,81,50,.05);
+        }
+
+        .field select:disabled {
+          color: #7f8b83;
+          background: #f3f5f4;
+
+          cursor: not-allowed;
+        }
+
+        .select-wrap,
+        .number-wrap,
+        .date-input-wrap {
+          position: relative;
+        }
+
+        .select-wrap select {
+          appearance: none;
+
+          padding-left: 30px;
+        }
+
+        .select-wrap > svg {
+          position: absolute;
+
+          left: 10px;
+          top: 50%;
+
+          transform:
+            translateY(-50%);
+
+          color: #859089;
+
+          pointer-events: none;
+        }
+
+        .number-wrap input {
+          padding-left: 45px;
+        }
+
+        .number-wrap > span {
+          position: absolute;
+
+          left: 9px;
+          top: 50%;
+
+          transform:
+            translateY(-50%);
+
+          color: #89938c;
+
+          font-size: 7px;
+
+          pointer-events: none;
+        }
+
+        .date-input-wrap > svg {
+          position: absolute;
+
+          right: 10px;
+          top: 50%;
+
+          transform:
+            translateY(-50%);
+
+          color: #0f5132;
+
+          pointer-events: none;
+        }
+
+        .date-input-wrap input {
+          padding-right: 33px;
+        }
+
+        /* =============================================
+           DUAL DATE
+        ============================================= */
+
+        .dual-date {
+          display: grid;
+
+          grid-template-columns:
+            1fr 1fr;
+
+          gap: 7px;
+
+          margin-top: 10px;
+        }
+
+        .dual-date > div {
+          padding: 8px 10px;
+
+          border-radius: 10px;
+
+          background: #f5faf7;
+        }
+
+        .dual-date span {
+          display: block;
+
+          color: #8c9690;
+
+          font-size: 6px;
+        }
+
+        .dual-date strong {
+          display: block;
+
+          margin-top: 2px;
+
+          color: #0f5132;
+
+          font-size: 8px;
+        }
+
+        /* =============================================
+           QURAN RANGE
+        ============================================= */
+
+        .quran-range {
+          display: grid;
+
+          grid-template-columns:
+            minmax(140px,1fr)
+            minmax(90px,.55fr)
+            25px
+            minmax(140px,1fr)
+            minmax(90px,.55fr);
+
+          gap: 7px;
+
+          align-items: end;
+        }
+
+        .range-divider {
+          height: 40px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #98a29c;
+
+          font-size: 14px;
+        }
+
+        /* =============================================
+           EVALUATIONS
+        ============================================= */
+
+        .evaluation-area {
+          margin-top: 13px;
+        }
+
+        .evaluation-grid {
+          display: grid;
+
+          grid-template-columns:
+            repeat(
+              4,
+              minmax(0,1fr)
+            );
+
+          gap: 6px;
+        }
+
+        .evaluation-option {
+          min-height: 40px;
+
+          border:
+            1px solid #dfe5e1;
+
+          border-radius: 10px;
+
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          gap: 4px;
+
+          padding: 0 9px;
+
+          color: #606c64;
+          background: #fff;
+
+          font-size: 8px;
+          font-weight: 850;
+
+          cursor: pointer;
+        }
+
+        .evaluation-option small {
+          opacity: .7;
+          font-size: 6px;
+        }
+
+        .evaluation-option.excellent.active {
+          border-color: #0f5132;
+
+          color: #0f5132;
+          background: #e8f6ed;
+        }
+
+        .evaluation-option.very-good.active {
+          border-color: #0f766e;
+
+          color: #0f766e;
+          background: #edf8f7;
+        }
+
+        .evaluation-option.good.active {
+          border-color: #c79d43;
+
+          color: #927536;
+          background: #fff8e7;
+        }
+
+        .evaluation-option.bad.active {
+          border-color: #b42318;
+
+          color: #b42318;
+          background: #fff0ef;
+        }
+
+        /* =============================================
+           LESSON AMOUNT
+        ============================================= */
+
+        .lesson-amount-block {
+          margin-top: 13px;
+        }
+
+        .lesson-amount-grid {
+          display: grid;
+
+          grid-template-columns:
+            repeat(
+              4,
+              minmax(0,1fr)
+            );
+
+          gap: 6px;
+        }
+
+        .amount-option {
+          min-height: 52px;
+
+          border:
+            1px solid #dfe5e1;
+
+          border-radius: 11px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+
+          gap: 2px;
+
+          color: #59665e;
+          background: #fff;
+
+          cursor: pointer;
+        }
+
+        .amount-option strong {
+          font-size: 9px;
+        }
+
+        .amount-option span {
+          color: #97a09a;
+
+          font-size: 6px;
+        }
+
+        .amount-option.active {
+          border-color: #0f5132;
+
+          color: #0f5132;
+          background: #edf7f1;
+
+          box-shadow:
+            inset 0 0 0 1px
+            rgba(15,81,50,.08);
+        }
+
+        .faces-preview {
+          display: flex;
+          align-items: center;
+
+          gap: 5px;
+
+          margin-top: 7px;
+          padding: 7px 9px;
+
+          border-radius: 9px;
+
+          color: #66736a;
+          background: #f5f8f6;
+
+          font-size: 7px;
+        }
+
+        .faces-preview strong {
+          color: #0f5132;
+        }
+
+        .evaluation-faces-grid {
+          margin-top: 0;
+        }
+
+        /* =============================================
+           BOTTOM FORM
+        ============================================= */
+
+        .bottom-form-grid {
+          display: grid;
+
+          grid-template-columns:
+            190px
+            minmax(0,1fr);
+
+          gap: 10px;
+        }
+
+        .points-preview {
+          min-height: 135px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+
+          border:
+            1px solid #f0e2c2;
+
+          border-radius: 16px;
+
+          background:
+            linear-gradient(
+              145deg,
+              #fffaf0,
+              #fffdf8
+            );
+        }
+
+        .points-icon {
+          width: 37px;
+          height: 37px;
+
+          margin-bottom: 5px;
+
+          border-radius: 11px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #927536;
+          background: #fff2cf;
+        }
+
+        .points-preview > span {
+          color: #9b844f;
+
+          font-size: 7px;
+        }
+
+        .points-preview > strong {
+          margin-top: 2px;
+
+          color: #8c6919;
+
+          font-size: 23px;
+          font-weight: 950;
+        }
+
+        .points-preview > small {
+          margin-top: 2px;
+
+          color: #a99c7c;
+
+          font-size: 6px;
+        }
+
+        .notes-box {
+          padding: 13px;
+
+          border:
+            1px solid #e5ebe7;
+
+          border-radius: 16px;
+
+          background: #fff;
+        }
+
+        .notes-box textarea {
+          min-height: 91px;
+
+          padding: 9px;
+
+          resize: vertical;
+
+          line-height: 1.7;
+        }
+
+        /* =============================================
+           MODAL FOOTER
+        ============================================= */
+
+        .modal-footer {
+          position: sticky;
+          bottom: 0;
+
+          z-index: 20;
+
+          display: flex;
+          justify-content: flex-end;
+
+          gap: 7px;
+
+          padding: 12px 16px;
+
+          border-top:
+            1px solid #e7ede9;
+
+          background:
+            rgba(255,255,255,.97);
+
+          backdrop-filter:
+            blur(14px);
+        }
+
+        .modal-save,
+        .modal-cancel {
+          min-height: 40px;
+
+          padding: 0 15px;
+
+          border-radius: 10px;
+
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+
+          gap: 5px;
+
+          font-size: 8px;
+          font-weight: 900;
+
+          cursor: pointer;
+        }
+
+        .modal-save {
+          min-width: 135px;
+
+          border: none;
+
+          color: #fff;
+
+          background:
+            linear-gradient(
+              135deg,
+              #0f5132,
+              #0f766e
+            );
+        }
+
+        .modal-cancel {
+          border:
+            1px solid #dce3df;
+
+          color: #637068;
+          background: #fff;
+        }
+
+        .modal-save:disabled,
+        .modal-cancel:disabled {
+          opacity: .55;
+          cursor: wait;
+        }
+
+        /* =============================================
+           EMPTY
+        ============================================= */
+
+        .records-empty {
+          padding: 48px 20px;
+
+          border:
+            1px dashed #ccd8d1;
+
+          border-radius: 19px;
+
+          text-align: center;
+
+          background: #fff;
+        }
+
+        .empty-icon,
+        .loading-icon {
+          width: 54px;
+          height: 54px;
+
+          margin:
+            0 auto 10px;
+
+          border-radius: 16px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          color: #0f5132;
+          background: #edf7f1;
+        }
+
+        .records-empty h3,
+        .recitations-loading h3 {
+          margin: 0;
+
+          color: #35453b;
+
+          font-size: 13px;
+        }
+
+        .records-empty p,
+        .recitations-loading p {
+          margin: 4px 0 0;
+
+          color: #8d9790;
+
+          font-size: 8px;
+        }
+
+        .recitations-loading {
+          min-height: 55vh;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+
+          text-align: center;
+        }
+
+        /* =============================================
+           ANIMATION
+        ============================================= */
+
+        @keyframes recitationSpin {
+          to {
+            transform:
+              rotate(360deg);
+          }
+        }
+
+        .spin {
+          animation:
+            recitationSpin
+            .8s linear infinite;
+        }
+
+        /* =============================================
+           TABLET
+        ============================================= */
+
+        @media (
+          max-width: 1100px
+        ) {
+          .recitation-stats {
+            grid-template-columns:
+              repeat(
+                3,
+                minmax(0,1fr)
+              );
+          }
+
+          .records-toolbar {
+            grid-template-columns:
+              1fr 1fr;
+          }
+
+          .records-search {
+            grid-column:
+              1 / -1;
+          }
+
+          .quran-range {
+            grid-template-columns:
+              1fr 1fr;
+
+            gap: 9px;
+          }
+
+          .range-divider {
+            display: none;
+          }
+        }
+
+        /* =============================================
+           MOBILE
+        ============================================= */
+
+        @media (
+          max-width: 720px
+        ) {
+          .recitations-hero {
+            align-items:
+              flex-start;
+
+            padding: 17px;
+
+            border-radius: 19px;
+          }
+
+          .hero-icon {
+            width: 42px;
+            height: 42px;
+
+            flex-basis: 42px;
+          }
+
+          .hero-main h1 {
+            font-size: 20px;
+          }
+
+          .hero-main p {
+            display: none;
+          }
+
+          .hero-actions {
+            gap: 5px;
+          }
+
+          .refresh-button,
+          .create-button {
+            width: 40px;
+            min-height: 40px;
+
+            padding: 0;
+          }
+
+          .refresh-button span,
+          .create-button span {
+            display: none;
+          }
+
+          .recitation-stats {
+            grid-template-columns:
+              repeat(
+                2,
+                minmax(0,1fr)
+              );
+
+            gap: 7px;
+          }
+
+          .recitation-stat {
+            padding: 10px;
+          }
+
+          .recitation-stat-icon {
+            width: 32px;
+            height: 32px;
+
+            flex-basis: 32px;
+          }
+
+          .recitation-stat strong {
+            font-size: 16px;
+          }
+
+          .records-toolbar {
+            grid-template-columns:
+              1fr;
+          }
+
+          .records-search {
+            grid-column: auto;
+          }
+
+          /* MODAL */
+
+          .recitation-modal-overlay {
+            padding: 7px;
+
+            align-items:
+              flex-end;
+          }
+
+          .recitation-modal {
+            max-height: 95dvh;
+
+            border-radius:
+              22px 22px
+              10px 10px;
+          }
+
+          .modal-body {
+            padding: 11px;
+          }
+
+          .form-grid.three,
+          .form-grid.two {
+            grid-template-columns:
+              1fr;
+          }
+
+          .dual-date {
+            grid-template-columns:
+              1fr;
+          }
+
+          .quran-range {
+            grid-template-columns:
+              1fr 1fr;
+          }
+
+          .evaluation-grid {
+            grid-template-columns:
+              1fr 1fr;
+          }
+
+          .lesson-amount-grid {
+            grid-template-columns:
+              1fr 1fr;
+          }
+
+          .bottom-form-grid {
+            grid-template-columns:
+              1fr;
+          }
+
+          .points-preview {
+            min-height: 100px;
+          }
+
+          .modal-footer {
+            padding: 10px 12px;
+          }
+
+          .modal-save,
+          .modal-cancel {
+            flex: 1;
+          }
+
+          .record-card:hover {
+            transform: none;
+          }
+        }
+
+        /* =============================================
+           SMALL MOBILE
+        ============================================= */
+
+        @media (
+          max-width: 430px
+        ) {
+          .recitations-hero {
+            padding: 14px;
+          }
+
+          .hero-main {
+            gap: 8px;
+          }
+
+          .hero-main h1 {
+            font-size: 18px;
+          }
+
+          .hero-eyebrow {
+            font-size: 7px;
+          }
+
+          .hero-icon {
+            width: 38px;
+            height: 38px;
+
+            flex-basis: 38px;
+          }
+
+          .refresh-button,
+          .create-button {
+            width: 36px;
+            min-height: 36px;
+          }
+
+          .recitation-scope {
+            font-size: 7px;
+          }
+
+          .quran-range {
+            grid-template-columns:
+              1fr;
+          }
+
+          .evaluation-grid {
+            grid-template-columns:
+              1fr 1fr;
+          }
+
+          .record-card-header {
+            align-items:
+              flex-start;
+          }
+
+          .record-footer {
+            flex-direction:
+              column;
+
+            align-items:
+              stretch;
+          }
+
+          .record-actions {
+            display: grid;
+
+            grid-template-columns:
+              1fr 1fr;
+          }
+
+          .record-edit,
+          .record-delete {
+            width: 100%;
+          }
+        }
+      `}
+    </style>
+  );
 }
-}
-`;

@@ -1,39 +1,48 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "../../lib/supabase";
+// src/pages/teacher/Students.jsx
 
 import {
-  Users,
-  Search,
-  Plus,
-  Pencil,
-  Trash2,
-  ArrowRight,
-  CheckCircle2,
-  XCircle,
-  UserRound,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  AlertTriangle,
   BookOpen,
-  Phone,
+  Building2,
   CalendarDays,
-  Trophy,
-  Clock3,
-  UserX,
-  UserCheck,
-  CircleSlash,
-  GraduationCap,
-  Save,
-  X,
-  RotateCcw,
-  Video,
-  BookMarked,
-  Timer,
-  FileText,
+  CheckCircle2,
   ChevronDown,
-  UserPlus,
+  CircleSlash,
+  Clock3,
+  Edit3,
+  GraduationCap,
+  Home,
+  Loader2,
+  MapPin,
+  Phone,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  UserCheck,
+  UserRound,
+  Users,
+  UserX,
+  VenusAndMars,
+  Video,
+  X,
 } from "lucide-react";
 
+import { supabase } from "../../lib/supabase";
+import ConfirmModal from "../../components/ConfirmModal";
+import { showToast } from "../../components/Toast";
+
 /* =========================================================
-   الثوابت
+   Constants
 ========================================================= */
 
 const DAYS = [
@@ -46,7 +55,7 @@ const DAYS = [
   { value: "friday", label: "الجمعة" },
 ];
 
-const EDUCATION_LEVELS = [
+const EDUCATION_STAGES = [
   { value: "primary", label: "ابتدائي" },
   { value: "middle", label: "متوسط" },
   { value: "secondary", label: "ثانوي" },
@@ -54,851 +63,1852 @@ const EDUCATION_LEVELS = [
   { value: "other", label: "غير ذلك" },
 ];
 
-const MEMORIZATION_TARGETS = [
+const LEARNING_GOALS = [
   { value: "quran", label: "القرآن الكريم" },
   { value: "noorania", label: "القاعدة النورانية" },
-  { value: "both", label: "القرآن والقاعدة النورانية" },
+  {
+    value: "noorania_quran",
+    label: "القرآن والقاعدة النورانية",
+  },
   { value: "other", label: "غير ذلك" },
 ];
 
-const RECITATION_TYPES = [
-  {
-    value: "regular",
-    label: "منتظم",
-  },
-  {
-    value: "remote",
-    label: "عن بعد",
-  },
+const RECITATION_MODES = [
+  { value: "regular", label: "حضوري" },
+  { value: "remote", label: "عن بُعد" },
+  { value: "both", label: "حضوري وعن بُعد" },
 ];
 
+const GENDERS = [
+  { value: "male", label: "ذكر" },
+  { value: "female", label: "أنثى" },
+];
+
+const GUARDIAN_RELATIONS = [
+  { value: "الأب", label: "الأب" },
+  { value: "الأم", label: "الأم" },
+  { value: "الأخ", label: "الأخ" },
+  { value: "العم", label: "العم" },
+  { value: "الخال", label: "الخال" },
+  { value: "الجد", label: "الجد" },
+  { value: "ولي آخر", label: "ولي آخر" },
+];
+
+const HALAQA_PERIODS = {
+  after_fajr: "بعد الفجر",
+  after_dhuhr: "بعد الظهر",
+  after_asr: "بعد العصر",
+  after_maghrib: "بعد المغرب",
+  after_isha: "بعد العشاء",
+};
+
+const EMPTY_FORM = {
+  full_name: "",
+  user_number: "",
+  phone: "",
+
+  birth_date: "",
+  gender: "",
+  nationality: "",
+  residence_address: "",
+
+  guardian_name: "",
+  guardian_phone: "",
+  guardian_relation: "",
+
+  education_stage: "",
+  education_grade: "",
+
+  learning_goal: "",
+  recitation_mode: "",
+  recitation_days: [],
+  preferred_recitation_time: "",
+
+  halaqa_id: "",
+  notes: "",
+};
+
 /* =========================================================
-   الصفحة الرئيسية
+   Helpers
+========================================================= */
+
+function getToday() {
+  const date = new Date();
+
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function normalizeText(value) {
+  return String(value ?? "").trim();
+}
+
+function getAgeFromBirthDate(value) {
+  if (!value) return null;
+
+  const birth = new Date(`${value}T12:00:00`);
+
+  if (Number.isNaN(birth.getTime())) {
+    return null;
+  }
+
+  const today = new Date();
+
+  let age =
+    today.getFullYear() -
+    birth.getFullYear();
+
+  const beforeBirthday =
+    today.getMonth() <
+      birth.getMonth() ||
+    (today.getMonth() ===
+      birth.getMonth() &&
+      today.getDate() <
+        birth.getDate());
+
+  if (beforeBirthday) {
+    age -= 1;
+  }
+
+  return age >= 0 ? age : null;
+}
+
+function getDaysAgo(days) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date;
+}
+
+function needsFollowUp(lastRecitation) {
+  if (!lastRecitation) {
+    return true;
+  }
+
+  const last = new Date(lastRecitation);
+
+  if (Number.isNaN(last.getTime())) {
+    return false;
+  }
+
+  return last < getDaysAgo(7);
+}
+
+function formatNumber(value) {
+  try {
+    return new Intl.NumberFormat(
+      "ar-SA"
+    ).format(Number(value) || 0);
+  } catch {
+    return String(Number(value) || 0);
+  }
+}
+
+function formatGregorianDate(value) {
+  if (!value) {
+    return "لا يوجد";
+  }
+
+  try {
+    const text =
+      String(value).slice(0, 10);
+
+    const [
+      year,
+      month,
+      day,
+    ] = text
+      .split("-")
+      .map(Number);
+
+    const date =
+      new Date(
+        year,
+        month - 1,
+        day,
+        12,
+        0,
+        0
+      );
+
+    return new Intl.DateTimeFormat(
+      "ar-SA-u-ca-gregory",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }
+    ).format(date);
+  } catch {
+    return String(value);
+  }
+}
+
+function formatHijriDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    const text =
+      String(value).slice(0, 10);
+
+    const [
+      year,
+      month,
+      day,
+    ] = text
+      .split("-")
+      .map(Number);
+
+    const date =
+      new Date(
+        year,
+        month - 1,
+        day,
+        12,
+        0,
+        0
+      );
+
+    return new Intl.DateTimeFormat(
+      "ar-SA-u-ca-islamic-umalqura",
+      {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }
+    ).format(date);
+  } catch {
+    return "";
+  }
+}
+
+function getLabel(
+  options,
+  value,
+  fallback = "غير محدد"
+) {
+  return (
+    options.find(
+      (item) =>
+        item.value === value
+    )?.label ||
+    fallback
+  );
+}
+
+function getAttendanceRate(student) {
+  const total =
+    Number(student.present || 0) +
+    Number(student.absent || 0) +
+    Number(student.late || 0) +
+    Number(student.excused || 0);
+
+  if (!total) {
+    return 0;
+  }
+
+  return Math.round(
+    ((Number(student.present || 0) +
+      Number(student.late || 0)) /
+      total) *
+      100
+  );
+}
+
+function getInitials(name) {
+  const parts =
+    normalizeText(name)
+      .split(/\s+/)
+      .filter(Boolean);
+
+  if (!parts.length) {
+    return "ط";
+  }
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 1);
+  }
+
+  return (
+    parts[0].slice(0, 1) +
+    parts[
+      parts.length - 1
+    ].slice(0, 1)
+  );
+}
+
+/* =========================================================
+   Page
 ========================================================= */
 
 export default function Students() {
-  const navigate = useNavigate();
+  const [
+    teacher,
+    setTeacher,
+  ] =
+    useState(null);
 
-  const [students, setStudents] = useState([]);
-  const [halaqat, setHalaqat] = useState([]);
-
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [levelFilter, setLevelFilter] = useState("all");
-
-  const [editingId, setEditingId] = useState(null);
-
-const [showCreateModal, setShowCreateModal] =
-  useState(false);
-
-  /* =====================================================
-     بيانات الطالب
-  ===================================================== */
-
-  const [fullName, setFullName] = useState("");
-  const [studentNumber, setStudentNumber] = useState("");
-  const [phone, setPhone] = useState("");
-
-  const [age, setAge] = useState("");
-  const [educationLevel, setEducationLevel] =
-    useState("");
-
-  const [memorizationTarget, setMemorizationTarget] =
-    useState("");
-
-  const [recitationType, setRecitationType] =
-    useState("");
-
-  const [recitationDays, setRecitationDays] =
+  const [
+    teacherHalaqaIds,
+    setTeacherHalaqaIds,
+  ] =
     useState([]);
 
-  const [preferredRecitationTime, setPreferredRecitationTime] =
+  const [
+    students,
+    setStudents,
+  ] =
+    useState([]);
+
+  const [
+    halaqat,
+    setHalaqat,
+  ] =
+    useState([]);
+
+  const [
+    initialLoading,
+    setInitialLoading,
+  ] =
+    useState(true);
+
+  const [
+    refreshing,
+    setRefreshing,
+  ] =
+    useState(false);
+
+  const [
+    saving,
+    setSaving,
+  ] =
+    useState(false);
+
+  const [
+    search,
+    setSearch,
+  ] =
     useState("");
 
-  const [selectedHalaqa, setSelectedHalaqa] =
-    useState("");
+  const [
+    statusFilter,
+    setStatusFilter,
+  ] =
+    useState("all");
 
-  const [notes, setNotes] = useState("");
+  const [
+    halaqaFilter,
+    setHalaqaFilter,
+  ] =
+    useState("all");
 
-  /* =====================================================
-     التحميل
-  ===================================================== */
+  const [
+    stageFilter,
+    setStageFilter,
+  ] =
+    useState("all");
+
+  const [
+    modalOpen,
+    setModalOpen,
+  ] =
+    useState(false);
+
+  const [
+    editingStudent,
+    setEditingStudent,
+  ] =
+    useState(null);
+
+  const [
+    form,
+    setForm,
+  ] =
+    useState(EMPTY_FORM);
+
+  const [
+    statusTarget,
+    setStatusTarget,
+  ] =
+    useState(null);
+
+  const [
+    deleteTarget,
+    setDeleteTarget,
+  ] =
+    useState(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  async function loadData() {
-    setInitialLoading(true);
+  /* =====================================================
+     Load
+  ===================================================== */
 
-const {
-  data: { user },
-} = await supabase.auth.getUser();
-
-const { data: teacherProfile } =
-  await supabase
-    .from("profiles")
-    .select("id")
-    .eq(
-      "auth_user_id",
-      user.id
-    )
-    .single();
-
-const teacherId =
-  teacherProfile.id;
-
-const {
-  data: teacherHalaqat,
-} = await supabase
-  .from("teacher_halaqat")
-  .select("halaqa_id")
-  .eq(
-    "teacher_id",
-    teacherId
-  );
-
-const halaqaIds =
-  teacherHalaqat.map(
-    (h) => h.halaqa_id
-  );
+  async function loadData(
+    silent = false
+  ) {
+    if (silent) {
+      setRefreshing(true);
+    } else {
+      setInitialLoading(true);
+    }
 
     try {
-      const [
-        studentsResult,
-        halaqatResult,
-        assignmentsResult,
-        attendanceResult,
-        recitationsResult,
-        transactionsResult,
-      ] = await Promise.all([
-        supabase
-  .from("student_halaqat")
-  .select(`
-    student_id,
-    halaqa_id,
-    profiles(*)
-  `)
-  .in(
-    "halaqa_id",
-    halaqaIds
-  ),
+      const {
+        data: authData,
+        error: authError,
+      } =
+        await supabase.auth.getUser();
 
-        supabase
-          .from("halaqat")
-          .select("*")
-          .order("id"),
+      if (authError) {
+        throw authError;
+      }
 
-        supabase
-          .from("student_halaqat")
-          .select("*")
-          .eq("is_current", true),
+      const user =
+        authData?.user;
 
-        supabase
-          .from("attendance")
-          .select("*"),
-
-        supabase
-          .from("recitations")
-          .select("*"),
-
-        supabase
-          .from("points_transactions")
-          .select("*"),
-      ]);
-
-      if (studentsResult.error) {
+      if (!user) {
         throw new Error(
-          `خطأ في تحميل الطلاب: ${studentsResult.error.message}`
+          "تعذر تحديد المستخدم الحالي."
         );
       }
 
-      if (halaqatResult.error) {
+      const {
+        data: teacherProfile,
+        error: teacherError,
+      } =
+        await supabase
+          .from("profiles")
+          .select(
+            "id, full_name, display_name, user_number, role"
+          )
+          .eq(
+            "auth_user_id",
+            user.id
+          )
+          .eq(
+            "role",
+            "teacher"
+          )
+          .maybeSingle();
+
+      if (teacherError) {
+        throw teacherError;
+      }
+
+      if (!teacherProfile) {
         throw new Error(
-          `خطأ في تحميل الحلقات: ${halaqatResult.error.message}`
+          "تعذر العثور على حساب المعلم."
         );
       }
 
-      if (assignmentsResult.error) {
-        throw new Error(
-          `خطأ في تحميل ارتباط الطلاب بالحلقات: ${assignmentsResult.error.message}`
-        );
-      }
+      setTeacher(
+        teacherProfile
+      );
 
-      if (attendanceResult.error) {
-        throw new Error(
-          `خطأ في تحميل الحضور: ${attendanceResult.error.message}`
-        );
-      }
-
-      if (recitationsResult.error) {
-        throw new Error(
-          `خطأ في تحميل التسميعات: ${recitationsResult.error.message}`
-        );
-      }
-
-      if (transactionsResult.error) {
-        throw new Error(
-          `خطأ في تحميل النقاط: ${transactionsResult.error.message}`
-        );
-      }
-
-      const studentsData =
-  studentsResult.data?.map(
-    (s) => ({
-      ...s.profiles,
-      halaqa_id: s.halaqa_id,
-    })
-  ) || [];
-      const halaqatData = halaqatResult.data || [];
-      const assignmentsData =
-        assignmentsResult.data || [];
-      const attendanceData =
-        attendanceResult.data || [];
-      const recitationsData =
-        recitationsResult.data || [];
-      const transactionsData =
-        transactionsResult.data || [];
-
-      const preparedStudents = studentsData.map(
-        (student) => {
-          const assignment =
-            assignmentsData.find(
-              (item) =>
-                Number(item.student_id) ===
-                Number(student.id)
-            );
-
-          const halaqa =
-            halaqatData.find(
-              (item) =>
-                Number(item.id) ===
-                Number(assignment?.halaqa_id)
-            );
-
-          const studentAttendance =
-            attendanceData.filter(
-              (item) =>
-                Number(item.student_id) ===
-                Number(student.id)
-            );
-
-          const present =
-            studentAttendance.filter(
-              (item) =>
-                item.status === "present"
-            ).length;
-
-          const absent =
-            studentAttendance.filter(
-              (item) =>
-                item.status === "absent"
-            ).length;
-
-          const late =
-            studentAttendance.filter(
-              (item) =>
-                item.status === "late"
-            ).length;
-
-          const excused =
-            studentAttendance.filter(
-              (item) =>
-                item.status === "excused"
-            ).length;
-
-          const studentRecitations =
-            recitationsData.filter(
-              (item) =>
-                Number(item.student_id) ===
-                Number(student.id)
-            );
-
-          const recitationPoints =
-            studentRecitations.reduce(
-              (total, item) =>
-                total +
-                Number(item.points || 0),
-              0
-            );
-
-          const sortedRecitations = [
-            ...studentRecitations,
-          ].sort(
-            (a, b) =>
-              new Date(
-                b.recitation_date
-              ) -
-              new Date(
-                a.recitation_date
-              )
+      const {
+        data: teacherLinks,
+        error: linksError,
+      } =
+        await supabase
+          .from(
+            "teacher_halaqat"
+          )
+          .select(
+            "halaqa_id, role"
+          )
+          .eq(
+            "teacher_id",
+            teacherProfile.id
           );
 
-          const lastRecitation =
-            sortedRecitations.length > 0
-              ? sortedRecitations[0]
-                  .recitation_date
-              : null;
+      if (linksError) {
+        throw linksError;
+      }
 
-          const studentTransactions =
-            transactionsData.filter(
-              (item) =>
-                Number(item.student_id) ===
-                Number(student.id)
+      const uniqueIds =
+        [
+          ...new Set(
+            (
+              teacherLinks ||
+              []
+            )
+              .map(
+                (item) =>
+                  Number(
+                    item.halaqa_id
+                  )
+              )
+              .filter(Boolean)
+          ),
+        ];
+
+      setTeacherHalaqaIds(
+        uniqueIds
+      );
+
+      if (
+        uniqueIds.length ===
+        0
+      ) {
+        setHalaqat([]);
+        setStudents([]);
+        return;
+      }
+
+      const roleMap =
+        new Map(
+          (
+            teacherLinks ||
+            []
+          ).map(
+            (item) => [
+              Number(
+                item.halaqa_id
+              ),
+              item.role,
+            ]
+          )
+        );
+
+      const {
+        data: halaqatRows,
+        error: halaqatError,
+      } =
+        await supabase
+          .from("halaqat")
+          .select(
+            "id, name, mosque_id, capacity, status, halaqa_period, description"
+          )
+          .in(
+            "id",
+            uniqueIds
+          )
+          .order("name");
+
+      if (halaqatError) {
+        throw halaqatError;
+      }
+
+      const mosqueIds =
+        [
+          ...new Set(
+            (
+              halaqatRows ||
+              []
+            )
+              .map(
+                (item) =>
+                  Number(
+                    item.mosque_id
+                  )
+              )
+              .filter(Boolean)
+          ),
+        ];
+
+      let mosquesRows = [];
+
+      if (
+        mosqueIds.length >
+        0
+      ) {
+        const {
+          data,
+          error,
+        } =
+          await supabase
+            .from("mosques")
+            .select("id, name")
+            .in(
+              "id",
+              mosqueIds
             );
 
-          const transactionsPoints =
-            studentTransactions.reduce(
-              (total, item) =>
-                total +
-                Number(item.points || 0),
-              0
-            );
-
-          return {
-            ...student,
-
-            halaqaName:
-              halaqa?.name ||
-              "غير مرتبط",
-
-            halaqaId:
-              halaqa?.id || null,
-
-            present,
-            absent,
-            late,
-            excused,
-
-            attendanceTotal:
-              studentAttendance.length,
-
-            recitationsCount:
-              studentRecitations.length,
-
-            lastRecitation,
-
-            recitationPoints,
-            transactionsPoints,
-
-            totalPoints:
-              recitationPoints +
-              transactionsPoints,
-          };
+        if (error) {
+          throw error;
         }
+
+        mosquesRows =
+          data || [];
+      }
+
+      const mosqueMap =
+        new Map(
+          mosquesRows.map(
+            (mosque) => [
+              Number(
+                mosque.id
+              ),
+              mosque.name,
+            ]
+          )
+        );
+
+      const preparedHalaqat =
+        (
+          halaqatRows ||
+          []
+        ).map(
+          (halaqa) => ({
+            ...halaqa,
+
+            mosque_name:
+              mosqueMap.get(
+                Number(
+                  halaqa.mosque_id
+                )
+              ) ||
+              "مسجد غير محدد",
+
+            teacher_role:
+              roleMap.get(
+                Number(
+                  halaqa.id
+                )
+              ) ||
+              "assistant",
+          })
+        );
+
+      setHalaqat(
+        preparedHalaqat
       );
 
-      setStudents(preparedStudents);
-      setHalaqat(halaqatData);
-    } catch (error) {
-      console.error(error);
-      showMessage(
-        error.message ||
-          "حدث خطأ أثناء تحميل البيانات"
+      const {
+        data: assignmentsRows,
+        error: assignmentsError,
+      } =
+        await supabase
+          .from(
+            "student_halaqat"
+          )
+          .select(
+            "id, student_id, halaqa_id, teacher_id, start_date, end_date, is_current"
+          )
+          .in(
+            "halaqa_id",
+            uniqueIds
+          )
+          .eq(
+            "is_current",
+            true
+          );
+
+      if (assignmentsError) {
+        throw assignmentsError;
+      }
+
+      const studentIds =
+        [
+          ...new Set(
+            (
+              assignmentsRows ||
+              []
+            )
+              .map(
+                (item) =>
+                  Number(
+                    item.student_id
+                  )
+              )
+              .filter(Boolean)
+          ),
+        ];
+
+      if (
+        studentIds.length ===
+        0
+      ) {
+        setStudents([]);
+        return;
+      }
+
+      const thirtyDaysAgo =
+        new Date();
+
+      thirtyDaysAgo.setDate(
+        thirtyDaysAgo.getDate() -
+          30
       );
+
+      const attendanceStart =
+        [
+          thirtyDaysAgo.getFullYear(),
+          String(
+            thirtyDaysAgo.getMonth() +
+              1
+          ).padStart(2, "0"),
+          String(
+            thirtyDaysAgo.getDate()
+          ).padStart(2, "0"),
+        ].join("-");
+
+      const [
+        profilesResult,
+        attendanceResult,
+        recitationsResult,
+      ] =
+        await Promise.all([
+          supabase
+            .from(
+              "profiles"
+            )
+            .select("*")
+            .in(
+              "id",
+              studentIds
+            )
+            .eq(
+              "role",
+              "student"
+            ),
+
+          supabase
+            .from(
+              "attendance"
+            )
+            .select(
+              "student_id, halaqa_id, status, attendance_date"
+            )
+            .in(
+              "student_id",
+              studentIds
+            )
+            .gte(
+              "attendance_date",
+              attendanceStart
+            ),
+
+          supabase
+            .from(
+              "recitations"
+            )
+            .select(
+              "id, student_id, halaqa_id, recitation_date"
+            )
+            .in(
+              "student_id",
+              studentIds
+            ),
+        ]);
+
+      if (
+        profilesResult.error
+      ) {
+        throw profilesResult.error;
+      }
+
+      if (
+        attendanceResult.error
+      ) {
+        throw attendanceResult.error;
+      }
+
+      if (
+        recitationsResult.error
+      ) {
+        throw recitationsResult.error;
+      }
+
+      const profiles =
+        profilesResult.data ||
+        [];
+
+      const attendance =
+        attendanceResult.data ||
+        [];
+
+      const recitations =
+        recitationsResult.data ||
+        [];
+
+      const assignmentMap =
+        new Map(
+          (
+            assignmentsRows ||
+            []
+          ).map(
+            (item) => [
+              Number(
+                item.student_id
+              ),
+              item,
+            ]
+          )
+        );
+
+      const halaqaMap =
+        new Map(
+          preparedHalaqat.map(
+            (item) => [
+              Number(
+                item.id
+              ),
+              item,
+            ]
+          )
+        );
+
+      const preparedStudents =
+        profiles.map(
+          (student) => {
+            const assignment =
+              assignmentMap.get(
+                Number(
+                  student.id
+                )
+              );
+
+            const halaqa =
+              assignment
+                ? halaqaMap.get(
+                    Number(
+                      assignment.halaqa_id
+                    )
+                  )
+                : null;
+
+            const studentAttendance =
+              attendance.filter(
+                (item) =>
+                  Number(
+                    item.student_id
+                  ) ===
+                  Number(
+                    student.id
+                  )
+              );
+
+            const present =
+              studentAttendance.filter(
+                (item) =>
+                  item.status ===
+                  "present"
+              ).length;
+
+            const absent =
+              studentAttendance.filter(
+                (item) =>
+                  item.status ===
+                  "absent"
+              ).length;
+
+            const late =
+              studentAttendance.filter(
+                (item) =>
+                  item.status ===
+                  "late"
+              ).length;
+
+            const excused =
+              studentAttendance.filter(
+                (item) =>
+                  item.status ===
+                  "excused"
+              ).length;
+
+            const studentRecitations =
+              recitations
+                .filter(
+                  (item) =>
+                    Number(
+                      item.student_id
+                    ) ===
+                    Number(
+                      student.id
+                    )
+                )
+                .sort(
+                  (a, b) =>
+                    new Date(
+                      b.recitation_date
+                    ) -
+                    new Date(
+                      a.recitation_date
+                    )
+                );
+
+            const lastRecitation =
+              studentRecitations[0]
+                ?.recitation_date ||
+              null;
+
+            const attendanceRate =
+              getAttendanceRate({
+                present,
+                absent,
+                late,
+                excused,
+              });
+
+            const profileComplete =
+              Boolean(
+                normalizeText(
+                  student.guardian_name
+                ) &&
+                  normalizeText(
+                    student.guardian_phone
+                  ) &&
+                  normalizeText(
+                    student.gender
+                  ) &&
+                  normalizeText(
+                    student.nationality
+                  )
+              );
+
+            return {
+              ...student,
+
+              halaqa_id:
+                halaqa?.id ||
+                null,
+
+              halaqa_name:
+                halaqa?.name ||
+                "غير مرتبط",
+
+              mosque_name:
+                halaqa
+                  ?.mosque_name ||
+                "غير محدد",
+
+              halaqa_period:
+                halaqa
+                  ?.halaqa_period ||
+                null,
+
+              teacher_role:
+                halaqa
+                  ?.teacher_role ||
+                null,
+
+              present,
+              absent,
+              late,
+              excused,
+
+              attendance_rate:
+                attendanceRate,
+
+              recitations_count:
+                studentRecitations.length,
+
+              last_recitation:
+                lastRecitation,
+
+              follow_up:
+                needsFollowUp(
+                  lastRecitation
+                ),
+
+              profile_complete:
+                profileComplete,
+            };
+          }
+        );
+
+      preparedStudents.sort(
+        (a, b) =>
+          String(
+            a.full_name || ""
+          ).localeCompare(
+            String(
+              b.full_name || ""
+            ),
+            "ar"
+          )
+      );
+
+      setStudents(
+        preparedStudents
+      );
+
+    } catch (error) {
+      console.error(
+        "LOAD TEACHER STUDENTS:",
+        error
+      );
+
+      showToast(
+        error?.message ||
+          "تعذر تحميل بيانات الطلاب.",
+        "error"
+      );
+
+      setStudents([]);
     } finally {
-      setInitialLoading(false);
+      setInitialLoading(
+        false
+      );
+
+      setRefreshing(
+        false
+      );
     }
   }
 
   /* =====================================================
-     Toast مركزي
-     
-     يستخدم حدثًا عامًا حتى لا تحتاج الصفحة
-     إلى معرفة تفاصيل نظام الـ Toast.
+     Access Helpers
   ===================================================== */
 
-  function showMessage(
-    message,
-    type = "error"
+  function isTeacherHalaqa(
+    halaqaId
   ) {
-    window.dispatchEvent(
-      new CustomEvent("app:toast", {
-        detail: {
-          message,
-          type,
-        },
+    return teacherHalaqaIds.includes(
+      Number(halaqaId)
+    );
+  }
+
+  async function ensureStudentAccess(
+    studentId
+  ) {
+    if (
+      teacherHalaqaIds.length ===
+      0
+    ) {
+      throw new Error(
+        "لا توجد حلقات مرتبطة بحسابك."
+      );
+    }
+
+    const {
+      data,
+      error,
+    } =
+      await supabase
+        .from(
+          "student_halaqat"
+        )
+        .select(
+          "id, halaqa_id"
+        )
+        .eq(
+          "student_id",
+          studentId
+        )
+        .eq(
+          "is_current",
+          true
+        )
+        .in(
+          "halaqa_id",
+          teacherHalaqaIds
+        )
+        .limit(1);
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.length) {
+      throw new Error(
+        "ليس لديك صلاحية لإدارة هذا الطالب."
+      );
+    }
+
+    return data[0];
+  }
+
+  /* =====================================================
+     Modal
+  ===================================================== */
+
+  function openCreateModal() {
+    setEditingStudent(
+      null
+    );
+
+    setForm({
+      ...EMPTY_FORM,
+
+      halaqa_id:
+        halaqat.length === 1
+          ? String(
+              halaqat[0].id
+            )
+          : "",
+    });
+
+    setModalOpen(true);
+  }
+
+  function openEditModal(
+    student
+  ) {
+    setEditingStudent(
+      student
+    );
+
+    setForm({
+      full_name:
+        student.full_name ||
+        "",
+
+      user_number:
+        student.user_number ||
+        "",
+
+      phone:
+        student.phone ||
+        "",
+
+      birth_date:
+        student.birth_date ||
+        "",
+
+      gender:
+        student.gender ||
+        "",
+
+      nationality:
+        student.nationality ||
+        "",
+
+      residence_address:
+        student.residence_address ||
+        "",
+
+      guardian_name:
+        student.guardian_name ||
+        student.parent_name ||
+        "",
+
+      guardian_phone:
+        student.guardian_phone ||
+        student.parent_phone ||
+        "",
+
+      guardian_relation:
+        student.guardian_relation ||
+        "",
+
+      education_stage:
+        student.education_stage ||
+        student.education_level ||
+        "",
+
+      education_grade:
+        student.education_grade ||
+        "",
+
+      learning_goal:
+        student.learning_goal ||
+        "",
+
+      recitation_mode:
+        student.recitation_mode ||
+        "",
+
+      recitation_days:
+        Array.isArray(
+          student.recitation_days
+        )
+          ? student.recitation_days
+          : [],
+
+      preferred_recitation_time:
+        student.preferred_recitation_time ||
+        "",
+
+      halaqa_id:
+        student.halaqa_id
+          ? String(
+              student.halaqa_id
+            )
+          : "",
+
+      notes:
+        student.notes ||
+        "",
+    });
+
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    if (saving) {
+      return;
+    }
+
+    setModalOpen(false);
+    setEditingStudent(null);
+    setForm(EMPTY_FORM);
+  }
+
+  function updateForm(
+    field,
+    value
+  ) {
+    setForm(
+      (current) => ({
+        ...current,
+        [field]: value,
+      })
+    );
+  }
+
+  function toggleRecitationDay(
+    day
+  ) {
+    setForm(
+      (current) => ({
+        ...current,
+
+        recitation_days:
+          current.recitation_days.includes(
+            day
+          )
+            ? current.recitation_days.filter(
+                (item) =>
+                  item !== day
+              )
+            : [
+                ...current.recitation_days,
+                day,
+              ],
       })
     );
   }
 
   /* =====================================================
-     حفظ الطالب
+     Save
   ===================================================== */
 
   async function saveStudent() {
-    if (!fullName.trim()) {
-      showMessage(
-        "أدخل اسم الطالب",
+    const fullName =
+      normalizeText(
+        form.full_name
+      );
+
+    const studentNumber =
+      normalizeText(
+        form.user_number
+      );
+
+    if (!fullName) {
+      showToast(
+        "أدخل اسم الطالب.",
         "error"
       );
       return;
     }
 
-    if (!studentNumber.trim()) {
-      showMessage(
-        "أدخل رقم الطالب",
+    if (!studentNumber) {
+      showToast(
+        "أدخل رقم الطالب.",
+        "error"
+      );
+      return;
+    }
+
+    if (!form.halaqa_id) {
+      showToast(
+        "اختر الحلقة.",
         "error"
       );
       return;
     }
 
     if (
-      age !== "" &&
-      (Number(age) < 3 ||
-        Number(age) > 100)
+      !isTeacherHalaqa(
+        form.halaqa_id
+      )
     ) {
-      showMessage(
-        "العمر يجب أن يكون بين 3 و100 سنة",
+      showToast(
+        "الحلقة المحددة ليست من حلقاتك.",
         "error"
       );
       return;
     }
 
-    setLoading(true);
+    const age =
+      getAgeFromBirthDate(
+        form.birth_date
+      );
+
+    if (
+      age !== null &&
+      (
+        age < 3 ||
+        age > 100
+      )
+    ) {
+      showToast(
+        "تاريخ الميلاد ينتج عمرًا غير منطقي.",
+        "error"
+      );
+      return;
+    }
+
+    setSaving(true);
 
     try {
-      const profileData = {
-        role: "student",
-        user_number:
-          studentNumber.trim(),
-        full_name:
-          fullName.trim(),
-        phone: phone.trim(),
-        age:
-          age === ""
-            ? null
-            : Number(age),
-
-        education_level:
-          educationLevel || null,
-
-learning_goal:
-  memorizationTarget || null,
-
-        recitation_mode:
-  recitationType || null,
-
-        recitation_days:
-          recitationDays,
-
-        preferred_recitation_time:
-          preferredRecitationTime ||
-          null,
-
-        notes: notes.trim(),
-
-        status: "active",
-      };
-
-      let studentId = editingId;
-
-      /* ===============================
-         تعديل
-      =============================== */
-
-      if (editingId) {
-        const { error } =
-          await supabase
-            .from("profiles")
-            .update(profileData)
-            .eq("id", editingId);
-
-        if (error) {
-          throw new Error(
-            `تعذر تعديل الطالب: ${error.message}`
-          );
-        }
-
-        showMessage(
-          "تم تعديل بيانات الطالب بنجاح",
-          "success"
+      if (!teacher?.id) {
+        throw new Error(
+          "تعذر تحديد حساب المعلم."
         );
       }
 
-      /* ===============================
-         إضافة
-      =============================== */
+      if (
+        editingStudent?.id
+      ) {
+        await ensureStudentAccess(
+          editingStudent.id
+        );
+      }
 
-      else {
-        const { data, error } =
+      const profilePayload = {
+        role: "student",
+
+        user_number:
+          studentNumber,
+
+        full_name:
+          fullName,
+
+        phone:
+          normalizeText(
+            form.phone
+          ) || null,
+
+        birth_date:
+          form.birth_date ||
+          null,
+
+        age,
+
+        gender:
+          form.gender ||
+          null,
+
+        nationality:
+          normalizeText(
+            form.nationality
+          ) || null,
+
+        residence_address:
+          normalizeText(
+            form.residence_address
+          ) || null,
+
+        guardian_name:
+          normalizeText(
+            form.guardian_name
+          ) || null,
+
+        guardian_phone:
+          normalizeText(
+            form.guardian_phone
+          ) || null,
+
+        guardian_relation:
+          normalizeText(
+            form.guardian_relation
+          ) || null,
+
+        education_stage:
+          form.education_stage ||
+          null,
+
+        // توافق مؤقت مع أجزاء المشروع القديمة
+        education_level:
+          form.education_stage ||
+          null,
+
+        education_grade:
+          normalizeText(
+            form.education_grade
+          ) || null,
+
+        learning_goal:
+          form.learning_goal ||
+          null,
+
+        recitation_mode:
+          form.recitation_mode ||
+          null,
+
+        recitation_days:
+          Array.isArray(
+            form.recitation_days
+          )
+            ? form.recitation_days
+            : [],
+
+        preferred_recitation_time:
+          form.preferred_recitation_time ||
+          null,
+
+        notes:
+          normalizeText(
+            form.notes
+          ) || null,
+
+        status:
+          editingStudent?.status ||
+          "active",
+
+        is_active:
+          editingStudent
+            ? editingStudent.is_active !==
+              false
+            : true,
+      };
+
+      let studentId =
+        editingStudent?.id ||
+        null;
+
+      if (studentId) {
+        const {
+          error,
+        } =
           await supabase
             .from("profiles")
-            .insert([
-              {
-                ...profileData,
-                status: "active",
-              },
-            ])
+            .update(
+              profilePayload
+            )
+            .eq(
+              "id",
+              studentId
+            )
+            .eq(
+              "role",
+              "student"
+            );
+
+        if (error) {
+          throw error;
+        }
+      } else {
+        const {
+          data,
+          error,
+        } =
+          await supabase
+            .from("profiles")
+            .insert(
+              profilePayload
+            )
             .select("id")
             .single();
 
         if (error) {
-          throw new Error(
-            `تعذر إضافة الطالب: ${error.message}`
-          );
+          throw error;
         }
 
-        studentId = data?.id;
+        studentId =
+          data?.id;
+      }
 
-        showMessage(
-          "تمت إضافة الطالب بنجاح",
-          "success"
+      if (!studentId) {
+        throw new Error(
+          "تعذر تحديد الطالب بعد الحفظ."
         );
       }
 
-      /* ===============================
-         ربط الحلقة
-      =============================== */
+      const targetHalaqaId =
+        Number(
+          form.halaqa_id
+        );
 
       if (
-        studentId &&
-        selectedHalaqa
+        !isTeacherHalaqa(
+          targetHalaqaId
+        )
       ) {
-        if (editingId) {
+        throw new Error(
+          "الحلقة المحددة ليست ضمن نطاقك."
+        );
+      }
+
+      const {
+        data: currentLinks,
+        error: currentLinksError,
+      } =
+        await supabase
+          .from(
+            "student_halaqat"
+          )
+          .select(
+            "id, halaqa_id"
+          )
+          .eq(
+            "student_id",
+            studentId
+          )
+          .eq(
+            "is_current",
+            true
+          );
+
+      if (currentLinksError) {
+        throw currentLinksError;
+      }
+
+      const currentLink =
+        (
+          currentLinks ||
+          []
+        )[0];
+
+      if (
+        !currentLink ||
+        Number(
+          currentLink.halaqa_id
+        ) !==
+          targetHalaqaId
+      ) {
+        if (
+          currentLinks?.length
+        ) {
+          const {
+            error:
+              deactivateError,
+          } =
+            await supabase
+              .from(
+                "student_halaqat"
+              )
+              .update({
+                is_current:
+                  false,
+
+                end_date:
+                  getToday(),
+              })
+              .eq(
+                "student_id",
+                studentId
+              )
+              .eq(
+                "is_current",
+                true
+              )
+              .in(
+                "halaqa_id",
+                teacherHalaqaIds
+              );
+
+          if (
+            deactivateError
+          ) {
+            throw deactivateError;
+          }
+        }
+
+        const {
+          data:
+            oldLink,
+          error:
+            oldLinkError,
+        } =
           await supabase
-            .from("student_halaqat")
-            .update({
-              is_current: false,
-            })
+            .from(
+              "student_halaqat"
+            )
+            .select("id")
             .eq(
               "student_id",
               studentId
             )
             .eq(
-              "is_current",
-              true
-            );
+              "halaqa_id",
+              targetHalaqaId
+            )
+            .maybeSingle();
+
+        if (
+          oldLinkError
+        ) {
+          throw oldLinkError;
         }
 
-const { data: existingAssignment } =
-  await supabase
-    .from("student_halaqat")
-    .select("id")
-    .eq("student_id", studentId)
-    .eq(
-      "halaqa_id",
-      Number(selectedHalaqa)
-    )
-    .maybeSingle();
+        if (oldLink) {
+          const {
+            error:
+              reactivateError,
+          } =
+            await supabase
+              .from(
+                "student_halaqat"
+              )
+              .update({
+                is_current:
+                  true,
 
-if (existingAssignment) {
+                start_date:
+                  getToday(),
 
-  await supabase
-    .from("student_halaqat")
-    .update({
-      is_current: true
-    })
-    .eq(
-      "id",
-      existingAssignment.id
-    );
+                end_date:
+                  null,
 
-}
-else {
+                teacher_id:
+                  teacher.id,
+              })
+              .eq(
+                "id",
+                oldLink.id
+              );
 
-  const {
-    error: assignmentError
-  } = await supabase
-    .from("student_halaqat")
-    .insert([
-      {
-        student_id: studentId,
-        halaqa_id: Number(selectedHalaqa),
-        is_current: true
+          if (
+            reactivateError
+          ) {
+            throw reactivateError;
+          }
+        } else {
+          const {
+            error:
+              linkError,
+          } =
+            await supabase
+              .from(
+                "student_halaqat"
+              )
+              .insert({
+                student_id:
+                  studentId,
+
+                halaqa_id:
+                  targetHalaqaId,
+
+                teacher_id:
+                  teacher.id,
+
+                is_current:
+                  true,
+
+                start_date:
+                  getToday(),
+              });
+
+          if (linkError) {
+            throw linkError;
+          }
+        }
       }
-    ]);
 
-  if (assignmentError)
-    throw assignmentError;
-
-}
-      }
-
-      clearForm();
-
-setShowCreateModal(false);
-
-await loadData();
-    } catch (error) {
-      console.error(error);
-
-      showMessage(
-        error.message ||
-          "حدث خطأ أثناء حفظ الطالب",
-        "error"
+      showToast(
+        editingStudent
+          ? "تم تحديث بيانات الطالب بنجاح."
+          : "تم إنشاء الطالب وربطه بالحلقة بنجاح.",
+        "success"
       );
+
+      closeModal();
+
+      await loadData(true);
+
+    } catch (error) {
+      console.error(
+        "SAVE TEACHER STUDENT:",
+        error
+      );
+
+      if (
+        error?.code ===
+        "23505"
+      ) {
+        showToast(
+          "رقم الطالب مستخدم مسبقًا.",
+          "error"
+        );
+      } else {
+        showToast(
+          error?.message ||
+            "تعذر حفظ بيانات الطالب.",
+          "error"
+        );
+      }
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
 
   /* =====================================================
-     تعديل الطالب
+     Status
   ===================================================== */
 
-function editStudent(student) {
-
-  setShowCreateModal(true);
-
-  setEditingId(student.id);
-
-    setFullName(
-      student.full_name || ""
-    );
-
-    setStudentNumber(
-      student.user_number || ""
-    );
-
-    setPhone(
-      student.phone || ""
-    );
-
-    setAge(
-      student.age === null ||
-      student.age === undefined
-        ? ""
-        : String(student.age)
-    );
-
-    setEducationLevel(
-      student.education_level || ""
-    );
-
-    setMemorizationTarget(
-      student.memorization_target ||
-        ""
-    );
-
-    setRecitationType(
-      student.recitation_type ||
-        ""
-    );
-
-    setRecitationDays(
-      Array.isArray(
-        student.recitation_days
-      )
-        ? student.recitation_days
-        : []
-    );
-
-    setPreferredRecitationTime(
-      student.preferred_recitation_time ||
-        ""
-    );
-
-    setSelectedHalaqa(
-      student.halaqaId
-        ? String(student.halaqaId)
-        : ""
-    );
-
-    setNotes(
-      student.notes || ""
-    );
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }
-
-  /* =====================================================
-     تفريغ النموذج
-  ===================================================== */
-
-  function clearForm() {
-
-  setShowCreateModal(false);
-
-  setEditingId(null);
-
-    setFullName("");
-    setStudentNumber("");
-    setPhone("");
-
-    setAge("");
-    setEducationLevel("");
-
-    setMemorizationTarget("");
-    setRecitationType("");
-
-    setRecitationDays([]);
-
-    setPreferredRecitationTime("");
-
-    setSelectedHalaqa("");
-
-    setNotes("");
-  }
-
-  /* =====================================================
-     الأيام
-  ===================================================== */
-
-  function toggleRecitationDay(day) {
-    setRecitationDays(
-      (current) =>
-        current.includes(day)
-          ? current.filter(
-              (item) => item !== day
-            )
-          : [...current, day]
-    );
-  }
-
-  function selectAllDays() {
-    setRecitationDays(
-      DAYS.map((day) => day.value)
-    );
-  }
-
-  function clearDays() {
-    setRecitationDays([]);
-  }
-
-  /* =====================================================
-     حالة الطالب
-  ===================================================== */
-
-  async function toggleStatus(student) {
-    const newStatus =
-      student.status === "active"
-        ? "inactive"
-        : "active";
-
+  async function toggleStatus(
+    student
+  ) {
     try {
-      const { error } =
+      setSaving(true);
+
+      await ensureStudentAccess(
+        student.id
+      );
+
+      const newStatus =
+        student.status ===
+        "active"
+          ? "inactive"
+          : "active";
+
+      const {
+        error,
+      } =
         await supabase
           .from("profiles")
           .update({
-            status: newStatus,
+            status:
+              newStatus,
+
+            is_active:
+              newStatus ===
+              "active",
           })
-          .eq("id", student.id);
+          .eq(
+            "id",
+            student.id
+          )
+          .eq(
+            "role",
+            "student"
+          );
 
       if (error) {
         throw error;
       }
 
-      showMessage(
-        newStatus === "active"
-          ? "تم تفعيل الطالب"
-          : "تم تعطيل الطالب",
+      showToast(
+        newStatus ===
+          "active"
+          ? "تم تفعيل الطالب."
+          : "تم إيقاف الطالب.",
         "success"
       );
 
-      await loadData();
-    } catch (error) {
-      console.error(error);
+      setStatusTarget(null);
 
-      showMessage(
-        error.message ||
-          "تعذر تغيير حالة الطالب",
+      await loadData(true);
+
+    } catch (error) {
+      console.error(
+        "TOGGLE TEACHER STUDENT:",
+        error
+      );
+
+      showToast(
+        error?.message ||
+          "تعذر تغيير حالة الطالب.",
         "error"
       );
+    } finally {
+      setSaving(false);
     }
   }
 
-  async function deleteStudent(id) {
+  /* =====================================================
+     Delete
+  ===================================================== */
 
-  const student =
-    students.find(
-      item => Number(item.id) === Number(id)
-    );
+  async function deleteStudent(
+    student
+  ) {
+    if (!student?.id) {
+      return;
+    }
 
-  const confirmed = window.confirm(
-    `هل أنت متأكد من حذف الطالب "${student?.full_name || ""}"؟\n\nسيتم حذف جميع بياناته نهائياً ولا يمكن التراجع عن العملية.`
-  );
+    try {
+      setSaving(true);
 
-  if (!confirmed) return;
+      await ensureStudentAccess(
+        student.id
+      );
 
-  setLoading(true);
+      const studentId =
+        Number(
+          student.id
+        );
 
-  try {
+      const tables = [
+        "monthly_progress",
+        "monthly_plans",
+        "noorania_recitations",
+        "recitations",
+        "attendance",
+        "points_transactions",
+        "exam_results",
+        "exam_students",
+        "student_halaqat",
+      ];
 
-    // الإنجازات الشهرية
-    await supabase
-      .from("monthly_progress")
-      .delete()
-      .eq("student_id", id);
+      for (
+        const table of tables
+      ) {
+        const {
+          error,
+        } =
+          await supabase
+            .from(table)
+            .delete()
+            .eq(
+              "student_id",
+              studentId
+            );
 
-    // التسميعات
-    await supabase
-      .from("recitations")
-      .delete()
-      .eq("student_id", id);
+        if (error) {
+          throw new Error(
+            `تعذر حذف بيانات الطالب من ${table}: ${error.message}`
+          );
+        }
+      }
 
-    // الحضور
-    await supabase
-      .from("attendance")
-      .delete()
-      .eq("student_id", id);
+      const {
+        error: profileError,
+      } =
+        await supabase
+          .from("profiles")
+          .delete()
+          .eq(
+            "id",
+            studentId
+          )
+          .eq(
+            "role",
+            "student"
+          );
 
-    // نقاط الطالب
-    await supabase
-      .from("student_points")
-      .delete()
-      .eq("student_id", id);
+      if (profileError) {
+        throw profileError;
+      }
 
-   
+      showToast(
+        "تم حذف الطالب نهائيًا.",
+        "success"
+      );
 
-    // ربط الطالب بالحلقات
-    await supabase
-      .from("student_halaqat")
-      .delete()
-      .eq("student_id", id);
+      setDeleteTarget(null);
 
-    // نتائج الاختبارات
-    await supabase
-      .from("exam_results")
-      .delete()
-      .eq("student_id", id);
+      await loadData(true);
 
-    // ربط الطالب بالاختبارات
-    await supabase
-      .from("exam_students")
-      .delete()
-      .eq("student_id", id);
+    } catch (error) {
+      console.error(
+        "DELETE TEACHER STUDENT:",
+        error
+      );
 
-    // حذف الطالب نفسه
-    const { error } = await supabase
-      .from("profiles")
-      .delete()
-      .eq("id", id);
-
-    if (error) throw error;
-
-    showMessage(
-      "تم حذف الطالب نهائياً",
-      "success"
-    );
-
-    await loadData();
-
-  } catch (error) {
-
-    console.error(error);
-
-    showMessage(
-      error.message,
-      "error"
-    );
-
-  } finally {
-
-    setLoading(false);
-
+      showToast(
+        error?.message ||
+          "تعذر حذف الطالب. قد توجد بيانات مرتبطة أخرى تمنع الحذف.",
+        "error"
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
-}
-
   /* =====================================================
-     البحث والتصفية
+     Filters
   ===================================================== */
 
   const filteredStudents =
@@ -910,47 +1920,64 @@ function editStudent(student) {
 
       return students.filter(
         (student) => {
+          const searchable =
+            [
+              student.full_name,
+              student.user_number,
+              student.phone,
+
+              student.guardian_name,
+              student.guardian_phone,
+
+              student.nationality,
+              student.residence_address,
+
+              student.halaqa_name,
+              student.mosque_name,
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+
           const matchesSearch =
             !text ||
-            String(
-              student.full_name || ""
-            )
-              .toLowerCase()
-              .includes(text) ||
-            String(
-              student.user_number ||
-                ""
-            )
-              .toLowerCase()
-              .includes(text) ||
-            String(
-              student.phone || ""
-            )
-              .toLowerCase()
-              .includes(text);
+            searchable.includes(
+              text
+            );
 
           const matchesStatus =
             statusFilter ===
               "all" ||
-            (statusFilter ===
-              "active" &&
-              student.status ===
-                "active") ||
-            (statusFilter ===
-              "inactive" &&
-              student.status !==
-                "active");
+            student.status ===
+              statusFilter;
 
-          const matchesLevel =
-            levelFilter ===
+          const stage =
+            student.education_stage ||
+            student.education_level ||
+            "";
+
+          const matchesStage =
+            stageFilter ===
               "all" ||
-            student.education_level ===
-              levelFilter;
+            stage ===
+              stageFilter;
+
+          const matchesHalaqa =
+            halaqaFilter ===
+              "all" ||
+            String(
+              student.halaqa_id ||
+                ""
+            ) ===
+              String(
+                halaqaFilter
+              );
 
           return (
             matchesSearch &&
             matchesStatus &&
-            matchesLevel
+            matchesStage &&
+            matchesHalaqa
           );
         }
       );
@@ -958,756 +1985,279 @@ function editStudent(student) {
       students,
       search,
       statusFilter,
-      levelFilter,
+      stageFilter,
+      halaqaFilter,
     ]);
 
   /* =====================================================
-     الإحصائيات
+     KPIs
   ===================================================== */
 
-  const activeCount =
-    students.filter(
-      (student) =>
-        student.status === "active"
-    ).length;
+  const stats =
+    useMemo(() => {
+      const active =
+        students.filter(
+          (student) =>
+            student.status ===
+            "active"
+        ).length;
 
-  const inactiveCount =
-    students.length -
-    activeCount;
+      const followUp =
+        students.filter(
+          (student) =>
+            student.follow_up
+        ).length;
 
-  const remoteCount =
-    students.filter(
-      (student) =>
-        student.recitation_type ===
-        "remote"
-    ).length;
+      const incomplete =
+        students.filter(
+          (student) =>
+            !student.profile_complete
+        ).length;
 
-  const regularCount =
-    students.filter(
-      (student) =>
-        student.recitation_type ===
-        "regular"
-    ).length;
+      const averageAttendance =
+        students.length ===
+        0
+          ? 0
+          : Math.round(
+              students.reduce(
+                (
+                  sum,
+                  student
+                ) =>
+                  sum +
+                  Number(
+                    student.attendance_rate ||
+                      0
+                  ),
+                0
+              ) /
+                students.length
+            );
 
-  /* =====================================================
-     العرض
-  ===================================================== */
+      return {
+        total:
+          students.length,
+
+        active,
+
+        halaqat:
+          halaqat.length,
+
+        averageAttendance,
+
+        followUp,
+
+        incomplete,
+      };
+    }, [
+      students,
+      halaqat,
+    ]);
+
+  const hasFilters =
+    Boolean(
+      search ||
+        statusFilter !==
+          "all" ||
+        halaqaFilter !==
+          "all" ||
+        stageFilter !==
+          "all"
+    );
+
+  function resetFilters() {
+    setSearch("");
+    setStatusFilter("all");
+    setHalaqaFilter("all");
+    setStageFilter("all");
+  }
 
   return (
-    <div style={pageStyle}>
-      {/* ================= HEADER ================= */}
+    <div
+      className="teacher-students-pro"
+      dir="rtl"
+    >
+      {/* =========================================
+          HERO
+      ========================================= */}
 
-      <header style={headerStyle}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "13px",
-          }}
-        >
-          <div style={headerIconStyle}>
+      <section className="teacher-students-hero">
+        <div className="teacher-students-hero-main">
+          <div className="teacher-students-hero-icon">
             <Users
-              size={25}
-              strokeWidth={1.8}
+              size={22}
             />
           </div>
 
           <div>
-            <h1 style={pageTitleStyle}>
-              إدارة الطلاب
+            <div className="teacher-students-eyebrow">
+              <Sparkles
+                size={11}
+              />
+              طلاب حلقاتي
+            </div>
+
+            <h1>
+              الطلاب
             </h1>
 
-            <p style={pageSubtitleStyle}>
-              إدارة بيانات الطلاب ومتابعة
-              الحضور والتسميع والنقاط
+            <p>
+              إدارة طلاب حلقاتك ومتابعة بياناتهم التعليمية
+              وبيانات ولي الأمر والحضور والتسميع والنقاط.
             </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() =>
-            navigate("/admin")
-          }
-          style={backButtonStyle}
-        >
-          <ArrowRight size={17} />
-          العودة للوحة التحكم
-        </button>
-      </header>
-
-      {/* ================= STATISTICS ================= */}
-
-      <section style={statsGridStyle}>
-        <StatCard
-          title="إجمالي الطلاب"
-          value={students.length}
-          icon={<Users size={22} />}
-        />
-
-        <StatCard
-          title="النشطون"
-          value={activeCount}
-          icon={<UserCheck size={22} />}
-        />
-
-        <StatCard
-          title="غير النشطين"
-          value={inactiveCount}
-          icon={<UserX size={22} />}
-        />
-
-        <StatCard
-          title="التسميع المنتظم"
-          value={regularCount}
-          icon={<BookMarked size={22} />}
-        />
-
-        <StatCard
-          title="التسميع عن بعد"
-          value={remoteCount}
-          icon={<Video size={22} />}
-        />
-      </section>
-
-
-
-<div
-  style={{
-    display: "flex",
-    justifyContent: "flex-end",
-    marginBottom: "28px",
-  }}
->
-  <button
-    type="button"
-    onClick={() => {
-      clearForm();
-      setEditingId(null);
-      setShowCreateModal(true);
-    }}
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "14px",
-      padding: "16px 26px",
-      border: "none",
-      borderRadius: "20px",
-      background:
-        "linear-gradient(135deg,#0F5132 0%,#166534 55%,#15803D 100%)",
-      color: "#fff",
-      cursor: "pointer",
-      fontWeight: "800",
-      fontSize: "15px",
-      boxShadow:
-        "0 18px 40px rgba(15,81,50,.28)",
-      transition: "all .25s ease",
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform =
-        "translateY(-4px)";
-      e.currentTarget.style.boxShadow =
-        "0 25px 50px rgba(15,81,50,.35)";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform =
-        "translateY(0)";
-      e.currentTarget.style.boxShadow =
-        "0 18px 40px rgba(15,81,50,.28)";
-    }}
-  >
-    <div
-      style={{
-        width: "42px",
-        height: "42px",
-        borderRadius: "14px",
-        background:
-          "rgba(255,255,255,.15)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backdropFilter: "blur(10px)",
-      }}
-    >
-      <UserPlus size={20} />
-    </div>
-
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        lineHeight: 1.2,
-      }}
-    >
-      <span>
-        إنشاء طالب جديد
-      </span>
-
-      <small
-        style={{
-          color:
-            "rgba(255,255,255,.75)",
-          fontWeight: "500",
-          fontSize: "11px",
-        }}
-      >
-        تسجيل طالب وربطه بالحلقة
-      </small>
-    </div>
-  </button>
-</div>
-
-      {/* ================= FORM ================= */}
-
-{(showCreateModal || editingId) && (
-
-<section style={cardStyle}>
-
-  <div style={sectionHeaderStyle}>
-
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-      }}
-    >
-      <div style={sectionIconStyle}>
-        {editingId ? (
-          <Pencil size={19} />
-        ) : (
-          <UserPlus size={19} />
-        )}
-      </div>
-
-      <div>
-        <h2 style={sectionTitleStyle}>
-          {editingId
-            ? "تعديل بيانات الطالب"
-            : "إضافة طالب جديد"}
-        </h2>
-
-        <p style={sectionSubtitleStyle}>
-          {editingId
-            ? "حدّث بيانات الطالب ثم احفظ التغييرات"
-            : "أدخل البيانات الأساسية والتعليمية وجدول التسميع"}
-        </p>
-      </div>
-    </div>
-
-    <button
-  type="button"
-  onClick={() => {
-    clearForm();
-    setShowRecitationModal(false);
-  }}
-  style={{
-    width: "44px",
-    height: "44px",
-    border: "none",
-    borderRadius: "14px",
-    background:
-      "linear-gradient(135deg,#F8FAFC,#E2E8F0)",
-    color: "#334155",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow:
-      "0 8px 20px rgba(15,23,42,.08)",
-    transition: "all .25s ease",
-  }}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.transform =
-      "translateY(-2px) rotate(90deg)";
-    e.currentTarget.style.background =
-      "linear-gradient(135deg,#DC2626,#EF4444)";
-    e.currentTarget.style.color =
-      "#FFFFFF";
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.transform =
-      "translateY(0) rotate(0)";
-    e.currentTarget.style.background =
-      "linear-gradient(135deg,#F8FAFC,#E2E8F0)";
-    e.currentTarget.style.color =
-      "#334155";
-  }}
->
-  <X size={20} strokeWidth={2.5} />
-</button>
-
-
-
-          {editingId && (
-            <button
-              type="button"
-              onClick={clearForm}
-              style={cancelButtonStyle}
-            >
-              <X size={16} />
-              إلغاء التعديل
-            </button>
-          )}
-        </div>
-
-        {/* البيانات الأساسية */}
-
-        <FormSectionTitle
-          icon={<UserRound size={17} />}
-          title="البيانات الأساسية"
-        />
-
-        <div style={formGridStyle}>
-          <FormField
-            label="اسم الطالب"
-            required
-            placeholder="مثال: أحمد محمد"
-            value={fullName}
-            onChange={setFullName}
-          />
-
-          <FormField
-            label="رقم الطالب"
-            required
-            placeholder="مثال: S001"
-            value={studentNumber}
-            onChange={setStudentNumber}
-          />
-
-          <FormField
-            label="رقم الجوال"
-            placeholder="05xxxxxxxx"
-            value={phone}
-            onChange={setPhone}
-            type="tel"
-          />
-
-          <FormField
-            label="العمر"
-            placeholder="مثال: 12"
-            value={age}
-            onChange={setAge}
-            type="number"
-            min="3"
-            max="100"
-          />
-        </div>
-
-        {/* المستوى والتعليم */}
-
-        <FormSectionTitle
-          icon={<GraduationCap size={17} />}
-          title="المستوى التعليمي"
-        />
-
-        <div style={formGridStyle}>
-          <SelectField
-            label="المرحلة الدراسية"
-            value={educationLevel}
-            onChange={
-              setEducationLevel
-            }
-            options={[
-              {
-                value: "",
-                label:
-                  "اختر المرحلة الدراسية",
-              },
-              ...EDUCATION_LEVELS,
-            ]}
-          />
-
-          <SelectField
-            label="المطلوب حفظه"
-            value={
-              memorizationTarget
-            }
-            onChange={
-              setMemorizationTarget
-            }
-            options={[
-              {
-                value: "",
-                label:
-                  "اختر المطلوب حفظه",
-              },
-              ...MEMORIZATION_TARGETS,
-            ]}
-          />
-
-          <SelectField
-            label="الحلقة"
-            value={selectedHalaqa}
-            onChange={
-              setSelectedHalaqa
-            }
-            options={[
-              {
-                value: "",
-                label:
-                  "غير مرتبط بحلقة",
-              },
-              ...halaqat.map(
-                (halaqa) => ({
-                  value: String(
-                    halaqa.id
-                  ),
-                  label:
-                    halaqa.name,
-                })
-              ),
-            ]}
-          />
-        </div>
-
-        {/* التسميع */}
-
-        <FormSectionTitle
-          icon={<BookOpen size={17} />}
-          title="إعدادات التسميع"
-        />
-
-        <div style={formGridStyle}>
-          <div>
-            <label style={labelStyle}>
-              نوع التسميع
-            </label>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "1fr 1fr",
-                gap: "8px",
-              }}
-            >
-              {RECITATION_TYPES.map(
-                (item) => {
-                  const active =
-                    recitationType ===
-                    item.value;
-
-                  return (
-                    <button
-                      key={item.value}
-                      type="button"
-                      onClick={() =>
-                        setRecitationType(
-                          item.value
-                        )
-                      }
-                      style={{
-                        minHeight:
-                          "48px",
-                        borderRadius:
-                          "10px",
-                        border: active
-                          ? "1px solid #0f5132"
-                          : "1px solid #d9dfdb",
-                        background:
-                          active
-                            ? "#0f5132"
-                            : "#fff",
-                        color: active
-                          ? "#fff"
-                          : "#59635d",
-                        cursor:
-                          "pointer",
-                        fontWeight:
-                          "700",
-                        display:
-                          "flex",
-                        alignItems:
-                          "center",
-                        justifyContent:
-                          "center",
-                        gap: "7px",
-                      }}
-                    >
-                      {item.value ===
-                      "remote" ? (
-                        <Video
-                          size={17}
-                        />
-                      ) : (
-                        <BookOpen
-                          size={17}
-                        />
-                      )}
-
-                      {item.label}
-                    </button>
-                  );
-                }
-              )}
-            </div>
-          </div>
-
-          <FormField
-            label="وقت التسميع المفضل"
-            value={
-              preferredRecitationTime
-            }
-            onChange={
-              setPreferredRecitationTime
-            }
-            type="time"
-          />
-        </div>
-
-        {/* أيام التسميع */}
-
-        <div
-          style={{
-            marginTop: "15px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent:
-                "space-between",
-              alignItems: "center",
-              gap: "10px",
-              flexWrap: "wrap",
-              marginBottom: "9px",
-            }}
-          >
-            <label style={labelStyle}>
-              أيام التسميع
-            </label>
-
-            <div
-              style={{
-                display: "flex",
-                gap: "6px",
-              }}
-            >
-              <button
-                type="button"
-                onClick={
-                  selectAllDays
-                }
-                style={
-                  miniButtonStyle
-                }
-              >
-                تحديد الكل
-              </button>
-
-              <button
-                type="button"
-                onClick={
-                  clearDays
-                }
-                style={
-                  miniButtonStyle
-                }
-              >
-                مسح
-              </button>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(105px, 1fr))",
-              gap: "8px",
-            }}
-          >
-            {DAYS.map((day) => {
-              const active =
-                recitationDays.includes(
-                  day.value
-                );
-
-              return (
-                <button
-                  key={day.value}
-                  type="button"
-                  onClick={() =>
-                    toggleRecitationDay(
-                      day.value
-                    )
-                  }
-                  style={{
-                    minHeight:
-                      "45px",
-                    borderRadius:
-                      "10px",
-                    border: active
-                      ? "1px solid #0f5132"
-                      : "1px solid #dfe4e0",
-                    background:
-                      active
-                        ? "#edf5ef"
-                        : "#fff",
-                    color: active
-                      ? "#0f5132"
-                      : "#667069",
-                    cursor:
-                      "pointer",
-                    fontWeight:
-                      active
-                        ? "800"
-                        : "600",
-                    display:
-                      "flex",
-                    alignItems:
-                      "center",
-                    justifyContent:
-                      "center",
-                    gap: "6px",
-                  }}
-                >
-                  {active && (
-                    <CheckCircle2
-                      size={15}
-                    />
-                  )}
-
-                  {day.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div
-            style={{
-              marginTop: "8px",
-              color: "#89918c",
-              fontSize: "11px",
-            }}
-          >
-            يمكنك اختيار أكثر من يوم.
-          </div>
-        </div>
-
-        {/* الملاحظات */}
-
-        <div style={{ marginTop: "18px" }}>
-          <label style={labelStyle}>
-            ملاحظات إضافية
-          </label>
-
-          <textarea
-            value={notes}
-            onChange={(e) =>
-              setNotes(
-                e.target.value
-              )
-            }
-            placeholder="أي معلومات إضافية مهمة عن الطالب..."
-            rows={4}
-            style={{
-              ...inputStyle,
-              resize: "vertical",
-              minHeight: "95px",
-              lineHeight: 1.8,
-            }}
-          />
-        </div>
-
-        {/* الحفظ */}
-
-        <div
-          style={{
-            display: "flex",
-            gap: "9px",
-            marginTop: "20px",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="teacher-students-hero-actions">
           <button
             type="button"
-            onClick={saveStudent}
-            disabled={loading}
-            style={{
-              ...primaryButtonStyle,
-              opacity: loading
-                ? 0.7
-                : 1,
-              cursor: loading
-                ? "wait"
-                : "pointer",
-            }}
+            className="teacher-students-refresh"
+            onClick={() =>
+              loadData(true)
+            }
+            disabled={
+              refreshing
+            }
+            title="تحديث البيانات"
           >
-            {editingId ? (
-              <Save size={18} />
-            ) : (
-              <Plus size={18} />
-            )}
-
-            {loading
-              ? "جارٍ الحفظ..."
-              : editingId
-              ? "حفظ التعديلات"
-              : "إضافة الطالب"}
+            <RefreshCw
+              size={15}
+              className={
+                refreshing
+                  ? "students-spin"
+                  : ""
+              }
+            />
           </button>
 
-          {editingId && (
-            <button
-              type="button"
-              onClick={clearForm}
-              style={
-                secondaryButtonStyle
-              }
-            >
-              <RotateCcw
-                size={17}
-              />
-              إلغاء
-            </button>
-          )}
+          <button
+            type="button"
+            className="teacher-students-add"
+            onClick={
+              openCreateModal
+            }
+            disabled={
+              halaqat.length ===
+              0
+            }
+          >
+            <Plus
+              size={14}
+            />
+            إضافة طالب
+          </button>
         </div>
       </section>
 
-)}
+      {/* =========================================
+          SCOPE
+      ========================================= */}
 
-      {/* ================= SEARCH ================= */}
+      <div className="teacher-students-scope">
+        <ShieldCheck
+          size={13}
+        />
 
-      <section
-        style={{
-          ...cardStyle,
-          padding: "16px",
-        }}
-      >
-        <div style={searchGridStyle}>
-          <div
-            style={{
-              position: "relative",
-            }}
-          >
+        تعرض الصفحة الطلاب المرتبطين بحلقاتك فقط، كما أن
+        إنشاء الطالب أو نقله يقتصر على الحلقات المسندة لك.
+      </div>
+
+      {/* =========================================
+          STATS
+      ========================================= */}
+
+      {!initialLoading && (
+        <section className="teacher-students-stats">
+          <StudentStat
+            label="طلابي"
+            value={stats.total}
+            icon={Users}
+            tone="green"
+            sub="ضمن حلقاتك الحالية"
+          />
+
+          <StudentStat
+            label="النشطون"
+            value={stats.active}
+            icon={UserCheck}
+            tone="blue"
+            sub="حسابات فعالة"
+          />
+
+          <StudentStat
+            label="حلقاتي"
+            value={stats.halaqat}
+            icon={BookOpen}
+            tone="gold"
+            sub="الحلقات المسندة لك"
+          />
+
+          <StudentStat
+            label="متوسط الحضور"
+            value={`${stats.averageAttendance}%`}
+            icon={CheckCircle2}
+            tone={
+              stats.averageAttendance >=
+              75
+                ? "green"
+                : stats.averageAttendance >=
+                    50
+                  ? "gold"
+                  : "red"
+            }
+            sub="آخر 30 يومًا"
+          />
+
+          <StudentStat
+            label="يحتاجون متابعة"
+            value={stats.followUp}
+            icon={AlertTriangle}
+            tone={
+              stats.followUp >
+              0
+                ? "red"
+                : "green"
+            }
+            sub="لا يوجد تسميع منذ 7 أيام"
+          />
+
+          <StudentStat
+            label="بيانات ناقصة"
+            value={stats.incomplete}
+            icon={ShieldCheck}
+            tone={
+              stats.incomplete >
+              0
+                ? "red"
+                : "green"
+            }
+            sub="ولي الأمر / الجنس / الجنسية"
+          />
+        </section>
+      )}
+
+      {/* =========================================
+          FILTERS
+      ========================================= */}
+
+      {!initialLoading && (
+        <section className="teacher-students-filters">
+          <div className="teacher-students-search">
             <Search
-              size={19}
-              style={{
-                position:
-                  "absolute",
-                right: "14px",
-                top: "50%",
-                transform:
-                  "translateY(-50%)",
-                color: "#89918c",
-              }}
+              size={15}
             />
 
             <input
               value={search}
-              onChange={(e) =>
+              onChange={(
+                event
+              ) =>
                 setSearch(
-                  e.target.value
+                  event.target
+                    .value
                 )
               }
-              placeholder="ابحث باسم الطالب أو رقمه أو جواله..."
-              style={{
-                ...inputStyle,
-                paddingRight:
-                  "44px",
-              }}
+              placeholder="ابحث بالاسم أو الرقم أو الجوال أو ولي الأمر..."
             />
 
             {search && (
@@ -1716,746 +2266,2976 @@ function editStudent(student) {
                 onClick={() =>
                   setSearch("")
                 }
-                style={{
-                  position:
-                    "absolute",
-                  left: "9px",
-                  top: "50%",
-                  transform:
-                    "translateY(-50%)",
-                  width: "30px",
-                  height: "30px",
-                  border: "none",
-                  borderRadius:
-                    "8px",
-                  background:
-                    "#f1f3f1",
-                  color: "#6d766f",
-                  cursor:
-                    "pointer",
-                  display:
-                    "flex",
-                  alignItems:
-                    "center",
-                  justifyContent:
-                    "center",
-                }}
+                aria-label="مسح البحث"
               >
-                <X size={15} />
+                <X
+                  size={13}
+                />
               </button>
             )}
           </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(
-                e.target.value
-              )
+          <FilterSelect
+            value={
+              halaqaFilter
             }
-            style={inputStyle}
-          >
-            <option value="all">
-              جميع الحالات
-            </option>
-
-            <option value="active">
-              النشطون فقط
-            </option>
-
-            <option value="inactive">
-              غير النشطين فقط
-            </option>
-          </select>
-
-          <select
-            value={levelFilter}
-            onChange={(e) =>
-              setLevelFilter(
-                e.target.value
-              )
+            onChange={
+              setHalaqaFilter
             }
-            style={inputStyle}
-          >
-            <option value="all">
-              جميع المراحل
-            </option>
+            options={[
+              {
+                value: "all",
+                label:
+                  "جميع حلقاتي",
+              },
+              ...halaqat.map(
+                (halaqa) => ({
+                  value:
+                    String(
+                      halaqa.id
+                    ),
+                  label:
+                    halaqa.name,
+                })
+              ),
+            ]}
+          />
 
-            {EDUCATION_LEVELS.map(
-              (level) => (
-                <option
-                  key={level.value}
-                  value={
-                    level.value
-                  }
-                >
-                  {level.label}
-                </option>
-              )
-            )}
-          </select>
+          <FilterSelect
+            value={
+              statusFilter
+            }
+            onChange={
+              setStatusFilter
+            }
+            options={[
+              {
+                value: "all",
+                label:
+                  "كل الحالات",
+              },
+              {
+                value:
+                  "active",
+                label:
+                  "نشط",
+              },
+              {
+                value:
+                  "inactive",
+                label:
+                  "غير نشط",
+              },
+            ]}
+          />
+
+          <FilterSelect
+            value={
+              stageFilter
+            }
+            onChange={
+              setStageFilter
+            }
+            options={[
+              {
+                value: "all",
+                label:
+                  "كل المراحل",
+              },
+              ...EDUCATION_STAGES,
+            ]}
+          />
+
+          <button
+            type="button"
+            className="teacher-students-reset"
+            onClick={
+              resetFilters
+            }
+            disabled={
+              !hasFilters
+            }
+          >
+            <RotateCcw
+              size={13}
+            />
+            إعادة
+          </button>
+        </section>
+      )}
+
+      {/* =========================================
+          RESULT HEADER
+      ========================================= */}
+
+      {!initialLoading && (
+        <div className="teacher-students-result-head">
+          <div>
+            <h2>
+              قائمة الطلاب
+            </h2>
+
+            <p>
+              عرض{" "}
+              {formatNumber(
+                filteredStudents.length
+              )}{" "}
+              من{" "}
+              {formatNumber(
+                students.length
+              )}{" "}
+              طالب
+            </p>
+          </div>
         </div>
-      </section>
+      )}
 
-      {/* ================= LIST HEADER ================= */}
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent:
-            "space-between",
-          alignItems: "center",
-          gap: "10px",
-          marginBottom: "15px",
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              margin: 0,
-              color: "#173d2b",
-              fontSize: "21px",
-            }}
-          >
-            قائمة الطلاب
-          </h2>
-
-          <p
-            style={{
-              margin:
-                "4px 0 0",
-              color: "#8a918d",
-              fontSize: "12px",
-            }}
-          >
-            عرض{" "}
-            {filteredStudents.length}{" "}
-            من {students.length}
-          </p>
-        </div>
-      </div>
-
-      {/* ================= LIST ================= */}
+      {/* =========================================
+          CONTENT
+      ========================================= */}
 
       {initialLoading ? (
-        <LoadingState />
+        <StudentsLoading />
       ) : filteredStudents.length ===
         0 ? (
-        <EmptyState
-          search={
-            search ||
-            statusFilter !== "all" ||
-            levelFilter !== "all"
+        <StudentsEmpty
+          hasHalaqat={
+            halaqat.length >
+            0
           }
-          onClear={() => {
-            setSearch("");
-            setStatusFilter(
-              "all"
-            );
-            setLevelFilter("all");
-          }}
+          filtered={
+            hasFilters
+          }
+          onReset={
+            resetFilters
+          }
+          onCreate={
+            openCreateModal
+          }
         />
       ) : (
-        <div style={studentsGridStyle}>
+        <section className="teacher-students-grid">
           {filteredStudents.map(
             (student) => (
               <StudentCard
-                key={student.id}
-                student={student}
-                isActive={
-                  student.status ===
-                  "active"
+                key={
+                  student.id
+                }
+                student={
+                  student
                 }
                 onEdit={
-                  editStudent
+                  openEditModal
                 }
-                onToggleStatus={
-                  toggleStatus
+                onToggle={() =>
+                  setStatusTarget(
+                    student
+                  )
                 }
-                onDelete={
-                  deleteStudent
+                onDelete={() =>
+                  setDeleteTarget(
+                    student
+                  )
                 }
               />
             )
           )}
-        </div>
+        </section>
       )}
+
+      {/* =========================================
+          FORM MODAL
+      ========================================= */}
+
+      <StudentFormModal
+        open={
+          modalOpen
+        }
+        editingStudent={
+          editingStudent
+        }
+        form={form}
+        updateForm={
+          updateForm
+        }
+        toggleDay={
+          toggleRecitationDay
+        }
+        halaqat={halaqat}
+        saving={saving}
+        onSave={
+          saveStudent
+        }
+        onClose={
+          closeModal
+        }
+      />
+
+      {/* =========================================
+          STATUS CONFIRM
+      ========================================= */}
+
+      <ConfirmModal
+        open={
+          Boolean(
+            statusTarget
+          )
+        }
+        title={
+          statusTarget?.status ===
+          "active"
+            ? "إيقاف الطالب"
+            : "تفعيل الطالب"
+        }
+        message={
+          statusTarget
+            ? statusTarget.status ===
+              "active"
+              ? `سيتم إيقاف الطالب "${statusTarget.full_name}" مع بقاء ملفه محفوظًا في النظام.`
+              : `سيتم تفعيل الطالب "${statusTarget.full_name}" من جديد.`
+            : ""
+        }
+        onConfirm={() =>
+          statusTarget &&
+          toggleStatus(
+            statusTarget
+          )
+        }
+        onCancel={() =>
+          setStatusTarget(
+            null
+          )
+        }
+      />
+
+      {/* =========================================
+          DELETE CONFIRM
+      ========================================= */}
+
+      <ConfirmModal
+        open={
+          Boolean(
+            deleteTarget
+          )
+        }
+        title="حذف الطالب نهائيًا"
+        message={
+          deleteTarget
+            ? `هل تريد حذف الطالب "${deleteTarget.full_name}" نهائيًا؟\n\nسيتم حذف بياناته من الجداول المرتبطة المعروفة. إذا كانت هناك بيانات إضافية مرتبطة به فقد تمنع قاعدة البيانات الحذف لحماية السجل.`
+            : ""
+        }
+        onConfirm={() =>
+          deleteTarget &&
+          deleteStudent(
+            deleteTarget
+          )
+        }
+        onCancel={() =>
+          setDeleteTarget(
+            null
+          )
+        }
+      />
+
+      {/* =========================================
+          STYLES
+      ========================================= */}
+
+      <style>
+        {`
+          .teacher-students-pro {
+            display: grid;
+            gap: 14px;
+
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+
+            color: #34463B;
+          }
+
+          /* HERO */
+
+          .teacher-students-hero {
+            position: relative;
+            overflow: hidden;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 14px;
+
+            padding: 15px 17px;
+
+            border: 1px solid #E4EAE6;
+            border-radius: 18px;
+
+            background:
+              linear-gradient(
+                135deg,
+                #FFFFFF 0%,
+                #F7FBF8 72%,
+                #FFFDF7 100%
+              );
+
+            box-shadow:
+              0 9px 26px rgba(26,54,41,.045);
+          }
+
+          .teacher-students-hero::after {
+            content: "";
+
+            position: absolute;
+            left: -24px;
+            top: -40px;
+
+            width: 140px;
+            height: 140px;
+
+            border: 1px solid rgba(185,144,55,.12);
+            border-radius: 50%;
+
+            box-shadow:
+              0 0 0 18px rgba(185,144,55,.025),
+              0 0 0 36px rgba(15,118,110,.018);
+
+            pointer-events: none;
+          }
+
+          .teacher-students-hero-main {
+            position: relative;
+            z-index: 2;
+
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+
+            min-width: 0;
+          }
+
+          .teacher-students-hero-icon {
+            width: 43px;
+            height: 43px;
+
+            flex: 0 0 43px;
+
+            border-radius: 13px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #FFFFFF;
+
+            background:
+              linear-gradient(
+                145deg,
+                #0F5132,
+                #0F766E
+              );
+
+            box-shadow:
+              0 8px 18px rgba(15,81,50,.12);
+          }
+
+          .teacher-students-eyebrow {
+            display: flex;
+            align-items: center;
+
+            gap: 3px;
+
+            color: #98772C;
+
+            font-size: 6px;
+            font-weight: 900;
+          }
+
+          .teacher-students-hero h1 {
+            margin: 1px 0 0;
+
+            color: #35463C;
+
+            font-size: 15px;
+            font-weight: 950;
+          }
+
+          .teacher-students-hero p {
+            margin: 3px 0 0;
+
+            color: #8D9791;
+
+            font-size: 6px;
+            line-height: 1.55;
+          }
+
+          .teacher-students-hero-actions {
+            position: relative;
+            z-index: 2;
+
+            display: flex;
+            align-items: center;
+
+            gap: 6px;
+          }
+
+          .teacher-students-refresh {
+            width: 36px;
+            height: 36px;
+
+            border: 1px solid #DDE5E0;
+            border-radius: 9px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #0F6848;
+            background: #FFFFFF;
+
+            cursor: pointer;
+          }
+
+          .teacher-students-add {
+            min-height: 36px;
+
+            padding: 0 12px;
+
+            border: none;
+            border-radius: 9px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            gap: 5px;
+
+            color: #FFFFFF;
+
+            background:
+              linear-gradient(
+                135deg,
+                #0F5132,
+                #0F766E
+              );
+
+            font-size: 6.5px;
+            font-weight: 900;
+
+            cursor: pointer;
+
+            box-shadow:
+              0 8px 17px rgba(15,81,50,.12);
+          }
+
+          .teacher-students-refresh:disabled,
+          .teacher-students-add:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+          }
+
+          /* SCOPE */
+
+          .teacher-students-scope {
+            display: flex;
+            align-items: center;
+
+            gap: 5px;
+
+            padding: 8px 10px;
+
+            border: 1px solid #DCE8E0;
+            border-radius: 10px;
+
+            color: #0F6848;
+            background: #F3F9F5;
+
+            font-size: 5.8px;
+            font-weight: 850;
+          }
+
+          /* STATS */
+
+          .teacher-students-stats {
+            display: grid;
+
+            grid-template-columns:
+              repeat(
+                6,
+                minmax(0,1fr)
+              );
+
+            gap: 8px;
+          }
+
+          .teacher-student-stat {
+            position: relative;
+
+            overflow: hidden;
+
+            min-width: 0;
+
+            padding: 11px;
+
+            border: 1px solid #E5EBE7;
+            border-radius: 13px;
+
+            background: #FFFFFF;
+
+            box-shadow:
+              0 8px 22px rgba(25,51,39,.035);
+          }
+
+          .teacher-student-stat::before {
+            content: "";
+
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+
+            height: 2px;
+
+            background: var(--stat-color);
+          }
+
+          .teacher-student-stat-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 6px;
+          }
+
+          .teacher-student-stat-label {
+            color: #8E9892;
+
+            font-size: 5.4px;
+            font-weight: 800;
+          }
+
+          .teacher-student-stat-icon {
+            width: 29px;
+            height: 29px;
+
+            flex: 0 0 29px;
+
+            border-radius: 8px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: var(--stat-color);
+            background: var(--stat-soft);
+          }
+
+          .teacher-student-stat strong {
+            display: block;
+
+            margin-top: 8px;
+
+            color: var(--stat-color);
+
+            font-size: 18px;
+            font-weight: 950;
+            line-height: 1;
+          }
+
+          .teacher-student-stat small {
+            display: block;
+
+            margin-top: 5px;
+
+            overflow: hidden;
+
+            color: #9AA29D;
+
+            font-size: 5px;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          /* FILTERS */
+
+          .teacher-students-filters {
+            display: grid;
+
+            grid-template-columns:
+              minmax(230px,1.4fr)
+              minmax(140px,.75fr)
+              minmax(130px,.7fr)
+              minmax(140px,.75fr)
+              auto;
+
+            gap: 7px;
+
+            padding: 9px;
+
+            border: 1px solid #E5EBE7;
+            border-radius: 13px;
+
+            background: #FFFFFF;
+
+            box-shadow:
+              0 7px 20px rgba(25,51,39,.03);
+          }
+
+          .teacher-students-search {
+            position: relative;
+          }
+
+          .teacher-students-search > svg {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            color: #8D9791;
+
+            pointer-events: none;
+          }
+
+          .teacher-students-search input,
+          .teacher-students-filter-select select {
+            width: 100%;
+            height: 38px;
+
+            border: 1px solid #DDE5E0;
+            border-radius: 9px;
+
+            outline: none;
+
+            color: #3D4D43;
+            background: #FBFDFC;
+
+            font-family: inherit;
+            font-size: 6.3px;
+          }
+
+          .teacher-students-search input {
+            padding: 0 32px 0 31px;
+          }
+
+          .teacher-students-search input:focus,
+          .teacher-students-filter-select select:focus {
+            border-color: #A3C6B0;
+
+            box-shadow:
+              0 0 0 3px rgba(15,81,50,.05);
+
+            background: #FFFFFF;
+          }
+
+          .teacher-students-search button {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+
+            width: 21px;
+            height: 21px;
+
+            transform: translateY(-50%);
+
+            border: none;
+            border-radius: 6px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #76827A;
+            background: #EDF2EF;
+
+            cursor: pointer;
+          }
+
+          .teacher-students-filter-select {
+            position: relative;
+          }
+
+          .teacher-students-filter-select select {
+            appearance: none;
+
+            padding: 0 10px 0 29px;
+          }
+
+          .teacher-students-filter-select svg {
+            position: absolute;
+            left: 9px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            color: #89938D;
+
+            pointer-events: none;
+          }
+
+          .teacher-students-reset {
+            min-height: 38px;
+
+            padding: 0 9px;
+
+            border: 1px solid #DDE5E0;
+            border-radius: 9px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            gap: 4px;
+
+            color: #536159;
+            background: #F8FBF9;
+
+            font-size: 5.8px;
+            font-weight: 900;
+
+            cursor: pointer;
+          }
+
+          .teacher-students-reset:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+          }
+
+          /* RESULT HEADER */
+
+          .teacher-students-result-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 10px;
+
+            padding: 2px;
+          }
+
+          .teacher-students-result-head h2 {
+            margin: 0;
+
+            color: #35463C;
+
+            font-size: 10px;
+            font-weight: 950;
+          }
+
+          .teacher-students-result-head p {
+            margin: 2px 0 0;
+
+            color: #929B95;
+
+            font-size: 5.5px;
+          }
+
+          /* GRID */
+
+          .teacher-students-grid {
+            display: grid;
+
+            grid-template-columns:
+              repeat(
+                auto-fill,
+                minmax(310px,1fr)
+              );
+
+            gap: 10px;
+          }
+
+          /* CARD */
+
+          .teacher-student-card {
+            position: relative;
+
+            min-width: 0;
+            overflow: hidden;
+
+            padding: 12px;
+
+            border: 1px solid #E5EBE7;
+            border-radius: 15px;
+
+            background: #FFFFFF;
+
+            box-shadow:
+              0 8px 23px rgba(25,51,39,.04);
+
+            transition:
+              transform .17s ease,
+              box-shadow .17s ease,
+              border-color .17s ease;
+          }
+
+          .teacher-student-card:hover {
+            transform: translateY(-2px);
+
+            border-color: #C9DCD0;
+
+            box-shadow:
+              0 12px 26px rgba(25,51,39,.06);
+          }
+
+          .teacher-student-card.inactive {
+            opacity: .76;
+          }
+
+          .teacher-student-card::before {
+            content: "";
+
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+
+            height: 2px;
+
+            background:
+              linear-gradient(
+                90deg,
+                transparent,
+                #0F766E,
+                #B99037,
+                transparent
+              );
+          }
+
+          .teacher-student-card-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            gap: 8px;
+          }
+
+          .teacher-student-identity {
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            min-width: 0;
+          }
+
+          .teacher-student-avatar {
+            width: 38px;
+            height: 38px;
+
+            flex: 0 0 38px;
+
+            border-radius: 11px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #FFFFFF;
+
+            background:
+              linear-gradient(
+                145deg,
+                #0F5132,
+                #0F766E
+              );
+
+            font-size: 9px;
+            font-weight: 950;
+          }
+
+          .teacher-student-name {
+            min-width: 0;
+          }
+
+          .teacher-student-name span,
+          .teacher-student-name strong,
+          .teacher-student-name small {
+            display: block;
+          }
+
+          .teacher-student-name span {
+            color: #9AA29D;
+            font-size: 5px;
+          }
+
+          .teacher-student-name strong {
+            margin-top: 1px;
+
+            overflow: hidden;
+
+            color: #3A4A40;
+
+            font-size: 8.5px;
+            font-weight: 950;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .teacher-student-name small {
+            margin-top: 2px;
+
+            color: #929B95;
+            font-size: 5px;
+          }
+
+          .teacher-student-status {
+            min-height: 23px;
+
+            padding: 0 6px;
+
+            border-radius: 999px;
+
+            display: inline-flex;
+            align-items: center;
+
+            gap: 3px;
+
+            font-size: 5.2px;
+            font-weight: 900;
+          }
+
+          .teacher-student-status.active {
+            color: #0F704A;
+
+            border: 1px solid #D9EADD;
+
+            background: #F0F9F3;
+          }
+
+          .teacher-student-status.inactive {
+            color: #9D463A;
+
+            border: 1px solid #EED8D3;
+
+            background: #FFF4F1;
+          }
+
+          .teacher-student-info-grid {
+            display: grid;
+
+            grid-template-columns:
+              repeat(2,minmax(0,1fr));
+
+            gap: 6px;
+
+            margin-top: 10px;
+          }
+
+          .teacher-student-info-box {
+            min-width: 0;
+
+            padding: 8px;
+
+            border: 1px solid #E8ECEA;
+            border-radius: 9px;
+
+            background: #FBFDFC;
+          }
+
+          .teacher-student-info-box span {
+            display: flex;
+            align-items: center;
+
+            gap: 3px;
+
+            color: #949D97;
+
+            font-size: 5px;
+          }
+
+          .teacher-student-info-box strong {
+            display: block;
+
+            margin-top: 3px;
+
+            overflow: hidden;
+
+            color: #536159;
+
+            font-size: 6.2px;
+            font-weight: 900;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .teacher-student-halaqa {
+            margin-top: 7px;
+            padding: 9px;
+
+            border: 1px solid #DDE9E1;
+            border-radius: 10px;
+
+            background:
+              linear-gradient(
+                135deg,
+                #F6FAF7,
+                #FFFFFF
+              );
+          }
+
+          .teacher-student-halaqa strong {
+            display: flex;
+            align-items: center;
+
+            gap: 4px;
+
+            color: #0F6848;
+
+            font-size: 6.4px;
+          }
+
+          .teacher-student-halaqa-meta {
+            display: flex;
+            flex-wrap: wrap;
+
+            gap: 4px 8px;
+
+            margin-top: 5px;
+
+            color: #89938D;
+
+            font-size: 5px;
+          }
+
+          .teacher-student-guardian {
+            margin-top: 7px;
+            padding: 9px;
+
+            border: 1px solid #E9E5D8;
+            border-radius: 10px;
+
+            background:
+              linear-gradient(
+                135deg,
+                #FFFDF8,
+                #FFFFFF
+              );
+          }
+
+          .teacher-student-guardian-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 8px;
+          }
+
+          .teacher-student-guardian-head > span:first-child {
+            display: flex;
+            align-items: center;
+
+            gap: 3px;
+
+            color: #947124;
+
+            font-size: 5.4px;
+            font-weight: 900;
+          }
+
+          .teacher-student-profile-complete {
+            color: #0F704A;
+            font-size: 5px;
+            font-weight: 900;
+          }
+
+          .teacher-student-profile-incomplete {
+            color: #A44337;
+            font-size: 5px;
+            font-weight: 900;
+          }
+
+          .teacher-student-guardian-grid {
+            display: grid;
+
+            grid-template-columns:
+              repeat(3,minmax(0,1fr));
+
+            gap: 5px;
+
+            margin-top: 7px;
+          }
+
+          .teacher-student-guardian-grid span,
+          .teacher-student-guardian-grid strong {
+            display: block;
+          }
+
+          .teacher-student-guardian-grid span {
+            color: #9A9F9B;
+            font-size: 4.7px;
+          }
+
+          .teacher-student-guardian-grid strong {
+            margin-top: 2px;
+
+            overflow: hidden;
+
+            color: #5B5C58;
+
+            font-size: 5.7px;
+            font-weight: 850;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .teacher-student-followup {
+            display: flex;
+            align-items: center;
+
+            gap: 5px;
+
+            margin-top: 7px;
+            padding: 7px 8px;
+
+            border: 1px solid #F0DFB5;
+            border-radius: 9px;
+
+            color: #8A6822;
+            background: #FFF9EA;
+
+            font-size: 5.3px;
+            font-weight: 850;
+          }
+
+          .teacher-student-performance {
+            display: grid;
+
+            grid-template-columns:
+              1fr 1fr 1fr;
+
+            gap: 6px;
+
+            margin-top: 7px;
+          }
+
+          .teacher-student-performance-box {
+            padding: 8px;
+
+            border: 1px solid #E7ECE9;
+            border-radius: 9px;
+
+            background: #FFFFFF;
+
+            text-align: center;
+          }
+
+          .teacher-student-performance-box span,
+          .teacher-student-performance-box strong {
+            display: block;
+          }
+
+          .teacher-student-performance-box span {
+            color: #929B95;
+
+            font-size: 4.8px;
+          }
+
+          .teacher-student-performance-box strong {
+            margin-top: 2px;
+
+            color: #3D4D43;
+
+            font-size: 8px;
+            font-weight: 950;
+          }
+
+          .teacher-student-attendance-bar {
+            height: 5px;
+
+            margin-top: 4px;
+
+            overflow: hidden;
+
+            border-radius: 999px;
+
+            background: #EEF2EF;
+          }
+
+          .teacher-student-attendance-bar div {
+            height: 100%;
+
+            border-radius: 999px;
+
+            background:
+              linear-gradient(
+                90deg,
+                #0F766E,
+                #65A578
+              );
+          }
+
+          .teacher-student-recitation-line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 8px;
+
+            margin-top: 7px;
+            padding: 7px 8px;
+
+            border-top: 1px solid #EEF2EF;
+
+            color: #8B958F;
+
+            font-size: 5px;
+          }
+
+          .teacher-student-recitation-line span {
+            display: inline-flex;
+            align-items: center;
+
+            gap: 3px;
+          }
+
+          .teacher-student-recitation-line strong {
+            color: #536159;
+            font-size: 5.4px;
+          }
+
+          .teacher-student-actions {
+            display: grid;
+
+            grid-template-columns:
+              1fr 1fr 1fr;
+
+            gap: 5px;
+
+            margin-top: 9px;
+          }
+
+          .teacher-student-action {
+            min-height: 32px;
+
+            border: none;
+            border-radius: 8px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            gap: 3px;
+
+            font-size: 5.5px;
+            font-weight: 900;
+
+            cursor: pointer;
+          }
+
+          .teacher-student-action.edit {
+            color: #3D6655;
+            background: #EDF6F1;
+          }
+
+          .teacher-student-action.status {
+            color: #8A6822;
+            background: #FFF8E8;
+          }
+
+          .teacher-student-action.delete {
+            color: #A34236;
+            background: #FFF0ED;
+          }
+
+          /* STATES */
+
+          .teacher-students-state {
+            min-height: 220px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+
+            gap: 5px;
+
+            padding: 20px;
+
+            border: 1px dashed #DDE5E0;
+            border-radius: 14px;
+
+            color: #929C96;
+            background: #FBFDFC;
+
+            text-align: center;
+          }
+
+          .teacher-students-state-icon {
+            width: 42px;
+            height: 42px;
+
+            border-radius: 12px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #0F6B49;
+            background: #EDF7F1;
+          }
+
+          .teacher-students-state strong {
+            color: #57645C;
+            font-size: 8px;
+          }
+
+          .teacher-students-state p {
+            max-width: 360px;
+
+            margin: 0;
+
+            color: #929B95;
+
+            font-size: 5.7px;
+            line-height: 1.5;
+          }
+
+          .teacher-students-state-actions {
+            display: flex;
+            align-items: center;
+
+            gap: 5px;
+
+            margin-top: 5px;
+          }
+
+          .teacher-students-state-actions button {
+            min-height: 30px;
+
+            padding: 0 9px;
+
+            border: none;
+            border-radius: 8px;
+
+            display: inline-flex;
+            align-items: center;
+
+            gap: 4px;
+
+            color: #FFFFFF;
+            background: #0F6848;
+
+            font-size: 5.7px;
+            font-weight: 900;
+
+            cursor: pointer;
+          }
+
+          /* MODAL */
+
+          .teacher-student-form-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 16px;
+
+            background:
+              rgba(10,29,24,.58);
+
+            backdrop-filter: blur(7px);
+          }
+
+          .teacher-student-form-modal {
+            width: min(900px,100%);
+            max-height: calc(100vh - 32px);
+
+            overflow: auto;
+
+            border: 1px solid rgba(255,255,255,.5);
+            border-radius: 22px;
+
+            background: #FFFFFF;
+
+            box-shadow:
+              0 30px 90px rgba(0,0,0,.25);
+          }
+
+          .teacher-student-form-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            gap: 12px;
+
+            padding: 14px 17px;
+
+            border-bottom: 1px solid #E8EEE9;
+
+            background:
+              rgba(255,255,255,.97);
+
+            backdrop-filter: blur(10px);
+          }
+
+          .teacher-student-form-heading {
+            display: flex;
+            align-items: center;
+
+            gap: 9px;
+          }
+
+          .teacher-student-form-heading-icon {
+            width: 39px;
+            height: 39px;
+
+            flex: 0 0 39px;
+
+            border-radius: 11px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #FFFFFF;
+
+            background:
+              linear-gradient(
+                145deg,
+                #0F5132,
+                #0F766E
+              );
+          }
+
+          .teacher-student-form-heading span {
+            display: block;
+
+            color: #98772C;
+
+            font-size: 5.4px;
+            font-weight: 900;
+          }
+
+          .teacher-student-form-heading h2 {
+            margin: 1px 0 0;
+
+            color: #35463C;
+
+            font-size: 12px;
+            font-weight: 950;
+          }
+
+          .teacher-student-form-heading p {
+            margin: 2px 0 0;
+
+            color: #8D9791;
+
+            font-size: 5.5px;
+          }
+
+          .teacher-student-form-close {
+            width: 32px;
+            height: 32px;
+
+            border: 1px solid #E0E7E2;
+            border-radius: 9px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #657169;
+            background: #FFFFFF;
+
+            cursor: pointer;
+          }
+
+          .teacher-student-form-body {
+            display: grid;
+            gap: 9px;
+
+            padding: 12px 16px 16px;
+          }
+
+          .teacher-student-form-section {
+            padding: 11px;
+
+            border: 1px solid #E7ECE9;
+            border-radius: 13px;
+
+            background: #FFFFFF;
+          }
+
+          .teacher-student-form-section-title {
+            display: flex;
+            align-items: center;
+
+            gap: 5px;
+
+            margin-bottom: 9px;
+
+            color: #405046;
+
+            font-size: 7px;
+            font-weight: 950;
+          }
+
+          .teacher-student-form-grid {
+            display: grid;
+
+            grid-template-columns:
+              repeat(3,minmax(0,1fr));
+
+            gap: 8px;
+          }
+
+          .teacher-student-form-field.full {
+            grid-column: 1 / -1;
+          }
+
+          .teacher-student-form-field.double {
+            grid-column: span 2;
+          }
+
+          .teacher-student-form-field label {
+            display: block;
+
+            margin-bottom: 5px;
+
+            color: #58665D;
+
+            font-size: 5.7px;
+            font-weight: 900;
+          }
+
+          .teacher-student-form-field label b {
+            color: #B42318;
+          }
+
+          .teacher-student-form-field input,
+          .teacher-student-form-field select,
+          .teacher-student-form-field textarea {
+            width: 100%;
+
+            border: 1px solid #DDE5E0;
+            border-radius: 8px;
+
+            outline: none;
+
+            box-sizing: border-box;
+
+            color: #3D4D43;
+            background: #FBFDFC;
+
+            font-family: inherit;
+            font-size: 6.3px;
+          }
+
+          .teacher-student-form-field input,
+          .teacher-student-form-field select {
+            height: 38px;
+
+            padding: 0 9px;
+          }
+
+          .teacher-student-form-field textarea {
+            min-height: 75px;
+
+            padding: 8px 9px;
+
+            resize: vertical;
+
+            line-height: 1.6;
+          }
+
+          .teacher-student-form-field input:focus,
+          .teacher-student-form-field select:focus,
+          .teacher-student-form-field textarea:focus {
+            border-color: #A3C6B0;
+
+            box-shadow:
+              0 0 0 3px rgba(15,81,50,.05);
+
+            background: #FFFFFF;
+          }
+
+          .teacher-student-form-days {
+            display: grid;
+
+            grid-template-columns:
+              repeat(7,minmax(0,1fr));
+
+            gap: 5px;
+
+            margin-top: 7px;
+          }
+
+          .teacher-student-form-day {
+            min-height: 31px;
+
+            border: 1px solid #DDE5E0;
+            border-radius: 8px;
+
+            color: #66736B;
+            background: #FFFFFF;
+
+            font-size: 5.5px;
+            font-weight: 850;
+
+            cursor: pointer;
+          }
+
+          .teacher-student-form-day.active {
+            border-color: #BFD5C7;
+
+            color: #0F6848;
+            background: #EDF7F1;
+          }
+
+          .teacher-student-form-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 20;
+
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+
+            gap: 6px;
+
+            padding: 10px 16px;
+
+            border-top: 1px solid #E9EEEB;
+
+            background:
+              rgba(251,253,252,.97);
+
+            backdrop-filter: blur(10px);
+          }
+
+          .teacher-student-form-footer button {
+            min-height: 36px;
+
+            padding: 0 11px;
+
+            border-radius: 9px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            gap: 4px;
+
+            font-size: 6px;
+            font-weight: 900;
+
+            cursor: pointer;
+          }
+
+          .teacher-student-form-cancel {
+            border: 1px solid #DCE4DF;
+
+            color: #647169;
+            background: #FFFFFF;
+          }
+
+          .teacher-student-form-save {
+            border: none;
+
+            color: #FFFFFF;
+
+            background:
+              linear-gradient(
+                135deg,
+                #0F5132,
+                #0F766E
+              );
+          }
+
+          .teacher-student-form-save:disabled,
+          .teacher-student-form-cancel:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+          }
+
+          .students-spin {
+            animation:
+              teacherStudentsSpin
+              .8s linear infinite;
+          }
+
+          @keyframes teacherStudentsSpin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
+
+          /* RESPONSIVE */
+
+          @media (max-width: 1200px) {
+            .teacher-students-stats {
+              grid-template-columns:
+                repeat(3,minmax(0,1fr));
+            }
+
+            .teacher-students-filters {
+              grid-template-columns:
+                repeat(2,minmax(0,1fr));
+            }
+
+            .teacher-students-reset {
+              grid-column: 1 / -1;
+            }
+          }
+
+          @media (max-width: 760px) {
+            .teacher-students-hero {
+              align-items: flex-start;
+              flex-direction: column;
+            }
+
+            .teacher-students-hero-actions {
+              width: 100%;
+            }
+
+            .teacher-students-add {
+              flex: 1;
+            }
+
+            .teacher-students-stats {
+              grid-template-columns:
+                repeat(2,minmax(0,1fr));
+            }
+
+            .teacher-students-filters {
+              grid-template-columns: 1fr;
+            }
+
+            .teacher-students-reset {
+              grid-column: auto;
+            }
+
+            .teacher-students-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .teacher-student-form-overlay {
+              align-items: flex-end;
+
+              padding: 6px;
+            }
+
+            .teacher-student-form-modal {
+              max-height: calc(100vh - 12px);
+
+              border-radius:
+                20px 20px 8px 8px;
+            }
+
+            .teacher-student-form-grid {
+              grid-template-columns:
+                repeat(2,minmax(0,1fr));
+            }
+
+            .teacher-student-form-days {
+              grid-template-columns:
+                repeat(4,minmax(0,1fr));
+            }
+          }
+
+          @media (max-width: 470px) {
+            .teacher-students-stats {
+              grid-template-columns: 1fr;
+            }
+
+            .teacher-student-info-grid,
+            .teacher-student-performance,
+            .teacher-student-guardian-grid,
+            .teacher-student-actions,
+            .teacher-student-form-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .teacher-student-form-field.double,
+            .teacher-student-form-field.full {
+              grid-column: auto;
+            }
+
+            .teacher-student-form-days {
+              grid-template-columns:
+                repeat(2,minmax(0,1fr));
+            }
+          }
+        `}
+      </style>
     </div>
   );
 }
 
 /* =========================================================
-   بطاقة الطالب
+   Student Card
 ========================================================= */
 
 function StudentCard({
   student,
-  isActive,
   onEdit,
-  onToggleStatus,
+  onToggle,
   onDelete,
 }) {
-  return (
-    <div
-      style={{
-        ...studentCardStyle,
-        opacity: isActive ? 1 : 0.78,
-      }}
-    >
-      {/* الرأس */}
+  const active =
+    student.status ===
+    "active";
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent:
-            "space-between",
-          alignItems: "flex-start",
-          gap: "10px",
-          marginBottom: "17px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "11px",
-            minWidth: 0,
-          }}
-        >
-          <div
-            style={avatarStyle}
-          >
-            <UserRound
-              size={25}
-              strokeWidth={1.6}
-            />
+  const stage =
+    student.education_stage ||
+    student.education_level ||
+    "";
+
+  const guardianName =
+    student.guardian_name ||
+    student.parent_name ||
+    "غير مسجل";
+
+  const guardianPhone =
+    student.guardian_phone ||
+    student.parent_phone ||
+    "غير مسجل";
+
+  const guardianRelation =
+    student.guardian_relation ||
+    "غير محددة";
+
+  return (
+    <article
+      className={`teacher-student-card ${
+        active
+          ? ""
+          : "inactive"
+      }`}
+    >
+      <div className="teacher-student-card-head">
+        <div className="teacher-student-identity">
+          <div className="teacher-student-avatar">
+            {getInitials(
+              student.full_name
+            )}
           </div>
 
-          <div
-            style={{
-              minWidth: 0,
-            }}
-          >
-            <h3
-              style={{
-                margin: 0,
-                color: "#173d2b",
-                fontSize: "17px",
-                fontWeight: "800",
-                whiteSpace:
-                  "nowrap",
-                overflow:
-                  "hidden",
-                textOverflow:
-                  "ellipsis",
-              }}
-            >
+          <div className="teacher-student-name">
+            <span>
+              الطالب
+            </span>
+
+            <strong>
               {student.full_name ||
                 "بدون اسم"}
-            </h3>
+            </strong>
 
-            <div
-              style={{
-                color: "#8b938e",
-                fontSize: "11px",
-                marginTop: "4px",
-              }}
-            >
+            <small>
               رقم الطالب:{" "}
               {student.user_number ||
-                "-"}
-            </div>
+                "—"}
+            </small>
           </div>
         </div>
 
         <span
-          style={
-            isActive
-              ? activeBadgeStyle
-              : inactiveBadgeStyle
-          }
+          className={`teacher-student-status ${
+            active
+              ? "active"
+              : "inactive"
+          }`}
         >
-          {isActive
+          {active ? (
+            <CheckCircle2
+              size={11}
+            />
+          ) : (
+            <CircleSlash
+              size={11}
+            />
+          )}
+
+          {active
             ? "نشط"
             : "غير نشط"}
         </span>
       </div>
 
-      {/* معلومات سريعة */}
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "1fr 1fr",
-          gap: "8px",
-          marginBottom: "12px",
-        }}
-      >
-        <QuickInfo
-          icon={
-            <GraduationCap
-              size={15}
-            />
-          }
+      <div className="teacher-student-info-grid">
+        <StudentInfoBox
+          icon={GraduationCap}
           label="المرحلة"
-          value={getEducationLabel(
-            student.education_level
+          value={getLabel(
+            EDUCATION_STAGES,
+            stage
           )}
         />
 
-        <QuickInfo
-          icon={
-            <UserRound size={15} />
-          }
-          label="العمر"
+        <StudentInfoBox
+          icon={VenusAndMars}
+          label="الجنس"
+          value={getLabel(
+            GENDERS,
+            student.gender
+          )}
+        />
+
+        <StudentInfoBox
+          icon={MapPin}
+          label="الجنسية"
           value={
-            student.age
-              ? `${student.age} سنة`
-              : "غير محدد"
+            student.nationality ||
+            "غير محددة"
           }
         />
 
-        <QuickInfo
-          icon={
-            <BookOpen size={15} />
+        <StudentInfoBox
+          icon={Phone}
+          label="جوال الطالب"
+          value={
+            student.phone ||
+            "غير مسجل"
           }
-          label="الحفظ"
-          value={getMemorizationLabel(
-            student.memorization_target
-          )}
         />
 
-        <QuickInfo
-          icon={
-            student.recitation_type ===
-            "remote" ? (
-              <Video size={15} />
-            ) : (
-              <BookOpen size={15} />
-            )
+        <StudentInfoBox
+          icon={Home}
+          label="السكن"
+          value={
+            student.residence_address ||
+            "غير مسجل"
           }
+        />
+
+        <StudentInfoBox
+          icon={Video}
           label="التسميع"
-          value={getRecitationTypeLabel(
-            student.recitation_type
+          value={getLabel(
+            RECITATION_MODES,
+            student.recitation_mode
           )}
         />
       </div>
 
-      {/* الحلقة */}
-
-      <div
-        style={{
-          background: "#f8faf8",
-          border:
-            "1px solid #edf0ed",
-          borderRadius: "11px",
-          padding: "11px",
-          marginBottom: "11px",
-        }}
-      >
-        <div
-          style={{
-            color: "#8b938e",
-            fontSize: "10px",
-            marginBottom: "4px",
-          }}
-        >
-          الحلقة الحالية
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            color: "#173d2b",
-            fontSize: "13px",
-            fontWeight: "700",
-          }}
-        >
-          <BookOpen size={15} />
-
-          {student.halaqaName}
-        </div>
-      </div>
-
-      {/* جدول التسميع */}
-
-      <div
-        style={{
-          background: "#fbfaf6",
-          border:
-            "1px solid #eeeae0",
-          borderRadius: "11px",
-          padding: "11px",
-          marginBottom: "12px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "7px",
-            color: "#76663c",
-            fontSize: "11px",
-            fontWeight: "700",
-            marginBottom: "7px",
-          }}
-        >
-          <CalendarDays
-            size={15}
+      <div className="teacher-student-halaqa">
+        <strong>
+          <BookOpen
+            size={11}
           />
 
-          جدول التسميع
-        </div>
+          {
+            student.halaqa_name
+          }
+        </strong>
 
-        <div
-          style={{
-            color: "#5f625e",
-            fontSize: "11px",
-            lineHeight: 1.8,
-          }}
-        >
-          {formatDays(
-            student.recitation_days
+        <div className="teacher-student-halaqa-meta">
+          <span>
+            <Building2
+              size={10}
+            />{" "}
+            {
+              student.mosque_name
+            }
+          </span>
+
+          {student.halaqa_period && (
+            <span>
+              <Clock3
+                size={10}
+              />{" "}
+              {HALAQA_PERIODS[
+                student.halaqa_period
+              ] ||
+                "غير محدد"}
+            </span>
           )}
         </div>
-
-        {student.preferred_recitation_time && (
-          <div
-            style={{
-              display: "flex",
-              alignItems:
-                "center",
-              gap: "6px",
-              marginTop: "6px",
-              color: "#777",
-              fontSize: "11px",
-            }}
-          >
-            <Timer size={14} />
-
-            الوقت المفضل:{" "}
-            <strong>
-              {student.preferred_recitation_time}
-            </strong>
-          </div>
-        )}
       </div>
 
-      {/* النقاط */}
-
-      <div
-        style={pointsBoxStyle}
-      >
-        <div
-          style={{
-            color: "#927536",
-            fontSize: "10px",
-            marginBottom: "4px",
-          }}
-        >
-          إجمالي النقاط
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent:
-              "center",
-            gap: "6px",
-            color: "#9a741f",
-            fontSize: "27px",
-            fontWeight: "800",
-          }}
-        >
-          <Trophy size={22} />
-
-          {student.totalPoints}
-        </div>
-      </div>
-
-      {/* الحضور */}
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(4, 1fr)",
-          gap: "6px",
-          marginBottom: "13px",
-        }}
-      >
-        <MiniStat
-          label="حاضر"
-          value={
-            student.present
-          }
-          icon={
-            <CheckCircle2
-              size={13}
+      <div className="teacher-student-guardian">
+        <div className="teacher-student-guardian-head">
+          <span>
+            <ShieldCheck
+              size={11}
             />
-          }
-        />
+            ولي الأمر
+          </span>
 
-        <MiniStat
-          label="غائب"
-          value={
-            student.absent
-          }
-          icon={
-            <XCircle
-              size={13}
-            />
-          }
-        />
-
-        <MiniStat
-          label="متأخر"
-          value={
-            student.late
-          }
-          icon={
-            <Clock3
-              size={13}
-            />
-          }
-        />
-
-        <MiniStat
-          label="معتذر"
-          value={
-            student.excused
-          }
-          icon={
-            <CircleSlash
-              size={13}
-            />
-          }
-        />
-      </div>
-
-      {/* آخر التسميع */}
-
-      <div
-        style={{
-          borderTop:
-            "1px solid #eee",
-          paddingTop: "11px",
-          marginBottom: "13px",
-        }}
-      >
-        <div
-          style={infoLineStyle}
-        >
           <span
-            style={
-              infoLabelStyle
+            className={
+              student.profile_complete
+                ? "teacher-student-profile-complete"
+                : "teacher-student-profile-incomplete"
             }
           >
-            <BookOpen size={14} />
+            {student.profile_complete
+              ? "مكتمل"
+              : "يحتاج استكمال"}
+          </span>
+        </div>
+
+        <div className="teacher-student-guardian-grid">
+          <div>
+            <span>
+              الاسم
+            </span>
+
+            <strong>
+              {guardianName}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              صلة القرابة
+            </span>
+
+            <strong>
+              {guardianRelation}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              التواصل
+            </span>
+
+            <strong>
+              {guardianPhone}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      {student.follow_up && (
+        <div className="teacher-student-followup">
+          <AlertTriangle
+            size={12}
+          />
+
+          يحتاج متابعة: لا يوجد تسميع خلال آخر 7 أيام.
+        </div>
+      )}
+
+      <div className="teacher-student-performance">
+        <div className="teacher-student-performance-box">
+          <span>
+            الحضور - 30 يوم
+          </span>
+
+          <strong>
+            {
+              student.attendance_rate
+            }
+            %
+          </strong>
+
+          <div className="teacher-student-attendance-bar">
+            <div
+              style={{
+                width: `${student.attendance_rate}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="teacher-student-performance-box">
+          <span>
             التسميعات
           </span>
 
-          <strong
-            style={{
-              color: "#173d2b",
-              fontSize: "12px",
-            }}
-          >
-            {student.recitationsCount}
+          <strong>
+            {formatNumber(
+              student.recitations_count
+            )}
           </strong>
         </div>
 
-        <div
-          style={{
-            ...infoLineStyle,
-            marginTop: "7px",
-          }}
-        >
-          <span
-            style={
-              infoLabelStyle
-            }
-          >
-            <CalendarDays
-              size={14}
-            />
-            آخر تسميع
+        <div className="teacher-student-performance-box">
+          <span>
+            النقاط
           </span>
 
-          <strong
-            style={{
-              color: "#555",
-              fontSize: "11px",
-            }}
-          >
-            {student.lastRecitation
-              ? formatDate(
-                  student.lastRecitation
-                )
-              : "لا يوجد"}
-          </strong>
-        </div>
-
-        <div
-          style={{
-            ...infoLineStyle,
-            marginTop: "7px",
-          }}
-        >
-          <span
-            style={
-              infoLabelStyle
-            }
-          >
-            <Phone size={14} />
-            الجوال
-          </span>
-
-          <strong
-            style={{
-              color: "#555",
-              fontSize: "11px",
-            }}
-          >
-            {student.phone ||
-              "غير مسجل"}
+          <strong>
+            {formatNumber(
+              student.total_points
+            )}
           </strong>
         </div>
       </div>
 
-      {/* الإجراءات */}
+      <div className="teacher-student-recitation-line">
+        <span>
+          <CalendarDays
+            size={11}
+          />
+          آخر تسميع
+        </span>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "1fr 1fr",
-          gap: "7px",
-        }}
-      >
+        <strong>
+          {student.last_recitation
+            ? `${formatGregorianDate(
+                student.last_recitation
+              )} • ${formatHijriDate(
+                student.last_recitation
+              )}`
+            : "لا يوجد"}
+        </strong>
+      </div>
+
+      <div className="teacher-student-actions">
         <button
           type="button"
+          className="teacher-student-action edit"
           onClick={() =>
             onEdit(student)
           }
-          style={actionButtonStyle}
         >
-          <Pencil size={15} />
+          <Edit3
+            size={13}
+          />
           تعديل
         </button>
 
         <button
           type="button"
-          onClick={() =>
-            onToggleStatus(
-              student
-            )
-          }
-          style={
-            actionSecondaryButtonStyle
+          className="teacher-student-action status"
+          onClick={
+            onToggle
           }
         >
-          {isActive ? (
-            <>
-              <XCircle size={15} />
-              تعطيل
-            </>
+          {active ? (
+            <UserX
+              size={13}
+            />
           ) : (
-            <>
-              <CheckCircle2
-                size={15}
-              />
-              تفعيل
-            </>
+            <UserCheck
+              size={13}
+            />
           )}
+
+          {active
+            ? "إيقاف"
+            : "تفعيل"}
         </button>
 
         <button
           type="button"
-          onClick={() =>
-            onDelete(student.id)
+          className="teacher-student-action delete"
+          onClick={
+            onDelete
           }
-          style={deleteButtonStyle}
         >
-          <Trash2 size={15} />
-          حذف الطالب
+          <Trash2
+            size={13}
+          />
+          حذف
         </button>
+      </div>
+    </article>
+  );
+}
+
+/* =========================================================
+   Form Modal
+========================================================= */
+
+function StudentFormModal({
+  open,
+  editingStudent,
+  form,
+  updateForm,
+  toggleDay,
+  halaqat,
+  saving,
+  onSave,
+  onClose,
+}) {
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow =
+      "hidden";
+
+    function handleKeyDown(
+      event
+    ) {
+      if (
+        event.key ===
+          "Escape" &&
+        !saving
+      ) {
+        onClose();
+      }
+    }
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow;
+
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [
+    open,
+    saving,
+    onClose,
+  ]);
+
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <div
+      className="teacher-student-form-overlay"
+      onMouseDown={(
+        event
+      ) => {
+        if (
+          event.target ===
+            event.currentTarget &&
+          !saving
+        ) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        className="teacher-student-form-modal"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="teacher-student-form-header">
+          <div className="teacher-student-form-heading">
+            <div className="teacher-student-form-heading-icon">
+              {editingStudent ? (
+                <Edit3
+                  size={18}
+                />
+              ) : (
+                <Plus
+                  size={18}
+                />
+              )}
+            </div>
+
+            <div>
+              <span>
+                ملف الطالب
+              </span>
+
+              <h2>
+                {editingStudent
+                  ? "تعديل بيانات الطالب"
+                  : "إضافة طالب جديد"}
+              </h2>
+
+              <p>
+                بيانات الطالب وولي الأمر والتعليم والتسميع.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="teacher-student-form-close"
+            onClick={
+              onClose
+            }
+            disabled={
+              saving
+            }
+          >
+            <X
+              size={16}
+            />
+          </button>
+        </div>
+
+        <div className="teacher-student-form-body">
+          <FormSection
+            icon={UserRound}
+            title="البيانات الأساسية"
+          >
+            <div className="teacher-student-form-grid">
+              <Field
+                label="اسم الطالب"
+                required
+                value={
+                  form.full_name
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "full_name",
+                    value
+                  )
+                }
+                placeholder="الاسم الرباعي"
+                className="double"
+              />
+
+              <Field
+                label="رقم الطالب"
+                required
+                value={
+                  form.user_number
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "user_number",
+                    value
+                  )
+                }
+                placeholder="مثال: S001"
+              />
+
+              <Field
+                label="جوال الطالب"
+                value={
+                  form.phone
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "phone",
+                    value
+                  )
+                }
+                placeholder="05xxxxxxxx"
+                type="tel"
+              />
+
+              <Field
+                label="تاريخ الميلاد"
+                value={
+                  form.birth_date
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "birth_date",
+                    value
+                  )
+                }
+                type="date"
+              />
+
+              <SelectField
+                label="الجنس"
+                value={
+                  form.gender
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "gender",
+                    value
+                  )
+                }
+                options={[
+                  {
+                    value: "",
+                    label:
+                      "غير محدد",
+                  },
+                  ...GENDERS,
+                ]}
+              />
+
+              <Field
+                label="الجنسية"
+                value={
+                  form.nationality
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "nationality",
+                    value
+                  )
+                }
+                placeholder="مثال: سعودي"
+              />
+
+              <Field
+                label="عنوان السكن"
+                value={
+                  form.residence_address
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "residence_address",
+                    value
+                  )
+                }
+                placeholder="الحي / المدينة / وصف مختصر"
+                className="double"
+              />
+            </div>
+          </FormSection>
+
+          <FormSection
+            icon={ShieldCheck}
+            title="بيانات ولي الأمر"
+          >
+            <div className="teacher-student-form-grid">
+              <Field
+                label="اسم ولي الأمر"
+                value={
+                  form.guardian_name
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "guardian_name",
+                    value
+                  )
+                }
+                placeholder="اسم ولي الأمر"
+              />
+
+              <Field
+                label="جوال ولي الأمر"
+                value={
+                  form.guardian_phone
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "guardian_phone",
+                    value
+                  )
+                }
+                placeholder="05xxxxxxxx"
+                type="tel"
+              />
+
+              <SelectField
+                label="صلة القرابة"
+                value={
+                  form.guardian_relation
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "guardian_relation",
+                    value
+                  )
+                }
+                options={[
+                  {
+                    value: "",
+                    label:
+                      "اختر صلة القرابة",
+                  },
+                  ...GUARDIAN_RELATIONS,
+                ]}
+              />
+            </div>
+          </FormSection>
+
+          <FormSection
+            icon={GraduationCap}
+            title="التعليم والحلقة"
+          >
+            <div className="teacher-student-form-grid">
+              <SelectField
+                label="المرحلة الدراسية"
+                value={
+                  form.education_stage
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "education_stage",
+                    value
+                  )
+                }
+                options={[
+                  {
+                    value: "",
+                    label:
+                      "اختر المرحلة",
+                  },
+                  ...EDUCATION_STAGES,
+                ]}
+              />
+
+              <Field
+                label="الصف الدراسي"
+                value={
+                  form.education_grade
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "education_grade",
+                    value
+                  )
+                }
+                placeholder="مثال: الصف السادس"
+              />
+
+              <SelectField
+                label="الهدف التعليمي"
+                value={
+                  form.learning_goal
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "learning_goal",
+                    value
+                  )
+                }
+                options={[
+                  {
+                    value: "",
+                    label:
+                      "اختر الهدف",
+                  },
+                  ...LEARNING_GOALS,
+                ]}
+              />
+
+              <SelectField
+                label="الحلقة"
+                value={
+                  form.halaqa_id
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "halaqa_id",
+                    value
+                  )
+                }
+                options={[
+                  {
+                    value: "",
+                    label:
+                      "اختر من حلقاتك",
+                  },
+                  ...halaqat.map(
+                    (halaqa) => ({
+                      value:
+                        String(
+                          halaqa.id
+                        ),
+
+                      label:
+                        `${halaqa.name} — ${halaqa.mosque_name}${
+                          halaqa.halaqa_period
+                            ? ` — ${
+                                HALAQA_PERIODS[
+                                  halaqa
+                                    .halaqa_period
+                                ] ||
+                                ""
+                              }`
+                            : ""
+                        }`,
+                    })
+                  ),
+                ]}
+              />
+            </div>
+          </FormSection>
+
+          <FormSection
+            icon={BookOpen}
+            title="إعدادات التسميع"
+          >
+            <div className="teacher-student-form-grid">
+              <SelectField
+                label="طريقة التسميع"
+                value={
+                  form.recitation_mode
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "recitation_mode",
+                    value
+                  )
+                }
+                options={[
+                  {
+                    value: "",
+                    label:
+                      "غير محدد",
+                  },
+                  ...RECITATION_MODES,
+                ]}
+              />
+
+              <Field
+                label="وقت التسميع المفضل"
+                value={
+                  form.preferred_recitation_time
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "preferred_recitation_time",
+                    value
+                  )
+                }
+                type="time"
+              />
+            </div>
+
+            <div className="teacher-student-form-days">
+              {DAYS.map(
+                (day) => {
+                  const active =
+                    form.recitation_days.includes(
+                      day.value
+                    );
+
+                  return (
+                    <button
+                      key={
+                        day.value
+                      }
+                      type="button"
+                      className={`teacher-student-form-day ${
+                        active
+                          ? "active"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        toggleDay(
+                          day.value
+                        )
+                      }
+                    >
+                      {day.label}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+          </FormSection>
+
+          <FormSection
+            icon={BookOpen}
+            title="ملاحظات"
+          >
+            <div className="teacher-student-form-grid">
+              <Field
+                label="ملاحظات إضافية"
+                value={
+                  form.notes
+                }
+                onChange={(
+                  value
+                ) =>
+                  updateForm(
+                    "notes",
+                    value
+                  )
+                }
+                placeholder="أي معلومات تربوية أو تشغيلية مهمة..."
+                textarea
+                className="full"
+              />
+            </div>
+          </FormSection>
+        </div>
+
+        <div className="teacher-student-form-footer">
+          <button
+            type="button"
+            className="teacher-student-form-cancel"
+            onClick={
+              onClose
+            }
+            disabled={
+              saving
+            }
+          >
+            إلغاء
+          </button>
+
+          <button
+            type="button"
+            className="teacher-student-form-save"
+            onClick={
+              onSave
+            }
+            disabled={
+              saving
+            }
+          >
+            {saving ? (
+              <Loader2
+                size={14}
+                className="students-spin"
+              />
+            ) : editingStudent ? (
+              <Edit3
+                size={14}
+              />
+            ) : (
+              <Plus
+                size={14}
+              />
+            )}
+
+            {saving
+              ? "جارٍ الحفظ..."
+              : editingStudent
+                ? "حفظ التعديلات"
+                : "إضافة الطالب"}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
 /* =========================================================
-   مكونات صغيرة
+   Small Components
 ========================================================= */
 
-function FormSectionTitle({
-  icon,
-  title,
+function StudentStat({
+  label,
+  value,
+  icon: Icon,
+  tone,
+  sub,
 }) {
+  const tones = {
+    green: {
+      color: "#0F704A",
+      soft: "#EAF7EE",
+    },
+    blue: {
+      color: "#356D9E",
+      soft: "#EDF5FB",
+    },
+    gold: {
+      color: "#927021",
+      soft: "#FFF8E8",
+    },
+    red: {
+      color: "#A44337",
+      soft: "#FFF0ED",
+    },
+  };
+
+  const selected =
+    tones[tone] ||
+    tones.green;
+
   return (
     <div
+      className="teacher-student-stat"
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "7px",
-        margin:
-          "23px 0 13px",
-        color: "#173d2b",
-        fontWeight: "800",
-        fontSize: "14px",
+        "--stat-color":
+          selected.color,
+
+        "--stat-soft":
+          selected.soft,
       }}
     >
-      {icon}
-      {title}
+      <div className="teacher-student-stat-head">
+        <span className="teacher-student-stat-label">
+          {label}
+        </span>
+
+        <div className="teacher-student-stat-icon">
+          <Icon
+            size={15}
+          />
+        </div>
+      </div>
+
+      <strong>
+        {value}
+      </strong>
+
+      <small>
+        {sub}
+      </small>
     </div>
   );
 }
 
-function FormField({
+function StudentInfoBox({
+  icon: Icon,
   label,
-  placeholder,
   value,
-  onChange,
-  type = "text",
-  required = false,
-  min,
-  max,
 }) {
   return (
-    <div>
-      <label style={labelStyle}>
+    <div className="teacher-student-info-box">
+      <span>
+        <Icon
+          size={11}
+        />
         {label}
+      </span>
 
+      <strong
+        title={value}
+      >
+        {value ||
+          "غير محدد"}
+      </strong>
+    </div>
+  );
+}
+
+function FilterSelect({
+  value,
+  onChange,
+  options,
+}) {
+  return (
+    <div className="teacher-students-filter-select">
+      <select
+        value={value}
+        onChange={(
+          event
+        ) =>
+          onChange(
+            event.target
+              .value
+          )
+        }
+      >
+        {options.map(
+          (option) => (
+            <option
+              key={
+                option.value
+              }
+              value={
+                option.value
+              }
+            >
+              {option.label}
+            </option>
+          )
+        )}
+      </select>
+
+      <ChevronDown
+        size={13}
+      />
+    </div>
+  );
+}
+
+function FormSection({
+  icon: Icon,
+  title,
+  children,
+}) {
+  return (
+    <section className="teacher-student-form-section">
+      <div className="teacher-student-form-section-title">
+        <Icon
+          size={14}
+        />
+        {title}
+      </div>
+
+      {children}
+    </section>
+  );
+}
+
+function Field({
+  label,
+  required,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  textarea = false,
+  className = "",
+}) {
+  return (
+    <div
+      className={`teacher-student-form-field ${className}`}
+    >
+      <label>
+        {label}
         {required && (
-          <span
-            style={{
-              color: "#b42318",
-              marginRight: "3px",
-            }}
-          >
-            *
-          </span>
+          <b> *</b>
         )}
       </label>
 
-      <input
-        type={type}
-        min={min}
-        max={max}
-        value={value}
-        onChange={(e) =>
-          onChange(
-            e.target.value
-          )
-        }
-        placeholder={placeholder}
-        style={inputStyle}
-      />
+      {textarea ? (
+        <textarea
+          value={value}
+          onChange={(
+            event
+          ) =>
+            onChange(
+              event.target
+                .value
+            )
+          }
+          placeholder={
+            placeholder
+          }
+        />
+      ) : (
+        <input
+          type={type}
+          value={value}
+          onChange={(
+            event
+          ) =>
+            onChange(
+              event.target
+                .value
+            )
+          }
+          placeholder={
+            placeholder
+          }
+        />
+      )}
     </div>
   );
 }
@@ -2467,735 +5247,128 @@ function SelectField({
   options,
 }) {
   return (
-    <div>
-      <label style={labelStyle}>
+    <div className="teacher-student-form-field">
+      <label>
         {label}
       </label>
 
-      <div
-        style={{
-          position: "relative",
-        }}
+      <select
+        value={value}
+        onChange={(
+          event
+        ) =>
+          onChange(
+            event.target
+              .value
+          )
+        }
       >
-        <select
-          value={value}
-          onChange={(e) =>
-            onChange(
-              e.target.value
-            )
-          }
-          style={{
-            ...inputStyle,
-            appearance:
-              "none",
-            paddingLeft:
-              "38px",
-          }}
-        >
-          {options.map(
-            (option) => (
-              <option
-                key={
-                  option.value
-                }
-                value={
-                  option.value
-                }
-              >
-                {option.label}
-              </option>
-            )
-          )}
-        </select>
+        {options.map(
+          (option) => (
+            <option
+              key={
+                option.value
+              }
+              value={
+                option.value
+              }
+            >
+              {option.label}
+            </option>
+          )
+        )}
+      </select>
+    </div>
+  );
+}
 
-        <ChevronDown
-          size={17}
-          style={{
-            position:
-              "absolute",
-            left: "12px",
-            top: "50%",
-            transform:
-              "translateY(-50%)",
-            color: "#7d8780",
-            pointerEvents:
-              "none",
-          }}
+function StudentsLoading() {
+  return (
+    <div className="teacher-students-state">
+      <div className="teacher-students-state-icon">
+        <Loader2
+          size={22}
+          className="students-spin"
         />
       </div>
-    </div>
-  );
-}
 
-function QuickInfo({
-  icon,
-  label,
-  value,
-}) {
-  return (
-    <div
-      style={{
-        background: "#fafbf9",
-        border:
-          "1px solid #eef0ed",
-        borderRadius: "9px",
-        padding: "8px",
-        minWidth: 0,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "5px",
-          color: "#89918c",
-          fontSize: "9px",
-          marginBottom: "3px",
-        }}
-      >
-        {icon}
-        {label}
-      </div>
-
-      <div
-        style={{
-          color: "#344139",
-          fontSize: "11px",
-          fontWeight: "700",
-          whiteSpace:
-            "nowrap",
-          overflow:
-            "hidden",
-          textOverflow:
-            "ellipsis",
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function MiniStat({
-  label,
-  value,
-  icon,
-}) {
-  return (
-    <div
-      style={{
-        background: "#fafafa",
-        borderRadius: "8px",
-        padding: "7px 4px",
-        textAlign: "center",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent:
-            "center",
-          alignItems: "center",
-          gap: "3px",
-          color: "#777",
-          fontSize: "9px",
-        }}
-      >
-        {icon}
-        {label}
-      </div>
-
-      <strong
-        style={{
-          display: "block",
-          marginTop: "2px",
-          color: "#333",
-          fontSize: "13px",
-        }}
-      >
-        {value}
+      <strong>
+        جارٍ تحميل طلابك...
       </strong>
+
+      <p>
+        يتم تجهيز بيانات الطلاب والحلقات والحضور والتسميع.
+      </p>
     </div>
   );
 }
 
-function StatCard({
-  title,
-  value,
-  icon,
+function StudentsEmpty({
+  hasHalaqat,
+  filtered,
+  onReset,
+  onCreate,
 }) {
   return (
-    <div
-      style={statCardStyle}
-    >
-      <div
-        style={statIconStyle}
-      >
-        {icon}
+    <div className="teacher-students-state">
+      <div className="teacher-students-state-icon">
+        {hasHalaqat ? (
+          <Users
+            size={22}
+          />
+        ) : (
+          <BookOpen
+            size={22}
+          />
+        )}
       </div>
 
-      <div>
-        <div
-          style={{
-            color: "#7d8780",
-            fontSize: "11px",
-            marginBottom: "3px",
-          }}
-        >
-          {title}
-        </div>
+      <strong>
+        {!hasHalaqat
+          ? "لا توجد حلقات مرتبطة بك"
+          : filtered
+            ? "لا توجد نتائج مطابقة"
+            : "لا يوجد طلاب في حلقاتك"}
+      </strong>
 
-        <strong
-          style={{
-            color: "#173d2b",
-            fontSize: "23px",
-          }}
-        >
-          {value}
-        </strong>
-      </div>
-    </div>
-  );
-}
-
-function LoadingState() {
-  return (
-    <div
-      style={{
-        ...cardStyle,
-        textAlign: "center",
-        padding: "60px 20px",
-        color: "#7e8781",
-      }}
-    >
-      <div
-        style={{
-          width: "38px",
-          height: "38px",
-          margin:
-            "0 auto 12px",
-          border:
-            "3px solid #e1e8e3",
-          borderTopColor:
-            "#0f5132",
-          borderRadius:
-            "50%",
-          animation:
-            "spin 0.8s linear infinite",
-        }}
-      />
-
-      جاري تحميل الطلاب...
-    </div>
-  );
-}
-
-function EmptyState({
-  search,
-  onClear,
-}) {
-  return (
-    <div
-      style={{
-        ...cardStyle,
-        textAlign: "center",
-        padding: "60px 20px",
-      }}
-    >
-      <div
-        style={{
-          width: "62px",
-          height: "62px",
-          margin:
-            "0 auto 14px",
-          borderRadius: "18px",
-          background:
-            "#edf5ef",
-          color: "#0f5132",
-          display: "flex",
-          alignItems:
-            "center",
-          justifyContent:
-            "center",
-        }}
-      >
-        <Users size={29} />
-      </div>
-
-      <h3
-        style={{
-          margin:
-            "0 0 7px",
-          color: "#354139",
-        }}
-      >
-        {search
-          ? "لا توجد نتائج"
-          : "لا يوجد طلاب حتى الآن"}
-      </h3>
-
-      <p
-        style={{
-          margin: 0,
-          color: "#929993",
-          fontSize: "12px",
-        }}
-      >
-        {search
-          ? "لم نجد طالبًا مطابقًا للبحث أو الفلاتر."
-          : "ابدأ بإضافة أول طالب إلى النظام."}
+      <p>
+        {!hasHalaqat
+          ? "يجب أن تقوم الإدارة بربطك بحلقة أولًا."
+          : filtered
+            ? "غيّر البحث أو الفلاتر الحالية."
+            : "يمكنك إضافة أول طالب من زر إضافة طالب."}
       </p>
 
-      {search && (
-        <button
-          type="button"
-          onClick={onClear}
-          style={{
-            ...primaryButtonStyle,
-            marginTop: "15px",
-          }}
-        >
-          مسح الفلاتر
-        </button>
-      )}
+      <div className="teacher-students-state-actions">
+        {filtered && (
+          <button
+            type="button"
+            onClick={
+              onReset
+            }
+          >
+            <RotateCcw
+              size={12}
+            />
+            مسح الفلاتر
+          </button>
+        )}
+
+        {!filtered &&
+          hasHalaqat && (
+            <button
+              type="button"
+              onClick={
+                onCreate
+              }
+            >
+              <Plus
+                size={12}
+              />
+              إضافة طالب
+            </button>
+          )}
+      </div>
     </div>
   );
 }
-
-/* =========================================================
-   Helpers
-========================================================= */
-
-function getEducationLabel(
-  value
-) {
-  return (
-    EDUCATION_LEVELS.find(
-      (item) =>
-        item.value === value
-    )?.label ||
-    "غير محدد"
-  );
-}
-
-function getMemorizationLabel(
-  value
-) {
-  return (
-    MEMORIZATION_TARGETS.find(
-      (item) =>
-        item.value === value
-    )?.label ||
-    "غير محدد"
-  );
-}
-
-function getRecitationTypeLabel(
-  value
-) {
-  return (
-    RECITATION_TYPES.find(
-      (item) =>
-        item.value === value
-    )?.label ||
-    "غير محدد"
-  );
-}
-
-function formatDays(days) {
-  if (!Array.isArray(days) ||
-      days.length === 0) {
-    return "لم يتم تحديد الأيام";
-  }
-
-  return days
-    .map(
-      (day) =>
-        DAYS.find(
-          (item) =>
-            item.value === day
-        )?.label || day
-    )
-    .join(" • ");
-}
-
-function formatDate(date) {
-  if (!date) return "لا يوجد";
-
-  try {
-    return new Date(
-      date
-    ).toLocaleDateString(
-      "ar-SA",
-      {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }
-    );
-  } catch {
-    return String(date);
-  }
-}
-
-/* =========================================================
-   Styles
-   مهم: actionButtonStyle معرف قبل استخدامه
-========================================================= */
-
-const pageStyle = {
-  minHeight: "100vh",
-  padding: "28px",
-  direction: "rtl",
-  boxSizing: "border-box",
-  background:
-    "linear-gradient(135deg,#f7f5ef 0%,#f1f5f1 100%)",
-  color: "#26332c",
-};
-
-const headerStyle = {
-  display: "flex",
-  justifyContent:
-    "space-between",
-  alignItems: "center",
-  gap: "15px",
-  flexWrap: "wrap",
-  marginBottom: "25px",
-};
-
-const headerIconStyle = {
-  width: "49px",
-  height: "49px",
-  borderRadius: "15px",
-  background: "#0f5132",
-  color: "#fff",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  boxShadow:
-    "0 7px 18px rgba(15,81,50,0.16)",
-};
-
-const pageTitleStyle = {
-  margin: 0,
-  color: "#173d2b",
-  fontSize: "29px",
-  fontWeight: "800",
-};
-
-const pageSubtitleStyle = {
-  margin:
-    "5px 0 0",
-  color: "#7d8780",
-  fontSize: "13px",
-};
-
-const backButtonStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "7px",
-  padding: "10px 15px",
-  borderRadius: "10px",
-  border:
-    "1px solid #d9dfdb",
-  background: "#fff",
-  color: "#173d2b",
-  cursor: "pointer",
-  fontWeight: "700",
-};
-
-const statsGridStyle = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit,minmax(180px,1fr))",
-  gap: "13px",
-  marginBottom: "22px",
-};
-
-const statCardStyle = {
-  background: "#fff",
-  borderRadius: "16px",
-  padding: "17px",
-  display: "flex",
-  alignItems: "center",
-  gap: "12px",
-  border:
-    "1px solid #e5e9e5",
-  boxShadow:
-    "0 4px 15px rgba(0,0,0,0.035)",
-};
-
-const statIconStyle = {
-  width: "44px",
-  height: "44px",
-  flexShrink: 0,
-  borderRadius: "12px",
-  background: "#edf5ef",
-  color: "#0f5132",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const cardStyle = {
-  background: "#fff",
-  borderRadius: "18px",
-  padding: "22px",
-  marginBottom: "22px",
-  border:
-    "1px solid #e4e9e5",
-  boxShadow:
-    "0 5px 20px rgba(0,0,0,0.035)",
-};
-
-const sectionHeaderStyle = {
-  display: "flex",
-  justifyContent:
-    "space-between",
-  alignItems: "center",
-  gap: "12px",
-  flexWrap: "wrap",
-};
-
-const sectionIconStyle = {
-  width: "41px",
-  height: "41px",
-  borderRadius: "12px",
-  background: "#edf5ef",
-  color: "#0f5132",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const sectionTitleStyle = {
-  margin: 0,
-  color: "#173d2b",
-  fontSize: "18px",
-};
-
-const sectionSubtitleStyle = {
-  margin:
-    "4px 0 0",
-  color: "#8a918d",
-  fontSize: "11px",
-};
-
-const formGridStyle = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit,minmax(210px,1fr))",
-  gap: "14px",
-};
-
-const searchGridStyle = {
-  display: "grid",
-  gridTemplateColumns:
-    "minmax(250px,1fr) 210px 210px",
-  gap: "10px",
-};
-
-const studentsGridStyle = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit,minmax(300px,1fr))",
-  gap: "16px",
-};
-
-const studentCardStyle = {
-  background: "#fff",
-  borderRadius: "18px",
-  padding: "18px",
-  border:
-    "1px solid #e3e8e4",
-  boxShadow:
-    "0 5px 20px rgba(0,0,0,0.045)",
-};
-
-const avatarStyle = {
-  width: "50px",
-  height: "50px",
-  flexShrink: 0,
-  borderRadius: "50%",
-  background:
-    "linear-gradient(145deg,#eaf3ed,#dfeae3)",
-  color: "#0f5132",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const activeBadgeStyle = {
-  padding:
-    "5px 9px",
-  borderRadius: "20px",
-  background: "#e7f5ec",
-  color: "#0f5132",
-  fontSize: "10px",
-  fontWeight: "800",
-};
-
-const inactiveBadgeStyle = {
-  padding:
-    "5px 9px",
-  borderRadius: "20px",
-  background: "#f1f1f1",
-  color: "#777",
-  fontSize: "10px",
-  fontWeight: "800",
-};
-
-const pointsBoxStyle = {
-  background: "#fffaf0",
-  border:
-    "1px solid #f0e4c8",
-  borderRadius: "12px",
-  padding: "11px",
-  textAlign: "center",
-  marginBottom: "12px",
-};
-
-const inputStyle = {
-  width: "100%",
-  minHeight: "45px",
-  padding:
-    "10px 12px",
-  border:
-    "1px solid #d8dfda",
-  borderRadius: "10px",
-  fontSize: "13px",
-  boxSizing: "border-box",
-  background: "#fff",
-  color: "#26332c",
-  outline: "none",
-  direction: "rtl",
-};
-
-const labelStyle = {
-  display: "block",
-  marginBottom: "7px",
-  color: "#465149",
-  fontSize: "12px",
-  fontWeight: "800",
-};
-
-const primaryButtonStyle = {
-  border: "none",
-  background: "#0f5132",
-  color: "#fff",
-  padding:
-    "11px 21px",
-  borderRadius: "10px",
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "7px",
-  fontSize: "13px",
-  fontWeight: "800",
-};
-
-const secondaryButtonStyle = {
-  border:
-    "1px solid #d8dfda",
-  background: "#fff",
-  color: "#59635d",
-  padding:
-    "11px 18px",
-  borderRadius: "10px",
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "7px",
-  fontSize: "13px",
-  fontWeight: "700",
-};
-
-const cancelButtonStyle = {
-  ...secondaryButtonStyle,
-  padding:
-    "8px 13px",
-  fontSize: "11px",
-};
-
-const miniButtonStyle = {
-  border:
-    "1px solid #dce2de",
-  background: "#fff",
-  color: "#59635d",
-  borderRadius: "7px",
-  padding:
-    "5px 9px",
-  cursor: "pointer",
-  fontSize: "10px",
-  fontWeight: "700",
-};
-
-/* =========================================================
-   مهم:
-   تعريف actionButtonStyle قبل StudentCard
-========================================================= */
-
-const actionButtonStyle = {
-  padding: "9px",
-  borderRadius: "9px",
-  border:
-    "1px solid #0f5132",
-  background: "#fff",
-  color: "#0f5132",
-  cursor: "pointer",
-  fontWeight: "800",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "6px",
-  fontSize: "11px",
-};
-
-const actionSecondaryButtonStyle = {
-  padding: "9px",
-  borderRadius: "9px",
-  border:
-    "1px solid #d9dedb",
-  background: "#fff",
-  color: "#59635d",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "6px",
-  fontWeight: "700",
-  fontSize: "11px",
-};
-
-const deleteButtonStyle = {
-  gridColumn: "1 / -1",
-  padding: "9px",
-  borderRadius: "9px",
-  border: "none",
-  background: "#b42318",
-  color: "#fff",
-  cursor: "pointer",
-  fontWeight: "800",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "6px",
-  fontSize: "11px",
-};
-
-const infoLineStyle = {
-  display: "flex",
-  justifyContent:
-    "space-between",
-  alignItems: "center",
-};
-
-const infoLabelStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "6px",
-  color: "#7b847e",
-  fontSize: "11px",
-};
