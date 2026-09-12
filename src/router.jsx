@@ -49,13 +49,20 @@ import TeacherHalaqat
   from "./pages/teacher/Halaqat";
 import TeacherMonthlyPlan from "./pages/teacher/MonthlyPlan";
 import TeacherStudentCare from "./pages/teacher/StudentCare";
+import PublicLayout from "./layouts/PublicLayout";
+import LandingPage from "./pages/LandingPage";
 
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Login />,
-  },
-
+{
+  path: "/",
+  element: <PublicLayout />,
+  children: [
+    {
+      index: true,
+      element: <LandingPage />,
+    },
+  ],
+},
   {
     path: "/login",
     element: <Login />,
