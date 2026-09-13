@@ -1,1044 +1,424 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useToast } from "../components/Toast";
-
 import {
-  ShieldCheck,
-  GraduationCap,
-  UserRound,
-  LockKeyhole,
-  Mail,
+  ArrowLeft,
+  BookOpenCheck,
   Eye,
   EyeOff,
-  LogIn,
-  ArrowLeft,
-  Sparkles,
+  GraduationCap,
   Loader2,
-  AlertCircle,
+  LockKeyhole,
+  LogIn,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+  UserRoundPlus,
 } from "lucide-react";
+import "./Login.css";
+
+const DUAS = [
+  "﴿وَقُلْ رَبِّ زِدْنِي عِلْمًا﴾",
+  "اللهم انفعني بما علمتني، وعلّمني ما ينفعني، وزدني علمًا.",
+  "﴿رَبِّ اشْرَحْ لِي صَدْرِي ۝ وَيَسِّرْ لِي أَمْرِي﴾",
+  "اللهم اجعل القرآن ربيع قلوبنا ونور صدورنا.",
+];
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
-const [loginMode, setLoginMode] =
-  useState("staff");
-  
-  const [username, setUsername] = useState("");
+
+  const [loginMode, setLoginMode] = useState("staff");
+  const [identifier, setIdentifier] = useState("");
+  const [studentNumber, setStudentNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  /*
-  =====================================================
-  الأدعية
-  =====================================================
-  */
-
-  const duas = [
-    "﴿وَقُلْ رَبِّ زِدْنِي عِلْمًا﴾",
-
-    "اللهم انفعني بما علمتني، وعلّمني ما ينفعني، وزدني علمًا.",
-
-    "اللهم افتح لي أبواب الفهم والعلم، وبارك لي فيما تعلمت.",
-
-    "﴿رَبِّ اشْرَحْ لِي صَدْرِي ۝ وَيَسِّرْ لِي أَمْرِي﴾",
-
-    "اللهم اجعل القرآن ربيع قلوبنا ونور صدورنا.",
-
-    "اللهم ارزقنا علمًا نافعًا وعملًا صالحًا.",
-  ];
-
-  const [dua] = useState(
-    () =>
-      duas[
-        Math.floor(
-          Math.random() * duas.length
-        )
-      ]
+  const dua = useMemo(
+    () => DUAS[Math.floor(Math.random() * DUAS.length)],
+    []
   );
 
-  /*
-  =====================================================
-  بيانات الأدوار
-  =====================================================
-  */
+  function switchMode(mode) {
+    setLoginMode(mode);
+    setIdentifier("");
+    setStudentNumber("");
+    setPassword("");
+    setErrorMessage("");
+    setShowPassword(false);
+  }
 
- 
-  /*
-  =====================================================
-  تسجيل الدخول
-  =====================================================
-  */
+  async function loadProfile(authUserId) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, role, user_number, full_name, phone, status, auth_user_id")
+      .eq("auth_user_id", authUserId)
+      .maybeSingle();
 
-  async function handleLogin() {
+    if (error) throw error;
+    return data;
+  }
+
+  async function handleStaffLogin() {
+    const email = identifier.trim().toLowerCase();
+
+    if (!email) throw new Error("يرجى إدخال البريد الإلكتروني.");
+    if (!password) throw new Error("يرجى إدخال كلمة المرور.");
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) throw new Error("بيانات الدخول غير صحيحة.");
+
+    const authUser = data?.user;
+    if (!authUser) throw new Error("تعذر التحقق من الحساب.");
+
+    const profile = await loadProfile(authUser.id);
+
+    if (!profile) {
+      await supabase.auth.signOut();
+      throw new Error("الحساب غير مرتبط بملف مستخدم داخل نظام الصديق.");
+    }
+
+    if (profile.status !== "active") {
+      await supabase.auth.signOut();
+      throw new Error("هذا الحساب غير نشط حاليًا.");
+    }
+
+    if (profile.role === "student") {
+      await supabase.auth.signOut();
+      throw new Error("هذا حساب طالب. استخدم خيار «دخول الطالب».");
+    }
+
+    let destination = getDestination(profile.role);
+
+    if (profile.role === "supervisor") {
+      const {
+        data: onboardingRows,
+        error: onboardingError,
+      } = await supabase.rpc("get_my_supervisor_onboarding");
+
+      if (onboardingError) {
+        console.error(
+          "Supervisor onboarding check error:",
+          onboardingError
+        );
+
+        await supabase.auth.signOut();
+
+        throw new Error(
+          "تعذر التحقق من إعداد حساب المشرف. حاول مرة أخرى."
+        );
+      }
+
+      const onboarding = Array.isArray(onboardingRows)
+        ? onboardingRows[0]
+        : null;
+
+      if (!onboarding) {
+        await supabase.auth.signOut();
+
+        throw new Error(
+          "تعذر تحديد حالة ربط حساب المشرف بالمسجد."
+        );
+      }
+
+      if (onboarding.has_mosque) {
+        destination = "/admin";
+      } else if (
+        onboarding.needs_setup &&
+        onboarding.can_create_mosque
+      ) {
+        destination = "/supervisor/setup";
+      } else {
+        await supabase.auth.signOut();
+
+        throw new Error(
+          "حساب المشرف غير مرتبط بمسجد ولا يملك صلاحية إنشاء مسجد. تواصل مع مدير النظام."
+        );
+      }
+    }
+
+    showToast(`مرحبًا بك ${profile.full_name}`, "success");
+
+    navigate(destination, {
+      replace: true,
+      state: {
+        welcome: true,
+        name: profile.full_name,
+        role: profile.role,
+        from: location.pathname,
+      },
+    });
+  }
+
+  async function handleStudentLogin() {
+    const fullName = identifier.trim();
+    const userNumber = studentNumber.trim().toUpperCase();
+
+    if (!fullName) throw new Error("يرجى إدخال اسم الطالب.");
+    if (!userNumber) throw new Error("يرجى إدخال رقم الطالب.");
+
+    const { data, error } = await supabase.functions.invoke(
+      "student-login",
+      {
+        body: {
+          full_name: fullName,
+          user_number: userNumber,
+        },
+      }
+    );
+
+    if (error) {
+      console.error("student-login invoke error:", error);
+      throw new Error(
+        "تعذر الوصول إلى خدمة دخول الطالب. تأكد من نشر Edge Function."
+      );
+    }
+
+    if (!data?.ok || !data?.access_token || !data?.refresh_token) {
+      throw new Error(
+        data?.message || "اسم الطالب أو رقم الطالب غير صحيح."
+      );
+    }
+
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    });
+
+    if (sessionError) throw sessionError;
+
+    showToast(
+      `مرحبًا بك ${data?.profile?.full_name || fullName}`,
+      "success"
+    );
+
+    navigate("/student", {
+      replace: true,
+      state: {
+        welcome: true,
+        name: data?.profile?.full_name || fullName,
+        role: "student",
+      },
+    });
+  }
+
+  async function handleLogin(event) {
+    event.preventDefault();
     if (loading) return;
 
     setErrorMessage("");
-
-    const identifier = username.trim();
-
-    if (!identifier) {
-      setErrorMessage(
-        `يرجى إدخال ${currentRole.user}`
-      );
-
-      return;
-    }
-
-    if (!password) {
-      setErrorMessage(
-        "يرجى إدخال كلمة المرور"
-      );
-
-      return;
-    }
-
     setLoading(true);
 
     try {
-      /*
-      =================================================
-      1. تحديد البريد المستخدم في Auth
-      =================================================
-      */
-
-      let email = identifier;
-
-      /*
-      المشرف:
-      البريد يدخل مباشرة.
-
-      المعلم / الطالب:
-      الرقم يبحث عنه في profiles.
-      */
-
-    
-      /*
-      =================================================
-      2. تسجيل الدخول في Supabase Auth
-      =================================================
-      */
-
-      const {
-        data: authData,
-        error: authError,
-      } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-      if (authError) {
-        console.error(
-          "Supabase Auth Error:",
-          authError
-        );
-
-        setErrorMessage(
-          "بيانات الدخول غير صحيحة. تحقق من البريد الإلكتروني وكلمة المرور."
-        );
-
-        setLoading(false);
-        return;
+      if (loginMode === "staff") {
+        await handleStaffLogin();
+      } else {
+        await handleStudentLogin();
       }
-
-      const authUser =
-        authData?.user;
-
-      if (!authUser) {
-        await supabase.auth.signOut();
-
-        setErrorMessage(
-          "تعذر التحقق من الحساب."
-        );
-
-        setLoading(false);
-        return;
-      }
-
-      /*
-      =================================================
-      3. تحميل Profile
-      =================================================
-      */
-
-      const {
-        data: profile,
-        error: profileError,
-      } =
-        await supabase
-          .from("profiles")
-          .select(
-            `
-              id,
-              role,
-              user_number,
-              full_name,
-              phone,
-              status,
-              auth_user_id
-            `
-          )
-          .eq(
-            "auth_user_id",
-            authUser.id
-          )
-          .maybeSingle();
-
-      if (profileError) {
-        console.error(
-          "Profile Error:",
-          profileError
-        );
-
-        await supabase.auth.signOut();
-
-        setErrorMessage(
-          "حدث خطأ أثناء تحميل بيانات الحساب."
-        );
-
-        setLoading(false);
-        return;
-      }
-
-      /*
-      =================================================
-      4. لا يوجد Profile
-      =================================================
-      */
-
-      if (!profile) {
-        await supabase.auth.signOut();
-
-        setErrorMessage(
-          "الحساب موجود في Supabase Auth لكنه غير مرتبط بملف مستخدم في نظام الصديق."
-        );
-
-        setLoading(false);
-        return;
-      }
-
-      /*
-      =================================================
-      5. التحقق من الدور
-      =================================================
-      */
-
-    
-      /*
-      =================================================
-      6. التحقق من حالة الحساب
-      =================================================
-      */
-
-      if (profile.status !== "active") {
-        await supabase.auth.signOut();
-
-        setErrorMessage(
-          "هذا الحساب غير نشط حاليًا. يرجى التواصل مع المشرف."
-        );
-
-        setLoading(false);
-        return;
-      }
-
-      /*
-      =================================================
-      7. رسالة نجاح
-      =================================================
-      */
-
-      showToast(
-        `مرحبًا بك ${
-          profile.full_name ||
-          getRoleName(profile.role)
-        }`,
-        "success"
-      );
-
-      /*
-      =================================================
-      8. التوجيه
-      =================================================
-      */
-
-      const destination =
-        getDestination(profile.role);
-
-      navigate(destination, {
-        replace: true,
-        state: {
-          welcome: true,
-          name:
-            profile.full_name ||
-            getRoleName(profile.role),
-
-          role: profile.role,
-
-          from:
-            location.pathname,
-        },
-      });
     } catch (error) {
-      console.error(
-        "Unexpected Login Error:",
-        error
-      );
-
-      setErrorMessage(
-        "حدث خطأ غير متوقع أثناء تسجيل الدخول."
-      );
-
+      console.error("Login error:", error);
+      setErrorMessage(error?.message || "حدث خطأ غير متوقع أثناء تسجيل الدخول.");
+    } finally {
       setLoading(false);
     }
   }
 
-  /*
-  =====================================================
-  واجهة الصفحة
-  =====================================================
-  */
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        position: "relative",
-        overflow: "hidden",
-        direction: "rtl",
+    <main className="login-pro-page">
+      <div className="login-pro-orb login-pro-orb-one" />
+      <div className="login-pro-orb login-pro-orb-two" />
 
-        background:
-          "linear-gradient(135deg,#f7f5ef 0%,#eef5f0 50%,#f8f6f0 100%)",
+      <section className="login-pro-shell">
+        <aside className="login-pro-showcase">
+          <div className="login-pro-showcase-inner">
+            <div className="login-pro-logo-box">
+              <img src="/icon-512.png" alt="الصديق" />
+            </div>
 
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+            <div className="login-pro-kicker">
+              <Sparkles />
+              منظومة لإدارة الحلقات وصناعة الأثر
+            </div>
 
-        padding: "25px",
-        boxSizing: "border-box",
-      }}
-    >
-      {/* الخلفية */}
+            <h1>
+              الصِّديق
+              <span>إدارة للحلقة، وعناية بمسيرة الطالب</span>
+            </h1>
 
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          opacity: 0.07,
+            <p>
+              متابعة الحضور والتسميع والخطط والإنجاز والتحفيز والعناية
+              بالطالب من مكان واحد.
+            </p>
 
-          backgroundImage: `
-            linear-gradient(
-              45deg,
-              transparent 46%,
-              #0f5132 47%,
-              #0f5132 53%,
-              transparent 54%
-            ),
-            linear-gradient(
-              -45deg,
-              transparent 46%,
-              #0f5132 47%,
-              #0f5132 53%,
-              transparent 54%
-            )
-          `,
+            <div className="login-pro-features">
+              <div><ShieldCheck /> صلاحيات ومسارات واضحة</div>
+              <div><BookOpenCheck /> متابعة تعليمية مترابطة</div>
+              <div><GraduationCap /> تجربة مناسبة لكل دور</div>
+            </div>
 
-          backgroundSize: "90px 90px",
-          transform: "scale(1.5)",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          width: "430px",
-          height: "430px",
-          borderRadius: "50%",
-          border:
-            "1px solid rgba(15,81,50,0.10)",
-          top: "-200px",
-          right: "-130px",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          width: "320px",
-          height: "320px",
-          borderRadius: "50%",
-          border:
-            "1px solid rgba(15,81,50,0.08)",
-          bottom: "-150px",
-          left: "-120px",
-        }}
-      />
-
-      {/* البطاقة */}
-
-      <div
-        style={{
-          position: "relative",
-          zIndex: 2,
-
-          width: "100%",
-          maxWidth: "480px",
-
-          background:
-            "rgba(255,255,255,0.97)",
-
-          border:
-            "1px solid rgba(15,81,50,0.10)",
-
-          borderRadius: "28px",
-
-          padding: "38px",
-
-          boxSizing: "border-box",
-
-          boxShadow:
-            "0 28px 80px rgba(22,55,39,0.14)",
-
-          backdropFilter: "blur(14px)",
-        }}
-      >
-        {/* الشعار */}
-
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "24px",
-          }}
-        >
-          <div
-            style={{
-              width: "94px",
-              height: "94px",
-              margin: "0 auto 14px",
-
-              borderRadius: "25px",
-
-              background:
-                "linear-gradient(145deg,#f1f6f2,#ffffff)",
-
-              border:
-                "1px solid rgba(15,81,50,0.10)",
-
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-
-              boxShadow:
-                "0 12px 32px rgba(15,81,50,0.09)",
-            }}
-          >
-            <img
-              src="/logo.png"
-              alt="الصديق"
-              style={{
-                width: "140px",
-                height: "74px",
-                objectFit: "contain",
-              }}
-            />
+            <div className="login-pro-dua">
+              <span>وقفة اليوم</span>
+              <strong>{dua}</strong>
+            </div>
           </div>
+        </aside>
 
-          <h1
-            style={{
-              margin: 0,
-              color: "#173d2b",
-              fontSize: "29px",
-              fontWeight: "800",
-            }}
-          >
-            نظام الصديق
-          </h1>
-
-          <p
-            style={{
-              margin: "8px 0 0",
-              color: "#7b817d",
-              fontSize: "13px",
-            }}
-          >
-            نظام إدارة حلقات تحفيظ القرآن الكريم
-          </p>
-        </div>
-
-        {/* الدعاء */}
-
-        <div
-          style={{
-            background:
-              "linear-gradient(135deg,#f4f8f5,#faf9f4)",
-
-            border:
-              "1px solid #e5ebe6",
-
-            borderRadius: "16px",
-
-            padding: "15px 18px",
-
-            marginBottom: "23px",
-
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "7px",
-
-              color: "#0f5132",
-
-              fontSize: "11px",
-              fontWeight: "800",
-
-              marginBottom: "7px",
-            }}
-          >
-            <Sparkles size={14} />
-            دعاء اليوم
-          </div>
-
-          <div
-            style={{
-              color: "#425248",
-              fontSize: "13px",
-              fontWeight: "700",
-              lineHeight: 1.9,
-            }}
-          >
-            {dua}
-          </div>
-        </div>
-
-     <div
-  style={{
-    display: "flex",
-    gap: "12px",
-    marginBottom: "24px",
-  }}
->
-  <button
-    type="button"
-    onClick={() => setLoginMode("staff")}
-    style={{
-      flex: 1,
-      height: "54px",
-      border: "none",
-      borderRadius: "14px",
-      fontWeight: "800",
-      cursor: "pointer",
-      background:
-        loginMode === "staff"
-          ? "#0f5132"
-          : "#edf2ee",
-      color:
-        loginMode === "staff"
-          ? "#fff"
-          : "#0f5132",
-    }}
-  >
-    دخول الإدارة
-  </button>
-
-  <button
-    type="button"
-    onClick={() => setLoginMode("student")}
-    style={{
-      flex: 1,
-      height: "54px",
-      border: "none",
-      borderRadius: "14px",
-      fontWeight: "800",
-      cursor: "pointer",
-      background:
-        loginMode === "student"
-          ? "#0f5132"
-          : "#edf2ee",
-      color:
-        loginMode === "student"
-          ? "#fff"
-          : "#0f5132",
-    }}
-  >
-    دخول الطالب
-  </button>
-</div>
-        {/* النموذج */}
-
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            handleLogin();
-          }}
-        >
-         <FormInput
-  label={
-    loginMode === "staff"
-      ? "البريد الإلكتروني"
-      : "اسم الطالب"
-  }
-  placeholder={
-    loginMode === "staff"
-      ? "أدخل البريد الإلكتروني"
-      : "أدخل اسم الطالب"
-  }
-  value={username}
-  onChange={setUsername}
-  icon={
-    loginMode === "staff"
-      ? Mail
-      : UserRound
-  }
-/>
-    
-
-          {/* كلمة المرور */}
-
-          <div
-            style={{
-              marginBottom: "18px",
-            }}
-          >
-            <label style={labelStyle}>
-              كلمة المرور
-            </label>
-
-            <div
-              style={{
-                position: "relative",
-              }}
-            >
-              <LockKeyhole
-                size={18}
-                color="#84908a"
-                style={{
-                  position: "absolute",
-                  right: "13px",
-                  top: "50%",
-                  transform:
-                    "translateY(-50%)",
-                }}
-              />
-
-              <input
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
-                value={password}
-                onChange={(event) =>
-                  setPassword(
-                    event.target.value
-                  )
-                }
-                placeholder="أدخل كلمة المرور"
-                autoComplete="current-password"
-                style={{
-                  ...inputStyle,
-                  paddingRight: "44px",
-                  paddingLeft: "45px",
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={() =>
-                  setShowPassword(
-                    (value) => !value
-                  )
-                }
-                aria-label={
-                  showPassword
-                    ? "إخفاء كلمة المرور"
-                    : "إظهار كلمة المرور"
-                }
-                style={{
-                  position: "absolute",
-                  left: "8px",
-                  top: "50%",
-                  transform:
-                    "translateY(-50%)",
-
-                  width: "34px",
-                  height: "34px",
-
-                  border: "none",
-                  background: "transparent",
-
-                  color: "#7c8780",
-
-                  cursor: "pointer",
-
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {showPassword ? (
-                  <EyeOff size={18} />
-                ) : (
-                  <Eye size={18} />
-                )}
-              </button>
+        <section className="login-pro-card">
+          <div className="login-pro-mobile-brand">
+            <img src="/icon-512.png" alt="الصديق" />
+            <div>
+              <strong>الصِّديق</strong>
+              <span>مرحبًا بعودتك</span>
             </div>
           </div>
 
-          {/* زر الدخول */}
+          <header className="login-pro-heading">
+            <div className="login-pro-eyebrow"><LogIn /> تسجيل الدخول</div>
+            <h2>مرحبًا بعودتك</h2>
+            <p>اختر طريقة الدخول المناسبة لحسابك.</p>
+          </header>
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              height: "53px",
+          <div className="login-pro-switch">
+            <button
+              type="button"
+              className={loginMode === "staff" ? "active" : ""}
+              onClick={() => switchMode("staff")}
+            >
+              <ShieldCheck />
+              <span>
+                <strong>دخول الإدارة</strong>
+                <small>مدير النظام • المشرف • المعلم</small>
+              </span>
+            </button>
 
-              border: "none",
-              borderRadius: "13px",
+            <button
+              type="button"
+              className={loginMode === "student" ? "active" : ""}
+              onClick={() => switchMode("student")}
+            >
+              <UserRound />
+              <span>
+                <strong>دخول الطالب</strong>
+                <small>الاسم + رقم الطالب</small>
+              </span>
+            </button>
+          </div>
 
-              background: loading
-                ? "#6c8c7c"
-                : "linear-gradient(135deg,#0f5132,#174f37)",
+          <form className="login-pro-form" onSubmit={handleLogin}>
+            <FormInput
+              label={loginMode === "staff" ? "البريد الإلكتروني" : "اسم الطالب"}
+              type={loginMode === "staff" ? "email" : "text"}
+              value={identifier}
+              onChange={setIdentifier}
+              placeholder={loginMode === "staff" ? "name@example.com" : "أدخل اسم الطالب"}
+              icon={loginMode === "staff" ? Mail : UserRound}
+            />
 
-              color: "#fff",
-
-              fontSize: "15px",
-              fontWeight: "800",
-
-              cursor: loading
-                ? "wait"
-                : "pointer",
-
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-
-              gap: "9px",
-
-              boxShadow:
-                "0 9px 22px rgba(15,81,50,0.20)",
-            }}
-          >
-            {loading ? (
-              <>
-                <Loader2
-                  size={19}
-                  style={{
-                    animation:
-                      "loginSpin 1s linear infinite",
-                  }}
-                />
-
-                جارٍ التحقق...
-              </>
+            {loginMode === "staff" ? (
+              <div className="login-pro-field">
+                <label>كلمة المرور</label>
+                <div className="login-pro-input-wrap">
+                  <LockKeyhole className="login-pro-input-icon" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="أدخل كلمة المرور"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="login-pro-eye"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </button>
+                </div>
+              </div>
             ) : (
-              <>
-                تسجيل الدخول
-                <LogIn size={19} />
-              </>
+              <FormInput
+                label="رقم الطالب"
+                value={studentNumber}
+                onChange={(value) => setStudentNumber(value.toUpperCase())}
+                placeholder="مثال: ST-7K4M92"
+                icon={GraduationCap}
+                dir="ltr"
+              />
             )}
-          </button>
-        </form>
 
-        {/* نسيت كلمة المرور */}
+            {errorMessage && <div className="login-pro-error">{errorMessage}</div>}
 
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "16px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() =>
-              showToast(
-                "استعادة كلمة المرور سيتم تفعيلها قريبًا.",
-                "info"
-              )
-            }
-            style={{
-              border: "none",
-              background: "transparent",
+            <button className="login-pro-primary" type="submit" disabled={loading}>
+              {loading ? (
+                <><Loader2 className="login-pro-spin" /> جارٍ التحقق…</>
+              ) : (
+                <><LogIn /> {loginMode === "staff" ? "تسجيل الدخول" : "دخول الطالب"}</>
+              )}
+            </button>
+          </form>
 
-              color: "#0f5132",
+          {loginMode === "staff" && (
+            <button
+              type="button"
+              className="login-pro-link"
+              onClick={() => showToast("سنفعّل استعادة كلمة المرور في مرحلة لاحقة.", "info")}
+            >
+              نسيت كلمة المرور؟ <ArrowLeft />
+            </button>
+          )}
 
-              fontSize: "13px",
-              fontWeight: "700",
+          <div className="login-pro-register">
+            <div>
+              <strong>ليس لديك حساب؟</strong>
+              <span>أنشئ حساب مشرف أو معلم أو طالب.</span>
+            </div>
+            <button type="button" onClick={() => navigate("/register")}>
+              <UserRoundPlus /> إنشاء حساب
+            </button>
+          </div>
 
-              cursor: "pointer",
-
-              display: "inline-flex",
-              alignItems: "center",
-
-              gap: "5px",
-            }}
-          >
-            نسيت كلمة المرور؟
-            <ArrowLeft size={15} />
-          </button>
-        </div>
-
-        {/* الفوتر */}
-
-        <div
-          style={{
-            marginTop: "21px",
-
-            paddingTop: "16px",
-
-            borderTop:
-              "1px solid #edf0ed",
-
-            textAlign: "center",
-
-            color: "#9da39f",
-
-            fontSize: "10px",
-          }}
-        >
-          نظام الصديق لإدارة حلقات تحفيظ القرآن الكريم
-        </div>
-      </div>
-
-      <style>
-        {`
-          @keyframes loginSpin {
-            from {
-              transform: rotate(0deg);
-            }
-
-            to {
-              transform: rotate(360deg);
-            }
-          }
-        `}
-      </style>
-    </div>
+          <div className="login-pro-security">
+            <ShieldCheck /> الصلاحية يحددها الحساب نفسه، وليس اختيارًا من صفحة الدخول.
+          </div>
+        </section>
+      </section>
+    </main>
   );
 }
 
-/*
-=========================================================
-حقل الإدخال
-=========================================================
-*/
-
-function FormInput({
-  label,
-  placeholder,
-  value,
-  onChange,
-  icon: Icon,
-}) {
+function FormInput({ label, type = "text", value, onChange, placeholder, icon: Icon, dir = "rtl" }) {
   return (
-    <div
-      style={{
-        marginBottom: "15px",
-      }}
-    >
-      <label style={labelStyle}>
-        {label}
-      </label>
-
-      <div
-        style={{
-          position: "relative",
-        }}
-      >
-        <Icon
-          size={18}
-          color="#84908a"
-          style={{
-            position: "absolute",
-            right: "13px",
-            top: "50%",
-            transform:
-              "translateY(-50%)",
-          }}
-        />
-
+    <div className="login-pro-field">
+      <label>{label}</label>
+      <div className="login-pro-input-wrap">
+        <Icon className="login-pro-input-icon" />
         <input
+          type={type}
           value={value}
-          onChange={(event) =>
-            onChange(
-              event.target.value
-            )
-          }
+          onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          autoComplete="username"
-          style={inputStyle}
+          autoComplete={type === "email" ? "email" : "off"}
+          dir={dir}
         />
       </div>
     </div>
   );
 }
-
-/*
-=========================================================
-زر الدور
-=========================================================
-*/
-
-function RoleButton({
-  active,
-  onClick,
-  icon: Icon,
-  label,
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        minHeight: "72px",
-
-        borderRadius: "13px",
-
-        border: active
-          ? "1px solid #0f5132"
-          : "1px solid #e1e5e2",
-
-        background: active
-          ? "#0f5132"
-          : "#fff",
-
-        color: active
-          ? "#fff"
-          : "#5f6963",
-
-        cursor: "pointer",
-
-        display: "flex",
-        flexDirection: "column",
-
-        alignItems: "center",
-        justifyContent: "center",
-
-        gap: "5px",
-
-        transition:
-          "all 0.18s ease",
-      }}
-    >
-      <Icon
-        size={20}
-        strokeWidth={1.8}
-      />
-
-      <span
-        style={{
-          fontSize: "12px",
-          fontWeight: "700",
-        }}
-      >
-        {label}
-      </span>
-    </button>
-  );
-}
-
-/*
-=========================================================
-أسماء الأدوار
-=========================================================
-*/
-
-function getRoleName(role){
-
-  switch(role){
-
-    case "admin":
-      return "مدير النظام";
-
-    case "supervisor":
-      return "مشرف المسجد";
-
-    case "teacher":
-      return "المعلم";
-
-    case "student":
-      return "الطالب";
-
-    default:
-      return role;
-  }
-
-}
-/*
-=========================================================
-مسارات النظام
-=========================================================
-*/
 
 function getDestination(role) {
-
-  if (role === "admin") {
-    return "/system-admin";
-  }
-
-  if (role === "supervisor") {
-    return "/admin";
-  }
-
-  if (role === "teacher") {
-    return "/teacher";
-  }
-
-  if (role === "student") {
-    return "/student";
-  }
-
+  if (role === "admin") return "/system-admin";
+  if (role === "supervisor") return "/admin";
+  if (role === "teacher") return "/teacher";
+  if (role === "student") return "/student";
   return "/login";
 }
-
-/*
-=========================================================
-التنسيقات
-=========================================================
-*/
-
-const inputStyle = {
-  width: "100%",
-  height: "50px",
-
-  padding: "0 44px 0 14px",
-
-  boxSizing: "border-box",
-
-  border:
-    "1px solid #d9dfdb",
-
-  borderRadius: "12px",
-
-  outline: "none",
-
-  fontSize: "14px",
-
-  color: "#26332c",
-
-  background: "#fff",
-
-  direction: "rtl",
-};
-
-const labelStyle = {
-  display: "block",
-
-  marginBottom: "7px",
-
-  color: "#3f4943",
-
-  fontSize: "13px",
-
-  fontWeight: "700",
-};

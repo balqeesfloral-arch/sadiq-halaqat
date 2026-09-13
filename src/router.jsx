@@ -51,6 +51,9 @@ import TeacherMonthlyPlan from "./pages/teacher/MonthlyPlan";
 import TeacherStudentCare from "./pages/teacher/StudentCare";
 import PublicLayout from "./layouts/PublicLayout";
 import LandingPage from "./pages/LandingPage";
+import Register from "./pages/Register";
+import StudentOnboarding from "./pages/student/Onboarding";
+import SupervisorSetup from "./pages/supervisor/SupervisorSetup";
 
 const router = createBrowserRouter([
 {
@@ -67,14 +70,25 @@ const router = createBrowserRouter([
     path: "/login",
     element: <Login />,
   },
+{
+  path: "/register",
+  element: <Register />,
+},
 
+{
+  path: "/student",
+  element: <StudentOnboarding />,
+},
 {
   path: "/system-admin",
   element: <SystemAdmin />,
 },
 
 
-
+{
+  path: "/supervisor/setup",
+  element: <SupervisorSetup />,
+},
   {
     path: "/admin",
     element: <AdminLayout />,
