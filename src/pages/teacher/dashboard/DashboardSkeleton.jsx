@@ -1,92 +1,26 @@
 export default function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="teacher-dashboard td-skeleton" aria-busy="true">
+      <div className="td-skeleton-line td-skeleton-title" />
+      <div className="td-skeleton-hero" />
 
-      {/* Hero */}
-
-      <div
-        className="
-        h-48
-        rounded-[32px]
-        bg-slate-200
-      "
-      />
-
-      {/* Stats */}
-
-      <div
-        className="
-        grid
-        grid-cols-2
-        lg:grid-cols-3
-        xl:grid-cols-6
-        gap-4
-      "
-      >
-        {[...Array(6)].map((_, i) => (
-          <div
-            key={i}
-            className="
-            h-32
-            rounded-[28px]
-            bg-slate-200
-            "
-          />
+      <div className="td-skeleton-grid">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div className="td-skeleton-card" key={index} />
         ))}
       </div>
 
-      {/* Charts */}
+      <div className="td-skeleton-actions" />
 
-      <div
-        className="
-        grid
-        xl:grid-cols-2
-        gap-6
-      "
-      >
-        <div
-          className="
-          h-[420px]
-          rounded-[30px]
-          bg-slate-200
-          "
-        />
-
-        <div
-          className="
-          h-[420px]
-          rounded-[30px]
-          bg-slate-200
-          "
-        />
+      <div className="td-two-column">
+        <div className="td-skeleton-panel" />
+        <div className="td-skeleton-panel" />
       </div>
 
-      {/* Bottom */}
-
-      <div
-        className="
-        grid
-        xl:grid-cols-2
-        gap-6
-      "
-      >
-        <div
-          className="
-          h-[450px]
-          rounded-[30px]
-          bg-slate-200
-          "
-        />
-
-        <div
-          className="
-          h-[450px]
-          rounded-[30px]
-          bg-slate-200
-          "
-        />
+      <div className="td-two-column">
+        <div className="td-skeleton-panel td-skeleton-panel--tall" />
+        <div className="td-skeleton-panel td-skeleton-panel--tall" />
       </div>
-
     </div>
   );
 }

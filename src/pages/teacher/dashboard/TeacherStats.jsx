@@ -1,201 +1,85 @@
 import {
-  Users,
-  ClipboardCheck,
-  XCircle,
   Award,
+  CheckCircle2,
+  ClipboardCheck,
   GraduationCap,
   Target,
-  TrendingUp,
+  UserX,
+  Users,
 } from "lucide-react";
 
-export default function TeacherStats({
-  studentsCount = 0,
-  presentCount = 0,
-  absentCount = 0,
-  recitationsCount = 0,
-  examsCount = 0,
-  achievementRate = 0,
-}) {
-  const cards = [
-    {
-      title: "الطلاب",
-      value: studentsCount,
-      icon: Users,
-      color:
-        "from-blue-500 to-cyan-500",
-    },
+const CARDS = [
+  {
+    key: "studentsCount",
+    title: "طلاب الحلقة",
+    subtitle: "المسجلون حاليًا",
+    icon: Users,
+    tone: "blue",
+  },
+  {
+    key: "presentCount",
+    title: "الحضور اليوم",
+    subtitle: "حاضر + متأخر",
+    icon: ClipboardCheck,
+    tone: "green",
+  },
+  {
+    key: "absentCount",
+    title: "الغياب اليوم",
+    subtitle: "يحتاج متابعة",
+    icon: UserX,
+    tone: "red",
+  },
+  {
+    key: "recitationsCount",
+    title: "تسميع اليوم",
+    subtitle: "المسجل حتى الآن",
+    icon: Award,
+    tone: "gold",
+  },
+  {
+    key: "examsCount",
+    title: "الاختبارات",
+    subtitle: "المرتبطة بالمعلم",
+    icon: GraduationCap,
+    tone: "violet",
+  },
+  {
+    key: "achievementRate",
+    title: "الإنجاز الشهري",
+    subtitle: "اكتمال الحفظ والمراجعة",
+    icon: Target,
+    tone: "teal",
+    suffix: "%",
+  },
+];
 
-    {
-      title: "الحضور اليوم",
-      value: presentCount,
-      icon: ClipboardCheck,
-      color:
-        "from-emerald-500 to-green-500",
-    },
-
-    {
-      title: "الغياب اليوم",
-      value: absentCount,
-      icon: XCircle,
-      color:
-        "from-red-500 to-rose-500",
-    },
-
-    {
-      title: "التسميعات",
-      value: recitationsCount,
-      icon: Award,
-      color:
-        "from-amber-500 to-yellow-500",
-    },
-
-    {
-      title: "الاختبارات",
-      value: examsCount,
-      icon: GraduationCap,
-      color:
-        "from-violet-500 to-purple-500",
-    },
-
-    {
-      title: "الإنجاز الشهري",
-      value: `${achievementRate}%`,
-      icon: Target,
-      color:
-        "from-teal-500 to-emerald-500",
-    },
-  ];
-
+export default function TeacherStats({ stats = {} }) {
   return (
-    <div
-      className="
-      grid
-      grid-cols-1
-      md:grid-cols-2
-    xl:grid-cols-6
-      gap-6
-    "
-    >
-      {cards.map((card) => (
-        <StatsCard
-          key={card.title}
-          {...card}
-        />
-      ))}
-    </div>
-  );
-}
+    <section className="td-stats-grid">
+      {CARDS.map((card) => {
+        const Icon = card.icon;
+        const value = stats[card.key] ?? 0;
 
-function StatsCard({
-  title,
-  value,
-  icon: Icon,
-  color,
-}) {
-  return (
-    <div
-      className="
-      relative
-      overflow-hidden
-      rounded-[28px]
-      bg-white
-      border
-      border-slate-200
-      shadow-sm
-      hover:shadow-xl
-      transition-all
-      duration-300
-      group
-    "
-    >
-      {/* خلفية زخرفية */}
-
-      <div
-        className={`
-          absolute
-          top-0
-          right-0
-          w-40
-          h-40
-          rounded-full
-          blur-3xl
-          opacity-10
-          bg-gradient-to-br
-          ${color}
-        `}
-      />
-
-      <div className="relative p-6">
-
-        <div
-          className="
-          flex
-          items-start
-          justify-between
-        "
-        >
-          <div>
-
-            <div
-              className="
-              text-slate-500
-              text-sm
-              font-medium
-            "
-            >
-              {title}
+        return (
+          <article className={`td-stat-card td-tone-${card.tone}`} key={card.key}>
+            <div className="td-stat-icon">
+              <Icon size={21} />
             </div>
 
-            <div
-              className="
-              mt-3
-              text-5xl
-              font-black
-              text-slate-900
-            "
-            >
-              {value}
+            <div className="td-stat-body">
+              <span>{card.title}</span>
+              <strong>
+                {value}
+                {card.suffix || ""}
+              </strong>
+              <small>{card.subtitle}</small>
             </div>
 
-          </div>
-
-          <div
-            className={`
-              w-16
-              h-16
-              rounded-3xl
-              bg-gradient-to-br
-              ${color}
-              text-white
-              flex
-              items-center
-              justify-center
-              shadow-lg
-            `}
-          >
-            <Icon size={30} />
-          </div>
-        </div>
-
-        <div
-          className="
-          mt-6
-          flex
-          items-center
-          gap-2
-          text-emerald-600
-          text-sm
-          font-medium
-        "
-        >
-          <TrendingUp size={15} />
-
-          <span>
-            أداء مستقر
-          </span>
-        </div>
-
-      </div>
-    </div>
+            <CheckCircle2 className="td-stat-mark" size={16} />
+          </article>
+        );
+      })}
+    </section>
   );
 }

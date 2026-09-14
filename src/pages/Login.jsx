@@ -177,11 +177,51 @@ export default function Login() {
     );
 
     if (error) {
-      console.error("student-login invoke error:", error);
-      throw new Error(
-        "تعذر الوصول إلى خدمة دخول الطالب. تأكد من نشر Edge Function."
+  console.error("student-login invoke error:", error);
+
+  let serverMessage = "";
+  let status = error?.context?.status || "";
+
+  try {
+    if (error?.context) {
+      const responseText = await error.context.clone().text();
+
+      console.log(
+        "student-login status:",
+        error.context.status
       );
+
+      console.log(
+        "student-login response:",
+        responseText
+      );
+
+      try {
+        const parsed = JSON.parse(responseText);
+
+        serverMessage =
+          parsed?.message ||
+          parsed?.error ||
+          parsed?.details ||
+          "";
+      } catch {
+        serverMessage = responseText;
+      }
     }
+  } catch (readError) {
+    console.error(
+      "Failed to read student-login response:",
+      readError
+    );
+  }
+
+  throw new Error(
+    serverMessage ||
+      `تعذر تسجيل دخول الطالب${
+        status ? ` — رمز الخطأ ${status}` : ""
+      }`
+  );
+}
 
     if (!data?.ok || !data?.access_token || !data?.refresh_token) {
       throw new Error(

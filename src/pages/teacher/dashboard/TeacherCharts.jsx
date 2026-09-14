@@ -9,218 +9,131 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
+import { Activity, BarChart3 } from "lucide-react";
 
-import {
-  BarChart3,
-  Activity,
-} from "lucide-react";
+function EmptyChart({ text }) {
+  return (
+    <div className="td-chart-empty">
+      <span>{text}</span>
+    </div>
+  );
+}
+
+function ChartTooltip({ active, payload, label, suffix = "" }) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="td-chart-tooltip">
+      <strong>{label}</strong>
+      <span>
+        {payload[0]?.value ?? 0}
+        {suffix}
+      </span>
+    </div>
+  );
+}
 
 export default function TeacherCharts({
   attendanceData = [],
   recitationData = [],
 }) {
   return (
-    <div
-      className="
-      grid
-      grid-cols-1
-      xl:grid-cols-2
-      gap-6
-    "
-    >
-      <AttendanceChart
-        data={attendanceData}
-      />
+    <section className="td-two-column">
+      <article className="td-panel">
+        <header className="td-panel-header">
+          <div className="td-panel-icon td-panel-icon--green">
+            <Activity size={20} />
+          </div>
+          <div>
+            <span>آخر 30 يومًا</span>
+            <h3>نسبة الحضور المسجلة</h3>
+          </div>
+        </header>
 
-      <RecitationChart
-        data={recitationData}
-      />
-    </div>
-  );
-}
-
-function AttendanceChart({
-  data,
-}) {
-  return (
-    <div
-      className="
-      bg-white
-      rounded-[30px]
-      border
-      border-slate-200
-      shadow-sm
-      p-6
-    "
-    >
-      <div
-        className="
-        flex
-        items-center
-        gap-3
-        mb-6
-      "
-      >
-        <div
-          className="
-          w-12
-          h-12
-          rounded-2xl
-          bg-emerald-100
-          flex
-          items-center
-          justify-center
-          text-emerald-700
-        "
-        >
-          <Activity size={22} />
+        <div className="td-chart">
+          {!attendanceData.length ? (
+            <EmptyChart text="لا توجد بيانات حضور بعد" />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={attendanceData}
+                margin={{ top: 10, right: 4, left: -22, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="4 4" stroke="#e8eeeb" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11, fill: "#718079" }}
+                  minTickGap={30}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fontSize: 11, fill: "#718079" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip content={<ChartTooltip suffix="%" />} />
+                <Line
+                  type="monotone"
+                  dataKey="attendance"
+                  stroke="#0f766e"
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
+      </article>
 
-        <div>
-          <h3
-            className="
-            font-black
-            text-xl
-          "
-          >
-            الحضور
-          </h3>
+      <article className="td-panel">
+        <header className="td-panel-header">
+          <div className="td-panel-icon td-panel-icon--gold">
+            <BarChart3 size={20} />
+          </div>
+          <div>
+            <span>آخر 30 يومًا</span>
+            <h3>نشاط التسميع</h3>
+          </div>
+        </header>
 
-          <p
-            className="
-            text-slate-500
-            text-sm
-          "
-          >
-            آخر 30 يوم
-          </p>
+        <div className="td-chart">
+          {!recitationData.length ? (
+            <EmptyChart text="لا توجد بيانات تسميع بعد" />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={recitationData}
+                margin={{ top: 10, right: 4, left: -22, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="4 4" stroke="#e8eeeb" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11, fill: "#718079" }}
+                  minTickGap={30}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: "#718079" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar
+                  dataKey="recitations"
+                  fill="#c9a83f"
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={24}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
-      </div>
-
-      <div className="h-[320px]">
-
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-        >
-          <LineChart data={data}>
-
-            <CartesianGrid
-              strokeDasharray="3 3"
-            />
-
-            <XAxis
-              dataKey="date"
-            />
-
-            <YAxis />
-
-            <Tooltip />
-
-            <Line
-              type="monotone"
-              dataKey="attendance"
-              stroke="#0F766E"
-              strokeWidth={4}
-              dot={false}
-            />
-
-          </LineChart>
-        </ResponsiveContainer>
-
-      </div>
-    </div>
-  );
-}
-
-function RecitationChart({
-  data,
-}) {
-  return (
-    <div
-      className="
-      bg-white
-      rounded-[30px]
-      border
-      border-slate-200
-      shadow-sm
-      p-6
-    "
-    >
-      <div
-        className="
-        flex
-        items-center
-        gap-3
-        mb-6
-      "
-      >
-        <div
-          className="
-          w-12
-          h-12
-          rounded-2xl
-          bg-amber-100
-          flex
-          items-center
-          justify-center
-          text-amber-700
-        "
-        >
-          <BarChart3 size={22} />
-        </div>
-
-        <div>
-          <h3
-            className="
-            font-black
-            text-xl
-          "
-          >
-            التسميعات
-          </h3>
-
-          <p
-            className="
-            text-slate-500
-            text-sm
-          "
-          >
-            آخر 30 يوم
-          </p>
-        </div>
-      </div>
-
-      <div className="h-[320px]">
-
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-        >
-          <BarChart data={data}>
-
-            <CartesianGrid
-              strokeDasharray="3 3"
-            />
-
-            <XAxis
-              dataKey="date"
-            />
-
-            <YAxis />
-
-            <Tooltip />
-
-            <Bar
-              dataKey="recitations"
-              radius={[10,10,0,0]}
-              fill="#D6C28A"
-            />
-
-          </BarChart>
-        </ResponsiveContainer>
-
-      </div>
-    </div>
+      </article>
+    </section>
   );
 }

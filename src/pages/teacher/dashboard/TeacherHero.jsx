@@ -1,237 +1,138 @@
 import {
   BookOpen,
   Building2,
-  Users,
-  ClipboardCheck,
-  Award,
+  CalendarDays,
+  ChevronDown,
+  ShieldCheck,
   Sparkles,
+  Users,
 } from "lucide-react";
 
+const PERIOD_LABELS = {
+  after_fajr: "بعد الفجر",
+  after_dhuhr: "بعد الظهر",
+  after_asr: "بعد العصر",
+  after_maghrib: "بعد المغرب",
+  after_isha: "بعد العشاء",
+};
+
 export default function TeacherHero({
-  teacherName,
-  halaqaName,
-  mosqueName,
-  studentsCount,
-  attendanceCount,
-  recitationsCount,
+  teacher,
+  assignments = [],
+  activeHalaqaId,
+  onHalaqaChange,
+  assignment,
+  stats = {},
 }) {
-  const today =
-    new Date().toLocaleDateString(
-      "ar-SA",
-      {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }
-    );
+  const todayGregorian = new Intl.DateTimeFormat("ar-SA", {
+    timeZone: "Asia/Riyadh",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
+
+  const todayHijri = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
+    timeZone: "Asia/Riyadh",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
 
   return (
-    <div
-      className="
-      relative
-      overflow-hidden
-      rounded-[32px]
-      bg-gradient-to-l
-      from-emerald-900
-      via-emerald-800
-      to-emerald-700
-      p-8
-      text-white
-      shadow-xl
-    "
-    >
-      {/* زخرفة */}
+    <section className="td-hero">
+      <div className="td-pattern" aria-hidden="true" />
 
-      <div
-        className="
-        absolute
-        -top-20
-        -left-20
-        w-72
-        h-72
-        rounded-full
-        bg-white/5
-      "
-      />
+      <div className="td-hero-copy">
+        <div className="td-hero-kicker">
+          <Sparkles size={16} />
+          مساحة المعلم اليومية
+        </div>
 
-      <div
-        className="
-        absolute
-        -bottom-24
-        -right-24
-        w-96
-        h-96
-        rounded-full
-        bg-yellow-300/10
-      "
-      />
+        <h2>
+          حيّاك الله،
+          <span>{teacher?.full_name || "المعلم"}</span>
+        </h2>
 
-      <div
-        className="
-        relative
-        z-10
-        flex
-        flex-col
-        xl:flex-row
-        gap-8
-        justify-between
-      "
-      >
-        {/* معلومات */}
+        <p>
+          كل ما تحتاجه للحضور والتسميع ومتابعة طلاب الحلقة في مكان واحد سريع وواضح.
+        </p>
 
-        <div>
+        <div className="td-hero-meta">
+          <span>
+            <Building2 size={16} />
+            {assignment?.mosque_name || "—"}
+          </span>
 
-          <div
-            className="
-            inline-flex
-            items-center
-            gap-2
-            bg-white/10
-            px-4
-            py-2
-            rounded-full
-            mb-5
-          "
+          <span>
+            <BookOpen size={16} />
+            {assignment?.halaqa_name || "—"}
+          </span>
+
+          <span>
+            <ShieldCheck size={16} />
+            {assignment?.teacher_role === "main" ? "معلم رئيسي" : "معلم مساعد"}
+          </span>
+        </div>
+
+        <div className="td-date-line">
+          <CalendarDays size={16} />
+          <span>{todayGregorian}</span>
+          <i />
+          <span>{todayHijri}</span>
+        </div>
+      </div>
+
+      <div className="td-hero-control">
+        <div className="td-hero-control-head">
+          <span>الحلقة الحالية</span>
+          <strong>
+            {assignments.length} {assignments.length === 1 ? "حلقة" : "حلقات"}
+          </strong>
+        </div>
+
+        <label className="td-halaqa-select">
+          <BookOpen size={18} />
+          <select
+            value={activeHalaqaId ?? ""}
+            onChange={(event) => onHalaqaChange(Number(event.target.value))}
           >
-            <Sparkles size={16} />
+            {assignments.map((item) => (
+              <option value={item.halaqa_id} key={item.halaqa_id}>
+                {item.halaqa_name} — {item.mosque_name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={18} />
+        </label>
+
+        <div className="td-hero-control-grid">
+          <div>
+            <strong>{stats.studentsCount ?? 0}</strong>
             <span>
-              لوحة المعلم
+              <Users size={14} />
+              طالب
             </span>
           </div>
 
-          <h1
-            className="
-            text-4xl
-            font-black
-          "
-          >
-            السلام عليكم
-          </h1>
-
-          <h2
-            className="
-            text-2xl
-            mt-2
-            font-bold
-            text-yellow-200
-          "
-          >
-            {teacherName}
-          </h2>
-
-          <div
-            className="
-            mt-6
-            space-y-3
-          "
-          >
-            <div className="flex items-center gap-3">
-              <BookOpen size={18} />
-              <span>
-                {halaqaName}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Building2 size={18} />
-              <span>
-                {mosqueName}
-              </span>
-            </div>
-
-            <div className="text-emerald-100">
-              {today}
-            </div>
+          <div>
+            <strong>{stats.presentCount ?? 0}</strong>
+            <span>حاضر اليوم</span>
           </div>
 
+          <div>
+            <strong>{stats.recitationsCount ?? 0}</strong>
+            <span>تسميع اليوم</span>
+          </div>
         </div>
 
-        {/* إحصائيات */}
-
-        <div
-          className="
-          grid
-          grid-cols-1
-          md:grid-cols-3
-          gap-4
-          w-full
-xl:w-auto
-        "
-        >
-          <StatCard
-            icon={<Users size={24} />}
-            title="الطلاب"
-            value={studentsCount}
-          />
-
-          <StatCard
-            icon={
-              <ClipboardCheck size={24} />
-            }
-            title="الحضور"
-            value={attendanceCount}
-          />
-
-          <StatCard
-            icon={<Award size={24} />}
-            title="التسميعات"
-            value={recitationsCount}
-          />
+        <div className="td-hero-period">
+          وقت الحلقة:
+          <strong>
+            {PERIOD_LABELS[assignment?.halaqa_period] || "غير محدد"}
+          </strong>
         </div>
       </div>
-    </div>
-  );
-}
-
-function StatCard({
-  icon,
-  title,
-  value,
-}) {
-  return (
-    <div
-      className="
-      bg-white/10
-      backdrop-blur-md
-      rounded-3xl
-      p-5
-      border
-      border-white/10
-    "
-    >
-      <div
-        className="
-        w-12
-        h-12
-        rounded-2xl
-        bg-white/10
-        flex
-        items-center
-        justify-center
-      "
-      >
-        {icon}
-      </div>
-
-      <div
-        className="
-        mt-5
-        text-4xl
-        font-black
-      "
-      >
-        {value}
-      </div>
-
-      <div
-        className="
-        text-white/70
-        mt-1
-      "
-      >
-        {title}
-      </div>
-    </div>
+    </section>
   );
 }

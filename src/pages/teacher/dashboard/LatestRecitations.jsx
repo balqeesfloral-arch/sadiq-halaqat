@@ -1,245 +1,68 @@
+import { useNavigate } from "react-router-dom";
 import {
+  ArrowLeft,
   BookOpen,
   CalendarDays,
   Star,
-  ChevronLeft,
 } from "lucide-react";
 
-export default function LatestRecitations({
-  recitations = [],
-}) {
-  return (
-    <div
-      className="
-      bg-white
-      rounded-[30px]
-      border
-      border-slate-200
-      shadow-sm
-      overflow-hidden
-    "
-    >
-      {/* Header */}
+export default function LatestRecitations({ recitations = [] }) {
+  const navigate = useNavigate();
 
-      <div
-        className="
-        px-6
-        py-5
-        border-b
-        border-slate-100
-        flex
-        items-center
-        justify-between
-      "
-      >
-        <div
-          className="
-          flex
-          items-center
-          gap-3
-        "
-        >
-          <div
-            className="
-            w-12
-            h-12
-            rounded-2xl
-            bg-emerald-100
-            flex
-            items-center
-            justify-center
-            text-emerald-700
-          "
-          >
-            <BookOpen size={22} />
+  return (
+    <section className="td-panel td-list-panel">
+      <header className="td-panel-header td-panel-header--between">
+        <div className="td-panel-header-group">
+          <div className="td-panel-icon td-panel-icon--green">
+            <BookOpen size={20} />
           </div>
 
           <div>
-            <h3
-              className="
-              text-xl
-              font-black
-            "
-            >
-              آخر التسميعات
-            </h3>
-
-            <p
-              className="
-              text-sm
-              text-slate-500
-            "
-            >
-              أحدث النشاطات المسجلة
-            </p>
+            <span>آخر ما سُجل</span>
+            <h3>أحدث التسميعات</h3>
           </div>
         </div>
-      </div>
 
-      <div className="divide-y">
+        <button type="button" onClick={() => navigate("/teacher/recitations")}>
+          عرض الكل
+          <ArrowLeft size={15} />
+        </button>
+      </header>
 
-        {recitations
-          .slice(0, 8)
-          .map((item) => (
-            <RecitationRow
-              key={item.id}
-              item={item}
-            />
+      {!recitations.length ? (
+        <div className="td-list-empty">لم يتم تسجيل تسميعات خلال آخر 30 يومًا.</div>
+      ) : (
+        <div className="td-recitation-list">
+          {recitations.map((item) => (
+            <article className="td-recitation-row" key={item.id}>
+              <div className="td-recitation-main">
+                <strong>{item.student_name}</strong>
+                <span>
+                  {item.from_surah || "—"}
+                  {" ← "}
+                  {item.to_surah || "—"}
+                </span>
+              </div>
+
+              <div className="td-recitation-meta">
+                {item.lesson_evaluation && (
+                  <span className="td-evaluation">{item.lesson_evaluation}</span>
+                )}
+
+                <span className="td-points">
+                  <Star size={13} />
+                  {Number(item.points || 0)}
+                </span>
+
+                <span className="td-recitation-date">
+                  <CalendarDays size={13} />
+                  {item.recitation_date}
+                </span>
+              </div>
+            </article>
           ))}
-
-      </div>
-    </div>
-  );
-}
-
-function RecitationRow({
-  item,
-}) {
-  return (
-    <div
-      className="
-      p-4
-      hover:bg-slate-50
-      transition-all
-    "
-    >
-      <div
-        className="
-        flex
-        items-center
-        justify-between
-      "
-      >
-        <div>
-
-          <div
-            className="
-            font-bold
-            text-slate-900
-          "
-          >
-            {
-              item.profiles
-                ?.full_name
-            }
-          </div>
-
-          <div
-            className="
-            text-sm
-            text-slate-500
-            mt-1
-          "
-          >
-            {item.from_surah}
-            {" "}
-            →
-            {" "}
-            {item.to_surah}
-          </div>
-
         </div>
-
-        <div
-          className="
-          flex
-          items-center
-          gap-2
-        "
-        >
-          <div
-            className="
-            flex
-            items-center
-            gap-1
-            text-slate-500
-            text-sm
-          "
-          >
-            <CalendarDays
-              size={14}
-            />
-
-            {
-              item.recitation_date
-            }
-          </div>
-
-          <ChevronLeft
-            size={18}
-            className="
-            text-slate-400
-            "
-          />
-        </div>
-      </div>
-
-      <div
-        className="
-        mt-3
-        flex
-        gap-2
-        flex-wrap
-      "
-      >
-        <Badge
-          value={
-            item.lesson_evaluation
-          }
-        />
-
-        <Points
-          value={item.points}
-        />
-      </div>
-    </div>
-  );
-}
-
-function Badge({
-  value,
-}) {
-  if (!value) return null;
-
-  return (
-    <div
-      className="
-      px-3
-      py-1
-      rounded-xl
-      bg-emerald-50
-      text-emerald-700
-      text-xs
-      font-bold
-    "
-    >
-      {value}
-    </div>
-  );
-}
-
-function Points({
-  value,
-}) {
-  return (
-    <div
-      className="
-      px-3
-      py-1
-      rounded-xl
-      bg-amber-50
-      text-amber-700
-      text-xs
-      font-bold
-      flex
-      items-center
-      gap-1
-    "
-    >
-      <Star size={12} />
-
-      {value || 0}
-      نقطة
-    </div>
+      )}
+    </section>
   );
 }

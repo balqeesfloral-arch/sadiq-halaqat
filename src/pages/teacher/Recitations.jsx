@@ -111,6 +111,8 @@ function createQuranForm() {
 
     lesson_evaluation: "",
     lesson_amount_type: "",
+    lesson_amount_value: "",
+    lesson_amount_unit: "lines",
 
     next_surah: "",
     next_from_ayah: "",
@@ -284,6 +286,12 @@ export default function Recitations() {
   ] = useState(
     createNooraniaForm
   );
+
+
+  const [
+    planSuggestion,
+    setPlanSuggestion,
+  ] = useState(null);
 
   /* =====================================================
      سجل العمليات - Filters
@@ -794,7 +802,8 @@ export default function Recitations() {
               phone,
               status,
               learning_goal,
-              recitation_mode
+              recitation_mode,
+              recitation_days
             `)
             .in(
               "id",
@@ -1236,22 +1245,232 @@ export default function Recitations() {
     ]);
 
   /* =====================================================
+     الخطة الشهرية → افتراضيات التسميع
+  ===================================================== */
+
+  useEffect(() => {
+    if (
+      editing ||
+      !formOpen ||
+      !commonForm.student_id ||
+      !commonForm.halaqa_id ||
+      !commonForm.recitation_date
+    ) {
+      if (editing) {
+        setPlanSuggestion(null);
+      }
+      return;
+    }
+
+    let active = true;
+
+    async function loadPlanSuggestion() {
+      try {
+        const hijri = getHijriPartsForDate(
+          commonForm.recitation_date
+        );
+
+        const { data: plan, error } = await supabase
+          .from("monthly_plans")
+          .select(`
+            id,
+            status,
+            hijri_year,
+            hijri_month,
+            memorization_daily_amount,
+            memorization_daily_unit,
+            revision_daily_amount,
+            revision_daily_unit,
+            memorization_target_faces,
+            revision_target_faces,
+            planned_sessions,
+            recitation_days_snapshot,
+            noorania_lesson_daily_amount,
+            noorania_lesson_daily_unit,
+            noorania_revision_daily_amount,
+            noorania_revision_daily_unit
+          `)
+          .eq("student_id", Number(commonForm.student_id))
+          .eq("halaqa_id", Number(commonForm.halaqa_id))
+          .eq("hijri_year", Number(hijri.year))
+          .eq("hijri_month", Number(hijri.month))
+          .maybeSingle();
+
+        if (error) throw error;
+        if (!active) return;
+
+        if (!plan) {
+          setPlanSuggestion(null);
+          return;
+        }
+
+        const student = profiles.find(
+          (item) => Number(item.id) === Number(commonForm.student_id)
+        );
+
+        const days = Array.isArray(plan.recitation_days_snapshot) &&
+          plan.recitation_days_snapshot.length
+          ? plan.recitation_days_snapshot
+          : Array.isArray(student?.recitation_days)
+            ? student.recitation_days
+            : [];
+
+        const scheduledToday = isScheduledRecitationDate(
+          commonForm.recitation_date,
+          days
+        );
+
+        const plannedSessions = Number(plan.planned_sessions || 0);
+
+        const memFallback = inferDailyFromTarget(
+          plan.memorization_target_faces,
+          plannedSessions
+        );
+
+        const revFallback = inferDailyFromTarget(
+          plan.revision_target_faces,
+          plannedSessions
+        );
+
+        const memorizationAmount =
+          plan.memorization_daily_amount ?? memFallback.amount;
+
+        const memorizationUnit =
+          plan.memorization_daily_unit || memFallback.unit || "lines";
+
+        const revisionAmount =
+          plan.revision_daily_amount ?? revFallback.amount;
+
+        const revisionUnit =
+          plan.revision_daily_unit || revFallback.unit || "faces";
+
+        setPlanSuggestion({
+          ...plan,
+          scheduledToday,
+          days,
+          memorizationAmount,
+          memorizationUnit,
+          revisionAmount,
+          revisionUnit,
+        });
+
+        if (formType === "quran") {
+          setQuranForm((current) => {
+            const next = { ...current };
+
+            if (
+              (current.lesson_amount_value === "" || current.lesson_amount_value === null) &&
+              Number(memorizationAmount || 0) > 0
+            ) {
+              next.lesson_amount_value = Number(memorizationAmount);
+              next.lesson_amount_unit = memorizationUnit;
+            }
+
+            if (
+              (current.review_faces === "" || current.review_faces === null) &&
+              Number(revisionAmount || 0) > 0
+            ) {
+              next.review_faces = amountToFaces(
+                revisionAmount,
+                revisionUnit
+              );
+            }
+
+            return next;
+          });
+        }
+
+        if (formType === "noorania") {
+          setNooraniaForm((current) => {
+            const next = { ...current };
+
+            const lessonAmount = Number(
+              plan.noorania_lesson_daily_amount || 0
+            );
+
+            const lessonUnit =
+              plan.noorania_lesson_daily_unit || "lesson";
+
+            const revisionNooraniaAmount = Number(
+              plan.noorania_revision_daily_amount || 0
+            );
+
+            const revisionNooraniaUnit =
+              plan.noorania_revision_daily_unit || "faces";
+
+            if (lessonAmount > 0) {
+              if (lessonUnit === "lesson" && !current.lesson) {
+                next.lesson = `${lessonAmount} ${lessonAmount === 1 ? "درس" : "دروس"}`;
+              } else if (!current.lesson_faces) {
+                next.lesson_faces = amountToFaces(
+                  lessonAmount,
+                  lessonUnit
+                );
+              }
+            }
+
+            if (
+              revisionNooraniaAmount > 0 &&
+              !current.revision_faces
+            ) {
+              next.revision_faces = amountToFaces(
+                revisionNooraniaAmount,
+                revisionNooraniaUnit
+              );
+            }
+
+            return next;
+          });
+        }
+      } catch (error) {
+        console.error("LOAD RECITATION PLAN SUGGESTION:", error);
+        if (active) {
+          setPlanSuggestion(null);
+        }
+      }
+    }
+
+    loadPlanSuggestion();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    editing,
+    formOpen,
+    formType,
+    commonForm.student_id,
+    commonForm.halaqa_id,
+    commonForm.recitation_date,
+    profiles,
+  ]);
+
+  /* =====================================================
      مقدار الدرس الحالي
   ===================================================== */
 
   const lessonFaces =
     useMemo(() => {
+      const manualValue = Number(
+        quranForm.lesson_amount_value || 0
+      );
+
+      if (manualValue > 0) {
+        return quranForm.lesson_amount_unit === "lines"
+          ? roundFaces(manualValue / 15)
+          : roundFaces(manualValue);
+      }
+
       return (
         LESSON_AMOUNTS.find(
           (item) =>
-            item.value ===
-            quranForm
-              .lesson_amount_type
+            item.value === quranForm.lesson_amount_type
         )?.faces || 0
       );
     }, [
-      quranForm
-        .lesson_amount_type,
+      quranForm.lesson_amount_value,
+      quranForm.lesson_amount_unit,
+      quranForm.lesson_amount_type,
     ]);
 
   /* =====================================================
@@ -1306,6 +1525,32 @@ export default function Recitations() {
     key,
     value
   ) {
+    if (!editing && key === "halaqa_id") {
+      setCommonForm((current) => ({
+        ...current,
+        halaqa_id: value,
+        student_id: "",
+      }));
+
+      setQuranForm(createQuranForm());
+      setNooraniaForm(createNooraniaForm());
+      setPlanSuggestion(null);
+      return;
+    }
+
+    if (!editing && key === "student_id") {
+      setCommonForm((current) => ({
+        ...current,
+        student_id: value,
+      }));
+
+      // لا نسمح أن تنتقل مقادير الطالب السابق إلى الطالب الجديد.
+      setQuranForm(createQuranForm());
+      setNooraniaForm(createNooraniaForm());
+      setPlanSuggestion(null);
+      return;
+    }
+
     setCommonForm(
       (current) => ({
         ...current,
@@ -1359,6 +1604,8 @@ export default function Recitations() {
       createNooraniaForm()
     );
 
+    setPlanSuggestion(null);
+
     if (close) {
       setFormOpen(false);
     }
@@ -1396,6 +1643,8 @@ export default function Recitations() {
     setNooraniaForm(
       createNooraniaForm()
     );
+
+    setPlanSuggestion(null);
 
     setFormOpen(true);
   }
@@ -1461,6 +1710,18 @@ export default function Recitations() {
       lesson_amount_type:
         record.lesson_amount_type ||
         "",
+
+      lesson_amount_value:
+        record.lesson_amount_value ??
+        legacyLessonAmount(
+          record.lesson_amount_type
+        ).amount,
+
+      lesson_amount_unit:
+        record.lesson_amount_unit ||
+        legacyLessonAmount(
+          record.lesson_amount_type
+        ).unit,
 
       next_surah:
         record.next_surah ||
@@ -1533,6 +1794,8 @@ export default function Recitations() {
           record.review_faces
         ),
     });
+
+    setPlanSuggestion(null);
 
     setFormOpen(true);
   }
@@ -1609,6 +1872,8 @@ export default function Recitations() {
           record.revision_faces
         ),
     });
+
+    setPlanSuggestion(null);
 
     setFormOpen(true);
   }
@@ -1720,24 +1985,65 @@ export default function Recitations() {
   ===================================================== */
 
   async function saveQuran() {
-    const hasLesson =
+    /*
+      واجهة القرآن الجديدة لا تطلب نطاق سورة/آية.
+      الحقول القديمة تبقى داخل quranForm فقط حتى لا نمسح
+      بيانات السجلات القديمة عند تعديلها.
+    */
+
+    const hasLegacyLesson =
       Boolean(
         quranForm.from_surah ||
         quranForm.to_surah
       );
 
-    const hasReview =
+    const hasLesson =
+      Boolean(
+        Number(quranForm.lesson_amount_value || 0) > 0 ||
+        quranForm.lesson_amount_type ||
+        quranForm.lesson_evaluation ||
+        hasLegacyLesson
+      );
+
+    const hasFirstSide =
+      Boolean(
+        String(
+          quranForm.next_surah || ""
+        ).trim() ||
+        quranForm.next_evaluation ||
+        quranForm.next_to_surah
+      );
+
+    const hasSecondSide =
+      Boolean(
+        String(
+          quranForm.next2_surah || ""
+        ).trim() ||
+        quranForm.next2_evaluation ||
+        quranForm.next2_to_surah
+      );
+
+    const hasLegacyReview =
       Boolean(
         quranForm.review_surah ||
         quranForm.review_to_surah
       );
 
+    const hasReview =
+      Boolean(
+        quranForm.review_faces !== "" ||
+        quranForm.review_evaluation ||
+        hasLegacyReview
+      );
+
     if (
       !hasLesson &&
+      !hasFirstSide &&
+      !hasSecondSide &&
       !hasReview
     ) {
       showToast(
-        "أدخل الدرس أو المراجعة أولًا",
+        "سجل الدرس أو جنب الدرس أو المراجعة أولًا",
         "error"
       );
 
@@ -1745,19 +2051,15 @@ export default function Recitations() {
     }
 
     /*
-      للسجلات الجديدة:
-      مقدار الدرس إلزامي عند وجود درس.
-
-      السجلات القديمة:
-      نسمح بالتعديل حتى لو كانت
-      القيمة القديمة غير موجودة.
+      الدرس اليومي:
+      في السجل الجديد نحتاج فقط مقدار + تقييم.
+      السجل القديم قد لا يملك lesson_amount_type، لذلك لا نجبره.
     */
 
     if (
+      !editing &&
       hasLesson &&
-      !quranForm
-        .lesson_amount_type &&
-      !editing
+      Number(quranForm.lesson_amount_value || 0) <= 0
     ) {
       showToast(
         "حدد مقدار الدرس",
@@ -1768,18 +2070,112 @@ export default function Recitations() {
     }
 
     if (
-      hasReview &&
-      (
-        quranForm.review_faces ===
-          "" ||
-        Number(
-          quranForm.review_faces
-        ) < 0
-      ) &&
-      !editing
+      hasLesson &&
+      !quranForm.lesson_evaluation &&
+      !hasLegacyLesson
     ) {
       showToast(
-        "أدخل عدد أوجه المراجعة",
+        "حدد تقييم الدرس",
+        "error"
+      );
+
+      return;
+    }
+
+    /*
+      جنب الدرس:
+      نستخدم next_surah / next2_surah كنص مختصر
+      دون إضافة أعمدة جديدة أو تغيير هيكل قاعدة البيانات.
+    */
+
+    if (
+      String(
+        quranForm.next_surah || ""
+      ).trim() &&
+      !quranForm.next_evaluation
+    ) {
+      showToast(
+        "حدد تقييم جنب الدرس الأول",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      quranForm.next_evaluation &&
+      !String(
+        quranForm.next_surah || ""
+      ).trim() &&
+      !quranForm.next_to_surah
+    ) {
+      showToast(
+        "اكتب جنب الدرس الأول أو أزل تقييمه",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      String(
+        quranForm.next2_surah || ""
+      ).trim() &&
+      !quranForm.next2_evaluation
+    ) {
+      showToast(
+        "حدد تقييم جنب الدرس الثاني",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      quranForm.next2_evaluation &&
+      !String(
+        quranForm.next2_surah || ""
+      ).trim() &&
+      !quranForm.next2_to_surah
+    ) {
+      showToast(
+        "اكتب جنب الدرس الثاني أو أزل تقييمه",
+        "error"
+      );
+
+      return;
+    }
+
+    /*
+      المراجعة:
+      لا نطلب سورة أو آية؛ فقط مقدار المراجعة + التقييم.
+    */
+
+    if (
+      hasReview &&
+      !hasLegacyReview &&
+      (
+        quranForm.review_faces === "" ||
+        Number(
+          quranForm.review_faces
+        ) <= 0
+      )
+    ) {
+      showToast(
+        "أدخل مقدار المراجعة",
+        "error"
+      );
+
+      return;
+    }
+
+    if (
+      hasReview &&
+      !quranForm.review_evaluation &&
+      !hasLegacyReview
+    ) {
+      showToast(
+        "حدد تقييم المراجعة",
         "error"
       );
 
@@ -1806,6 +2202,12 @@ export default function Recitations() {
         recitation_date:
           commonForm.recitation_date,
 
+        /*
+          لا تظهر هذه الحقول في الواجهة الجديدة.
+          عند إنشاء سجل جديد ستكون null.
+          وعند تعديل سجل قديم نحافظ على قيمه القديمة.
+        */
+
         from_surah:
           textOrNull(
             quranForm.from_surah
@@ -1828,19 +2230,40 @@ export default function Recitations() {
 
         lesson_evaluation:
           textOrNull(
-            quranForm
-              .lesson_evaluation
+            quranForm.lesson_evaluation
           ),
 
         lesson_amount_type:
           textOrNull(
-            quranForm
-              .lesson_amount_type
+            legacyTypeForFreeAmount(
+              quranForm.lesson_amount_value,
+              quranForm.lesson_amount_unit
+            ) || quranForm.lesson_amount_type
           ),
 
+        lesson_amount_value:
+          numberOrNull(
+            quranForm.lesson_amount_value
+          ),
+
+        lesson_amount_unit:
+          textOrNull(
+            quranForm.lesson_amount_unit
+          ),
+
+        lesson_faces_manual:
+          Number(quranForm.lesson_amount_value || 0) > 0
+            ? (
+                quranForm.lesson_amount_unit === "lines"
+                  ? Number(quranForm.lesson_amount_value) / 15
+                  : Number(quranForm.lesson_amount_value)
+              )
+            : null,
+
         /*
-          lesson_faces لا نرسله.
-          PostgreSQL يحسبه تلقائيًا.
+          lesson_faces القديم Generated Column لا نعدله.
+          السجلات الجديدة تستخدم lesson_faces_manual حتى ندعم أي مقدار حر.
+          PostgreSQL يحسبه تلقائيًا كما في النظام الحالي.
         */
 
         next_surah:
@@ -1850,92 +2273,77 @@ export default function Recitations() {
 
         next_from_ayah:
           numberOrNull(
-            quranForm
-              .next_from_ayah
+            quranForm.next_from_ayah
           ),
 
         next_to_surah:
           textOrNull(
-            quranForm
-              .next_to_surah
+            quranForm.next_to_surah
           ),
 
         next_to_ayah:
           numberOrNull(
-            quranForm
-              .next_to_ayah
+            quranForm.next_to_ayah
           ),
 
         next_evaluation:
           textOrNull(
-            quranForm
-              .next_evaluation
+            quranForm.next_evaluation
           ),
 
         next2_surah:
           textOrNull(
-            quranForm
-              .next2_surah
+            quranForm.next2_surah
           ),
 
         next2_from_ayah:
           numberOrNull(
-            quranForm
-              .next2_from_ayah
+            quranForm.next2_from_ayah
           ),
 
         next2_to_surah:
           textOrNull(
-            quranForm
-              .next2_to_surah
+            quranForm.next2_to_surah
           ),
 
         next2_to_ayah:
           numberOrNull(
-            quranForm
-              .next2_to_ayah
+            quranForm.next2_to_ayah
           ),
 
         next2_evaluation:
           textOrNull(
-            quranForm
-              .next2_evaluation
+            quranForm.next2_evaluation
           ),
 
         review_surah:
           textOrNull(
-            quranForm
-              .review_surah
+            quranForm.review_surah
           ),
 
         review_from_ayah:
           numberOrNull(
-            quranForm
-              .review_from_ayah
+            quranForm.review_from_ayah
           ),
 
         review_to_surah:
           textOrNull(
-            quranForm
-              .review_to_surah
+            quranForm.review_to_surah
           ),
 
         review_to_ayah:
           numberOrNull(
-            quranForm
-              .review_to_ayah
+            quranForm.review_to_ayah
           ),
 
         review_evaluation:
           textOrNull(
-            quranForm
-              .review_evaluation
+            quranForm.review_evaluation
           ),
 
         review_faces:
           numberOrNull(
-            quranForm
-              .review_faces
+            quranForm.review_faces
           ),
 
         notes:
@@ -2576,10 +2984,8 @@ export default function Recitations() {
             </h1>
 
             <p>
-              تسجيل ومتابعة القرآن
-              الكريم والقاعدة
-              النورانية وربط الإنجاز
-              الفعلي بالطالب.
+              تسجيل سريع وواضح للقرآن والقاعدة النورانية،
+              بدون إدخال «من سورة / من آية / إلى سورة / إلى آية» في الجلسة اليومية.
             </p>
           </div>
         </div>
@@ -2668,12 +3074,8 @@ export default function Recitations() {
           size={14}
         />
 
-        تعرض الصفحة طلاب
-        وحلقات المعلم الحالي فقط،
-        بينما تبقى السجلات القديمة
-        للحلقات متاحة للتعديل حتى
-        لو لم يكن حقل المعلم مسجلًا
-        فيها سابقًا.
+        التسميع اليومي الآن أخف: اختر الطالب، المقدار، التقييم والمراجعة فقط.
+        جنب الدرس باقٍ كما هو، والسجلات القديمة محفوظة في قاعدة البيانات.
       </div>
 
       {/* =================================================
@@ -3212,135 +3614,103 @@ export default function Recitations() {
               {formType ===
                 "quran" && (
                 <>
+                  <div className="quick-entry-banner">
+                    <div className="quick-entry-icon">
+                      <Sparkles size={18} />
+                    </div>
+
+                    <div>
+                      <strong>تسميع سريع</strong>
+                      <span>
+                        لا تحتاج الآن إلى تحديد سورة أو رقم آية.
+                        سجّل المقدار والتقييم فقط، وأضف جنب الدرس أو المراجعة عند الحاجة.
+                      </span>
+                    </div>
+                  </div>
+
+                  {planSuggestion && (
+                    <div className={`plan-suggestion-card ${planSuggestion.scheduledToday ? "scheduled" : "extra-day"}`}>
+                      <div className="plan-suggestion-icon">
+                        <Target size={18} />
+                      </div>
+
+                      <div className="plan-suggestion-copy">
+                        <span>الخطة الشهرية قرأت تلقائيًا</span>
+                        <strong>
+                          {Number(planSuggestion.memorizationAmount || 0) > 0
+                            ? `${planSuggestion.memorizationAmount} ${planSuggestion.memorizationUnit === "lines" ? "سطر حفظ" : "صفحة حفظ"}`
+                            : "بدون حفظ"}
+                          {Number(planSuggestion.revisionAmount || 0) > 0
+                            ? ` • ${formatFaces(amountToFaces(planSuggestion.revisionAmount, planSuggestion.revisionUnit))} صفحة مراجعة`
+                            : ""}
+                        </strong>
+                        <small>
+                          {planSuggestion.scheduledToday
+                            ? "اليوم من أيام تسميع الطالب — يمكنك التعديل على المقادير لهذه الجلسة فقط."
+                            : "اليوم ليس من أيام التسميع المجدولة، لكن يمكنك تسجيل جلسة إضافية دون تغيير الخطة."}
+                        </small>
+                      </div>
+                    </div>
+                  )}
+
                   {/* LESSON */}
 
                   <FormSection
                     icon={
                       <BookOpen
-                        size={16}
+                        size={17}
                       />
                     }
                     title="الدرس"
-                    subtitle="المقدار الجديد الذي تم تسميعه"
+                    subtitle="المقدار الجديد الذي سمعه الطالب"
                   >
-                    <QuranRange
-                      prefix=""
-                      form={
-                        quranForm
-                      }
-                      setValue={
-                        setQuran
-                      }
-                    />
-
-                    <EvaluationSelector
-                      label="تقييم الدرس"
-                      value={
-                        quranForm
-                          .lesson_evaluation
-                      }
-                      onChange={(
-                        value
-                      ) =>
-                        setQuran(
-                          "lesson_evaluation",
-                          value
-                        )
-                      }
-                    />
-
-                    {/* مقدار الدرس */}
-
-                    <div
-                      className="lesson-amount-block"
-                    >
-                      <label
-                        className="field-label"
-                      >
-                        مقدار الدرس
-                      </label>
-
-                      <div
-                        className="lesson-amount-grid"
-                      >
-                        {LESSON_AMOUNTS.map(
-                          (
-                            item
-                          ) => {
-                            const active =
-                              quranForm
-                                .lesson_amount_type ===
-                              item.value;
-
-                            return (
-                              <button
-                                key={
-                                  item.value
-                                }
-                                type="button"
-                                className={
-                                  active
-                                    ? "amount-option active"
-                                    : "amount-option"
-                                }
-                                onClick={() =>
-                                  setQuran(
-                                    "lesson_amount_type",
-                                    active
-                                      ? ""
-                                      : item.value
-                                  )
-                                }
-                              >
-                                <strong>
-                                  {
-                                    item.label
-                                  }
-                                </strong>
-
-                                <span>
-                                  {
-                                    item.hint
-                                  }
-                                </span>
-                              </button>
-                            );
+                    <div className="quick-section-grid">
+                      <div className="quick-amount-column">
+                        <LessonAmountField
+                          value={quranForm.lesson_amount_value}
+                          unit={quranForm.lesson_amount_unit}
+                          onValueChange={(value) =>
+                            setQuran("lesson_amount_value", value)
                           }
-                        )}
-                      </div>
-
-                      <div
-                        className="faces-preview"
-                      >
-                        <Target
-                          size={14}
+                          onUnitChange={(value) =>
+                            setQuran("lesson_amount_unit", value)
+                          }
                         />
 
-                        {quranForm
-                          .lesson_amount_type ? (
-                          <>
-                            سيُحتسب في
-                            الإنجاز الشهري:
-                            <strong>
-                              {" "}
-                              {formatFaces(
-                                lessonFaces
-                              )}{" "}
-                              وجه
-                            </strong>
-                          </>
-                        ) : editing ? (
-                          <>
-                            هذا قد يكون
-                            سجلًا قديمًا.
-                            يمكنك ترك
-                            المقدار فارغًا
-                            أو تحديده الآن
-                            ليُحتسب مستقبلًا.
-                          </>
-                        ) : (
-                          "اختر مقدار الدرس ليتم احتساب الأوجه تلقائيًا."
-                        )}
+                        <div className="faces-preview quick-faces-preview">
+                          <Target size={15} />
+
+                          {Number(quranForm.lesson_amount_value || 0) > 0 ? (
+                            <>
+                              يدخل في الإنجاز:
+                              <strong>
+                                {formatFaces(lessonFaces)} وجه
+                              </strong>
+                            </>
+                          ) : editing && quranForm.lesson_amount_type ? (
+                            <>
+                              السجل القديم:
+                              <strong>{getLessonAmountLabel(quranForm.lesson_amount_type)}</strong>
+                            </>
+                          ) : (
+                            "اكتب المقدار واختر أسطر أو صفحات."
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="quick-evaluation-column">
+                        <EvaluationSelector
+                          label="تقييم الدرس"
+                          value={
+                            quranForm.lesson_evaluation
+                          }
+                          onChange={(value) =>
+                            setQuran(
+                              "lesson_evaluation",
+                              value
+                            )
+                          }
+                        />
                       </div>
                     </div>
                   </FormSection>
@@ -3350,37 +3720,40 @@ export default function Recitations() {
                   <FormSection
                     icon={
                       <Target
-                        size={16}
+                        size={17}
                       />
                     }
                     title="جنب الدرس الأول"
-                    subtitle="المقدار المرتبط بالدرس إن وجد"
+                    subtitle="يبقى مستقلاً عن الخطة الشهرية"
                   >
-                    <QuranRange
-                      prefix="next"
-                      form={
-                        quranForm
-                      }
-                      setValue={
-                        setQuran
-                      }
-                    />
+                    <div className="form-grid two quick-side-grid">
+                      <TextField
+                        label="جنب الدرس"
+                        value={
+                          quranForm.next_surah
+                        }
+                        onChange={(value) =>
+                          setQuran(
+                            "next_surah",
+                            value
+                          )
+                        }
+                        placeholder="مثال: سطران إضافيان / وجه سابق / تمرين مرافق"
+                      />
 
-                    <EvaluationSelector
-                      label="تقييم جنب الدرس"
-                      value={
-                        quranForm
-                          .next_evaluation
-                      }
-                      onChange={(
-                        value
-                      ) =>
-                        setQuran(
-                          "next_evaluation",
-                          value
-                        )
-                      }
-                    />
+                      <EvaluationSelector
+                        label="تقييم جنب الدرس"
+                        value={
+                          quranForm.next_evaluation
+                        }
+                        onChange={(value) =>
+                          setQuran(
+                            "next_evaluation",
+                            value
+                          )
+                        }
+                      />
+                    </div>
                   </FormSection>
 
                   {/* NEXT 2 */}
@@ -3388,37 +3761,40 @@ export default function Recitations() {
                   <FormSection
                     icon={
                       <Plus
-                        size={16}
+                        size={17}
                       />
                     }
                     title="جنب الدرس الثاني"
-                    subtitle="مقدار إضافي اختياري"
+                    subtitle="اختياري — اتركه فارغًا إذا لم يوجد"
                   >
-                    <QuranRange
-                      prefix="next2"
-                      form={
-                        quranForm
-                      }
-                      setValue={
-                        setQuran
-                      }
-                    />
+                    <div className="form-grid two quick-side-grid">
+                      <TextField
+                        label="جنب الدرس الثاني"
+                        value={
+                          quranForm.next2_surah
+                        }
+                        onChange={(value) =>
+                          setQuran(
+                            "next2_surah",
+                            value
+                          )
+                        }
+                        placeholder="مقدار إضافي اختياري"
+                      />
 
-                    <EvaluationSelector
-                      label="تقييم جنب الدرس الثاني"
-                      value={
-                        quranForm
-                          .next2_evaluation
-                      }
-                      onChange={(
-                        value
-                      ) =>
-                        setQuran(
-                          "next2_evaluation",
-                          value
-                        )
-                      }
-                    />
+                      <EvaluationSelector
+                        label="تقييم جنب الدرس الثاني"
+                        value={
+                          quranForm.next2_evaluation
+                        }
+                        onChange={(value) =>
+                          setQuran(
+                            "next2_evaluation",
+                            value
+                          )
+                        }
+                      />
+                    </div>
                   </FormSection>
 
                   {/* REVIEW */}
@@ -3426,59 +3802,41 @@ export default function Recitations() {
                   <FormSection
                     icon={
                       <RefreshCw
-                        size={16}
+                        size={17}
                       />
                     }
                     title="المراجعة"
-                    subtitle="المقدار السابق الذي تمت مراجعته"
+                    subtitle="أدخل المقدار والتقييم فقط"
                   >
-                    <QuranRange
-                      prefix="review"
-                      form={
-                        quranForm
-                      }
-                      setValue={
-                        setQuran
-                      }
-                    />
-
-                    <div
-                      className="form-grid two evaluation-faces-grid"
-                    >
-                      <EvaluationSelector
-                        label="تقييم المراجعة"
-                        value={
-                          quranForm
-                            .review_evaluation
-                        }
-                        onChange={(
-                          value
-                        ) =>
-                          setQuran(
-                            "review_evaluation",
-                            value
-                          )
-                        }
-                      />
-
+                    <div className="form-grid two evaluation-faces-grid">
                       <NumberField
-                        label="عدد أوجه المراجعة"
+                        label="مقدار المراجعة"
                         value={
-                          quranForm
-                            .review_faces
+                          quranForm.review_faces
                         }
-                        onChange={(
-                          value
-                        ) =>
+                        onChange={(value) =>
                           setQuran(
                             "review_faces",
                             value
                           )
                         }
                         min="0"
-                        step="0.5"
-                        placeholder="مثال: 4"
-                        suffix="وجه"
+                        step="0.01"
+                        placeholder="مثال: 5"
+                        suffix="صفحة"
+                      />
+
+                      <EvaluationSelector
+                        label="تقييم المراجعة"
+                        value={
+                          quranForm.review_evaluation
+                        }
+                        onChange={(value) =>
+                          setQuran(
+                            "review_evaluation",
+                            value
+                          )
+                        }
                       />
                     </div>
                   </FormSection>
@@ -3988,42 +4346,27 @@ function RecordCard({
             title="الدرس"
             icon={
               <BookOpen
-                size={13}
+                size={14}
               />
             }
           >
-            <QuranText
-              from={
-                record.from_surah
-              }
-              fromAyah={
-                record.from_ayah
-              }
-              to={
-                record.to_surah
-              }
-              toAyah={
-                record.to_ayah
-              }
-            />
-
-            <div
-              className="record-values"
-            >
-              <EvaluationBadge
+            <div className="record-values quick-record-values">
+              <FaceBadge
+                label={
+                  formatStoredLessonAmount(record) ||
+                  getLessonAmountLabel(
+                    record.lesson_amount_type
+                  ) || "مقدار الدرس"
+                }
                 value={
-                  record.lesson_evaluation
+                  record.lesson_faces_manual ??
+                  record.lesson_faces
                 }
               />
 
-              <FaceBadge
-                label={
-                  getLessonAmountLabel(
-                    record.lesson_amount_type
-                  )
-                }
+              <EvaluationBadge
                 value={
-                  record.lesson_faces
+                  record.lesson_evaluation
                 }
               />
             </div>
@@ -4035,28 +4378,15 @@ function RecordCard({
               title="جنب الدرس"
               icon={
                 <Target
-                  size={13}
+                  size={14}
                 />
               }
             >
               {record.next_surah && (
-                <div
-                  className="sub-record-line"
-                >
-                  <QuranText
-                    from={
-                      record.next_surah
-                    }
-                    fromAyah={
-                      record.next_from_ayah
-                    }
-                    to={
-                      record.next_to_surah
-                    }
-                    toAyah={
-                      record.next_to_ayah
-                    }
-                  />
+                <div className="sub-record-line quick-side-record">
+                  <strong className="text-record-value">
+                    {record.next_surah}
+                  </strong>
 
                   <EvaluationBadge
                     value={
@@ -4067,23 +4397,10 @@ function RecordCard({
               )}
 
               {record.next2_surah && (
-                <div
-                  className="sub-record-line"
-                >
-                  <QuranText
-                    from={
-                      record.next2_surah
-                    }
-                    fromAyah={
-                      record.next2_from_ayah
-                    }
-                    to={
-                      record.next2_to_surah
-                    }
-                    toAyah={
-                      record.next2_to_ayah
-                    }
-                  />
+                <div className="sub-record-line quick-side-record">
+                  <strong className="text-record-value">
+                    {record.next2_surah}
+                  </strong>
 
                   <EvaluationBadge
                     value={
@@ -4095,48 +4412,33 @@ function RecordCard({
             </RecordSection>
           )}
 
-          <RecordSection
-            title="المراجعة"
-            icon={
-              <RefreshCw
-                size={13}
-              />
-            }
-          >
-            <QuranText
-              from={
-                record.review_surah
+          {(record.review_faces ||
+            record.review_evaluation) && (
+            <RecordSection
+              title="المراجعة"
+              icon={
+                <RefreshCw
+                  size={14}
+                />
               }
-              fromAyah={
-                record.review_from_ayah
-              }
-              to={
-                record.review_to_surah
-              }
-              toAyah={
-                record.review_to_ayah
-              }
-            />
-
-            <div
-              className="record-values"
             >
-              <EvaluationBadge
-                value={
-                  record.review_evaluation
-                }
-              />
+              <div className="record-values quick-record-values">
+                <FaceBadge
+                  label="أوجه المراجعة"
+                  value={
+                    record.review_faces
+                  }
+                />
 
-              <FaceBadge
-                label="أوجه المراجعة"
-                value={
-                  record.review_faces
-                }
-              />
-            </div>
-          </RecordSection>
-        </>
-      ) : (
+                <EvaluationBadge
+                  value={
+                    record.review_evaluation
+                  }
+                />
+              </div>
+            </RecordSection>
+          )}
+        </>      ) : (
         <>
           <RecordSection
             title="الدرس"
@@ -4593,6 +4895,60 @@ function NumberField({
           </span>
         )}
       </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   Lesson Amount — free input
+========================================================= */
+
+function LessonAmountField({
+  value,
+  unit,
+  onValueChange,
+  onUnitChange,
+}) {
+  return (
+    <div className="lesson-free-field">
+      <label className="field-label">
+        مقدار الدرس
+      </label>
+
+      <div className="lesson-free-control">
+        <input
+          type="number"
+          min="0"
+          step={unit === "lines" ? "1" : "0.25"}
+          value={value}
+          onChange={(event) =>
+            onValueChange(event.target.value)
+          }
+          placeholder={unit === "lines" ? "مثال: 3" : "مثال: 1.5"}
+        />
+
+        <div className="lesson-unit-switch">
+          <button
+            type="button"
+            className={unit === "lines" ? "active" : ""}
+            onClick={() => onUnitChange("lines")}
+          >
+            أسطر
+          </button>
+
+          <button
+            type="button"
+            className={unit === "faces" ? "active" : ""}
+            onClick={() => onUnitChange("faces")}
+          >
+            صفحات
+          </button>
+        </div>
+      </div>
+
+      <small className="lesson-free-hint">
+        اكتب أي مقدار بحرية — مثال: 4 أسطر أو 1.5 صفحة.
+      </small>
     </div>
   );
 }
@@ -5175,6 +5531,132 @@ function formatGregorianDate(
   } catch {
     return dateString;
   }
+}
+
+function roundFaces(value) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 10000) / 10000;
+}
+
+function amountToFaces(amount, unit) {
+  const number = Number(amount || 0);
+
+  if (!Number.isFinite(number) || number <= 0) {
+    return 0;
+  }
+
+  return unit === "lines"
+    ? roundFaces(number / 15)
+    : roundFaces(number);
+}
+
+function legacyTypeForFreeAmount(amount, unit) {
+  const value = Number(amount || 0);
+
+  if (unit === "lines" && value === 3) {
+    return "three_lines";
+  }
+
+  if (unit === "faces") {
+    if (value === 0.5) return "half_page";
+    if (value === 1) return "one_page";
+    if (value === 2) return "two_pages";
+  }
+
+  return "";
+}
+
+function legacyLessonAmount(type) {
+  const item = LESSON_AMOUNTS.find((entry) => entry.value === type);
+
+  if (!item) {
+    return { amount: "", unit: "lines" };
+  }
+
+  if (type === "three_lines") {
+    return { amount: 3, unit: "lines" };
+  }
+
+  return { amount: item.faces, unit: "faces" };
+}
+
+function inferDailyFromTarget(targetFaces, sessions) {
+  const total = Number(targetFaces || 0);
+  const count = Number(sessions || 0);
+
+  if (total <= 0 || count <= 0) {
+    return { amount: "", unit: "lines" };
+  }
+
+  const dailyFaces = total / count;
+  const lines = dailyFaces * 15;
+  const roundedLines = Math.round(lines);
+
+  if (
+    dailyFaces < 1 &&
+    Math.abs(lines - roundedLines) < 0.02
+  ) {
+    return { amount: roundedLines, unit: "lines" };
+  }
+
+  return { amount: roundFaces(dailyFaces), unit: "faces" };
+}
+
+function getHijriPartsForDate(dateString) {
+  const parts = new Intl.DateTimeFormat(
+    "en-US-u-ca-islamic-umalqura",
+    {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    }
+  ).formatToParts(parseDate(dateString));
+
+  const result = {};
+
+  parts.forEach((part) => {
+    if (["year", "month", "day"].includes(part.type)) {
+      result[part.type] = Number(part.value);
+    }
+  });
+
+  return result;
+}
+
+const RECITATION_DAY_TO_JS = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
+function isScheduledRecitationDate(dateString, days) {
+  if (!Array.isArray(days) || days.length === 0) {
+    return false;
+  }
+
+  const dayNumber = parseDate(dateString).getDay();
+
+  return days.some(
+    (day) => RECITATION_DAY_TO_JS[day] === dayNumber
+  );
+}
+
+function formatStoredLessonAmount(record) {
+  const amount = Number(record?.lesson_amount_value || 0);
+  const unit = record?.lesson_amount_unit;
+
+  if (amount <= 0 || !unit) {
+    return "";
+  }
+
+  if (unit === "lines") {
+    return `${amount} ${amount === 1 ? "سطر" : amount === 2 ? "سطران" : "أسطر"}`;
+  }
+
+  return `${formatFaces(amount)} ${amount === 1 ? "صفحة" : "صفحات"}`;
 }
 
 function calculatePoints(
@@ -7359,6 +7841,452 @@ function PageStyles() {
           .record-edit,
           .record-delete {
             width: 100%;
+          }
+        }
+
+        /* =============================================
+           QUICK PRO v1 — وضوح وسرعة
+        ============================================= */
+
+        .recitations-page {
+          --quick-green: #0f4c45;
+          --quick-deep: #082f2a;
+          --quick-gold: #d1b34c;
+          --quick-ink: #173a33;
+          --quick-muted: #6f827b;
+          --quick-border: #dce6e2;
+          color: var(--quick-ink);
+        }
+
+        .hero-eyebrow,
+        .recitation-scope,
+        .stat-card span,
+        .stat-card small,
+        .records-title-row p,
+        .modal-eyebrow,
+        .form-section-header p,
+        .field-label,
+        .field label,
+        .dual-date span,
+        .record-type-badge,
+        .record-halaqa,
+        .record-footer,
+        .face-badge span,
+        .evaluation-badge,
+        .empty-state span {
+          font-size: 12px;
+          line-height: 1.55;
+        }
+
+        .hero-main h1 {
+          font-size: 28px;
+          line-height: 1.2;
+        }
+
+        .hero-main p {
+          max-width: 700px;
+          margin-top: 7px;
+          font-size: 14px;
+          line-height: 1.8;
+          color: #667b73;
+        }
+
+        .recitation-scope {
+          min-height: 48px;
+          padding: 11px 14px;
+          border-radius: 13px;
+        }
+
+        .stat-card strong {
+          font-size: 24px;
+        }
+
+        .records-toolbar input,
+        .records-toolbar select,
+        .field input,
+        .field select,
+        .field textarea,
+        .select-field select,
+        .text-field input,
+        .number-field input,
+        .date-field input {
+          font-size: 14px;
+        }
+
+        .records-title-row h2,
+        .form-section-header h3 {
+          font-size: 17px;
+        }
+
+        .modal-header h2 {
+          font-size: 22px;
+          line-height: 1.3;
+        }
+
+        .recitation-modal {
+          width: min(980px, 96vw);
+          border-radius: 24px;
+        }
+
+        .modal-body {
+          padding: 18px 20px 24px;
+        }
+
+        .form-section {
+          border-radius: 17px;
+          padding: 16px;
+        }
+
+        .quick-entry-banner {
+          display: grid;
+          grid-template-columns: 44px 1fr;
+          gap: 11px;
+          align-items: center;
+          margin-bottom: 13px;
+          padding: 13px 14px;
+          border: 1px solid rgba(209,179,76,.28);
+          border-radius: 15px;
+          background:
+            linear-gradient(
+              135deg,
+              #fffaf0,
+              #fffdf8
+            );
+        }
+
+        .quick-entry-icon {
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          border-radius: 12px;
+          background: #f6e9b6;
+          color: #8d6f16;
+        }
+
+        .quick-entry-banner strong {
+          display: block;
+          color: #6b5314;
+          font-size: 14px;
+          font-weight: 950;
+        }
+
+        .quick-entry-banner span {
+          display: block;
+          margin-top: 4px;
+          color: #887642;
+          font-size: 12px;
+          line-height: 1.7;
+          font-weight: 700;
+        }
+
+        .quick-section-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+          gap: 15px;
+          align-items: start;
+        }
+
+        .quick-amount-column,
+        .quick-evaluation-column {
+          min-width: 0;
+        }
+
+        .lesson-amount-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .amount-option {
+          min-height: 72px;
+          border-radius: 13px;
+        }
+
+        .amount-option strong {
+          font-size: 14px;
+        }
+
+        .amount-option span {
+          margin-top: 5px;
+          font-size: 11px;
+        }
+
+        .quick-faces-preview {
+          min-height: 42px;
+          margin-top: 9px;
+          font-size: 12px;
+        }
+
+        .evaluation-grid {
+          gap: 8px;
+        }
+
+        .evaluation-option {
+          min-height: 50px;
+          border-radius: 12px;
+          font-size: 13px;
+          font-weight: 900;
+        }
+
+        .quick-side-grid {
+          align-items: end;
+        }
+
+        .quick-side-grid .text-field input {
+          min-height: 46px;
+        }
+
+        .quick-record-values {
+          justify-content: flex-start;
+          gap: 8px;
+        }
+
+        .quick-side-record {
+          align-items: center;
+          gap: 9px;
+        }
+
+        .text-record-value {
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
+        .record-card {
+          border-radius: 18px;
+        }
+
+        .record-student strong {
+          font-size: 14px;
+        }
+
+        .record-student span,
+        .record-date strong,
+        .record-date span {
+          font-size: 11px;
+        }
+
+        .record-section h4 {
+          font-size: 12px;
+        }
+
+        .modal-save,
+        .modal-cancel,
+        .refresh-button,
+        .create-button {
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        @media (max-width: 820px) {
+          .quick-section-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .lesson-amount-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .recitation-modal {
+            width: min(100%, 720px);
+          }
+        }
+
+        @media (max-width: 520px) {
+          .hero-main h1 {
+            font-size: 23px;
+          }
+
+          .hero-main p {
+            font-size: 13px;
+          }
+
+          .hero-eyebrow,
+          .recitation-scope,
+          .stat-card span,
+          .stat-card small,
+          .records-title-row p,
+          .modal-eyebrow,
+          .form-section-header p,
+          .field-label,
+          .field label,
+          .dual-date span,
+          .record-halaqa,
+          .record-footer {
+            font-size: 11px;
+          }
+
+          .lesson-amount-grid,
+          .evaluation-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .quick-entry-banner {
+            grid-template-columns: 38px 1fr;
+            padding: 11px;
+          }
+
+          .quick-entry-icon {
+            width: 37px;
+            height: 37px;
+          }
+
+          .modal-body {
+            padding: 13px;
+          }
+
+          .form-section {
+            padding: 13px;
+          }
+        }
+
+
+        /* =============================================
+           SMART PLAN DEFAULT + FREE LESSON AMOUNT
+        ============================================= */
+
+        .plan-suggestion-card {
+          display: grid;
+          grid-template-columns: 43px 1fr;
+          gap: 10px;
+          align-items: center;
+          margin-bottom: 13px;
+          padding: 12px 13px;
+          border: 1px solid #cfe3dc;
+          border-radius: 14px;
+          background: linear-gradient(135deg, #eef8f4, #fbfdfc);
+        }
+
+        .plan-suggestion-card.extra-day {
+          border-color: #eadca7;
+          background: linear-gradient(135deg, #fffaf0, #fffdf8);
+        }
+
+        .plan-suggestion-icon {
+          width: 41px;
+          height: 41px;
+          display: grid;
+          place-items: center;
+          border-radius: 12px;
+          background: #dff1ea;
+          color: #147a5e;
+        }
+
+        .plan-suggestion-card.extra-day .plan-suggestion-icon {
+          background: #f8ebbd;
+          color: #8d6f16;
+        }
+
+        .plan-suggestion-copy span,
+        .plan-suggestion-copy strong,
+        .plan-suggestion-copy small {
+          display: block;
+        }
+
+        .plan-suggestion-copy span {
+          color: #71857d;
+          font-size: 10px;
+          font-weight: 850;
+        }
+
+        .plan-suggestion-copy strong {
+          margin-top: 3px;
+          color: #173f37;
+          font-size: 13px;
+          line-height: 1.45;
+          font-weight: 950;
+        }
+
+        .plan-suggestion-copy small {
+          margin-top: 4px;
+          color: #70827b;
+          font-size: 10px;
+          line-height: 1.55;
+          font-weight: 700;
+        }
+
+        .lesson-free-field {
+          min-width: 0;
+        }
+
+        .lesson-free-control {
+          display: grid;
+          grid-template-columns: minmax(100px,1fr) auto;
+          gap: 8px;
+        }
+
+        .lesson-free-control > input {
+          width: 100%;
+          height: 48px;
+          border: 1px solid #d9e3df;
+          border-radius: 12px;
+          outline: none;
+          padding: 0 12px;
+          background: #fff;
+          color: #23433b;
+          font-family: inherit;
+          font-size: 14px;
+          font-weight: 850;
+        }
+
+        .lesson-free-control > input:focus {
+          border-color: #9fc8bc;
+          box-shadow: 0 0 0 4px rgba(15,76,69,.06);
+        }
+
+        .lesson-unit-switch {
+          min-width: 145px;
+          display: grid;
+          grid-template-columns: repeat(2,1fr);
+          overflow: hidden;
+          border: 1px solid #d9e3df;
+          border-radius: 12px;
+          background: #fff;
+        }
+
+        .lesson-unit-switch button {
+          border: 0;
+          background: transparent;
+          color: #72857e;
+          font-family: inherit;
+          font-size: 11px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .lesson-unit-switch button + button {
+          border-right: 1px solid #e1e9e6;
+        }
+
+        .lesson-unit-switch button.active {
+          background: #eaf7f1;
+          color: #147a5e;
+        }
+
+        .lesson-free-hint {
+          display: block;
+          margin-top: 7px;
+          color: #82938d;
+          font-size: 10px;
+          line-height: 1.5;
+        }
+
+        @media (max-width: 560px) {
+          .lesson-free-control {
+            grid-template-columns: 1fr;
+          }
+
+          .lesson-unit-switch {
+            min-width: 0;
+            min-height: 42px;
+          }
+
+          .plan-suggestion-card {
+            grid-template-columns: 37px 1fr;
+          }
+
+          .plan-suggestion-icon {
+            width: 36px;
+            height: 36px;
           }
         }
       `}

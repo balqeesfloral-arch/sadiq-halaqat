@@ -15,6 +15,10 @@ import {
   ChevronRight,
   CircleAlert,
   FileSpreadsheet,
+  FileText,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
   History,
   Layers3,
   Loader2,
@@ -154,6 +158,40 @@ function formatFaces(
       /\.?0+$/,
       ""
     );
+}
+
+function acceptedRecitationEvaluation(value) {
+  const text = String(value || "").trim();
+
+  // نحافظ على توافق السجلات القديمة التي لم يكن التقييم إلزاميًا فيها.
+  return !text || text !== "إعادة";
+}
+
+function getAcceptedLessonFaces(record) {
+  if (!acceptedRecitationEvaluation(record?.lesson_evaluation)) {
+    return 0;
+  }
+
+  const amount = Number(record?.lesson_amount_value || 0);
+  const unit = record?.lesson_amount_unit;
+
+  if (amount > 0 && (unit === "lines" || unit === "faces")) {
+    return unit === "lines" ? amount / 15 : amount;
+  }
+
+  return Number(
+    record?.lesson_faces_manual ??
+      record?.lesson_faces ??
+      0
+  );
+}
+
+function getAcceptedReviewFaces(record) {
+  if (!acceptedRecitationEvaluation(record?.review_evaluation)) {
+    return 0;
+  }
+
+  return Number(record?.review_faces || 0);
 }
 
 function getHijriParts(
@@ -576,6 +614,98 @@ function selectExistingProgress({
     ) ||
     null
   );
+}
+
+
+/* =========================================================
+   Smart Monthly Analysis
+========================================================= */
+
+function calculateAchievementPercent(done, target) {
+  const goal = Number(target || 0);
+  if (goal <= 0) return null;
+  return Math.round((Number(done || 0) / goal) * 100);
+}
+
+function buildSmartDelayAnalysis({
+  attendanceRows = [],
+  recitationRows = [],
+  nooraniaRows = [],
+  plannedSessions = 0,
+  finalMem = 0,
+  finalRev = 0,
+  memTarget = 0,
+  revTarget = 0,
+}) {
+  const absent = attendanceRows.filter((item) => item.status === "absent").length;
+  const excused = attendanceRows.filter((item) => item.status === "excused").length;
+  const late = attendanceRows.filter((item) => item.status === "late").length;
+  const missed = absent + excused;
+
+  const quranRepeats = recitationRows.reduce((sum, item) => {
+    return sum + (item.lesson_evaluation === "إعادة" ? 1 : 0) + (item.review_evaluation === "إعادة" ? 1 : 0);
+  }, 0);
+
+  const nooraniaRepeats = nooraniaRows.reduce((sum, item) => {
+    return (
+      sum +
+      (item.lesson_evaluation === "إعادة" ? 1 : 0) +
+      (item.side_lesson_evaluation === "إعادة" ? 1 : 0) +
+      (item.revision_evaluation === "إعادة" ? 1 : 0)
+    );
+  }, 0);
+
+  const repeats = quranRepeats + nooraniaRepeats;
+  const sessions = new Set([
+    ...recitationRows.map((item) => `q-${item.id}`),
+    ...nooraniaRows.map((item) => `n-${item.id}`),
+  ]).size;
+
+  const reasons = [];
+
+  if (missed >= 3 || (plannedSessions >= 4 && missed / plannedSessions >= 0.25)) {
+    reasons.push("غياب متكرر");
+  }
+
+  if (repeats >= 3 || (sessions >= 4 && repeats / sessions >= 0.3)) {
+    reasons.push("تكرار الإعادة في التسميع");
+  }
+
+  if (plannedSessions > 0 && sessions === 0) {
+    reasons.push("انقطاع عن التسميع");
+  } else if (plannedSessions >= 5 && sessions < plannedSessions * 0.6) {
+    reasons.push("قلة جلسات التسميع");
+  }
+
+  if (Number(memTarget || 0) > 0 && Number(finalMem || 0) < Number(memTarget) * 0.75) {
+    reasons.push("انخفاض إنجاز الحفظ عن الخطة");
+  }
+
+  if (Number(revTarget || 0) > 0 && Number(finalRev || 0) < Number(revTarget) * 0.75) {
+    reasons.push("انخفاض إنجاز المراجعة عن الخطة");
+  }
+
+  if (late >= 3) reasons.push("تأخر متكرر في الحضور");
+
+  return {
+    reason: reasons.length ? reasons.slice(0, 3).join(" • ") : "لا يوجد تعثر ظاهر",
+    hasDelay: reasons.length > 0,
+    absent,
+    excused,
+    missed,
+    late,
+    repeats,
+    sessions,
+    reasons,
+  };
+}
+
+function getOverallCompletion(row) {
+  const planned = [];
+  if (Number(row.memorization_target_faces || 0) > 0) planned.push(Boolean(row.memorization_completed));
+  if (Number(row.revision_target_faces || 0) > 0) planned.push(Boolean(row.revision_completed));
+  if (!planned.length) return null;
+  return planned.every(Boolean);
 }
 
 /* =========================================================
@@ -1197,6 +1327,52 @@ export default function MonthlyAchievement() {
       }
 
       /* -----------------------------------------
+         Monthly plans + Attendance + Noorania
+      ----------------------------------------- */
+
+      const [plansResult, attendanceResult, nooraniaResult] = await Promise.all([
+        supabase
+          .from("monthly_plans")
+          .select(`
+            id, student_id, plan_month, hijri_year, hijri_month,
+            memorization_target_faces, revision_target_faces,
+            memorization_daily_amount, memorization_daily_unit,
+            revision_daily_amount, revision_daily_unit,
+            planned_sessions, recitation_days_snapshot
+          `)
+          .eq("halaqa_id", Number(selectedHalaqa))
+          .eq("plan_month", period.start)
+          .in("student_id", studentIds),
+
+        supabase
+          .from("attendance")
+          .select("student_id, attendance_date, status")
+          .eq("halaqa_id", Number(selectedHalaqa))
+          .in("student_id", studentIds)
+          .gte("attendance_date", period.start)
+          .lte("attendance_date", period.end),
+
+        supabase
+          .from("noorania_recitations")
+          .select(`
+            id, student_id, recitation_date,
+            lesson_evaluation, side_lesson_evaluation, revision_evaluation
+          `)
+          .eq("halaqa_id", Number(selectedHalaqa))
+          .in("student_id", studentIds)
+          .gte("recitation_date", period.start)
+          .lte("recitation_date", period.end),
+      ]);
+
+      if (plansResult.error) throw plansResult.error;
+      if (attendanceResult.error) throw attendanceResult.error;
+      if (nooraniaResult.error) throw nooraniaResult.error;
+
+      const planMap = new Map((plansResult.data || []).map((item) => [Number(item.student_id), item]));
+      const attendanceRows = attendanceResult.data || [];
+      const nooraniaRows = nooraniaResult.data || [];
+
+      /* -----------------------------------------
          Recitations
       ----------------------------------------- */
 
@@ -1223,6 +1399,9 @@ export default function MonthlyAchievement() {
             lesson_evaluation,
             lesson_amount_type,
             lesson_faces,
+            lesson_faces_manual,
+            lesson_amount_value,
+            lesson_amount_unit,
 
             review_surah,
             review_from_ayah,
@@ -1306,16 +1485,10 @@ export default function MonthlyAchievement() {
             };
 
           const lesson =
-            Number(
-              record.lesson_faces ||
-                0
-            );
+            getAcceptedLessonFaces(record);
 
           const revision =
-            Number(
-              record.review_faces ||
-                0
-            );
+            getAcceptedReviewFaces(record);
 
           old.sessions += 1;
 
@@ -1432,6 +1605,35 @@ export default function MonthlyAchievement() {
                     manualRev
                 );
 
+              const monthlyPlan = planMap.get(studentId) || null;
+              const memTarget = roundFaces(monthlyPlan?.memorization_target_faces || 0);
+              const revTarget = roundFaces(monthlyPlan?.revision_target_faces || 0);
+              const plannedSessions = Number(monthlyPlan?.planned_sessions || 0);
+
+              const studentAttendance = attendanceRows.filter(
+                (item) => Number(item.student_id) === studentId
+              );
+              const studentRecitations = (recitations || []).filter(
+                (item) => Number(item.student_id) === studentId
+              );
+              const studentNoorania = nooraniaRows.filter(
+                (item) => Number(item.student_id) === studentId
+              );
+
+              const smartAnalysis = buildSmartDelayAnalysis({
+                attendanceRows: studentAttendance,
+                recitationRows: studentRecitations,
+                nooraniaRows: studentNoorania,
+                plannedSessions,
+                finalMem,
+                finalRev,
+                memTarget,
+                revTarget,
+              });
+
+              const memCompleted = memTarget > 0 ? finalMem >= memTarget : false;
+              const revCompleted = revTarget > 0 ? finalRev >= revTarget : false;
+
               /*
                 لو الاعتماد موجود
                 لكن أرقام التسميع
@@ -1546,22 +1748,23 @@ export default function MonthlyAchievement() {
                   existing?.notes ||
                   "",
 
-                delay_reason:
-                  existing
-                    ?.delay_reason ||
-                  "",
+                memorization_target_faces: memTarget,
+                revision_target_faces: revTarget,
+                planned_sessions: plannedSessions,
+                recitation_days_snapshot: monthlyPlan?.recitation_days_snapshot || [],
+                memorization_daily_amount: monthlyPlan?.memorization_daily_amount || 0,
+                memorization_daily_unit: monthlyPlan?.memorization_daily_unit || "lines",
+                revision_daily_amount: monthlyPlan?.revision_daily_amount || 0,
+                revision_daily_unit: monthlyPlan?.revision_daily_unit || "faces",
 
-                memorization_completed:
-                  Boolean(
-                    existing
-                      ?.memorization_completed
-                  ),
+                delay_reason: smartAnalysis.reason,
+                smart_delay: smartAnalysis,
+                smart_total_sessions: smartAnalysis.sessions,
 
-                revision_completed:
-                  Boolean(
-                    existing
-                      ?.revision_completed
-                  ),
+                memorization_completed: memCompleted,
+                revision_completed: revCompleted,
+                memorization_percent: calculateAchievementPercent(finalMem, memTarget),
+                revision_percent: calculateAchievementPercent(finalRev, revTarget),
 
                 approved:
                   Boolean(
@@ -1703,6 +1906,25 @@ export default function MonthlyAchievement() {
                       0
                   )
               );
+
+            next.memorization_completed =
+              Number(next.memorization_target_faces || 0) > 0
+                ? Number(next.final_memorization_faces || 0) >= Number(next.memorization_target_faces || 0)
+                : false;
+
+            next.revision_completed =
+              Number(next.revision_target_faces || 0) > 0
+                ? Number(next.final_revision_faces || 0) >= Number(next.revision_target_faces || 0)
+                : false;
+
+            next.memorization_percent = calculateAchievementPercent(
+              next.final_memorization_faces,
+              next.memorization_target_faces
+            );
+            next.revision_percent = calculateAchievementPercent(
+              next.final_revision_faces,
+              next.revision_target_faces
+            );
 
             return next;
           }
@@ -2666,808 +2888,356 @@ export default function MonthlyAchievement() {
   ===================================================== */
 
   function exportExcel() {
-    if (
-      rows.length === 0
-    ) {
-      showToast(
-        "لا توجد بيانات للتصدير",
-        "error"
-      );
-
+    if (rows.length === 0) {
+      showToast("لا توجد بيانات للتصدير", "error");
       return;
     }
 
-    const data =
-      rows.map(
-        (row) => ({
-          الطالب:
-            row.student_name,
+    const selectedHalaqaData = halaqat.find(
+      (item) => Number(item.id) === Number(selectedHalaqa)
+    );
 
-          "رقم الطالب":
-            row.user_number ||
-            "",
-
-          "الحفظ من التسميع":
-            row.auto_memorization_faces,
-
-          "إضافة حفظ يدوية":
-            row.manual_memorization_faces,
-
-          "إجمالي الحفظ":
-            row.final_memorization_faces,
-
-          "سبب إضافة الحفظ":
-            row.manual_memorization_reason ||
-            "",
-
-          "المراجعة من التسميع":
-            row.auto_revision_faces,
-
-          "إضافة مراجعة يدوية":
-            row.manual_revision_faces,
-
-          "إجمالي المراجعة":
-            row.final_revision_faces,
-
-          "سبب إضافة المراجعة":
-            row.manual_revision_reason ||
-            "",
-
-          "جلسات التسميع":
-            row.source_recitations_count,
-
-          "جلسات الحفظ":
-            row.lesson_sessions,
-
-          "جلسات المراجعة":
-            row.revision_sessions,
-
-          "آخر تسميع":
-            row.last_recitation_date ||
-            "",
-
-          ملاحظات:
-            row.notes ||
-            "",
-
-          الحالة:
-            row.approved
-              ? "معتمد"
-              : "غير معتمد",
-        })
-      );
-
-    const worksheet =
-      XLSX.utils
-        .json_to_sheet(
-          data
-        );
-
-    worksheet[
-      "!cols"
-    ] = [
-      { wch: 25 },
-      { wch: 14 },
-      { wch: 18 },
-      { wch: 18 },
-      { wch: 16 },
-      { wch: 40 },
-      { wch: 20 },
-      { wch: 20 },
-      { wch: 18 },
-      { wch: 40 },
-      { wch: 14 },
-      { wch: 14 },
-      { wch: 14 },
-      { wch: 16 },
-      { wch: 35 },
-      { wch: 14 },
+    const titleRows = [
+      ["تقرير الإنجاز الشهري — نظام الصديق"],
+      [`${HIJRI_MONTHS[hijriMonth - 1]} ${hijriYear} هـ`],
+      [
+        `الحلقة: ${selectedHalaqaData?.name || "-"}`,
+        `المسجد: ${selectedHalaqaData?.mosque_name || "-"}`,
+        `المعلم: ${teacher?.full_name || "-"}`,
+      ],
+      [],
     ];
 
-    const workbook =
-      XLSX.utils
-        .book_new();
+    const headers = [
+      "م",
+      "الطالب",
+      "رقم الطالب",
+      "هدف الحفظ",
+      "إنجاز الحفظ",
+      "حالة الحفظ",
+      "هدف المراجعة",
+      "إنجاز المراجعة",
+      "حالة المراجعة",
+      "الحالة الشهرية",
+      "سبب التعثر الذكي",
+      "الغياب",
+      "الغياب بعذر",
+      "الإعادات",
+      "جلسات التسميع",
+      "ملاحظات",
+      "الاعتماد",
+    ];
 
-    XLSX.utils
-      .book_append_sheet(
-        workbook,
-        worksheet,
-        "الإنجاز الشهري"
-      );
+    const body = rows.map((row, index) => {
+      const overall = getOverallCompletion(row);
+      return [
+        index + 1,
+        row.student_name,
+        row.user_number || "",
+        formatFaces(row.memorization_target_faces),
+        formatFaces(row.final_memorization_faces),
+        Number(row.memorization_target_faces || 0) <= 0
+          ? "لا توجد خطة"
+          : row.memorization_completed
+            ? "منجز"
+            : "غير منجز",
+        formatFaces(row.revision_target_faces),
+        formatFaces(row.final_revision_faces),
+        Number(row.revision_target_faces || 0) <= 0
+          ? "لا توجد خطة"
+          : row.revision_completed
+            ? "منجز"
+            : "غير منجز",
+        overall === null ? "لا توجد خطة" : overall ? "منجز" : "غير منجز",
+        row.delay_reason || "لا يوجد تعثر ظاهر",
+        Number(row.smart_delay?.absent || 0),
+        Number(row.smart_delay?.excused || 0),
+        Number(row.smart_delay?.repeats || 0),
+        Number(row.smart_total_sessions ?? row.source_recitations_count ?? 0),
+        row.notes || "",
+        row.approved ? "معتمد" : "غير معتمد",
+      ];
+    });
 
-    XLSX.writeFile(
-      workbook,
-      `monthly-achievement-${hijriYear}-${pad2(
-        hijriMonth
-      )}.xlsx`
-    );
+    const footerRows = [
+      [],
+      ["بالقرآن نرتقي، وبالمتابعة نصنع أثرًا يبقى."],
+      ["الصديق • تقرير الإنجاز الشهري"],
+    ];
 
-    showToast(
-      "تم تصدير Excel",
-      "success"
-    );
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      ...titleRows,
+      headers,
+      ...body,
+      ...footerRows,
+    ]);
+
+    worksheet["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: headers.length - 1 } },
+      { s: { r: 5 + body.length, c: 0 }, e: { r: 5 + body.length, c: headers.length - 1 } },
+      { s: { r: 6 + body.length, c: 0 }, e: { r: 6 + body.length, c: headers.length - 1 } },
+    ];
+
+    worksheet["!cols"] = [
+      { wch: 6 }, { wch: 25 }, { wch: 16 }, { wch: 13 }, { wch: 14 }, { wch: 14 },
+      { wch: 13 }, { wch: 14 }, { wch: 14 }, { wch: 15 }, { wch: 32 }, { wch: 10 },
+      { wch: 12 }, { wch: 10 }, { wch: 13 }, { wch: 30 }, { wch: 13 },
+    ];
+    worksheet["!views"] = [{ rightToLeft: true }];
+
+    const summary = XLSX.utils.aoa_to_sheet([
+      ["ملخص الإنجاز الشهري"],
+      ["الشهر", `${HIJRI_MONTHS[hijriMonth - 1]} ${hijriYear} هـ`],
+      ["عدد الطلاب", rows.length],
+      ["المنجزون", rows.filter((row) => getOverallCompletion(row) === true).length],
+      ["غير المنجزين", rows.filter((row) => getOverallCompletion(row) === false).length],
+      ["حالات التعثر", rows.filter((row) => row.smart_delay?.hasDelay).length],
+      ["إجمالي حفظ منجز", formatFaces(rows.reduce((sum, row) => sum + Number(row.final_memorization_faces || 0), 0))],
+      ["إجمالي مراجعة منجزة", formatFaces(rows.reduce((sum, row) => sum + Number(row.final_revision_faces || 0), 0))],
+    ]);
+    summary["!cols"] = [{ wch: 24 }, { wch: 26 }];
+    summary["!views"] = [{ rightToLeft: true }];
+
+    const workbook = XLSX.utils.book_new();
+    workbook.Props = {
+      Title: "تقرير الإنجاز الشهري",
+      Subject: "نظام الصديق لإدارة الحلقات",
+      Author: "الصديق",
+    };
+    XLSX.utils.book_append_sheet(workbook, worksheet, "الإنجاز الشهري");
+    XLSX.utils.book_append_sheet(workbook, summary, "الملخص");
+
+    XLSX.writeFile(workbook, `الإنجاز-الشهري-${hijriYear}-${pad2(hijriMonth)}.xlsx`);
+    showToast("تم إنشاء ملف Excel الاحترافي", "success");
   }
 
   /* =====================================================
      Print
   ===================================================== */
 
-  function printReport() {
-    if (
-      rows.length === 0 ||
-      !period
-    ) {
-      showToast(
-        "لا توجد بيانات للطباعة",
-        "error"
-      );
-
+  function openProfessionalReport(mode = "print") {
+    if (rows.length === 0 || !period) {
+      showToast("لا توجد بيانات للتقرير", "error");
       return;
     }
 
-    const printWindow =
-      window.open(
-        "",
-        "_blank"
-      );
-
+    const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      showToast(
-        "تعذر فتح نافذة الطباعة",
-        "error"
-      );
-
+      showToast("تعذر فتح نافذة التقرير", "error");
       return;
     }
 
-    const origin =
-      window.location.origin;
+    const origin = window.location.origin;
+    const selectedHalaqaData = halaqat.find(
+      (item) => Number(item.id) === Number(selectedHalaqa)
+    );
 
-    const rowsHtml =
-      rows
-        .map(
-          (
-            row,
-            index
-          ) => `
-            <tr>
-              <td>
-                ${index + 1}
-              </td>
+    const completedCount = rows.filter((row) => getOverallCompletion(row) === true).length;
+    const delayedCount = rows.filter((row) => row.smart_delay?.hasDelay).length;
+    const achievementRate = rows.length
+      ? Math.round((completedCount / rows.length) * 100)
+      : 0;
 
-              <td class="student-name">
-                ${escapeHtml(
-                  row.student_name
-                )}
-              </td>
+    const rowsHtml = rows.map((row, index) => {
+      const overall = getOverallCompletion(row);
+      const memStatus = Number(row.memorization_target_faces || 0) <= 0
+        ? "غير مخطط"
+        : row.memorization_completed ? "منجز" : "غير منجز";
+      const revStatus = Number(row.revision_target_faces || 0) <= 0
+        ? "غير مخطط"
+        : row.revision_completed ? "منجز" : "غير منجز";
 
-              <td>
-                ${formatFaces(
-                  row.auto_memorization_faces
-                )}
-              </td>
-
-              <td>
-                ${formatFaces(
-                  row.manual_memorization_faces
-                )}
-              </td>
-
-              <td class="total-cell">
-                ${formatFaces(
-                  row.final_memorization_faces
-                )}
-              </td>
-
-              <td>
-                ${formatFaces(
-                  row.auto_revision_faces
-                )}
-              </td>
-
-              <td>
-                ${formatFaces(
-                  row.manual_revision_faces
-                )}
-              </td>
-
-              <td class="total-cell">
-                ${formatFaces(
-                  row.final_revision_faces
-                )}
-              </td>
-
-              <td>
-                ${
-                  row.source_recitations_count
-                }
-              </td>
-
-              <td>
-                <span class="${
-                  row.approved
-                    ? "approved"
-                    : "draft"
-                }">
-                  ${
-                    row.approved
-                      ? "معتمد"
-                      : "غير معتمد"
-                  }
-                </span>
-              </td>
-            </tr>
-          `
-        )
-        .join("");
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td class="student-name">${escapeHtml(row.student_name)}</td>
+          <td>${escapeHtml(row.user_number || "-")}</td>
+          <td>${formatFaces(row.final_memorization_faces)} / ${formatFaces(row.memorization_target_faces)}</td>
+          <td><span class="status ${memStatus === "منجز" ? "ok" : memStatus === "غير منجز" ? "bad" : "muted"}">${memStatus}</span></td>
+          <td>${formatFaces(row.final_revision_faces)} / ${formatFaces(row.revision_target_faces)}</td>
+          <td><span class="status ${revStatus === "منجز" ? "ok" : revStatus === "غير منجز" ? "bad" : "muted"}">${revStatus}</span></td>
+          <td><span class="status ${overall === true ? "ok" : overall === false ? "bad" : "muted"}">${overall === null ? "لا توجد خطة" : overall ? "منجز" : "غير منجز"}</span></td>
+          <td class="reason">${escapeHtml(row.delay_reason || "لا يوجد تعثر ظاهر")}</td>
+          <td>${row.smart_total_sessions ?? row.source_recitations_count ?? 0}</td>
+        </tr>
+      `;
+    }).join("");
 
     printWindow.document.write(`
-      <!DOCTYPE html>
-
-      <html
-        lang="ar"
-        dir="rtl"
-      >
-        <head>
-          <meta charset="utf-8" />
-
-          <title>
-            تقرير الإنجاز الشهري
-          </title>
-
-          <style>
-            * {
-              box-sizing:
-                border-box;
-            }
-
-            body {
-              margin: 0;
-              padding: 25px;
-
-              font-family:
-                Tahoma,
-                Arial,
-                sans-serif;
-
-              color: #25372d;
-              background: #f5f7f5;
-            }
-
-            .watermark {
-              position: fixed;
-
-              width: 600px;
-
-              top: 50%;
-              left: 50%;
-
-              transform:
-                translate(
-                  -50%,
-                  -50%
-                );
-
-              opacity: .045;
-
-              z-index: 0;
-            }
-
-            .pattern-right {
-              position: fixed;
-
-              width: 130px;
-
-              right: 12px;
-              top: 12px;
-
-              opacity: .06;
-
-              z-index: 0;
-            }
-
-            .pattern-left {
-              position: fixed;
-
-              width: 130px;
-
-              left: 12px;
-              top: 12px;
-
-              opacity: .06;
-
-              z-index: 0;
-            }
-
-            .report {
-              position: relative;
-              z-index: 2;
-            }
-
-            .hero {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-
-              gap: 18px;
-
-              padding: 24px;
-
-              border-radius: 23px;
-
-              color: #fff;
-
-              background:
-                linear-gradient(
-                  135deg,
-                  #0f5132,
-                  #0f766e
-                );
-            }
-
-            .hero img {
-              width: 82px;
-            }
-
-            .hero h1 {
-              margin: 0;
-
-              font-size: 28px;
-            }
-
-            .hero p {
-              margin:
-                5px 0 0;
-
-              opacity: .88;
-
-              font-size: 11px;
-            }
-
-            .hero .month {
-              margin-top: 7px;
-
-              font-size: 13px;
-              font-weight: 700;
-            }
-
-            .info-grid {
-              display: grid;
-
-              grid-template-columns:
-                repeat(
-                  4,
-                  1fr
-                );
-
-              gap: 10px;
-
-              margin:
-                14px 0;
-            }
-
-            .info-card {
-              padding: 13px;
-
-              border-radius: 13px;
-
-              text-align: center;
-
-              background: #fff;
-            }
-
-            .info-card span {
-              display: block;
-
-              color: #829087;
-
-              font-size: 8px;
-            }
-
-            .info-card strong {
-              display: block;
-
-              margin-top: 3px;
-
-              color: #173d2b;
-
-              font-size: 11px;
-            }
-
-            .stats-grid {
-              display: grid;
-
-              grid-template-columns:
-                repeat(
-                  5,
-                  1fr
-                );
-
-              gap: 9px;
-
-              margin-bottom: 14px;
-            }
-
-            .stat {
-              padding: 12px;
-
-              border-radius: 13px;
-
-              text-align: center;
-
-              background: #fff;
-            }
-
-            .stat strong {
-              display: block;
-
-              color: #0f5132;
-
-              font-size: 20px;
-            }
-
-            .stat span {
-              color: #7e8a82;
-
-              font-size: 8px;
-            }
-
-            .table-wrapper {
-              overflow: hidden;
-
-              border-radius: 15px;
-
-              background: #fff;
-            }
-
-            table {
-              width: 100%;
-
-              border-collapse:
-                collapse;
-
-              font-size: 8px;
-            }
-
-            th {
-              padding: 9px 5px;
-
-              color: #fff;
-
-              background: #0f5132;
-            }
-
-            td {
-              padding: 8px 5px;
-
-              border-bottom:
-                1px solid #e8ece9;
-
-              text-align: center;
-            }
-
-            .student-name {
-              text-align: right;
-
-              font-weight: 700;
-            }
-
-            .total-cell {
-              color: #0f5132;
-
-              background: #f5faf7;
-
-              font-weight: 900;
-            }
-
-            .approved,
-            .draft {
-              display:
-                inline-block;
-
-              padding:
-                4px 7px;
-
-              border-radius:
-                999px;
-
-              font-weight: 700;
-            }
-
-            .approved {
-              color: #166534;
-              background: #dcfce7;
-            }
-
-            .draft {
-              color: #64748b;
-              background: #f1f5f9;
-            }
-
-            .footer {
-              margin-top: 14px;
-              padding: 12px;
-
-              border-radius: 13px;
-
-              text-align: center;
-
-              color: #7c8981;
-              background: #fff;
-
-              font-size: 8px;
-            }
-
-            @page {
-              size:
-                A4 landscape;
-
-              margin:
-                8mm;
-            }
-
-            @media print {
-              body {
-                padding: 0;
-
-                -webkit-print-color-adjust:
-                  exact !important;
-
-                print-color-adjust:
-                  exact !important;
-              }
-            }
-          </style>
-        </head>
-
-        <body>
-          <img
-            src="${origin}/logo.png"
-            class="watermark"
-          />
-
-          <img
-            src="${origin}/patterns/Z-1.png"
-            class="pattern-right"
-          />
-
-          <img
-            src="${origin}/patterns/Z-3.png"
-            class="pattern-left"
-          />
-
-          <div class="report">
-            <div class="hero">
-              <img
-                src="${origin}/logo.png"
-              />
-
-              <div>
-                <h1>
-                  تقرير الإنجاز الشهري
-                </h1>
-
-                <p>
-                  نظام الصديق لإدارة حلقات القرآن الكريم
-                </p>
-
-                <div class="month">
-                  ${
-                    HIJRI_MONTHS[
-                      hijriMonth -
-                        1
-                    ]
-                  }
-                  ${hijriYear} هـ
-                </div>
+      <!doctype html>
+      <html lang="ar" dir="rtl">
+      <head>
+        <meta charset="utf-8" />
+        <title>${mode === "pdf" ? "PDF" : "طباعة"} — تقرير الإنجاز الشهري</title>
+        <style>
+          @page { size: A4 landscape; margin: 10mm; }
+          * { box-sizing: border-box; }
+          body {
+            margin: 0;
+            font-family: Tahoma, Arial, sans-serif;
+            color: #17382f;
+            background: #f3f6f4;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .page {
+            position: relative;
+            min-height: 185mm;
+            overflow: hidden;
+            padding: 18px 20px 16px;
+            border: 1px solid #dce7e2;
+            background: #fff;
+          }
+          .corner { position: absolute; width: 108px; opacity: .10; pointer-events: none; }
+          .corner.r { top: -12px; right: -8px; }
+          .corner.l { top: -12px; left: -8px; transform: scaleX(-1); }
+          .corner.br { bottom: -22px; right: -12px; transform: scaleY(-1); opacity: .055; }
+          .corner.bl { bottom: -22px; left: -12px; transform: scale(-1); opacity: .055; }
+          .watermark {
+            position: absolute;
+            width: 360px;
+            left: 50%;
+            top: 54%;
+            transform: translate(-50%, -50%);
+            opacity: .025;
+            pointer-events: none;
+          }
+          .report { position: relative; z-index: 2; }
+          .top-line { height: 4px; border-radius: 999px; background: linear-gradient(90deg,#0f4c45,#d1b34c,#0f4c45); }
+          .header {
+            display: grid;
+            grid-template-columns: 70px 1fr 170px;
+            gap: 14px;
+            align-items: center;
+            padding: 15px 4px 12px;
+            border-bottom: 1px solid #e4ebe8;
+          }
+          .header-logo {
+            width: 54px; height: 54px; object-fit: contain; padding: 6px;
+            border: 1px solid #dce7e2; border-radius: 15px; background: #fff;
+          }
+          .title h1 { margin: 0; color: #0d4239; font-size: 23px; }
+          .title p { margin: 5px 0 0; color: #7a8c85; font-size: 10px; }
+          .month-box {
+            padding: 10px; border: 1px solid #e7d9a7; border-radius: 13px;
+            background: #fffaf0; text-align: center;
+          }
+          .month-box span { display:block; color:#9c7b20; font-size:9px; }
+          .month-box strong { display:block; margin-top:4px; color:#624d16; font-size:13px; }
+          .meta {
+            display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin: 11px 0;
+          }
+          .meta div, .stat {
+            padding: 8px 9px; border: 1px solid #e2e9e6; border-radius: 10px; background: #fafcfb;
+          }
+          .meta span, .stat span { display:block; color:#84958e; font-size:8px; }
+          .meta strong { display:block; margin-top:3px; color:#294940; font-size:10px; }
+          .stats { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin-bottom:11px; }
+          .stat { text-align:center; }
+          .stat strong { display:block; color:#0f4c45; font-size:17px; }
+          table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border:1px solid #dce6e2; border-radius:11px; }
+          th { padding:7px 5px; background:#0f4c45; color:#fff; font-size:8px; font-weight:800; }
+          td { padding:6px 5px; border-bottom:1px solid #e7ecea; border-left:1px solid #edf1ef; text-align:center; font-size:7.6px; }
+          tbody tr:nth-child(even) td { background:#f9fbfa; }
+          tbody tr:last-child td { border-bottom:0; }
+          .student-name { font-weight:800; text-align:right; }
+          .reason { max-width:170px; text-align:right; line-height:1.45; }
+          .status { display:inline-block; padding:3px 6px; border-radius:999px; font-size:7px; font-weight:800; white-space:nowrap; }
+          .status.ok { color:#166534; background:#dcfce7; }
+          .status.bad { color:#a43b32; background:#fff0ee; }
+          .status.muted { color:#697973; background:#eef2f0; }
+          .footer {
+            display:flex; align-items:center; justify-content:space-between; gap:12px;
+            margin-top:12px; padding-top:10px; border-top:1px solid #e2e9e6;
+          }
+          .signature { color:#526b63; font-size:9px; font-weight:700; }
+          .signature strong { display:block; margin-bottom:2px; color:#9a7820; font-size:10px; }
+          .brand-sign { display:flex; align-items:center; gap:7px; color:#74867f; font-size:8px; }
+          .brand-sign img { width:27px; height:27px; object-fit:contain; }
+          .pdf-hint { margin-top:7px; color:#899992; text-align:center; font-size:7px; }
+          @media print { body { background:#fff; } .page { border:0; } .pdf-hint { display:none; } }
+        </style>
+      </head>
+      <body>
+        <div class="page">
+          <img class="corner r" src="${origin}/patterns/Z-1.png" onerror="this.style.display='none'" />
+          <img class="corner l" src="${origin}/patterns/Z-3.png" onerror="this.style.display='none'" />
+          <img class="corner br" src="${origin}/patterns/Z-5.png" onerror="this.style.display='none'" />
+          <img class="corner bl" src="${origin}/patterns/Z-5.png" onerror="this.style.display='none'" />
+          <img class="watermark" src="${origin}/icon-512.png" onerror="this.style.display='none'" />
+
+          <main class="report">
+            <div class="top-line"></div>
+            <header class="header">
+              <img class="header-logo" src="${origin}/icon-512.png" onerror="this.src='${origin}/logo.png'" />
+              <div class="title">
+                <h1>تقرير الإنجاز الشهري</h1>
+                <p>نظام الصديق لإدارة حلقات القرآن الكريم — قراءة ذكية للإنجاز والتعثر</p>
               </div>
-            </div>
-
-            <div class="info-grid">
-              <div class="info-card">
-                <span>
-                  الحلقة
-                </span>
-
-                <strong>
-                  ${escapeHtml(
-                    selectedHalaqaData
-                      ?.name ||
-                      "-"
-                  )}
-                </strong>
+              <div class="month-box">
+                <span>الشهر الهجري</span>
+                <strong>${HIJRI_MONTHS[hijriMonth - 1]} ${hijriYear} هـ</strong>
               </div>
+            </header>
 
-              <div class="info-card">
-                <span>
-                  المسجد
-                </span>
+            <section class="meta">
+              <div><span>المسجد</span><strong>${escapeHtml(selectedHalaqaData?.mosque_name || "-")}</strong></div>
+              <div><span>الحلقة</span><strong>${escapeHtml(selectedHalaqaData?.name || "-")}</strong></div>
+              <div><span>المعلم</span><strong>${escapeHtml(teacher?.full_name || "-")}</strong></div>
+              <div><span>الفترة الميلادية</span><strong>${escapeHtml(formatGregorianDate(period.start))} — ${escapeHtml(formatGregorianDate(period.end))}</strong></div>
+            </section>
 
-                <strong>
-                  ${escapeHtml(
-                    selectedHalaqaData
-                      ?.mosque_name ||
-                      "-"
-                  )}
-                </strong>
+            <section class="stats">
+              <div class="stat"><strong>${rows.length}</strong><span>الطلاب</span></div>
+              <div class="stat"><strong>${completedCount}</strong><span>منجزون</span></div>
+              <div class="stat"><strong>${rows.length - completedCount}</strong><span>غير منجزين / بلا خطة</span></div>
+              <div class="stat"><strong>${delayedCount}</strong><span>حالات تحتاج متابعة</span></div>
+              <div class="stat"><strong>${achievementRate}%</strong><span>نسبة الإنجاز</span></div>
+            </section>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>م</th><th>الطالب</th><th>الرقم</th><th>الحفظ / الهدف</th><th>حالة الحفظ</th>
+                  <th>المراجعة / الهدف</th><th>حالة المراجعة</th><th>الشهر</th><th>سبب التعثر الذكي</th><th>الجلسات</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+
+            <footer class="footer">
+              <div class="signature">
+                <strong>بالقرآن نرتقي، وبالمتابعة نصنع أثرًا يبقى.</strong>
+                تقرير تعليمي لمساندة المعلم في متابعة رحلة الطالب، لا لمجرد تسجيل الأرقام.
               </div>
-
-              <div class="info-card">
-                <span>
-                  المعلم
-                </span>
-
-                <strong>
-                  ${escapeHtml(
-                    teacher
-                      ?.full_name ||
-                      "-"
-                  )}
-                </strong>
+              <div class="brand-sign">
+                <img src="${origin}/icon-512.png" onerror="this.style.display='none'" />
+                <span>الصديق • متابعةٌ تصنع فرقًا</span>
               </div>
+            </footer>
 
-              <div class="info-card">
-                <span>
-                  الفترة الميلادية
-                </span>
-
-                <strong>
-                  ${escapeHtml(
-                    formatGregorianDate(
-                      period.start
-                    )
-                  )}
-
-                  —
-
-                  ${escapeHtml(
-                    formatGregorianDate(
-                      period.end
-                    )
-                  )}
-                </strong>
-              </div>
-            </div>
-
-            <div class="stats-grid">
-              <div class="stat">
-                <strong>
-                  ${
-                    stats.totalStudents
-                  }
-                </strong>
-
-                <span>
-                  الطلاب
-                </span>
-              </div>
-
-              <div class="stat">
-                <strong>
-                  ${formatFaces(
-                    stats.finalMem
-                  )}
-                </strong>
-
-                <span>
-                  الحفظ
-                </span>
-              </div>
-
-              <div class="stat">
-                <strong>
-                  ${formatFaces(
-                    stats.finalRev
-                  )}
-                </strong>
-
-                <span>
-                  المراجعة
-                </span>
-              </div>
-
-              <div class="stat">
-                <strong>
-                  ${
-                    stats.sessions
-                  }
-                </strong>
-
-                <span>
-                  جلسات التسميع
-                </span>
-              </div>
-
-              <div class="stat">
-                <strong>
-                  ${
-                    stats.approved
-                  }
-                </strong>
-
-                <span>
-                  المعتمدون
-                </span>
-              </div>
-            </div>
-
-            <div class="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>الطالب</th>
-
-                    <th>
-                      حفظ تلقائي
-                    </th>
-
-                    <th>
-                      حفظ يدوي
-                    </th>
-
-                    <th>
-                      إجمالي الحفظ
-                    </th>
-
-                    <th>
-                      مراجعة تلقائية
-                    </th>
-
-                    <th>
-                      مراجعة يدوية
-                    </th>
-
-                    <th>
-                      إجمالي المراجعة
-                    </th>
-
-                    <th>
-                      الجلسات
-                    </th>
-
-                    <th>
-                      الاعتماد
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  ${rowsHtml}
-                </tbody>
-              </table>
-            </div>
-
-            <div class="footer">
-              تم إنشاء التقرير بواسطة نظام الصديق
-              —
-              ${
-                HIJRI_MONTHS[
-                  hijriMonth -
-                    1
-                ]
-              }
-              ${hijriYear} هـ
-            </div>
-          </div>
-
-          <script>
-            window.onload =
-              function () {
-                setTimeout(
-                  function () {
-                    window.focus();
-                    window.print();
-                  },
-                  350
-                );
-              };
-          </script>
-        </body>
+            ${mode === "pdf" ? '<div class="pdf-hint">من نافذة الطباعة اختر «حفظ بتنسيق PDF» للحصول على النسخة النهائية مع الحفاظ على العربية والزخارف.</div>' : ''}
+          </main>
+        </div>
+        <script>
+          window.onload = function () {
+            setTimeout(function () { window.focus(); window.print(); }, 420);
+          };
+        </script>
+      </body>
       </html>
     `);
 
     printWindow.document.close();
+  }
+
+  function printReport() {
+    openProfessionalReport("print");
+  }
+
+  function exportPdf() {
+    openProfessionalReport("pdf");
   }
 
   /* =====================================================
@@ -3589,18 +3359,20 @@ export default function MonthlyAchievement() {
 
           <button
             type="button"
-            className="hero-action print"
-            onClick={
-              printReport
-            }
+            className="hero-action pdf"
+            onClick={exportPdf}
           >
-            <Printer
-              size={16}
-            />
+            <FileText size={16} />
+            <span>PDF</span>
+          </button>
 
-            <span>
-              طباعة / PDF
-            </span>
+          <button
+            type="button"
+            className="hero-action print"
+            onClick={printReport}
+          >
+            <Printer size={16} />
+            <span>طباعة</span>
           </button>
 
           <button
@@ -3698,15 +3470,12 @@ export default function MonthlyAchievement() {
 
         <div>
           <strong>
-            حساب ذكي وشفاف
+            الإنجاز الشهري الذكي
           </strong>
 
           <span>
-            الأرقام التلقائية
-            تأتي مباشرة من
-            جلسات التسميع، بينما
-            الإضافات اليدوية تحفظ
-            منفصلة مع سبب واضح.
+            الصفحة تعرض الإنجاز الفعلي وحالة الطالب وسبب التعثر المحلل تلقائيًا.
+            التدخل اليدوي مخصص فقط لإنجاز لم يُسجل في التسميع.
           </span>
         </div>
       </div>
@@ -4283,6 +4052,26 @@ export default function MonthlyAchievement() {
               null
             )
           }
+          onChange={(field, value) => {
+            updateRow(detailStudent.student_id, field, value);
+            setDetailStudent((current) => {
+              if (!current) return current;
+              const next = { ...current, [field]: value };
+              if (field === "manual_memorization_faces") {
+                next.final_memorization_faces = roundFaces(Number(next.auto_memorization_faces || 0) + Number(value || 0));
+                next.memorization_completed = Number(next.memorization_target_faces || 0) > 0
+                  ? next.final_memorization_faces >= Number(next.memorization_target_faces || 0)
+                  : false;
+              }
+              if (field === "manual_revision_faces") {
+                next.final_revision_faces = roundFaces(Number(next.auto_revision_faces || 0) + Number(value || 0));
+                next.revision_completed = Number(next.revision_target_faces || 0) > 0
+                  ? next.final_revision_faces >= Number(next.revision_target_faces || 0)
+                  : false;
+              }
+              return next;
+            });
+          }}
         />
       )}
     </div>
@@ -4298,325 +4087,92 @@ function StudentAchievementCard({
   onChange,
   onDetails,
 }) {
-  const hasAuto =
-    Number(
-      row.auto_memorization_faces ||
-        0
-    ) >
-      0 ||
-    Number(
-      row.auto_revision_faces ||
-        0
-    ) >
-      0;
+  const overall = getOverallCompletion(row);
 
-  const hasManual =
-    Number(
-      row.manual_memorization_faces ||
-        0
-    ) >
-      0 ||
-    Number(
-      row.manual_revision_faces ||
-        0
-    ) >
-      0;
+  const memStatus = Number(row.memorization_target_faces || 0) <= 0
+    ? "no-plan"
+    : row.memorization_completed
+      ? "done"
+      : "pending";
 
-  let sourceText =
-    "بدون إنجاز";
-
-  let sourceClass =
-    "none";
-
-  if (
-    hasAuto &&
-    hasManual
-  ) {
-    sourceText =
-      "مختلط";
-
-    sourceClass =
-      "mixed";
-  } else if (hasAuto) {
-    sourceText =
-      "تلقائي";
-
-    sourceClass =
-      "auto";
-  } else if (
-    hasManual
-  ) {
-    sourceText =
-      "يدوي";
-
-    sourceClass =
-      "manual";
-  }
+  const revStatus = Number(row.revision_target_faces || 0) <= 0
+    ? "no-plan"
+    : row.revision_completed
+      ? "done"
+      : "pending";
 
   return (
-    <article
-      className="student-achievement-card"
-    >
-      <div
-        className="student-card-line"
-      />
+    <article className="achievement-summary-card">
+      <div className={`achievement-summary-accent ${overall === true ? "done" : overall === false ? "pending" : "neutral"}`} />
 
-      {/* Header */}
-
-      <div
-        className="student-card-header"
-      >
-        <div
-          className="student-identity"
-        >
-          <div
-            className="student-avatar"
-          >
-            <UserRound
-              size={19}
-            />
+      <div className="achievement-summary-header">
+        <div className="student-identity compact">
+          <div className="student-avatar compact-avatar">
+            <UserRound size={18} />
           </div>
-
-          <div
-            style={{
-              minWidth: 0,
-            }}
-          >
-            <h3>
-              {
-                row.student_name
-              }
-            </h3>
-
-            <span>
-              {row.user_number
-                ? `رقم الطالب: ${row.user_number}`
-                : "طالب الحلقة"}
-            </span>
+          <div>
+            <h3>{row.student_name}</h3>
+            <span>{row.user_number || "طالب الحلقة"}</span>
           </div>
         </div>
 
-        <div
-          className="student-badges"
-        >
-          {row.legacy_record && (
-            <span
-              className="legacy-badge"
-            >
-              سجل قديم
-            </span>
-          )}
+        <span className={`monthly-completion-badge ${overall === true ? "done" : overall === false ? "pending" : "neutral"}`}>
+          {overall === true ? <CheckCircle2 size={14} /> : overall === false ? <XCircle size={14} /> : <History size={14} />}
+          {overall === null ? "لا توجد خطة" : overall ? "منجز" : "غير منجز"}
+        </span>
+      </div>
 
-          {row.source_changed && (
-            <span
-              className="changed-badge"
-            >
-              <CircleAlert
-                size={11}
-              />
+      <div className="achievement-summary-grid">
+        <AchievementSummaryItem
+          title="الحفظ"
+          status={memStatus}
+          done={row.final_memorization_faces}
+          target={row.memorization_target_faces}
+          percent={row.memorization_percent}
+        />
+        <AchievementSummaryItem
+          title="المراجعة"
+          status={revStatus}
+          done={row.final_revision_faces}
+          target={row.revision_target_faces}
+          percent={row.revision_percent}
+        />
+      </div>
 
-              المصدر تغيّر
-            </span>
-          )}
-
-          <span
-            className={
-              `source-badge ${sourceClass}`
-            }
-          >
-            {sourceText}
-          </span>
-
-          <span
-            className={
-              row.approved
-                ? "approved-badge"
-                : "draft-badge"
-            }
-          >
-            {row.approved ? (
-              <BadgeCheck
-                size={11}
-              />
-            ) : (
-              <History
-                size={11}
-              />
-            )}
-
-            {row.approved
-              ? "معتمد"
-              : "مسودة"}
-          </span>
+      <div className={`smart-delay-summary ${row.smart_delay?.hasDelay ? "has-delay" : "clear"}`}>
+        {row.smart_delay?.hasDelay ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
+        <div>
+          <span>سبب التعثر الذكي</span>
+          <strong>{row.delay_reason || "لا يوجد تعثر ظاهر"}</strong>
         </div>
       </div>
 
-      {/* Source Info */}
-
-      <div
-        className="student-source-info"
-      >
+      <div className="achievement-summary-footer">
         <div>
-          <History
-            size={12}
-          />
-
-          <span>
-            الجلسات
-          </span>
-
-          <strong>
-            {
-              row.source_recitations_count
-            }
-          </strong>
+          <History size={14} />
+          <span>{row.smart_total_sessions ?? row.source_recitations_count ?? 0} جلسة تسميع</span>
         </div>
-
-        <div>
-          <CalendarDays
-            size={12}
-          />
-
-          <span>
-            آخر تسميع
-          </span>
-
-          <strong>
-            {row.last_recitation_date
-              ? formatHijriDate(
-                  row.last_recitation_date
-                )
-              : "لا يوجد"}
-          </strong>
-        </div>
-
-        <button
-          type="button"
-          onClick={
-            onDetails
-          }
-        >
-          <Search
-            size={12}
-          />
-
-          تفاصيل الحساب
+        <button type="button" onClick={onDetails}>
+          <Search size={15} />
+          عرض
         </button>
       </div>
-
-      {/* Achievement */}
-
-      <div
-        className="achievement-columns"
-      >
-        <AchievementBlock
-          type="memorization"
-          icon={
-            <BookOpen
-              size={16}
-            />
-          }
-          title="الحفظ"
-          automatic={
-            row.auto_memorization_faces
-          }
-          manual={
-            row.manual_memorization_faces
-          }
-          total={
-            row.final_memorization_faces
-          }
-          reason={
-            row.manual_memorization_reason
-          }
-          onManualChange={(
-            value
-          ) =>
-            onChange(
-              "manual_memorization_faces",
-              value
-            )
-          }
-          onReasonChange={(
-            value
-          ) =>
-            onChange(
-              "manual_memorization_reason",
-              value
-            )
-          }
-        />
-
-        <AchievementBlock
-          type="revision"
-          icon={
-            <RefreshCw
-              size={16}
-            />
-          }
-          title="المراجعة"
-          automatic={
-            row.auto_revision_faces
-          }
-          manual={
-            row.manual_revision_faces
-          }
-          total={
-            row.final_revision_faces
-          }
-          reason={
-            row.manual_revision_reason
-          }
-          onManualChange={(
-            value
-          ) =>
-            onChange(
-              "manual_revision_faces",
-              value
-            )
-          }
-          onReasonChange={(
-            value
-          ) =>
-            onChange(
-              "manual_revision_reason",
-              value
-            )
-          }
-        />
-      </div>
-
-      {/* Notes */}
-
-      <div
-        className="monthly-notes"
-      >
-        <label>
-          <MessageSquareText
-            size={12}
-          />
-
-          ملاحظات الشهر
-        </label>
-
-        <textarea
-          rows={2}
-          value={
-            row.notes
-          }
-          onChange={(
-            event
-          ) =>
-            onChange(
-              "notes",
-              event.target
-                .value
-            )
-          }
-          placeholder="ملاحظة اختيارية عن أداء الطالب..."
-        />
-      </div>
     </article>
+  );
+}
+
+function AchievementSummaryItem({ title, status, done, target, percent }) {
+  return (
+    <div className={`achievement-summary-item ${status}`}>
+      <span>{title}</span>
+      <strong>
+        {formatFaces(done)}
+        <small> / {formatFaces(target)} وجه</small>
+      </strong>
+      <em>
+        {status === "no-plan" ? "لا توجد خطة" : status === "done" ? "منجز" : `${percent ?? 0}%`}
+      </em>
+    </div>
   );
 }
 
@@ -4798,6 +4354,7 @@ function DetailsModal({
   student,
   records,
   onClose,
+  onChange,
 }) {
   const lessonTotal =
     records.reduce(
@@ -4806,10 +4363,7 @@ function DetailsModal({
         record
       ) =>
         sum +
-        Number(
-          record.lesson_faces ||
-            0
-        ),
+        getAcceptedLessonFaces(record),
       0
     );
 
@@ -4820,10 +4374,7 @@ function DetailsModal({
         record
       ) =>
         sum +
-        Number(
-          record.review_faces ||
-            0
-        ),
+        getAcceptedReviewFaces(record),
       0
     );
 
@@ -4918,6 +4469,68 @@ function DetailsModal({
           </div>
         </div>
 
+        <div className="details-smart-analysis">
+          <div className="details-analysis-head">
+            <Sparkles size={16} />
+            <div>
+              <span>التحليل الذكي</span>
+              <strong>{student.delay_reason || "لا يوجد تعثر ظاهر"}</strong>
+            </div>
+          </div>
+
+          <div className="details-analysis-grid">
+            <div><span>غياب</span><strong>{student.smart_delay?.absent || 0}</strong></div>
+            <div><span>غياب بعذر</span><strong>{student.smart_delay?.excused || 0}</strong></div>
+            <div><span>إعادات</span><strong>{student.smart_delay?.repeats || 0}</strong></div>
+            <div><span>الجلسات</span><strong>{student.smart_total_sessions ?? student.source_recitations_count ?? 0}</strong></div>
+          </div>
+        </div>
+
+        <div className="details-manual-area">
+          <div className="details-manual-heading">
+            <div>
+              <span>التعديل اليدوي الوحيد</span>
+              <strong>إضافة إنجاز غير مسجل في التسميع</strong>
+            </div>
+            <ShieldCheck size={17} />
+          </div>
+
+          <div className="achievement-columns detail-edit-columns">
+            <AchievementBlock
+              type="memorization"
+              icon={<BookOpen size={16} />}
+              title="الحفظ"
+              automatic={student.auto_memorization_faces}
+              manual={student.manual_memorization_faces}
+              total={student.final_memorization_faces}
+              reason={student.manual_memorization_reason}
+              onManualChange={(value) => onChange("manual_memorization_faces", value)}
+              onReasonChange={(value) => onChange("manual_memorization_reason", value)}
+            />
+            <AchievementBlock
+              type="revision"
+              icon={<RefreshCw size={16} />}
+              title="المراجعة"
+              automatic={student.auto_revision_faces}
+              manual={student.manual_revision_faces}
+              total={student.final_revision_faces}
+              reason={student.manual_revision_reason}
+              onManualChange={(value) => onChange("manual_revision_faces", value)}
+              onReasonChange={(value) => onChange("manual_revision_reason", value)}
+            />
+          </div>
+
+          <div className="monthly-notes detail-notes">
+            <label><MessageSquareText size={13} /> ملاحظة اختيارية</label>
+            <textarea
+              rows={2}
+              value={student.notes || ""}
+              onChange={(event) => onChange("notes", event.target.value)}
+              placeholder="ملاحظة مختصرة عند الحاجة..."
+            />
+          </div>
+        </div>
+
         <div
           className="details-body"
         >
@@ -5004,7 +4617,8 @@ function DetailsModal({
 
                         <strong>
                           {formatFaces(
-                            record.lesson_faces
+                            record.lesson_faces_manual ??
+                              record.lesson_faces
                           )}
                         </strong>
                       </div>
@@ -7291,6 +6905,108 @@ function MonthlyStyles() {
               1fr;
           }
         }
+
+        /* ==========================================
+           PRO MAX v3 — إنجاز مختصر + تحليل ذكي
+        ========================================== */
+
+        .achievement-grid {
+          grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+          gap: 12px;
+        }
+
+        .achievement-summary-card {
+          position: relative;
+          overflow: hidden;
+          padding: 15px;
+          border: 1px solid #dfe8e4;
+          border-radius: 18px;
+          background: linear-gradient(180deg,#fff,#fbfdfc);
+          box-shadow: 0 10px 26px rgba(8,47,42,.045);
+          transition: transform .18s ease, box-shadow .18s ease;
+        }
+        .achievement-summary-card:hover { transform: translateY(-2px); box-shadow: 0 15px 32px rgba(8,47,42,.075); }
+        .achievement-summary-accent { position:absolute; right:0; top:0; width:4px; height:100%; }
+        .achievement-summary-accent.done { background:#2e9a71; }
+        .achievement-summary-accent.pending { background:#d3a332; }
+        .achievement-summary-accent.neutral { background:#9aa7a2; }
+
+        .achievement-summary-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+        .student-identity.compact { gap:9px; }
+        .student-identity.compact h3 { margin:0; color:#173d33; font-size:14px; font-weight:950; }
+        .student-identity.compact span { display:block; margin-top:4px; color:#83938d; font-size:10px; font-weight:750; }
+        .compact-avatar { width:40px; height:40px; flex-basis:40px; }
+
+        .monthly-completion-badge {
+          min-height:27px; display:inline-flex; align-items:center; gap:5px; padding:0 9px;
+          border-radius:999px; font-size:9px; font-weight:900; white-space:nowrap;
+        }
+        .monthly-completion-badge.done { color:#166534; background:#dcfce7; }
+        .monthly-completion-badge.pending { color:#9a5c0c; background:#fff6dc; }
+        .monthly-completion-badge.neutral { color:#6b7b75; background:#eef2f0; }
+
+        .achievement-summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+        .achievement-summary-item { min-height:82px; padding:10px; border:1px solid #e4ebe8; border-radius:12px; background:#fff; }
+        .achievement-summary-item > span { display:block; color:#7f9089; font-size:10px; font-weight:800; }
+        .achievement-summary-item > strong { display:block; margin-top:5px; color:#183e34; font-size:14px; font-weight:950; }
+        .achievement-summary-item > strong small { color:#8a9993; font-size:9px; font-weight:750; }
+        .achievement-summary-item > em { display:inline-flex; margin-top:7px; padding:3px 7px; border-radius:999px; font-size:9px; font-style:normal; font-weight:900; }
+        .achievement-summary-item.done > em { color:#166534; background:#dcfce7; }
+        .achievement-summary-item.pending > em { color:#9a5c0c; background:#fff6dc; }
+        .achievement-summary-item.no-plan > em { color:#6b7b75; background:#eef2f0; }
+
+        .smart-delay-summary { display:grid; grid-template-columns:18px 1fr; gap:7px; align-items:start; margin-top:9px; padding:9px 10px; border-radius:11px; }
+        .smart-delay-summary.has-delay { border:1px solid #efd9aa; background:#fffaf0; color:#906d16; }
+        .smart-delay-summary.clear { border:1px solid #d5eadf; background:#f2faf6; color:#197052; }
+        .smart-delay-summary span { display:block; font-size:9px; font-weight:800; opacity:.78; }
+        .smart-delay-summary strong { display:block; margin-top:3px; font-size:10px; line-height:1.55; font-weight:900; }
+
+        .achievement-summary-footer { display:flex; align-items:center; justify-content:space-between; gap:9px; margin-top:10px; padding-top:10px; border-top:1px solid #edf1ef; }
+        .achievement-summary-footer > div { display:flex; align-items:center; gap:5px; color:#778982; font-size:10px; font-weight:750; }
+        .achievement-summary-footer button { min-height:35px; display:inline-flex; align-items:center; gap:5px; padding:0 12px; border:0; border-radius:9px; background:#0f4c45; color:#fff; font-family:inherit; font-size:10px; font-weight:900; cursor:pointer; }
+
+        .details-smart-analysis { margin:12px 16px 0; padding:12px; border:1px solid #eadca9; border-radius:13px; background:#fffaf0; }
+        .details-analysis-head { display:flex; align-items:flex-start; gap:8px; color:#876715; }
+        .details-analysis-head span { display:block; font-size:9px; font-weight:800; }
+        .details-analysis-head strong { display:block; margin-top:3px; font-size:11px; line-height:1.6; font-weight:950; }
+        .details-analysis-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:10px; }
+        .details-analysis-grid > div { padding:8px; border-radius:9px; background:rgba(255,255,255,.65); text-align:center; }
+        .details-analysis-grid span { display:block; color:#948254; font-size:8px; }
+        .details-analysis-grid strong { display:block; margin-top:3px; color:#695317; font-size:13px; font-weight:950; }
+
+        .details-manual-area { margin:12px 16px; padding:13px; border:1px solid #dde7e3; border-radius:14px; background:#fbfdfc; }
+        .details-manual-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; color:#0f4c45; }
+        .details-manual-heading span { display:block; color:#83928c; font-size:9px; font-weight:800; }
+        .details-manual-heading strong { display:block; margin-top:2px; color:#25483f; font-size:11px; font-weight:950; }
+        .detail-edit-columns { margin:0; }
+        .detail-notes { margin-top:10px; }
+
+        .hero-action.pdf { color:#7c5d13; background:#fff8df; border-color:#eadca7; }
+
+        /* رفع المقروئية في الصفحة الحالية */
+        .monthly-achievement-page .hero-main h1 { font-size:28px; }
+        .monthly-achievement-page .hero-main p { font-size:13px; line-height:1.75; }
+        .monthly-achievement-page .monthly-source-note strong,
+        .monthly-achievement-page .scope-heading strong,
+        .monthly-achievement-page .students-heading h2 { font-size:14px; }
+        .monthly-achievement-page .monthly-source-note span,
+        .monthly-achievement-page .scope-heading span,
+        .monthly-achievement-page .students-heading p { font-size:10px; line-height:1.6; }
+        .monthly-achievement-page input,
+        .monthly-achievement-page select,
+        .monthly-achievement-page textarea { font-size:12px; }
+
+        @media (max-width:700px) {
+          .achievement-grid { grid-template-columns:1fr; }
+          .details-analysis-grid { grid-template-columns:1fr 1fr; }
+          .achievement-summary-grid { grid-template-columns:1fr 1fr; }
+          .detail-edit-columns { grid-template-columns:1fr; }
+        }
+        @media (max-width:430px) {
+          .achievement-summary-header { flex-direction:column; }
+          .achievement-summary-grid { grid-template-columns:1fr; }
+        }
+
       `}
     </style>
   );

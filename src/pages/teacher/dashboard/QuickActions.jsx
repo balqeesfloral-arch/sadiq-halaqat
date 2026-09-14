@@ -1,179 +1,96 @@
+import { useNavigate } from "react-router-dom";
 import {
-  ClipboardCheck,
-  BookOpen,
-  Users,
-  GraduationCap,
   ArrowLeft,
+  Award,
+  BookOpenCheck,
+  ClipboardCheck,
+  GraduationCap,
+  Target,
+  Users,
 } from "lucide-react";
 
-import { useNavigate }
-from "react-router-dom";
+const ACTIONS = [
+  {
+    title: "تسجيل الحضور",
+    description: "افتح كشف الحلقة وابدأ التسجيل",
+    icon: ClipboardCheck,
+    path: "/teacher/attendance",
+    tone: "green",
+  },
+  {
+    title: "إضافة تسميع",
+    description: "سجل حفظ أو مراجعة الطالب",
+    icon: BookOpenCheck,
+    path: "/teacher/recitations",
+    tone: "gold",
+  },
+  {
+    title: "طلابي",
+    description: "متابعة الطلاب والملفات",
+    icon: Users,
+    path: "/teacher/students",
+    tone: "blue",
+  },
+  {
+    title: "الإنجاز الشهري",
+    description: "تابع الحفظ والمراجعة",
+    icon: Target,
+    path: "/teacher/monthly-achievement",
+    tone: "teal",
+  },
+  {
+    title: "النقاط والمكافآت",
+    description: "تحفيز الطلاب ومتابعة النقاط",
+    icon: Award,
+    path: "/teacher/points",
+    tone: "rose",
+  },
+  {
+    title: "الاختبارات",
+    description: "إدارة الاختبارات والنتائج",
+    icon: GraduationCap,
+    path: "/teacher/exams",
+    tone: "violet",
+  },
+];
 
 export default function QuickActions() {
-  const navigate =
-    useNavigate();
-
-  const actions = [
-    {
-      title:
-        "تسجيل الحضور",
-      icon:
-        ClipboardCheck,
-      path:
-        "/teacher/attendance",
-      color:
-        "emerald",
-    },
-
-    {
-      title:
-        "إضافة تسميع",
-      icon:
-        BookOpen,
-      path:
-        "/teacher/recitations",
-      color:
-        "amber",
-    },
-
-    {
-      title:
-        "إدارة الطلاب",
-      icon:
-        Users,
-      path:
-        "/teacher/students",
-      color:
-        "blue",
-    },
-
-    {
-      title:
-        "الاختبارات",
-      icon:
-        GraduationCap,
-      path:
-        "/teacher/exams",
-      color:
-        "violet",
-    },
-  ];
+  const navigate = useNavigate();
 
   return (
-    <div
-      className="
-      bg-white
-      rounded-[30px]
-      border
-      border-slate-200
-      shadow-sm
-      p-6
-      "
-    >
-      <h3
-        className="
-        text-xl
-        font-black
-        mb-6
-      "
-      >
-        إجراءات سريعة
-      </h3>
-
-      <div
-        className="
-        grid
-        sm:grid-cols-2
-        xl:grid-cols-4
-        gap-4
-      "
-      >
-        {actions.map(
-          (action) => (
-            <ActionCard
-              key={
-                action.title
-              }
-              action={
-                action
-              }
-              navigate={
-                navigate
-              }
-            />
-          )
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ActionCard({
-  action,
-  navigate,
-}) {
-  const Icon =
-    action.icon;
-
-  return (
-    <button
-      onClick={() =>
-        navigate(
-          action.path
-        )
-      }
-      className="
-      group
-      text-right
-      p-5
-      rounded-3xl
-      border
-      border-slate-200
-      hover:border-emerald-300
-      hover:shadow-lg
-      transition-all
-      "
-    >
-      <div
-        className="
-        flex
-        items-center
-        justify-between
-        mb-6
-      "
-      >
-        <div
-          className="
-          w-14
-          h-14
-          rounded-2xl
-          bg-slate-100
-          flex
-          items-center
-          justify-center
-          "
-        >
-          <Icon size={24} />
+    <section className="td-actions">
+      <header className="td-section-head">
+        <div>
+          <span>أسرع طريق للعمل</span>
+          <h3>إجراءاتك اليومية</h3>
         </div>
+      </header>
 
-        <ArrowLeft
-          size={18}
-          className="
-          opacity-0
-          group-hover:opacity-100
-          transition-all
-          "
-        />
+      <div className="td-actions-grid">
+        {ACTIONS.map((action) => {
+          const Icon = action.icon;
+
+          return (
+            <button
+              type="button"
+              className={`td-action-card td-action-${action.tone}`}
+              key={action.title}
+              onClick={() => navigate(action.path)}
+            >
+              <div className="td-action-icon">
+                <Icon size={21} />
+              </div>
+
+              <div className="td-action-copy">
+                <strong>{action.title}</strong>
+                <span>{action.description}</span>
+              </div>
+
+              <ArrowLeft className="td-action-arrow" size={17} />
+            </button>
+          );
+        })}
       </div>
-
-      <h4
-        className="
-        font-black
-        text-lg
-        "
-      >
-        {action.title}
-      </h4>
-    </button>
+    </section>
   );
 }

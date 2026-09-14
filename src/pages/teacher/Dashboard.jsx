@@ -1,242 +1,216 @@
-import { useEffect, useState } from "react";
-
-
-
-
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { RefreshCw } from "lucide-react";
 
 import { supabase } from "../../lib/supabase";
+import {
+  getTeacherAssignments,
+  getTeacherDashboardData,
+} from "../../services/teacherDashboardService";
 
-import { getTeacherDashboardData }
-from "../../services/teacherDashboardService";
+import DashboardSkeleton from "./dashboard/DashboardSkeleton";
+import TeacherHero from "./dashboard/TeacherHero";
+import TeacherStats from "./dashboard/TeacherStats";
+import TeacherCharts from "./dashboard/TeacherCharts";
+import TopStudents from "./dashboard/TopStudents";
+import LatestRecitations from "./dashboard/LatestRecitations";
+import TeacherAlerts from "./dashboard/TeacherAlerts";
+import QuickActions from "./dashboard/QuickActions";
+import TeacherJoinOnboarding from "./dashboard/TeacherJoinOnboarding";
 
-import { buildTeacherStats }
-from "../../utils/teacherDashboardStats";
-
-import { buildTeacherAlerts }
-from "../../utils/teacherAlertsBuilder";
-
-import DashboardSkeleton
-from "./dashboard/DashboardSkeleton";
-
-import TeacherHero
-from "./dashboard/TeacherHero";
-
-import TeacherStats
-from "./dashboard/TeacherStats";
-
-import TeacherCharts
-from "./dashboard/TeacherCharts";
-
-import TopStudents
-from "./dashboard/TopStudents";
-
-import LatestRecitations
-from "./dashboard/LatestRecitations";
-
-import TeacherAlerts
-from "./dashboard/TeacherAlerts";
-
-import QuickActions
-from "./dashboard/QuickActions";
-
-import { showToast }
-from "../../components/Toast";
+import { showToast } from "../../components/Toast";
+import "./dashboard/TeacherDashboard.css";
 
 export default function Dashboard() {
-  const [loading, setLoading] =
-  useState(true);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [teacher, setTeacher] = useState(null);
+  const [assignments, setAssignments] = useState([]);
+  const [activeHalaqaId, setActiveHalaqaId] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [fatalError, setFatalError] = useState("");
 
-const [teacher, setTeacher] =
-  useState(null);
+  const activeAssignment = useMemo(
+    () =>
+      assignments.find(
+        (item) => Number(item.halaqa_id) === Number(activeHalaqaId)
+      ) ||
+      assignments[0] ||
+      null,
+    [assignments, activeHalaqaId]
+  );
 
-const [stats, setStats] =
-  useState(null);
+  const loadBase = useCallback(async ({ silent = false } = {}) => {
+    try {
+      if (!silent) setLoading(true);
+      setFatalError("");
 
-const [alerts, setAlerts] =
-  useState([]);
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-const [topStudents, setTopStudents] =
-  useState([]);
+      if (authError) throw authError;
+      if (!user) throw new Error("AUTH_REQUIRED");
 
-const [latestRecitations, setLatestRecitations] =
-  useState([]);
-
-
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  async function loadDashboard() {
-  try {
-
-    setLoading(true);
-
-    const {
-      data: { user },
-    } =
-      await supabase.auth.getUser();
-
-    if (!user)
-      return;
-
-    const { data: profile } =
-      await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
-        .eq(
-          "auth_user_id",
-          user.id
-        )
+        .select("id, full_name, user_number, role, status, is_active")
+        .eq("auth_user_id", user.id)
         .single();
 
-    if (!profile)
-      return;
+      if (profileError) throw profileError;
+      if (!profile || profile.role !== "teacher") {
+        throw new Error("TEACHER_PROFILE_REQUIRED");
+      }
 
-    const teacherId =
-      profile.id;
+      const teacherAssignments = await getTeacherAssignments();
 
-    const data =
-      await getTeacherDashboardData(
-        teacherId
-      );
+      setTeacher(profile);
+      setAssignments(teacherAssignments);
 
-    const teacherStats =
-      buildTeacherStats(
-        data
-      );
+      setActiveHalaqaId((current) => {
+        if (
+          current &&
+          teacherAssignments.some(
+            (item) => Number(item.halaqa_id) === Number(current)
+          )
+        ) {
+          return current;
+        }
 
-    const teacherAlerts =
-      buildTeacherAlerts(
-        data
-      );
+        return teacherAssignments[0]?.halaqa_id ?? null;
+      });
+    } catch (error) {
+      console.error("Teacher dashboard base error:", error);
+      setFatalError("تعذر تجهيز حساب المعلم. أعد تحميل الصفحة أو سجل الدخول من جديد.");
+      showToast("تعذر تجهيز لوحة المعلم", "error");
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
 
-    setTeacher(profile);
+  const loadOperationalData = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!teacher?.id || !activeHalaqaId) {
+        setDashboardData(null);
+        return;
+      }
 
-    setStats(
-      teacherStats
-    );
+      try {
+        if (silent) setRefreshing(true);
 
-    setAlerts(
-      teacherAlerts
-    );
+        const data = await getTeacherDashboardData({
+          teacherId: teacher.id,
+          halaqaId: activeHalaqaId,
+        });
 
-    setTopStudents(
-      data.students
-        ?.sort(
-          (a, b) =>
-            (b.total_points || 0) -
-            (a.total_points || 0)
-        )
-        .slice(0, 5)
-        || []
-    );
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Teacher dashboard data error:", error);
+        showToast("تعذر تحديث بيانات الحلقة", "error");
+      } finally {
+        if (silent) setRefreshing(false);
+      }
+    },
+    [teacher?.id, activeHalaqaId]
+  );
 
-    setLatestRecitations(
-      data.recitations
-        ?.slice(0, 10)
-        || []
-    );
+  useEffect(() => {
+    loadBase();
+  }, [loadBase]);
 
-  } catch (error) {
+  useEffect(() => {
+    loadOperationalData();
+  }, [loadOperationalData]);
 
-    console.error(error);
-
-    showToast(
-  "تعذر تحميل لوحة المعلم",
-  "error"
-);
-
-  } finally {
-
-    setLoading(false);
-
+  async function handleRefresh() {
+    setRefreshing(true);
+    await loadBase({ silent: true });
+    await loadOperationalData({ silent: true });
+    setRefreshing(false);
+    showToast("تم تحديث لوحة المعلم", "success");
   }
-}
 
-if (loading) {
+  async function handleMembershipChanged() {
+    await loadBase({ silent: true });
+  }
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (fatalError) {
+    return (
+      <div className="td-state-card td-state-card--danger">
+        <strong>تعذر فتح لوحة المعلم</strong>
+        <p>{fatalError}</p>
+        <button type="button" onClick={() => loadBase()}>
+          <RefreshCw size={18} />
+          إعادة المحاولة
+        </button>
+      </div>
+    );
+  }
+
+  if (!assignments.length) {
+    return (
+      <TeacherJoinOnboarding
+        teacher={teacher}
+        onMembershipChanged={handleMembershipChanged}
+      />
+    );
+  }
+
+  const stats = dashboardData?.stats ?? {};
+  const attendanceData = dashboardData?.attendanceChart ?? [];
+  const recitationData = dashboardData?.recitationChart ?? [];
+  const topStudents = dashboardData?.topStudents ?? [];
+  const latestRecitations = dashboardData?.latestRecitations ?? [];
+  const alerts = dashboardData?.alerts ?? [];
+
   return (
-    <DashboardSkeleton />
+    <div className="teacher-dashboard">
+      <div className="td-toolbar">
+        <div>
+          <span className="td-toolbar-kicker">مساحة العمل اليومية</span>
+          <h1>لوحة المعلم</h1>
+        </div>
+
+        <button
+          type="button"
+          className="td-refresh"
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw className={refreshing ? "td-spin" : ""} size={17} />
+          {refreshing ? "جارٍ التحديث…" : "تحديث البيانات"}
+        </button>
+      </div>
+
+      <TeacherHero
+        teacher={teacher}
+        assignments={assignments}
+        activeHalaqaId={activeHalaqaId}
+        onHalaqaChange={setActiveHalaqaId}
+        assignment={activeAssignment}
+        stats={stats}
+      />
+
+      <TeacherStats stats={stats} />
+
+      <QuickActions halaqaId={activeHalaqaId} />
+
+      <TeacherAlerts alerts={alerts} />
+
+      <TeacherCharts
+        attendanceData={attendanceData}
+        recitationData={recitationData}
+      />
+
+      <div className="td-two-column">
+        <TopStudents students={topStudents} />
+        <LatestRecitations recitations={latestRecitations} />
+      </div>
+    </div>
   );
 }
-
-return (
-  <div className="space-y-8">
-
-    <TeacherHero
-  teacherName={
-    teacher?.full_name
-  }
-  halaqaName={
-    "حلقة القرآن"
-  }
-  mosqueName={
-    "المسجد"
-  }
-  studentsCount={
-    stats?.studentsCount || 0
-  }
-  attendanceCount={
-    stats?.presentCount || 0
-  }
-  recitationsCount={
-    stats?.recitationsCount || 0
-  }
-/>
-
-   <TeacherStats
-  studentsCount={
-    stats?.studentsCount || 0
-  }
-  presentCount={
-    stats?.presentCount || 0
-  }
-  absentCount={
-    stats?.absentCount || 0
-  }
-  recitationsCount={
-    stats?.recitationsCount || 0
-  }
-  examsCount={
-    stats?.examsCount || 0
-  }
-  achievementRate={
-    stats?.achievementRate || 0
-  }
-/>
-
-    <TeacherCharts
-      stats={stats}
-    />
-
-    <div
-      className="
-      grid
-      grid-cols-1
-      xl:grid-cols-2
-      gap-6
-    "
-    >
-
-      <TopStudents
-        students={topStudents}
-      />
-
-      <LatestRecitations
-        recitations={
-          latestRecitations
-        }
-      />
-
-    </div>
-
-    <TeacherAlerts
-      alerts={alerts}
-    />
-
-    <QuickActions />
-
-  </div>
-);
-
-}
-

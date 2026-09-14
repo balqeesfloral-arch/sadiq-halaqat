@@ -503,6 +503,278 @@ function getPreviousHijriMonth(
   };
 }
 
+
+/* =========================================================
+   SMART DAILY PLAN HELPERS
+========================================================= */
+
+const RECITATION_DAY_META = [
+  { value: "sunday", label: "الأحد", jsDay: 0 },
+  { value: "monday", label: "الإثنين", jsDay: 1 },
+  { value: "tuesday", label: "الثلاثاء", jsDay: 2 },
+  { value: "wednesday", label: "الأربعاء", jsDay: 3 },
+  { value: "thursday", label: "الخميس", jsDay: 4 },
+  { value: "friday", label: "الجمعة", jsDay: 5 },
+  { value: "saturday", label: "السبت", jsDay: 6 },
+];
+
+function normalizeRecitationDays(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((day) =>
+    RECITATION_DAY_META.some((item) => item.value === day)
+  );
+}
+
+function countScheduledSessions(period, recitationDays) {
+  const days = normalizeRecitationDays(recitationDays);
+
+  if (!period || days.length === 0) {
+    return 0;
+  }
+
+  const allowed = new Set(
+    RECITATION_DAY_META
+      .filter((item) => days.includes(item.value))
+      .map((item) => item.jsDay)
+  );
+
+  const cursor = parseLocalDate(period.start);
+  const end = parseLocalDate(period.end);
+  let count = 0;
+
+  while (cursor <= end) {
+    if (allowed.has(cursor.getDay())) {
+      count += 1;
+    }
+
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return count;
+}
+
+function getScheduledElapsedPercent(period, recitationDays, plannedSessions) {
+  if (!period) {
+    return 0;
+  }
+
+  const total = Number(plannedSessions || 0) ||
+    countScheduledSessions(period, recitationDays);
+
+  if (total <= 0) {
+    return getElapsedPercent(period);
+  }
+
+  const todayText = getLocalDate();
+
+  if (todayText < period.start) {
+    return 0;
+  }
+
+  if (todayText > period.end) {
+    return 100;
+  }
+
+  const elapsed = countScheduledSessions(
+    { start: period.start, end: todayText },
+    recitationDays
+  );
+
+  return Math.min(
+    100,
+    Math.max(0, Math.round((elapsed / total) * 100))
+  );
+}
+
+function acceptedEvaluation(value) {
+  const text = String(value || "").trim();
+
+  // السجلات القديمة التي لا تحتوي تقييمًا تبقى محسوبة كما كانت.
+  return !text || text !== "إعادة";
+}
+
+function recitationLessonFaces(record) {
+  if (!acceptedEvaluation(record?.lesson_evaluation)) {
+    return 0;
+  }
+
+  const amount = Number(record?.lesson_amount_value || 0);
+  const unit = record?.lesson_amount_unit;
+
+  if (amount > 0 && (unit === "lines" || unit === "faces")) {
+    return unit === "lines" ? amount / 15 : amount;
+  }
+
+  return Number(
+    record?.lesson_faces_manual ??
+      record?.lesson_faces ??
+      0
+  );
+}
+
+function recitationReviewFaces(record) {
+  if (!acceptedEvaluation(record?.review_evaluation)) {
+    return 0;
+  }
+
+  return Number(record?.review_faces || 0);
+}
+
+function nooraniaAcceptedFaces(record, kind) {
+  const evaluation =
+    kind === "lesson"
+      ? record?.lesson_evaluation
+      : record?.revision_evaluation;
+
+  if (!acceptedEvaluation(evaluation)) {
+    return 0;
+  }
+
+  return Number(
+    kind === "lesson"
+      ? record?.lesson_faces || 0
+      : record?.revision_faces || 0
+  );
+}
+
+function amountToFaces(amount, unit) {
+  const number = Number(amount || 0);
+
+  if (!Number.isFinite(number) || number <= 0) {
+    return 0;
+  }
+
+  if (unit === "lines") {
+    return roundFaces(number / 15);
+  }
+
+  return roundFaces(number);
+}
+
+function monthlyTargetFaces(amount, unit, sessions) {
+  const number = Number(amount || 0);
+  const count = Number(sessions || 0);
+
+  if (!Number.isFinite(number) || number <= 0 || count <= 0) {
+    return 0;
+  }
+
+  if (unit === "lines") {
+    return roundFaces((number * count) / 15);
+  }
+
+  return roundFaces(number * count);
+}
+
+function inferDailyPlan(targetFaces, sessions) {
+  const total = Number(targetFaces || 0);
+  const count = Number(sessions || 0);
+
+  if (total <= 0 || count <= 0) {
+    return {
+      amount: "",
+      unit: "lines",
+    };
+  }
+
+  const dailyFaces = total / count;
+  const dailyLines = dailyFaces * 15;
+  const roundedLines = Math.round(dailyLines);
+
+  if (
+    dailyFaces < 1 &&
+    Math.abs(dailyLines - roundedLines) < 0.02
+  ) {
+    return {
+      amount: roundedLines,
+      unit: "lines",
+    };
+  }
+
+  return {
+    amount: roundFaces(dailyFaces),
+    unit: "faces",
+  };
+}
+
+function formatPagesAndLines(faces) {
+  const safeFaces = Math.max(0, Number(faces || 0));
+  const wholePages = Math.floor(safeFaces + 1e-9);
+  const lines = Math.round((safeFaces - wholePages) * 15);
+
+  let pages = wholePages;
+  let remainingLines = lines;
+
+  if (remainingLines >= 15) {
+    pages += 1;
+    remainingLines = 0;
+  }
+
+  const pageText =
+    pages === 0
+      ? ""
+      : pages === 1
+        ? "صفحة واحدة"
+        : pages === 2
+          ? "صفحتان"
+          : `${pages} صفحات`;
+
+  const lineText =
+    remainingLines === 0
+      ? ""
+      : remainingLines === 1
+        ? "سطر واحد"
+        : remainingLines === 2
+          ? "سطران"
+          : `${remainingLines} أسطر`;
+
+  if (pageText && lineText) {
+    return `${pageText} + ${lineText}`;
+  }
+
+  return pageText || lineText || "0";
+}
+
+function formatDailyAmount(amount, unit) {
+  const number = Number(amount || 0);
+
+  if (!number) {
+    return "غير محدد";
+  }
+
+  if (unit === "lines") {
+    return `${formatFaces(number / 15)} وجه • ${number} سطر`;
+  }
+
+  return `${formatFaces(number)} وجه`;
+}
+
+function isQuranGoal(goal) {
+  if (!goal || goal === "other") {
+    return true;
+  }
+
+  return ["quran", "noorania_quran", "memorization", "revision", "memorization_revision", "tajweed"].includes(goal);
+}
+
+function isNooraniaGoal(goal) {
+  return ["noorania", "noorania_quran", "foundation"].includes(goal);
+}
+
+function nooraniaMonthlyTarget(amount, unit, sessions) {
+  const number = Number(amount || 0);
+  const count = Number(sessions || 0);
+
+  if (!Number.isFinite(number) || number <= 0 || count <= 0) {
+    return 0;
+  }
+
+  return Math.round((number * count + Number.EPSILON) * 100) / 100;
+}
+
 /* =========================================================
    OLD/NEW MONTHLY PROGRESS
 ========================================================= */
@@ -785,6 +1057,7 @@ function getPaceInfo({
   achieved,
   target,
   period,
+  expectedPercent = null,
 }) {
   const goal =
     Number(
@@ -818,9 +1091,9 @@ function getPaceInfo({
     );
 
   const expected =
-    getElapsedPercent(
-      period
-    );
+    Number.isFinite(Number(expectedPercent))
+      ? Number(expectedPercent)
+      : getElapsedPercent(period);
 
   if (
     percentage >= 100
@@ -977,6 +1250,36 @@ function getPaceInfo({
 
 function createEmptyPlanData() {
   return {
+    memorization_daily_amount:
+      "",
+
+    memorization_daily_unit:
+      "lines",
+
+    revision_daily_amount:
+      "",
+
+    revision_daily_unit:
+      "faces",
+
+    recitation_days_snapshot:
+      [],
+
+    planned_sessions:
+      0,
+
+    noorania_lesson_daily_amount:
+      "",
+
+    noorania_lesson_daily_unit:
+      "lesson",
+
+    noorania_revision_daily_amount:
+      "",
+
+    noorania_revision_daily_unit:
+      "faces",
+
     memorization_from_surah:
       "",
 
@@ -1590,7 +1893,8 @@ export default function MonthlyPlan() {
             full_name,
             user_number,
             status,
-            learning_goal
+            learning_goal,
+            recitation_days
           `)
           .in(
             "id",
@@ -1674,7 +1978,12 @@ export default function MonthlyPlan() {
             student_id,
             recitation_date,
             lesson_faces,
-            review_faces
+            lesson_faces_manual,
+            lesson_amount_value,
+            lesson_amount_unit,
+            lesson_evaluation,
+            review_faces,
+            review_evaluation
           `)
           .eq(
             "halaqa_id",
@@ -1701,6 +2010,50 @@ export default function MonthlyPlan() {
         throw recitationsError;
       }
 
+      const {
+        data:
+          nooraniaRecitations,
+        error:
+          nooraniaRecitationsError,
+      } =
+        await supabase
+          .from(
+            "noorania_recitations"
+          )
+          .select(`
+            id,
+            student_id,
+            recitation_date,
+            lesson_faces,
+            lesson_evaluation,
+            revision_faces,
+            revision_evaluation
+          `)
+          .eq(
+            "halaqa_id",
+            Number(
+              selectedHalaqa
+            )
+          )
+          .in(
+            "student_id",
+            studentIds
+          )
+          .gte(
+            "recitation_date",
+            period.start
+          )
+          .lte(
+            "recitation_date",
+            period.end
+          );
+
+      if (
+        nooraniaRecitationsError
+      ) {
+        throw nooraniaRecitationsError;
+      }
+
       const recitationMap =
         new Map();
 
@@ -1724,16 +2077,10 @@ export default function MonthlyPlan() {
             };
 
           old.memorization +=
-            Number(
-              record.lesson_faces ||
-                0
-            );
+            recitationLessonFaces(record);
 
           old.revision +=
-            Number(
-              record.review_faces ||
-                0
-            );
+            recitationReviewFaces(record);
 
           old.sessions += 1;
 
@@ -1747,6 +2094,54 @@ export default function MonthlyPlan() {
           }
 
           recitationMap.set(
+            id,
+            old
+          );
+        }
+      );
+
+      const nooraniaRecitationMap =
+        new Map();
+
+      (
+        nooraniaRecitations || []
+      ).forEach(
+        (record) => {
+          const id =
+            Number(
+              record.student_id
+            );
+
+          const old =
+            nooraniaRecitationMap.get(
+              id
+            ) || {
+              lessonFaces: 0,
+              revisionFaces: 0,
+              sessions: 0,
+              lastDate: null,
+            };
+
+          old.lessonFaces +=
+            Number(
+              record.lesson_faces || 0
+            );
+
+          old.revisionFaces +=
+            Number(
+              record.revision_faces || 0
+            );
+
+          old.sessions += 1;
+
+          if (
+            !old.lastDate ||
+            record.recitation_date > old.lastDate
+          ) {
+            old.lastDate = record.recitation_date;
+          }
+
+          nooraniaRecitationMap.set(
             id,
             old
           );
@@ -1877,6 +2272,90 @@ export default function MonthlyPlan() {
                     manualRev
                 );
 
+              const profileDays =
+                normalizeRecitationDays(
+                  profile.recitation_days
+                );
+
+              const storedDays =
+                normalizeRecitationDays(
+                  plan?.recitation_days_snapshot
+                );
+
+              const planDays =
+                storedDays.length
+                  ? storedDays
+                  : profileDays;
+
+              const calculatedSessions =
+                countScheduledSessions(
+                  period,
+                  planDays
+                );
+
+              const plannedSessions =
+                Number(
+                  plan?.planned_sessions || 0
+                ) > 0
+                  ? Number(
+                      plan.planned_sessions
+                    )
+                  : calculatedSessions;
+
+              const inferredMem =
+                inferDailyPlan(
+                  plan?.memorization_target_faces,
+                  plannedSessions
+                );
+
+              const inferredRev =
+                inferDailyPlan(
+                  plan?.revision_target_faces,
+                  plannedSessions
+                );
+
+              const memDailyAmount =
+                plan?.memorization_daily_amount ??
+                inferredMem.amount;
+
+              const memDailyUnit =
+                plan?.memorization_daily_unit ||
+                inferredMem.unit ||
+                "lines";
+
+              const revDailyAmount =
+                plan?.revision_daily_amount ??
+                inferredRev.amount;
+
+              const revDailyUnit =
+                plan?.revision_daily_unit ||
+                inferredRev.unit ||
+                "faces";
+
+              const calculatedMemTarget =
+                monthlyTargetFaces(
+                  memDailyAmount,
+                  memDailyUnit,
+                  plannedSessions
+                );
+
+              const calculatedRevTarget =
+                monthlyTargetFaces(
+                  revDailyAmount,
+                  revDailyUnit,
+                  plannedSessions
+                );
+
+              const nooraniaLive =
+                nooraniaRecitationMap.get(
+                  studentId
+                ) || {
+                  lessonFaces: 0,
+                  revisionFaces: 0,
+                  sessions: 0,
+                  lastDate: null,
+                };
+
               return {
                 id:
                   studentId,
@@ -1895,6 +2374,59 @@ export default function MonthlyPlan() {
                 learning_goal:
                   profile.learning_goal ||
                   "",
+
+                recitation_days:
+                  profileDays,
+
+                recitation_days_snapshot:
+                  planDays,
+
+                planned_sessions:
+                  plannedSessions,
+
+                memorization_daily_amount:
+                  memDailyAmount,
+
+                memorization_daily_unit:
+                  memDailyUnit,
+
+                revision_daily_amount:
+                  revDailyAmount,
+
+                revision_daily_unit:
+                  revDailyUnit,
+
+                noorania_lesson_daily_amount:
+                  plan?.noorania_lesson_daily_amount ??
+                  "",
+
+                noorania_lesson_daily_unit:
+                  plan?.noorania_lesson_daily_unit ||
+                  "lesson",
+
+                noorania_revision_daily_amount:
+                  plan?.noorania_revision_daily_amount ??
+                  "",
+
+                noorania_revision_daily_unit:
+                  plan?.noorania_revision_daily_unit ||
+                  "faces",
+
+                achieved_noorania_lesson_faces:
+                  roundFaces(
+                    nooraniaLive.lessonFaces
+                  ),
+
+                achieved_noorania_revision_faces:
+                  roundFaces(
+                    nooraniaLive.revisionFaces
+                  ),
+
+                noorania_recitation_sessions:
+                  nooraniaLive.sessions,
+
+                noorania_last_recitation_date:
+                  nooraniaLive.lastDate,
 
                 plan_id:
                   plan?.id ||
@@ -1918,8 +2450,11 @@ export default function MonthlyPlan() {
 
                 memorization_target_faces:
                   Number(
-                    plan?.memorization_target_faces ||
-                      0
+                    memDailyAmount !== "" &&
+                    Number(plannedSessions) > 0
+                      ? calculatedMemTarget
+                      : plan?.memorization_target_faces ||
+                        0
                   ),
 
                 revision_from_surah:
@@ -1940,8 +2475,11 @@ export default function MonthlyPlan() {
 
                 revision_target_faces:
                   Number(
-                    plan?.revision_target_faces ||
-                      0
+                    revDailyAmount !== "" &&
+                    Number(plannedSessions) > 0
+                      ? calculatedRevTarget
+                      : plan?.revision_target_faces ||
+                        0
                   ),
 
                 notes:
@@ -2086,11 +2624,41 @@ export default function MonthlyPlan() {
               return row;
             }
 
-            return {
+            const next = {
               ...row,
+              [field]: value,
+            };
 
-              [field]:
-                value,
+            if (
+              [
+                "memorization_daily_amount",
+                "memorization_daily_unit",
+              ].includes(field)
+            ) {
+              next.memorization_target_faces =
+                monthlyTargetFaces(
+                  next.memorization_daily_amount,
+                  next.memorization_daily_unit,
+                  next.planned_sessions
+                );
+            }
+
+            if (
+              [
+                "revision_daily_amount",
+                "revision_daily_unit",
+              ].includes(field)
+            ) {
+              next.revision_target_faces =
+                monthlyTargetFaces(
+                  next.revision_daily_amount,
+                  next.revision_daily_unit,
+                  next.planned_sessions
+                );
+            }
+
+            return {
+              ...next,
 
               /*
                 أي تعديل مباشر
@@ -2126,15 +2694,17 @@ export default function MonthlyPlan() {
   ) {
     return Boolean(
       Number(
-        row.memorization_target_faces ||
-          0
-      ) >
-        0 ||
+        row.memorization_target_faces || 0
+      ) > 0 ||
       Number(
-        row.revision_target_faces ||
-          0
-      ) >
-        0 ||
+        row.revision_target_faces || 0
+      ) > 0 ||
+      Number(
+        row.noorania_lesson_daily_amount || 0
+      ) > 0 ||
+      Number(
+        row.noorania_revision_daily_amount || 0
+      ) > 0 ||
       row.memorization_from_surah ||
       row.revision_from_surah ||
       String(
@@ -2149,21 +2719,27 @@ export default function MonthlyPlan() {
   ===================================================== */
 
   function validateNumbers() {
-    for (
-      const row of rows
-    ) {
+    for (const row of rows) {
+      const numericFields = [
+        row.memorization_daily_amount,
+        row.revision_daily_amount,
+        row.noorania_lesson_daily_amount,
+        row.noorania_revision_daily_amount,
+        row.memorization_target_faces,
+        row.revision_target_faces,
+      ];
+
       if (
-        Number(
-          row.memorization_target_faces ||
-            0
-        ) < 0 ||
-        Number(
-          row.revision_target_faces ||
-            0
-        ) < 0
+        numericFields.some(
+          (value) =>
+            value !== "" &&
+            value !== null &&
+            value !== undefined &&
+            Number(value) < 0
+        )
       ) {
         showToast(
-          `لا يمكن إدخال هدف سالب للطالب ${row.student_name}`,
+          `لا يمكن إدخال مقدار سالب للطالب ${row.student_name}`,
           "error"
         );
 
@@ -2179,73 +2755,73 @@ export default function MonthlyPlan() {
   ===================================================== */
 
   function validateForSubmit() {
-    if (
-      !validateNumbers()
-    ) {
+    if (!validateNumbers()) {
       return false;
     }
 
-    for (
-      const row of rows
-    ) {
-      const memTarget =
-        Number(
-          row.memorization_target_faces ||
-            0
-        );
+    for (const row of rows) {
+      const quranRequired = isQuranGoal(row.learning_goal);
+      const nooraniaRequired = isNooraniaGoal(row.learning_goal);
 
-      const revTarget =
-        Number(
-          row.revision_target_faces ||
-            0
-        );
+      const hasQuranPlan =
+        Number(row.memorization_target_faces || 0) > 0 ||
+        Number(row.revision_target_faces || 0) > 0;
+
+      const hasNooraniaPlan =
+        Number(row.noorania_lesson_daily_amount || 0) > 0 ||
+        Number(row.noorania_revision_daily_amount || 0) > 0;
 
       if (
-        memTarget <= 0 &&
-        revTarget <= 0
+        quranRequired &&
+        !nooraniaRequired &&
+        !hasQuranPlan
       ) {
         showToast(
-          `لم يتم تحديد هدف للطالب ${row.student_name}`,
+          `حدد خطة القرآن للطالب ${row.student_name}`,
           "error"
         );
-
         return false;
       }
 
       if (
-        memTarget > 0
+        nooraniaRequired &&
+        !quranRequired &&
+        !hasNooraniaPlan
       ) {
-        if (
-          !row.memorization_from_surah ||
-          !row.memorization_from_ayah ||
-          !row.memorization_to_surah ||
-          !row.memorization_to_ayah
-        ) {
-          showToast(
-            `أكمل نطاق الحفظ للطالب ${row.student_name}`,
-            "error"
-          );
-
-          return false;
-        }
+        showToast(
+          `حدد خطة القاعدة للطالب ${row.student_name}`,
+          "error"
+        );
+        return false;
       }
 
       if (
-        revTarget > 0
+        quranRequired &&
+        nooraniaRequired &&
+        !hasQuranPlan &&
+        !hasNooraniaPlan
       ) {
-        if (
-          !row.revision_from_surah ||
-          !row.revision_from_ayah ||
-          !row.revision_to_surah ||
-          !row.revision_to_ayah
-        ) {
-          showToast(
-            `أكمل نطاق المراجعة للطالب ${row.student_name}`,
-            "error"
-          );
+        showToast(
+          `حدد خطة القرآن أو القاعدة للطالب ${row.student_name}`,
+          "error"
+        );
+        return false;
+      }
 
-          return false;
-        }
+      const usesDailyPlan =
+        Number(row.memorization_daily_amount || 0) > 0 ||
+        Number(row.revision_daily_amount || 0) > 0 ||
+        hasNooraniaPlan;
+
+      if (
+        usesDailyPlan &&
+        Number(row.planned_sessions || 0) <= 0
+      ) {
+        showToast(
+          `لا توجد أيام تسميع محددة للطالب ${row.student_name}. عدّل أيام التسميع من ملف الطالب أولًا.`,
+          "error"
+        );
+        return false;
       }
     }
 
@@ -2295,6 +2871,58 @@ export default function MonthlyPlan() {
       hijri_month:
         Number(
           hijriMonth
+        ),
+
+      memorization_daily_amount:
+        numberOrNull(
+          row.memorization_daily_amount
+        ),
+
+      memorization_daily_unit:
+        textOrNull(
+          row.memorization_daily_unit
+        ),
+
+      revision_daily_amount:
+        numberOrNull(
+          row.revision_daily_amount
+        ),
+
+      revision_daily_unit:
+        textOrNull(
+          row.revision_daily_unit
+        ),
+
+      recitation_days_snapshot:
+        normalizeRecitationDays(
+          row.recitation_days_snapshot?.length
+            ? row.recitation_days_snapshot
+            : row.recitation_days
+        ),
+
+      planned_sessions:
+        Number(
+          row.planned_sessions || 0
+        ),
+
+      noorania_lesson_daily_amount:
+        numberOrNull(
+          row.noorania_lesson_daily_amount
+        ),
+
+      noorania_lesson_daily_unit:
+        textOrNull(
+          row.noorania_lesson_daily_unit
+        ),
+
+      noorania_revision_daily_amount:
+        numberOrNull(
+          row.noorania_revision_daily_amount
+        ),
+
+      noorania_revision_daily_unit:
+        textOrNull(
+          row.noorania_revision_daily_unit
         ),
 
       memorization_from_surah:
@@ -2928,6 +3556,39 @@ export default function MonthlyPlan() {
 
               copiedCount += 1;
 
+              const oldSessions =
+                Number(old.planned_sessions || 0);
+
+              const oldMemDaily =
+                old.memorization_daily_amount ??
+                inferDailyPlan(
+                  old.memorization_target_faces,
+                  oldSessions
+                ).amount;
+
+              const oldMemUnit =
+                old.memorization_daily_unit ||
+                inferDailyPlan(
+                  old.memorization_target_faces,
+                  oldSessions
+                ).unit ||
+                "lines";
+
+              const oldRevDaily =
+                old.revision_daily_amount ??
+                inferDailyPlan(
+                  old.revision_target_faces,
+                  oldSessions
+                ).amount;
+
+              const oldRevUnit =
+                old.revision_daily_unit ||
+                inferDailyPlan(
+                  old.revision_target_faces,
+                  oldSessions
+                ).unit ||
+                "faces";
+
               return {
                 ...row,
 
@@ -2947,10 +3608,17 @@ export default function MonthlyPlan() {
                   old.memorization_to_ayah ??
                   "",
 
+                memorization_daily_amount:
+                  oldMemDaily,
+
+                memorization_daily_unit:
+                  oldMemUnit,
+
                 memorization_target_faces:
-                  Number(
-                    old.memorization_target_faces ||
-                      0
+                  monthlyTargetFaces(
+                    oldMemDaily,
+                    oldMemUnit,
+                    row.planned_sessions
                   ),
 
                 revision_from_surah:
@@ -2969,11 +3637,33 @@ export default function MonthlyPlan() {
                   old.revision_to_ayah ??
                   "",
 
+                revision_daily_amount:
+                  oldRevDaily,
+
+                revision_daily_unit:
+                  oldRevUnit,
+
                 revision_target_faces:
-                  Number(
-                    old.revision_target_faces ||
-                      0
+                  monthlyTargetFaces(
+                    oldRevDaily,
+                    oldRevUnit,
+                    row.planned_sessions
                   ),
+
+                noorania_lesson_daily_amount:
+                  old.noorania_lesson_daily_amount ?? "",
+
+                noorania_lesson_daily_unit:
+                  old.noorania_lesson_daily_unit || "lesson",
+
+                noorania_revision_daily_amount:
+                  old.noorania_revision_daily_amount ?? "",
+
+                noorania_revision_daily_unit:
+                  old.noorania_revision_daily_unit || "faces",
+
+                recitation_days_snapshot:
+                  row.recitation_days,
 
                 /*
                   لا ننسخ ملاحظات الشهر
@@ -3026,150 +3716,86 @@ export default function MonthlyPlan() {
   ===================================================== */
 
   function applyHalaqaTemplate() {
-    const memTarget =
-      Number(
-        template.memorization_target_faces ||
-          0
-      );
+    const hasQuran =
+      Number(template.memorization_daily_amount || 0) > 0 ||
+      Number(template.revision_daily_amount || 0) > 0;
 
-    const revTarget =
-      Number(
-        template.revision_target_faces ||
-          0
-      );
+    const hasNoorania =
+      Number(template.noorania_lesson_daily_amount || 0) > 0 ||
+      Number(template.noorania_revision_daily_amount || 0) > 0;
 
-    if (
-      memTarget <= 0 &&
-      revTarget <= 0
-    ) {
+    if (!hasQuran && !hasNoorania) {
       showToast(
-        "حدد هدف حفظ أو مراجعة واحدًا على الأقل",
+        "حدد مقدارًا يوميًا واحدًا على الأقل",
         "error"
       );
-
       return;
     }
 
-    if (
-      memTarget > 0 &&
-      (
-        !template.memorization_from_surah ||
-        !template.memorization_from_ayah ||
-        !template.memorization_to_surah ||
-        !template.memorization_to_ayah
-      )
-    ) {
-      showToast(
-        "أكمل نطاق الحفظ في خطة الحلقة",
-        "error"
-      );
-
-      return;
-    }
-
-    if (
-      revTarget > 0 &&
-      (
-        !template.revision_from_surah ||
-        !template.revision_from_ayah ||
-        !template.revision_to_surah ||
-        !template.revision_to_ayah
-      )
-    ) {
-      showToast(
-        "أكمل نطاق المراجعة في خطة الحلقة",
-        "error"
-      );
-
-      return;
-    }
-
-    const confirmed =
-      window.confirm(
-        "سيتم تطبيق الخطة الموحدة على جميع الطلاب القابلين للتعديل.\n\nيمكنك تخصيص أي طالب بعد ذلك."
-      );
+    const confirmed = window.confirm(
+      "سيتم تطبيق المقادير اليومية على جميع الطلاب القابلين للتعديل، مع حساب الهدف الشهري لكل طالب حسب أيام تسميعه الفعلية."
+    );
 
     if (!confirmed) {
       return;
     }
 
-    setRows(
-      (current) =>
-        current.map(
-          (row) => {
-            if (
-              isLockedPlan(
-                row
-              )
-            ) {
-              return row;
-            }
+    setRows((current) =>
+      current.map((row) => {
+        if (isLockedPlan(row)) {
+          return row;
+        }
 
-            return {
-              ...row,
+        const quranStudent = isQuranGoal(row.learning_goal);
+        const nooraniaStudent = isNooraniaGoal(row.learning_goal);
 
-              memorization_from_surah:
-                template.memorization_from_surah,
+        const next = {
+          ...row,
+          memorization_daily_amount:
+            quranStudent ? template.memorization_daily_amount : "",
+          memorization_daily_unit:
+            quranStudent ? template.memorization_daily_unit : "lines",
+          revision_daily_amount:
+            quranStudent ? template.revision_daily_amount : "",
+          revision_daily_unit:
+            quranStudent ? template.revision_daily_unit : "faces",
+          noorania_lesson_daily_amount:
+            nooraniaStudent ? template.noorania_lesson_daily_amount : "",
+          noorania_lesson_daily_unit:
+            nooraniaStudent ? template.noorania_lesson_daily_unit : "lesson",
+          noorania_revision_daily_amount:
+            nooraniaStudent ? template.noorania_revision_daily_amount : "",
+          noorania_revision_daily_unit:
+            nooraniaStudent ? template.noorania_revision_daily_unit : "faces",
+          recitation_days_snapshot:
+            row.recitation_days,
+          notes:
+            template.notes || row.notes,
+          customization_reason: "",
+          plan_source: "halaqa_template",
+          status: "draft",
+          dirty: true,
+        };
 
-              memorization_from_ayah:
-                template.memorization_from_ayah,
+        next.memorization_target_faces = monthlyTargetFaces(
+          next.memorization_daily_amount,
+          next.memorization_daily_unit,
+          row.planned_sessions
+        );
 
-              memorization_to_surah:
-                template.memorization_to_surah,
+        next.revision_target_faces = monthlyTargetFaces(
+          next.revision_daily_amount,
+          next.revision_daily_unit,
+          row.planned_sessions
+        );
 
-              memorization_to_ayah:
-                template.memorization_to_ayah,
-
-              memorization_target_faces:
-                Number(
-                  template.memorization_target_faces ||
-                    0
-                ),
-
-              revision_from_surah:
-                template.revision_from_surah,
-
-              revision_from_ayah:
-                template.revision_from_ayah,
-
-              revision_to_surah:
-                template.revision_to_surah,
-
-              revision_to_ayah:
-                template.revision_to_ayah,
-
-              revision_target_faces:
-                Number(
-                  template.revision_target_faces ||
-                    0
-                ),
-
-              notes:
-                template.notes ||
-                row.notes,
-
-              customization_reason:
-                "",
-
-              plan_source:
-                "halaqa_template",
-
-              status:
-                "draft",
-
-              dirty:
-                true,
-            };
-          }
-        )
+        return next;
+      })
     );
 
-    setTemplateOpen(
-      false
-    );
-
+    setTemplateOpen(false);
     showToast(
-      "تم تطبيق الخطة الموحدة على طلاب الحلقة",
+      "تم تطبيق الخطة الذكية على طلاب الحلقة",
       "success"
     );
   }
@@ -3338,16 +3964,10 @@ export default function MonthlyPlan() {
       const withPlans =
         rows.filter(
           (row) =>
-            Number(
-              row.memorization_target_faces ||
-                0
-            ) >
-              0 ||
-            Number(
-              row.revision_target_faces ||
-                0
-            ) >
-              0
+            Number(row.memorization_target_faces || 0) > 0 ||
+            Number(row.revision_target_faces || 0) > 0 ||
+            Number(row.noorania_lesson_daily_amount || 0) > 0 ||
+            Number(row.noorania_revision_daily_amount || 0) > 0
         ).length;
 
       const submitted =
@@ -3550,11 +4170,7 @@ export default function MonthlyPlan() {
             </h1>
 
             <p>
-              تحديد أهداف الحفظ
-              والمراجعة لكل طالب،
-              ومتابعة الإنجاز الفعلي
-              من التسميع والإنجاز
-              الشهري لحظة بلحظة.
+              حدّد المقدار اليومي لكل طالب، وسيعرض الصديق الهدف الشهري النهائي تلقائيًا.
             </p>
           </div>
         </div>
@@ -3725,34 +4341,6 @@ export default function MonthlyPlan() {
           </button>
         </div>
       )}
-
-      {/* =================================================
-          ARCHITECTURE NOTE
-      ================================================= */}
-
-      <div
-        className="plan-flow-note"
-      >
-        <Sparkles
-          size={15}
-        />
-
-        <div>
-          <strong>
-            الخطة ← التسميع ←
-            الإنجاز
-          </strong>
-
-          <span>
-            الخطة تحدد المطلوب،
-            التسميع يسجل العمل
-            الفعلي، والإنجاز الشهري
-            يضيف أي إنجاز يدوي غير
-            مسجل ثم تعرض هذه الصفحة
-            نسبة تحقيق الهدف مباشرة.
-          </span>
-        </div>
-      </div>
 
       {/* =================================================
           PERIOD
@@ -4324,343 +4912,296 @@ function StudentPlanCard({
   period,
   onChange,
 }) {
-  const locked =
-    isLockedPlan(row);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const status =
-    getStatusInfo(
-      row.status
-    );
+  const locked = isLockedPlan(row);
+  const status = getStatusInfo(row.status);
+  const source = getSourceInfo(row.plan_source);
 
-  const source =
-    getSourceInfo(
-      row.plan_source
-    );
+  const scheduledExpected = getScheduledElapsedPercent(
+    period,
+    row.recitation_days_snapshot,
+    row.planned_sessions
+  );
 
-  const mem =
-    getPaceInfo({
-      achieved:
-        row.achieved_memorization_faces,
+  const mem = getPaceInfo({
+    achieved: row.achieved_memorization_faces,
+    target: row.memorization_target_faces,
+    period,
+    expectedPercent: scheduledExpected,
+  });
 
-      target:
-        row.memorization_target_faces,
+  const revision = getPaceInfo({
+    achieved: row.achieved_revision_faces,
+    target: row.revision_target_faces,
+    period,
+    expectedPercent: scheduledExpected,
+  });
 
-      period,
-    });
+  function dailyLabel(amount, unit) {
+    const value = Number(amount || 0);
+    if (!value) return "لم تحدد";
+    return `${formatFaces(value)} ${unit === "lines" ? "سطر" : "صفحة"}`;
+  }
 
-  const revision =
-    getPaceInfo({
-      achieved:
-        row.achieved_revision_faces,
-
-      target:
-        row.revision_target_faces,
-
-      period,
-    });
+  function nooraniaLabel(amount, unit) {
+    const value = Number(amount || 0);
+    if (!value) return "لم تحدد";
+    const label = unit === "lesson" ? "درس" : unit === "lines" ? "سطر" : "صفحة";
+    return `${formatFaces(value)} ${label}`;
+  }
 
   return (
-    <article
-      className={
-        locked
-          ? "student-plan-card locked"
-          : "student-plan-card"
-      }
-    >
-      <div
-        className="student-plan-line"
-      />
+    <>
+      <article className={`plan-summary-card ${locked ? "locked" : ""}`}>
+        <div className="plan-summary-accent" />
 
-      {/* HEADER */}
+        <div className="plan-summary-header">
+          <div className="student-plan-identity compact">
+            <div className="student-plan-avatar compact-avatar">
+              <UserRound size={18} />
+            </div>
 
-      <div
-        className="student-plan-header"
-      >
-        <div
-          className="student-plan-identity"
-        >
-          <div
-            className="student-plan-avatar"
-          >
-            <UserRound
-              size={19}
-            />
+            <div className="plan-summary-name">
+              <h3>{row.student_name}</h3>
+              <span>{row.user_number ? `رقم الطالب: ${row.user_number}` : "طالب الحلقة"}</span>
+            </div>
           </div>
 
-          <div
-            style={{
-              minWidth: 0,
-            }}
-          >
-            <h3>
-              {
-                row.student_name
-              }
-            </h3>
-
-            <span>
-              {row.user_number
-                ? `رقم الطالب: ${row.user_number}`
-                : "طالب الحلقة"}
-            </span>
+          <div className="student-plan-badges compact-badges">
+            <span className={`plan-source-badge ${source.className}`}>{source.label}</span>
+            <span className={`plan-status-badge ${status.className}`}>{status.label}</span>
           </div>
         </div>
 
-        <div
-          className="student-plan-badges"
-        >
-          <span
-            className={
-              `plan-source-badge ${source.className}`
-            }
-          >
-            {source.label}
-          </span>
-
-          <span
-            className={
-              `plan-status-badge ${status.className}`
-            }
-          >
-            {status.label}
-          </span>
-        </div>
-      </div>
-
-      {/* SUPERVISOR NOTE */}
-
-      {row.status ===
-        "needs_revision" &&
-        row.supervisor_note && (
-        <div
-          className="supervisor-note"
-        >
-          <CircleAlert
-            size={13}
-          />
-
-          <div>
-            <strong>
-              ملاحظة المشرف
-            </strong>
-
-            <span>
-              {
-                row.supervisor_note
-              }
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* LIVE SOURCE */}
-
-      <div
-        className="plan-live-source"
-      >
-        <div>
-          <History
-            size={12}
-          />
-
-          <span>
-            جلسات التسميع
-          </span>
-
+        <div className="plan-summary-days">
+          <CalendarDays size={15} />
+          <span>أيام التسميع</span>
           <strong>
-            {
-              row.recitation_sessions
-            }
+            {row.recitation_days_snapshot?.length
+              ? row.recitation_days_snapshot
+                  .map((day) => RECITATION_DAY_META.find((item) => item.value === day)?.label || day)
+                  .join(" • ")
+              : "غير محددة"}
           </strong>
         </div>
 
-        <div>
-          <CalendarDays
-            size={12}
-          />
+        <div className="plan-summary-grid">
+          {isQuranGoal(row.learning_goal) && (
+            <>
+              <SummaryItem
+                label="الحفظ اليومي"
+                value={dailyLabel(row.memorization_daily_amount, row.memorization_daily_unit)}
+                sub={`الهدف: ${formatPagesAndLines(row.memorization_target_faces)}`}
+              />
+              <SummaryItem
+                label="المراجعة اليومية"
+                value={dailyLabel(row.revision_daily_amount, row.revision_daily_unit)}
+                sub={`الهدف: ${formatPagesAndLines(row.revision_target_faces)}`}
+              />
+            </>
+          )}
 
-          <span>
-            آخر تسميع
-          </span>
-
-          <strong>
-            {row.last_recitation_date
-              ? formatHijriDate(
-                  row.last_recitation_date
-                )
-              : "لا يوجد"}
-          </strong>
-        </div>
-      </div>
-
-      {/* PLANS */}
-
-      <div
-        className="plan-sections"
-      >
-        <PlanSection
-          type="memorization"
-          title="خطة الحفظ"
-          icon={
-            <BookOpen
-              size={16}
-            />
-          }
-          locked={locked}
-          fromSurah={
-            row.memorization_from_surah
-          }
-          fromAyah={
-            row.memorization_from_ayah
-          }
-          toSurah={
-            row.memorization_to_surah
-          }
-          toAyah={
-            row.memorization_to_ayah
-          }
-          target={
-            row.memorization_target_faces
-          }
-          achieved={
-            row.achieved_memorization_faces
-          }
-          automatic={
-            row.auto_memorization_faces
-          }
-          manual={
-            row.manual_memorization_faces
-          }
-          pace={mem}
-          onChange={
-            onChange
-          }
-          fieldPrefix="memorization"
-        />
-
-        <PlanSection
-          type="revision"
-          title="خطة المراجعة"
-          icon={
-            <RefreshCw
-              size={16}
-            />
-          }
-          locked={locked}
-          fromSurah={
-            row.revision_from_surah
-          }
-          fromAyah={
-            row.revision_from_ayah
-          }
-          toSurah={
-            row.revision_to_surah
-          }
-          toAyah={
-            row.revision_to_ayah
-          }
-          target={
-            row.revision_target_faces
-          }
-          achieved={
-            row.achieved_revision_faces
-          }
-          automatic={
-            row.auto_revision_faces
-          }
-          manual={
-            row.manual_revision_faces
-          }
-          pace={
-            revision
-          }
-          onChange={
-            onChange
-          }
-          fieldPrefix="revision"
-        />
-      </div>
-
-      {/* CUSTOMIZATION */}
-
-      <div
-        className="plan-card-bottom"
-      >
-        <div
-          className="bottom-field"
-        >
-          <label>
-            سبب تخصيص الخطة
-          </label>
-
-          <input
-            value={
-              row.customization_reason
-            }
-            disabled={
-              locked
-            }
-            onChange={(
-              event
-            ) =>
-              onChange(
-                "customization_reason",
-                event.target
-                  .value
-              )
-            }
-            placeholder="اختياري: طالب جديد، يحتاج تثبيت، متقدم..."
-          />
+          {isNooraniaGoal(row.learning_goal) && (
+            <>
+              <SummaryItem
+                label="درس القاعدة"
+                value={nooraniaLabel(row.noorania_lesson_daily_amount, row.noorania_lesson_daily_unit)}
+                sub="خطة القاعدة النورانية"
+              />
+              <SummaryItem
+                label="مراجعة القاعدة"
+                value={nooraniaLabel(row.noorania_revision_daily_amount, row.noorania_revision_daily_unit)}
+                sub="جنب الدرس مستقل"
+              />
+            </>
+          )}
         </div>
 
-        <div
-          className="bottom-field"
-        >
-          <label>
-            <MessageSquareText
-              size={12}
-            />
+        <div className="plan-summary-footer">
+          <div className="plan-summary-state">
+            {locked ? <ShieldCheck size={15} /> : <Sparkles size={15} />}
+            <span>{locked ? "الخطة مقفلة حاليًا" : "اضغط عرض لإضافة أو تعديل تفاصيل الخطة"}</span>
+          </div>
 
-            ملاحظات الخطة
-          </label>
-
-          <textarea
-            rows={2}
-            value={
-              row.notes
-            }
-            disabled={
-              locked
-            }
-            onChange={(
-              event
-            ) =>
-              onChange(
-                "notes",
-                event.target
-                  .value
-              )
-            }
-            placeholder="ملاحظات تعليمية خاصة بخطة هذا الشهر..."
-          />
+          <button type="button" className="plan-view-button" onClick={() => setDetailsOpen(true)}>
+            <Search size={16} />
+            عرض
+          </button>
         </div>
-      </div>
+      </article>
 
-      {locked && (
+      {detailsOpen && (
         <div
-          className="plan-lock-note"
+          className="plan-details-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setDetailsOpen(false);
+          }}
         >
-          <ShieldCheck
-            size={13}
-          />
+          <section className="plan-details-modal" role="dialog" aria-modal="true">
+            <header className="plan-details-header">
+              <div className="student-plan-identity">
+                <div className="student-plan-avatar">
+                  <UserRound size={20} />
+                </div>
+                <div>
+                  <span className="plan-details-eyebrow">الخطة الشهرية</span>
+                  <h2>{row.student_name}</h2>
+                  <p>{row.user_number || "طالب الحلقة"}</p>
+                </div>
+              </div>
 
-          {row.status ===
-          "approved"
-            ? "هذه الخطة معتمدة من المشرف ومقفلة للتعديل."
-            : "هذه الخطة مرسلة للمشرف ومقفلة مؤقتًا حتى يتم اعتمادها أو إعادتها للتعديل."}
+              <button type="button" className="plan-details-close" onClick={() => setDetailsOpen(false)}>
+                <X size={19} />
+              </button>
+            </header>
+
+            <div className="plan-details-body">
+              {row.status === "needs_revision" && row.supervisor_note && (
+                <div className="supervisor-note modal-note">
+                  <CircleAlert size={15} />
+                  <div>
+                    <strong>ملاحظة المشرف</strong>
+                    <span>{row.supervisor_note}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="smart-plan-schedule modal-schedule">
+                <div className="smart-plan-schedule-head">
+                  <div>
+                    <CalendarDays size={16} />
+                    <strong>أيام التسميع</strong>
+                  </div>
+                </div>
+
+                <div className="smart-day-chips">
+                  {row.recitation_days_snapshot?.length ? (
+                    row.recitation_days_snapshot.map((day) => (
+                      <span key={day}>
+                        {RECITATION_DAY_META.find((item) => item.value === day)?.label || day}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="empty-days">لا توجد أيام تسميع محددة في ملف الطالب</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="smart-programs modal-programs">
+                {isQuranGoal(row.learning_goal) && (
+                  <section className="smart-program-block quran-program">
+                    <div className="smart-program-title">
+                      <div>
+                        <BookOpen size={18} />
+                        <strong>خطة القرآن</strong>
+                      </div>
+                    </div>
+
+                    <div className="plan-sections">
+                      <PlanSection
+                        type="memorization"
+                        title="الحفظ اليومي"
+                        icon={<BookOpen size={16} />}
+                        locked={locked}
+                        fromSurah={row.memorization_from_surah}
+                        fromAyah={row.memorization_from_ayah}
+                        toSurah={row.memorization_to_surah}
+                        toAyah={row.memorization_to_ayah}
+                        target={row.memorization_target_faces}
+                        achieved={row.achieved_memorization_faces}
+                        automatic={row.auto_memorization_faces}
+                        manual={row.manual_memorization_faces}
+                        pace={mem}
+                        onChange={onChange}
+                        fieldPrefix="memorization"
+                        dailyAmount={row.memorization_daily_amount}
+                        dailyUnit={row.memorization_daily_unit}
+                        plannedSessions={row.planned_sessions}
+                      />
+
+                      <PlanSection
+                        type="revision"
+                        title="المراجعة اليومية"
+                        icon={<RefreshCw size={16} />}
+                        locked={locked}
+                        fromSurah={row.revision_from_surah}
+                        fromAyah={row.revision_from_ayah}
+                        toSurah={row.revision_to_surah}
+                        toAyah={row.revision_to_ayah}
+                        target={row.revision_target_faces}
+                        achieved={row.achieved_revision_faces}
+                        automatic={row.auto_revision_faces}
+                        manual={row.manual_revision_faces}
+                        pace={revision}
+                        onChange={onChange}
+                        fieldPrefix="revision"
+                        dailyAmount={row.revision_daily_amount}
+                        dailyUnit={row.revision_daily_unit}
+                        plannedSessions={row.planned_sessions}
+                      />
+                    </div>
+                  </section>
+                )}
+
+                {isNooraniaGoal(row.learning_goal) && (
+                  <NooraniaPlanSection row={row} locked={locked} onChange={onChange} />
+                )}
+              </div>
+
+              <div className="plan-card-bottom modal-bottom-fields">
+                <div className="bottom-field">
+                  <label>سبب تخصيص الخطة</label>
+                  <input
+                    value={row.customization_reason}
+                    disabled={locked}
+                    onChange={(event) => onChange("customization_reason", event.target.value)}
+                    placeholder="اختياري: طالب جديد، يحتاج تثبيت، متقدم..."
+                  />
+                </div>
+
+                <div className="bottom-field">
+                  <label>
+                    <MessageSquareText size={14} />
+                    ملاحظات الخطة
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={row.notes}
+                    disabled={locked}
+                    onChange={(event) => onChange("notes", event.target.value)}
+                    placeholder="ملاحظات تعليمية خاصة بخطة هذا الشهر..."
+                  />
+                </div>
+              </div>
+
+              {locked && (
+                <div className="plan-lock-note modal-lock-note">
+                  <ShieldCheck size={14} />
+                  {row.status === "approved"
+                    ? "هذه الخطة معتمدة من المشرف ومقفلة للتعديل."
+                    : "هذه الخطة مرسلة للمشرف ومقفلة مؤقتًا حتى يتم اعتمادها أو إعادتها للتعديل."}
+                </div>
+              )}
+            </div>
+
+            <footer className="plan-details-footer">
+              <button type="button" onClick={() => setDetailsOpen(false)}>إغلاق</button>
+            </footer>
+          </section>
         </div>
       )}
-    </article>
+    </>
+  );
+}
+
+function SummaryItem({ label, value, sub }) {
+  return (
+    <div className="plan-summary-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small>{sub}</small>
+    </div>
   );
 }
 
@@ -4684,289 +5225,311 @@ function PlanSection({
   pace,
   onChange,
   fieldPrefix,
+  dailyAmount,
+  dailyUnit,
+  plannedSessions,
 }) {
-  const targetNumber =
-    Number(
-      target || 0
-    );
+  const targetNumber = Number(target || 0);
+  const achievedNumber = Number(achieved || 0);
 
-  const achievedNumber =
-    Number(
-      achieved || 0
-    );
-
-  const remaining =
-    Math.max(
-      0,
-      roundFaces(
-        targetNumber -
-          achievedNumber
-      )
-    );
+  const remaining = Math.max(
+    0,
+    roundFaces(targetNumber - achievedNumber)
+  );
 
   const barWidth =
     targetNumber > 0
-      ? Math.min(
-          100,
-          pace.percentage
-        )
+      ? Math.min(100, pace.percentage)
       : 0;
 
   return (
-    <section
-      className={
-        `student-plan-section ${type}`
-      }
-    >
-      {/* Title */}
-
-      <div
-        className="plan-section-title"
-      >
+    <section className={`student-plan-section ${type} smart-plan-section`}>
+      <div className="plan-section-title">
         <div>
           {icon}
-
-          <strong>
-            {title}
-          </strong>
+          <strong>{title}</strong>
         </div>
 
-        <span
-          className={
-            `pace-badge ${pace.className}`
-          }
-        >
+        <span className={`pace-badge ${pace.className}`}>
           {pace.label}
         </span>
       </div>
 
-      {/* Range */}
+      <div className="daily-plan-editor">
+        <div className="daily-plan-input-block">
+          <label>المقدار اليومي</label>
 
-      <div
-        className="plan-range-grid"
-      >
-        <SurahField
-          label="من سورة"
-          value={
-            fromSurah
-          }
-          disabled={
-            locked
-          }
-          onChange={(
-            value
-          ) =>
-            onChange(
-              `${fieldPrefix}_from_surah`,
-              value
-            )
-          }
-        />
-
-        <NumberField
-          label="من آية"
-          value={
-            fromAyah
-          }
-          disabled={
-            locked
-          }
-          min="1"
-          step="1"
-          onChange={(
-            value
-          ) =>
-            onChange(
-              `${fieldPrefix}_from_ayah`,
-              value
-            )
-          }
-        />
-
-        <SurahField
-          label="إلى سورة"
-          value={
-            toSurah
-          }
-          disabled={
-            locked
-          }
-          onChange={(
-            value
-          ) =>
-            onChange(
-              `${fieldPrefix}_to_surah`,
-              value
-            )
-          }
-        />
-
-        <NumberField
-          label="إلى آية"
-          value={
-            toAyah
-          }
-          disabled={
-            locked
-          }
-          min="1"
-          step="1"
-          onChange={(
-            value
-          ) =>
-            onChange(
-              `${fieldPrefix}_to_ayah`,
-              value
-            )
-          }
-        />
-      </div>
-
-      {/* Target */}
-
-      <div
-        className="plan-target-row"
-      >
-        <div>
-          <label>
-            عدد الأوجه المطلوب
-            إنجازها
-          </label>
-
-          <div
-            className="target-input"
-          >
+          <div className="daily-amount-control">
             <input
               type="number"
               min="0"
-              step="0.1"
-              disabled={
-                locked
-              }
-              value={
-                target
-              }
-              onChange={(
-                event
-              ) =>
+              step={dailyUnit === "lines" ? "1" : "0.25"}
+              disabled={locked}
+              value={dailyAmount ?? ""}
+              onChange={(event) =>
                 onChange(
-                  `${fieldPrefix}_target_faces`,
-                  event.target
-                    .value ===
-                    ""
+                  `${fieldPrefix}_daily_amount`,
+                  event.target.value === ""
                     ? ""
-                    : Number(
-                        event.target
-                          .value
-                      )
+                    : Number(event.target.value)
                 )
               }
-              placeholder="0"
+              placeholder={dailyUnit === "lines" ? "مثال: 3" : "مثال: 0.5"}
             />
 
-            <span>
-              وجه
-            </span>
+            <div className="daily-unit-toggle">
+              <button
+                type="button"
+                disabled={locked}
+                className={dailyUnit === "lines" ? "active" : ""}
+                onClick={() => onChange(`${fieldPrefix}_daily_unit`, "lines")}
+              >
+                أسطر
+              </button>
+
+              <button
+                type="button"
+                disabled={locked}
+                className={dailyUnit === "faces" ? "active" : ""}
+                onClick={() => onChange(`${fieldPrefix}_daily_unit`, "faces")}
+              >
+                صفحات
+              </button>
+            </div>
           </div>
+
+
         </div>
 
-        <div
-          className="target-summary"
-        >
-          <span>
-            المنجز
-          </span>
-
-          <strong>
-            {formatFaces(
-              achieved
-            )}
-
-            <small>
-              {" "}
-              /{" "}
-              {formatFaces(
-                target
-              )}
-            </small>
-          </strong>
+        <div className="monthly-target-card clean-result">
+          <span>الهدف الشهري</span>
+          <strong>{formatPagesAndLines(targetNumber)}</strong>
         </div>
       </div>
 
-      {/* Progress */}
-
-      <div
-        className="plan-progress"
-      >
-        <div
-          className="progress-heading"
-        >
+      <div className="plan-progress smart-plan-progress">
+        <div className="progress-heading">
           <div>
-            <span>
-              نسبة تحقيق الخطة
-            </span>
-
+            <span>المنجز</span>
             <strong>
-              {pace.percentage}
-              %
+              {formatPagesAndLines(achievedNumber)}
             </strong>
           </div>
 
           <div>
-            <span>
-              المتبقي
-            </span>
+            <span>المتبقي</span>
+            <strong>{formatPagesAndLines(remaining)}</strong>
+          </div>
 
-            <strong>
-              {formatFaces(
-                remaining
-              )}{" "}
-              وجه
-            </strong>
+          <div>
+            <span>تحقيق الخطة</span>
+            <strong>{pace.percentage}%</strong>
           </div>
         </div>
 
-        <div
-          className="progress-track"
-        >
+        <div className="progress-track">
           <div
-            className={
-              `progress-fill ${pace.className}`
-            }
-            style={{
-              width:
-                `${barWidth}%`,
-            }}
+            className={`progress-fill ${pace.className}`}
+            style={{ width: `${barWidth}%` }}
           />
         </div>
 
-        <div
-          className="progress-foot"
-        >
+        <div className="progress-foot">
+          <span>المتوقع حسب جلسات التسميع الفعلية: {pace.expected}%</span>
           <span>
-            المتوقع حسب مرور
-            الشهر:
-            {" "}
-            {pace.expected}%
-          </span>
-
-          <span>
-            {formatFaces(
-              automatic
-            )}{" "}
-            تلقائي
-
-            {Number(
-              manual || 0
-            ) > 0
-              ? ` + ${formatFaces(
-                  manual
-                )} يدوي`
+            {formatFaces(automatic)} تلقائي
+            {Number(manual || 0) > 0
+              ? ` + ${formatFaces(manual)} يدوي`
               : ""}
           </span>
         </div>
       </div>
+
+      <details className="advanced-route-details">
+        <summary>
+          <span>تفاصيل المسار القرآني — اختياري</span>
+          <ChevronDown size={14} />
+        </summary>
+
+        <div className="plan-range-grid">
+          <SurahField
+            label="من سورة"
+            value={fromSurah}
+            disabled={locked}
+            onChange={(value) =>
+              onChange(`${fieldPrefix}_from_surah`, value)
+            }
+          />
+
+          <NumberField
+            label="من آية"
+            value={fromAyah}
+            disabled={locked}
+            min="1"
+            step="1"
+            onChange={(value) =>
+              onChange(`${fieldPrefix}_from_ayah`, value)
+            }
+          />
+
+          <SurahField
+            label="إلى سورة"
+            value={toSurah}
+            disabled={locked}
+            onChange={(value) =>
+              onChange(`${fieldPrefix}_to_surah`, value)
+            }
+          />
+
+          <NumberField
+            label="إلى آية"
+            value={toAyah}
+            disabled={locked}
+            min="1"
+            step="1"
+            onChange={(value) =>
+              onChange(`${fieldPrefix}_to_ayah`, value)
+            }
+          />
+        </div>
+      </details>
     </section>
+  );
+}
+
+function NooraniaPlanSection({ row, locked, onChange }) {
+  const sessions = Number(row.planned_sessions || 0);
+
+  const lessonTarget = nooraniaMonthlyTarget(
+    row.noorania_lesson_daily_amount,
+    row.noorania_lesson_daily_unit,
+    sessions
+  );
+
+  const revisionTarget = nooraniaMonthlyTarget(
+    row.noorania_revision_daily_amount,
+    row.noorania_revision_daily_unit,
+    sessions
+  );
+
+  return (
+    <section className="smart-program-block noorania-program">
+      <div className="smart-program-title">
+        <div>
+          <Layers3 size={17} />
+          <strong>خطة القاعدة النورانية</strong>
+        </div>
+
+
+      </div>
+
+      <div className="noorania-plan-grid">
+        <NooraniaDailyCard
+          title="الدرس اليومي"
+          amount={row.noorania_lesson_daily_amount}
+          unit={row.noorania_lesson_daily_unit}
+          sessions={sessions}
+          target={lessonTarget}
+          locked={locked}
+          units={[
+            { value: "lesson", label: "درس" },
+            { value: "lines", label: "أسطر" },
+            { value: "faces", label: "صفحات" },
+          ]}
+          onAmountChange={(value) =>
+            onChange("noorania_lesson_daily_amount", value)
+          }
+          onUnitChange={(value) =>
+            onChange("noorania_lesson_daily_unit", value)
+          }
+        />
+
+        <NooraniaDailyCard
+          title="المراجعة اليومية"
+          amount={row.noorania_revision_daily_amount}
+          unit={row.noorania_revision_daily_unit}
+          sessions={sessions}
+          target={revisionTarget}
+          locked={locked}
+          units={[
+            { value: "lines", label: "أسطر" },
+            { value: "faces", label: "صفحات" },
+          ]}
+          onAmountChange={(value) =>
+            onChange("noorania_revision_daily_amount", value)
+          }
+          onUnitChange={(value) =>
+            onChange("noorania_revision_daily_unit", value)
+          }
+        />
+      </div>
+
+      <div className="noorania-plan-note">
+        <Sparkles size={14} />
+        <span>
+          جنب الدرس يبقى في صفحة التسميع ولا يدخل في حساب الخطة الشهرية.
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function NooraniaDailyCard({
+  title,
+  amount,
+  unit,
+  sessions,
+  target,
+  locked,
+  units,
+  onAmountChange,
+  onUnitChange,
+}) {
+  const unitLabel = units.find((item) => item.value === unit)?.label || "وحدة";
+
+  return (
+    <div className="noorania-daily-card">
+      <div className="noorania-daily-title">
+        <strong>{title}</strong>
+      </div>
+
+      <div className="noorania-daily-control">
+        <input
+          type="number"
+          min="0"
+          step={unit === "lines" || unit === "lesson" ? "1" : "0.25"}
+          disabled={locked}
+          value={amount ?? ""}
+          onChange={(event) =>
+            onAmountChange(
+              event.target.value === ""
+                ? ""
+                : Number(event.target.value)
+            )
+          }
+          placeholder="المقدار"
+        />
+
+        <select
+          value={unit}
+          disabled={locked}
+          onChange={(event) => onUnitChange(event.target.value)}
+        >
+          {units.map((item) => (
+            <option value={item.value} key={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="noorania-monthly-target clean-result">
+        <span>الهدف الشهري</span>
+        <strong>
+          {target || 0} {unitLabel}
+        </strong>
+      </div>
+    </div>
   );
 }
 
@@ -5160,59 +5723,72 @@ function TemplateModal({
         <div
           className="template-body"
         >
-          <TemplateSection
-            title="خطة الحفظ"
-            icon={
-              <BookOpen
-                size={16}
-              />
-            }
-            prefix="memorization"
-            data={
-              template
-            }
-            setValue={
-              setValue
-            }
-          />
+          <section className="template-section smart-template-section">
+            <div className="template-section-title">
+              <BookOpen size={16} />
+              <strong>خطة القرآن اليومية</strong>
+            </div>
 
-          <TemplateSection
-            title="خطة المراجعة"
-            icon={
-              <RefreshCw
-                size={16}
+            <div className="template-smart-grid">
+              <SmartTemplateAmount
+                label="الحفظ اليومي"
+                amount={template.memorization_daily_amount}
+                unit={template.memorization_daily_unit}
+                onAmount={(value) => setValue("memorization_daily_amount", value)}
+                onUnit={(value) => setValue("memorization_daily_unit", value)}
               />
-            }
-            prefix="revision"
-            data={
-              template
-            }
-            setValue={
-              setValue
-            }
-          />
 
-          <div
-            className="template-notes"
-          >
-            <label>
-              ملاحظات عامة
-            </label>
+              <SmartTemplateAmount
+                label="المراجعة اليومية"
+                amount={template.revision_daily_amount}
+                unit={template.revision_daily_unit}
+                onAmount={(value) => setValue("revision_daily_amount", value)}
+                onUnit={(value) => setValue("revision_daily_unit", value)}
+              />
+            </div>
+          </section>
+
+          <section className="template-section smart-template-section">
+            <div className="template-section-title">
+              <Layers3 size={16} />
+              <strong>خطة القاعدة اليومية</strong>
+            </div>
+
+            <div className="template-smart-grid">
+              <NooraniaTemplateAmount
+                label="درس القاعدة"
+                amount={template.noorania_lesson_daily_amount}
+                unit={template.noorania_lesson_daily_unit}
+                units={[
+                  { value: "lesson", label: "درس" },
+                  { value: "lines", label: "أسطر" },
+                  { value: "faces", label: "صفحات" },
+                ]}
+                onAmount={(value) => setValue("noorania_lesson_daily_amount", value)}
+                onUnit={(value) => setValue("noorania_lesson_daily_unit", value)}
+              />
+
+              <NooraniaTemplateAmount
+                label="مراجعة القاعدة"
+                amount={template.noorania_revision_daily_amount}
+                unit={template.noorania_revision_daily_unit}
+                units={[
+                  { value: "lines", label: "أسطر" },
+                  { value: "faces", label: "صفحات" },
+                ]}
+                onAmount={(value) => setValue("noorania_revision_daily_amount", value)}
+                onUnit={(value) => setValue("noorania_revision_daily_unit", value)}
+              />
+            </div>
+          </section>
+
+          <div className="template-notes">
+            <label>ملاحظات عامة</label>
 
             <textarea
               rows={3}
-              value={
-                template.notes
-              }
-              onChange={(
-                event
-              ) =>
-                setValue(
-                  "notes",
-                  event.target
-                    .value
-                )
-              }
+              value={template.notes}
+              onChange={(event) => setValue("notes", event.target.value)}
               placeholder="ملاحظة اختيارية ستطبق على الطلاب..."
             />
           </div>
@@ -5255,144 +5831,77 @@ function TemplateModal({
    TEMPLATE SECTION
 ========================================================= */
 
-function TemplateSection({
-  title,
-  icon,
-  prefix,
-  data,
-  setValue,
+function SmartTemplateAmount({
+  label,
+  amount,
+  unit,
+  onAmount,
+  onUnit,
 }) {
   return (
-    <section
-      className="template-section"
-    >
-      <div
-        className="template-section-title"
-      >
-        {icon}
+    <div className="template-smart-amount">
+      <label>{label}</label>
+      <div>
+        <input
+          type="number"
+          min="0"
+          step={unit === "lines" ? "1" : "0.25"}
+          value={amount ?? ""}
+          onChange={(event) =>
+            onAmount(
+              event.target.value === ""
+                ? ""
+                : Number(event.target.value)
+            )
+          }
+          placeholder="المقدار"
+        />
 
-        <strong>
-          {title}
-        </strong>
+        <select value={unit} onChange={(event) => onUnit(event.target.value)}>
+          <option value="lines">أسطر</option>
+          <option value="faces">صفحات</option>
+        </select>
       </div>
+    </div>
+  );
+}
 
-      <div
-        className="template-range"
-      >
-        <SurahField
-          label="من سورة"
-          value={
-            data[
-              `${prefix}_from_surah`
-            ]
-          }
-          onChange={(
-            value
-          ) =>
-            setValue(
-              `${prefix}_from_surah`,
-              value
+function NooraniaTemplateAmount({
+  label,
+  amount,
+  unit,
+  units,
+  onAmount,
+  onUnit,
+}) {
+  return (
+    <div className="template-smart-amount">
+      <label>{label}</label>
+      <div>
+        <input
+          type="number"
+          min="0"
+          step={unit === "faces" ? "0.25" : "1"}
+          value={amount ?? ""}
+          onChange={(event) =>
+            onAmount(
+              event.target.value === ""
+                ? ""
+                : Number(event.target.value)
             )
           }
+          placeholder="المقدار"
         />
 
-        <NumberField
-          label="من آية"
-          value={
-            data[
-              `${prefix}_from_ayah`
-            ]
-          }
-          min="1"
-          step="1"
-          onChange={(
-            value
-          ) =>
-            setValue(
-              `${prefix}_from_ayah`,
-              value
-            )
-          }
-        />
-
-        <SurahField
-          label="إلى سورة"
-          value={
-            data[
-              `${prefix}_to_surah`
-            ]
-          }
-          onChange={(
-            value
-          ) =>
-            setValue(
-              `${prefix}_to_surah`,
-              value
-            )
-          }
-        />
-
-        <NumberField
-          label="إلى آية"
-          value={
-            data[
-              `${prefix}_to_ayah`
-            ]
-          }
-          min="1"
-          step="1"
-          onChange={(
-            value
-          ) =>
-            setValue(
-              `${prefix}_to_ayah`,
-              value
-            )
-          }
-        />
+        <select value={unit} onChange={(event) => onUnit(event.target.value)}>
+          {units.map((item) => (
+            <option value={item.value} key={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </select>
       </div>
-
-      <div
-        className="template-target"
-      >
-        <label>
-          عدد الأوجه
-          المطلوب إنجازها
-        </label>
-
-        <div>
-          <input
-            type="number"
-            min="0"
-            step="0.1"
-            value={
-              data[
-                `${prefix}_target_faces`
-              ]
-            }
-            onChange={(
-              event
-            ) =>
-              setValue(
-                `${prefix}_target_faces`,
-                event.target
-                  .value ===
-                  ""
-                  ? ""
-                  : Number(
-                      event.target
-                        .value
-                    )
-              )
-            }
-          />
-
-          <span>
-            وجه
-          </span>
-        </div>
-      </div>
-    </section>
+    </div>
   );
 }
 
@@ -7857,6 +8366,857 @@ function MonthlyPlanStyles() {
               column;
           }
         }
+
+
+        /* ==========================================
+           SMART PLAN PRO MAX — 2026
+        ========================================== */
+
+        .monthly-plan-page {
+          --smart-green: #0f4c45;
+          --smart-deep: #082f2a;
+          --smart-gold: #d1b34c;
+          --smart-ink: #173a33;
+          --smart-muted: #71837c;
+          --smart-border: #dce6e2;
+        }
+
+        .plan-hero {
+          min-height: 178px;
+          padding: 26px 28px;
+          border-radius: 25px;
+          background:
+            radial-gradient(circle at 10% 10%, rgba(209,179,76,.14), transparent 25%),
+            linear-gradient(135deg, #ffffff 0%, #f4f9f6 68%, #fffaf0 100%);
+          box-shadow: 0 16px 38px rgba(8,47,42,.055);
+        }
+
+        .plan-hero h1 {
+          font-size: 29px;
+          line-height: 1.2;
+        }
+
+        .plan-hero p {
+          max-width: 760px;
+          font-size: 13px;
+          line-height: 1.85;
+        }
+
+        .plan-eyebrow,
+        .plan-flow-note,
+        .plan-filter-label,
+        .plan-stat-content > span,
+        .plan-stat-content > small,
+        .student-plan-identity span,
+        .plan-source-badge,
+        .plan-status-badge,
+        .plan-live-source span,
+        .plan-lock-note,
+        .bottom-field label,
+        .plan-field label {
+          font-size: 11px;
+          line-height: 1.55;
+        }
+
+        .plan-students-header h2 {
+          font-size: 19px;
+        }
+
+        .plan-students-header p,
+        .plan-students-header > span {
+          font-size: 12px;
+        }
+
+        .student-plan-card {
+          padding: 18px;
+          border-radius: 21px;
+          box-shadow: 0 10px 28px rgba(8,47,42,.045);
+        }
+
+        .student-plan-identity h3 {
+          font-size: 15px;
+          line-height: 1.4;
+        }
+
+        .smart-plan-schedule {
+          margin-top: 13px;
+          padding: 12px 13px;
+          border: 1px solid #dfe9e5;
+          border-radius: 14px;
+          background: linear-gradient(135deg, #f8fbfa, #ffffff);
+        }
+
+        .smart-plan-schedule-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .smart-plan-schedule-head > div {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          color: var(--smart-green);
+        }
+
+        .smart-plan-schedule-head strong {
+          font-size: 12px;
+          font-weight: 950;
+        }
+
+
+        .monthly-target-card.clean-result,
+        .noorania-monthly-target.clean-result {
+          position: relative;
+          overflow: hidden;
+          min-height: 86px;
+          display: grid;
+          align-content: center;
+          justify-items: center;
+          text-align: center;
+          border: 1px solid rgba(15,76,69,.12);
+          background:
+            radial-gradient(circle at 15% 10%, rgba(209,179,76,.13), transparent 34%),
+            linear-gradient(135deg, #f8fcfa, #ffffff);
+        }
+
+        .monthly-target-card.clean-result::before,
+        .noorania-monthly-target.clean-result::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 4px;
+          height: 100%;
+          background: linear-gradient(180deg, #0f4c45, #d1b34c);
+        }
+
+        .monthly-target-card.clean-result span,
+        .noorania-monthly-target.clean-result span {
+          color: #71837c;
+          font-size: 11px;
+          font-weight: 850;
+        }
+
+        .monthly-target-card.clean-result strong,
+        .noorania-monthly-target.clean-result strong {
+          margin-top: 6px;
+          color: #082f2a;
+          font-size: 20px;
+          line-height: 1.35;
+          font-weight: 950;
+        }
+
+        .smart-session-count {
+          min-height: 29px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 9px;
+          border-radius: 999px;
+          background: #eef7f3;
+          color: #2d6c5c;
+          font-size: 10px;
+          font-weight: 900;
+        }
+
+        .smart-day-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-top: 9px;
+        }
+
+        .smart-day-chips > span {
+          min-height: 29px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 9px;
+          border: 1px solid #dce7e2;
+          border-radius: 9px;
+          background: #fff;
+          color: #60766e;
+          font-size: 10px;
+          font-weight: 850;
+        }
+
+        .smart-day-chips > span.empty-days {
+          border-style: dashed;
+          color: #a06f1d;
+          background: #fffaf0;
+        }
+
+        .smart-programs {
+          display: grid;
+          gap: 13px;
+          margin-top: 13px;
+        }
+
+        .smart-program-block {
+          padding: 13px;
+          border: 1px solid #dfe8e4;
+          border-radius: 17px;
+          background: #fbfcfb;
+        }
+
+        .smart-program-block.quran-program {
+          background:
+            radial-gradient(circle at 100% 0%, rgba(15,76,69,.045), transparent 26%),
+            #fbfdfc;
+        }
+
+        .smart-program-block.noorania-program {
+          background:
+            radial-gradient(circle at 0 0, rgba(209,179,76,.08), transparent 28%),
+            #fffdf8;
+        }
+
+        .smart-program-title {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 10px;
+        }
+
+        .smart-program-title > div {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          color: var(--smart-green);
+        }
+
+        .smart-program-title strong {
+          color: var(--smart-deep);
+          font-size: 13px;
+          font-weight: 950;
+        }
+
+        .smart-program-title > span {
+          color: #7c8f88;
+          font-size: 10px;
+          font-weight: 750;
+        }
+
+        .plan-sections {
+          gap: 10px;
+        }
+
+        .smart-plan-section {
+          padding: 14px;
+          border-radius: 15px;
+          background: #fff;
+        }
+
+        .plan-section-title strong {
+          font-size: 13px;
+        }
+
+        .pace-badge {
+          font-size: 10px;
+        }
+
+        .daily-plan-editor {
+          display: grid;
+          grid-template-columns: minmax(0, 1.25fr) minmax(180px, .75fr);
+          gap: 10px;
+          margin-top: 11px;
+        }
+
+        .daily-plan-input-block,
+        .monthly-target-card {
+          min-height: 112px;
+          padding: 11px;
+          border: 1px solid #e1e9e6;
+          border-radius: 13px;
+          background: #f9fbfa;
+        }
+
+        .daily-plan-input-block > label,
+        .monthly-target-card > span {
+          display: block;
+          color: #6f827b;
+          font-size: 10px;
+          font-weight: 850;
+        }
+
+        .daily-amount-control {
+          display: grid;
+          grid-template-columns: minmax(90px, 1fr) auto;
+          gap: 7px;
+          margin-top: 7px;
+        }
+
+        .daily-amount-control > input,
+        .noorania-daily-control input,
+        .noorania-daily-control select,
+        .template-smart-amount input,
+        .template-smart-amount select {
+          min-width: 0;
+          height: 42px;
+          border: 1px solid #d9e4df;
+          border-radius: 10px;
+          outline: none;
+          background: #fff;
+          color: #294840;
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .daily-amount-control > input,
+        .noorania-daily-control input,
+        .template-smart-amount input {
+          padding: 0 10px;
+        }
+
+        .daily-amount-control > input:focus,
+        .noorania-daily-control input:focus,
+        .noorania-daily-control select:focus,
+        .template-smart-amount input:focus,
+        .template-smart-amount select:focus {
+          border-color: #9fc7bb;
+          box-shadow: 0 0 0 4px rgba(15,76,69,.055);
+        }
+
+        .daily-unit-toggle {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          overflow: hidden;
+          border: 1px solid #d9e4df;
+          border-radius: 10px;
+          background: #fff;
+        }
+
+        .daily-unit-toggle button {
+          min-width: 62px;
+          border: 0;
+          background: transparent;
+          color: #6f817b;
+          font-size: 10px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .daily-unit-toggle button + button {
+          border-right: 1px solid #e3eae7;
+        }
+
+        .daily-unit-toggle button.active {
+          background: #eaf7f1;
+          color: #147a5e;
+        }
+
+        .daily-conversion-note {
+          display: block;
+          margin-top: 7px;
+          color: #83948e;
+          font-size: 10px;
+          line-height: 1.5;
+        }
+
+        .monthly-target-card {
+          display: grid;
+          align-content: center;
+        }
+
+        .monthly-target-card strong {
+          display: block;
+          margin-top: 5px;
+          color: var(--smart-deep);
+          font-size: 17px;
+          line-height: 1.35;
+          font-weight: 950;
+        }
+
+        .monthly-target-card small {
+          display: block;
+          margin-top: 5px;
+          color: #81928c;
+          font-size: 9px;
+          line-height: 1.5;
+        }
+
+        .smart-plan-progress {
+          margin-top: 10px;
+        }
+
+        .smart-plan-progress .progress-heading {
+          grid-template-columns: repeat(3, minmax(0,1fr));
+        }
+
+        .smart-plan-progress .progress-heading span {
+          font-size: 9px;
+        }
+
+        .smart-plan-progress .progress-heading strong {
+          font-size: 11px;
+          line-height: 1.45;
+        }
+
+        .advanced-route-details {
+          margin-top: 10px;
+          border-top: 1px dashed #dde5e2;
+          padding-top: 9px;
+        }
+
+        .advanced-route-details > summary {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          list-style: none;
+          color: #687c75;
+          font-size: 10px;
+          font-weight: 850;
+          cursor: pointer;
+        }
+
+        .advanced-route-details > summary::-webkit-details-marker {
+          display: none;
+        }
+
+        .advanced-route-details[open] > summary svg {
+          transform: rotate(180deg);
+        }
+
+        .advanced-route-details .plan-range-grid {
+          margin-top: 10px;
+        }
+
+        .noorania-plan-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0,1fr));
+          gap: 10px;
+        }
+
+        .noorania-daily-card {
+          padding: 12px;
+          border: 1px solid #eadfb7;
+          border-radius: 13px;
+          background: rgba(255,255,255,.88);
+        }
+
+        .noorania-daily-title {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+
+        .noorania-daily-title strong {
+          color: #5c4914;
+          font-size: 12px;
+          font-weight: 950;
+        }
+
+        .noorania-daily-title span {
+          color: #9a8442;
+          font-size: 9px;
+          font-weight: 850;
+        }
+
+        .noorania-daily-control {
+          display: grid;
+          grid-template-columns: 1fr 100px;
+          gap: 7px;
+          margin-top: 8px;
+        }
+
+        .noorania-daily-control select,
+        .template-smart-amount select {
+          padding: 0 8px;
+        }
+
+        .noorania-monthly-target {
+          margin-top: 9px;
+          padding: 9px;
+          border-radius: 10px;
+          background: #fff9e8;
+        }
+
+        .noorania-monthly-target span,
+        .noorania-monthly-target strong,
+        .noorania-monthly-target small {
+          display: block;
+        }
+
+        .noorania-monthly-target span {
+          color: #9b8240;
+          font-size: 9px;
+          font-weight: 800;
+        }
+
+        .noorania-monthly-target strong {
+          margin-top: 3px;
+          color: #5e4c19;
+          font-size: 15px;
+          font-weight: 950;
+        }
+
+        .noorania-monthly-target small {
+          margin-top: 3px;
+          color: #9a8a61;
+          font-size: 9px;
+        }
+
+        .noorania-plan-note {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          margin-top: 9px;
+          color: #8e742c;
+          font-size: 10px;
+          line-height: 1.5;
+          font-weight: 800;
+        }
+
+        .template-smart-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0,1fr));
+          gap: 9px;
+        }
+
+        .template-smart-amount {
+          padding: 10px;
+          border: 1px solid #e0e8e5;
+          border-radius: 12px;
+          background: #f9fbfa;
+        }
+
+        .template-smart-amount > label {
+          display: block;
+          margin-bottom: 6px;
+          color: #566c65;
+          font-size: 10px;
+          font-weight: 900;
+        }
+
+        .template-smart-amount > div {
+          display: grid;
+          grid-template-columns: 1fr 90px;
+          gap: 7px;
+        }
+
+        .plan-field input,
+        .plan-field select,
+        .bottom-field input,
+        .bottom-field textarea,
+        .plan-filter-control input,
+        .plan-filter-control select {
+          font-size: 12px;
+        }
+
+        @media (max-width: 900px) {
+          .daily-plan-editor,
+          .noorania-plan-grid,
+          .template-smart-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .smart-program-title,
+          .smart-plan-schedule-head {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .plan-hero h1 {
+            font-size: 22px;
+          }
+
+          .plan-hero p {
+            font-size: 12px;
+          }
+
+          .daily-amount-control {
+            grid-template-columns: 1fr;
+          }
+
+          .daily-unit-toggle {
+            min-height: 40px;
+          }
+
+          .smart-plan-progress .progress-heading {
+            grid-template-columns: 1fr;
+            gap: 6px;
+          }
+
+          .noorania-daily-control,
+          .template-smart-amount > div {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* ==========================================
+           PRO MAX v3 — بطاقات مختصرة + نافذة عرض
+        ========================================== */
+
+        .plan-grid {
+          grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+          gap: 12px;
+        }
+
+        .plan-summary-card {
+          position: relative;
+          overflow: hidden;
+          min-height: 220px;
+          padding: 16px;
+          border: 1px solid #dfe8e4;
+          border-radius: 19px;
+          background: linear-gradient(180deg, #fff, #fbfdfc);
+          box-shadow: 0 10px 26px rgba(8,47,42,.045);
+          transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .plan-summary-card:hover {
+          transform: translateY(-2px);
+          border-color: #bdd5cd;
+          box-shadow: 0 16px 34px rgba(8,47,42,.075);
+        }
+
+        .plan-summary-card.locked { background: #fbfcfb; }
+
+        .plan-summary-accent {
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 4px;
+          height: 100%;
+          background: linear-gradient(180deg, #0f4c45, #d1b34c);
+        }
+
+        .plan-summary-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .student-plan-identity.compact { gap: 10px; }
+        .compact-avatar { width: 42px; height: 42px; flex-basis: 42px; }
+        .plan-summary-name { min-width: 0; }
+        .plan-summary-name h3 {
+          margin: 0;
+          overflow: hidden;
+          color: #173d33;
+          font-size: 15px;
+          line-height: 1.4;
+          font-weight: 950;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+        .plan-summary-name span {
+          display: block;
+          margin-top: 4px;
+          color: #82918b;
+          font-size: 11px;
+          font-weight: 750;
+        }
+        .compact-badges .plan-source-badge,
+        .compact-badges .plan-status-badge {
+          min-height: 25px;
+          padding: 0 8px;
+          font-size: 9px;
+        }
+
+        .plan-summary-days {
+          display: grid;
+          grid-template-columns: 18px auto 1fr;
+          gap: 7px;
+          align-items: center;
+          margin-top: 13px;
+          padding: 9px 10px;
+          border-radius: 11px;
+          background: #f4f8f6;
+          color: #587068;
+        }
+        .plan-summary-days span { font-size: 10px; font-weight: 850; }
+        .plan-summary-days strong {
+          overflow: hidden;
+          color: #345048;
+          font-size: 11px;
+          font-weight: 900;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        .plan-summary-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0,1fr));
+          gap: 8px;
+          margin-top: 10px;
+        }
+        .plan-summary-item {
+          min-height: 76px;
+          padding: 10px;
+          border: 1px solid #e5ece9;
+          border-radius: 12px;
+          background: #fff;
+        }
+        .plan-summary-item span,
+        .plan-summary-item strong,
+        .plan-summary-item small { display: block; }
+        .plan-summary-item span { color: #81928b; font-size: 10px; font-weight: 800; }
+        .plan-summary-item strong { margin-top: 4px; color: #173d33; font-size: 13px; font-weight: 950; }
+        .plan-summary-item small { margin-top: 4px; color: #9b8a57; font-size: 9px; font-weight: 750; }
+
+        .plan-summary-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-top: 12px;
+          padding-top: 11px;
+          border-top: 1px solid #edf1ef;
+        }
+        .plan-summary-state {
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #72847d;
+          font-size: 10px;
+          font-weight: 750;
+        }
+        .plan-view-button {
+          min-height: 37px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 0 13px;
+          border: 0;
+          border-radius: 10px;
+          background: #0f4c45;
+          color: #fff;
+          font-family: inherit;
+          font-size: 11px;
+          font-weight: 900;
+          cursor: pointer;
+          box-shadow: 0 8px 18px rgba(15,76,69,.14);
+        }
+
+        .plan-details-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 10020;
+          display: grid;
+          place-items: center;
+          padding: 18px;
+          background: rgba(3,24,21,.58);
+          backdrop-filter: blur(7px);
+        }
+        .plan-details-modal {
+          width: min(1060px, 100%);
+          max-height: calc(100vh - 36px);
+          overflow: auto;
+          border: 1px solid rgba(255,255,255,.5);
+          border-radius: 23px;
+          background: #fff;
+          box-shadow: 0 36px 100px rgba(3,27,23,.28);
+        }
+        .plan-details-header {
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          padding: 17px 19px;
+          border-bottom: 1px solid #e4ece8;
+          background: rgba(255,255,255,.97);
+          backdrop-filter: blur(12px);
+        }
+        .plan-details-eyebrow { color: #9a7a27; font-size: 10px; font-weight: 900; }
+        .plan-details-header h2 { margin: 2px 0 0; color: #0f3b32; font-size: 19px; font-weight: 950; }
+        .plan-details-header p { margin: 3px 0 0; color: #83938d; font-size: 10px; }
+        .plan-details-close {
+          width: 38px;
+          height: 38px;
+          display: grid;
+          place-items: center;
+          border: 1px solid #dfe8e4;
+          border-radius: 11px;
+          background: #fff;
+          color: #587068;
+          cursor: pointer;
+        }
+        .plan-details-body { padding: 17px 18px 22px; }
+        .modal-schedule { margin-bottom: 13px; }
+        .modal-programs .smart-program-block { margin-top: 12px; }
+        .modal-bottom-fields { margin-top: 13px; }
+        .modal-note { margin-bottom: 12px; }
+        .modal-lock-note { margin-top: 13px; }
+        .plan-details-footer {
+          position: sticky;
+          bottom: 0;
+          z-index: 5;
+          display: flex;
+          justify-content: flex-end;
+          padding: 11px 18px;
+          border-top: 1px solid #e5ece9;
+          background: rgba(250,252,251,.97);
+        }
+        .plan-details-footer button {
+          min-height: 39px;
+          padding: 0 16px;
+          border: 0;
+          border-radius: 10px;
+          background: #eef4f1;
+          color: #3d5c53;
+          font-family: inherit;
+          font-size: 11px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        /* تكبير المقروئية داخل نافذة التفاصيل فقط بدون تضخيم الصناديق */
+        .plan-details-modal .smart-program-title strong,
+        .plan-details-modal .plan-section-title strong,
+        .plan-details-modal .noorania-daily-title strong,
+        .plan-details-modal .bottom-field label,
+        .plan-details-modal .daily-plan-input-block label,
+        .plan-details-modal .plan-field label { font-size: 11px; }
+        .plan-details-modal input,
+        .plan-details-modal select,
+        .plan-details-modal textarea { font-size: 12px; }
+        .plan-details-modal .daily-plan-editor {
+          grid-template-columns: minmax(0,1fr) 155px;
+          gap: 9px;
+        }
+        .plan-details-modal .monthly-target-card.clean-result,
+        .plan-details-modal .noorania-monthly-target.clean-result {
+          min-height: 70px;
+          padding: 9px;
+        }
+        .plan-details-modal .monthly-target-card.clean-result strong,
+        .plan-details-modal .noorania-monthly-target.clean-result strong { font-size: 16px; }
+        .plan-details-modal .progress-heading span,
+        .plan-details-modal .progress-foot,
+        .plan-details-modal .pace-badge { font-size: 9px; }
+        .plan-details-modal .progress-heading strong { font-size: 11px; }
+        .plan-details-modal .smart-day-chips span { font-size: 10px; }
+
+        @media (max-width: 700px) {
+          .plan-grid { grid-template-columns: 1fr; }
+          .plan-summary-grid { grid-template-columns: 1fr 1fr; }
+          .plan-details-overlay { align-items: end; padding: 6px; }
+          .plan-details-modal { max-height: calc(100vh - 12px); border-radius: 20px 20px 8px 8px; }
+          .plan-details-modal .plan-sections,
+          .plan-details-modal .noorania-plan-grid,
+          .plan-details-modal .plan-card-bottom { grid-template-columns: 1fr; }
+          .plan-details-modal .daily-plan-editor { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 430px) {
+          .plan-summary-grid { grid-template-columns: 1fr; }
+          .plan-summary-header { flex-direction: column; }
+          .compact-badges { justify-content: flex-start; }
+        }
+
       `}
     </style>
   );

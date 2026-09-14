@@ -1,4 +1,7 @@
-import { createBrowserRouter } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+} from "react-router-dom";
 
 import AdminLayout from "./components/AdminLayout";
 
@@ -25,13 +28,14 @@ import Attendance from "./pages/Attendance";
 import Recitations from "./pages/Recitations";
 
 import Exams from "./pages/Exams";
-
 import MonthlyAchievement from "./pages/MonthlyAchievement";
 
 import TVLeaderboardPage from "./pages/TVLeaderboardPage";
-
 import SettingsPage from "./pages/SettingsPage";
 
+/* =========================================================
+   Teacher Portal
+========================================================= */
 import TeacherLayout from "./layouts/TeacherLayout";
 
 import TeacherDashboard from "./pages/teacher/Dashboard";
@@ -41,14 +45,34 @@ import TeacherRecitations from "./pages/teacher/Recitations";
 import TeacherPoints from "./pages/teacher/Points";
 import TeacherMonthlyAchievement from "./pages/teacher/MonthlyAchievement";
 import TeacherExams from "./pages/teacher/Exams";
-import TeacherNotifications from "./pages/teacher/Notifications";
 import TeacherReports from "./pages/teacher/Reports";
 import TeacherProfile from "./pages/teacher/Profile";
 import TeacherSettings from "./pages/teacher/Settings";
-import TeacherHalaqat
-  from "./pages/teacher/Halaqat";
+import TeacherHalaqat from "./pages/teacher/Halaqat";
 import TeacherMonthlyPlan from "./pages/teacher/MonthlyPlan";
 import TeacherStudentCare from "./pages/teacher/StudentCare";
+
+/* =========================================================
+   Student Portal
+========================================================= */
+import StudentLayout from "./layouts/StudentLayout";
+
+import StudentDashboard from "./pages/student/Dashboard";
+import MyHalaqa from "./pages/student/MyHalaqa";
+import Classmates from "./pages/student/Classmates";
+import StudentRecitations from "./pages/student/Recitations";
+import StudentMonthlyPlan from "./pages/student/MonthlyPlan";
+import StudentMonthlyAchievement from "./pages/student/MonthlyAchievement";
+import StudentAttendance from "./pages/student/Attendance";
+import StudentPoints from "./pages/student/Points";
+import StudentExams from "./pages/student/Exams";
+import StudentNotifications from "./pages/student/Notifications";
+import StudentSettings from "./pages/student/Settings";
+import StudentProfile from "./pages/student/Profile";
+
+/* =========================================================
+   Public / Setup
+========================================================= */
 import PublicLayout from "./layouts/PublicLayout";
 import LandingPage from "./pages/LandingPage";
 import Register from "./pages/Register";
@@ -56,39 +80,42 @@ import StudentOnboarding from "./pages/student/Onboarding";
 import SupervisorSetup from "./pages/supervisor/SupervisorSetup";
 
 const router = createBrowserRouter([
-{
-  path: "/",
-  element: <PublicLayout />,
-  children: [
-    {
-      index: true,
-      element: <LandingPage />,
-    },
-  ],
-},
+  {
+    path: "/",
+    element: <PublicLayout />,
+    children: [
+      {
+        index: true,
+        element: <LandingPage />,
+      },
+    ],
+  },
+
   {
     path: "/login",
     element: <Login />,
   },
-{
-  path: "/register",
-  element: <Register />,
-},
 
-{
-  path: "/student",
-  element: <StudentOnboarding />,
-},
-{
-  path: "/system-admin",
-  element: <SystemAdmin />,
-},
+  {
+    path: "/register",
+    element: <Register />,
+  },
 
+  {
+    path: "/student/onboarding",
+    element: <StudentOnboarding />,
+  },
 
-{
-  path: "/supervisor/setup",
-  element: <SupervisorSetup />,
-},
+  {
+    path: "/system-admin",
+    element: <SystemAdmin />,
+  },
+
+  {
+    path: "/supervisor/setup",
+    element: <SupervisorSetup />,
+  },
+
   {
     path: "/admin",
     element: <AdminLayout />,
@@ -109,11 +136,10 @@ const router = createBrowserRouter([
         element: <Reports />,
       },
 
-
-    {
-  path: "points-transactions",
-  element: <RewardsPage />,
-},
+      {
+        path: "points-transactions",
+        element: <RewardsPage />,
+      },
 
       {
         path: "competitions",
@@ -145,40 +171,35 @@ const router = createBrowserRouter([
         element: <Students />,
       },
 
-    {
-      path: "exams",
-      element: <Exams />,
-    },
-
-{
-  path: "monthly-achievement",
-  element: <MonthlyAchievement />,
-},
-
-{
-  path: "tv-leaderboard",
-  element: <TVLeaderboardPage />,
-},
-
-{
-  path: "settings",
-  element: <SettingsPage />,
-},
-
-  
-
-      // =========================
-      // طلاب الحلقات
-      // =========================
       {
-  path: "halaqa-students/:id",
-  element: <HalaqaStudents />,
-},
+        path: "exams",
+        element: <Exams />,
+      },
 
-{
-  path: "halaqa-teachers/:id",
-  element: <HalaqaTeachers />,
-},
+      {
+        path: "monthly-achievement",
+        element: <MonthlyAchievement />,
+      },
+
+      {
+        path: "tv-leaderboard",
+        element: <TVLeaderboardPage />,
+      },
+
+      {
+        path: "settings",
+        element: <SettingsPage />,
+      },
+
+      {
+        path: "halaqa-students/:id",
+        element: <HalaqaStudents />,
+      },
+
+      {
+        path: "halaqa-teachers/:id",
+        element: <HalaqaTeachers />,
+      },
 
       {
         path: "attendance",
@@ -192,76 +213,149 @@ const router = createBrowserRouter([
     ],
   },
 
-{
-  path: "/teacher",
-  element: <TeacherLayout />,
+  {
+    path: "/teacher",
+    element: <TeacherLayout />,
 
-  children: [
-    {
-      index: true,
-      element: <TeacherDashboard />,
-    },
+    children: [
+      {
+        index: true,
+        element: <TeacherDashboard />,
+      },
 
-    {
-      path: "students",
-      element: <TeacherStudents />,
-    },
+      {
+        path: "students",
+        element: <TeacherStudents />,
+      },
 
-    {
-      path: "attendance",
-      element: <TeacherAttendance />,
-    },
+      {
+        path: "attendance",
+        element: <TeacherAttendance />,
+      },
 
-    {
-      path: "recitations",
-      element: <TeacherRecitations />,
-    },
+      {
+        path: "recitations",
+        element: <TeacherRecitations />,
+      },
 
-    {
-      path: "points",
-      element: <TeacherPoints />,
-    },
+      {
+        path: "points",
+        element: <TeacherPoints />,
+      },
+
+      {
+        path: "halaqat",
+        element: <TeacherHalaqat />,
+      },
+
+      {
+        path: "monthly-plan",
+        element: <TeacherMonthlyPlan />,
+      },
+
+      {
+        path: "monthly-achievement",
+        element: <TeacherMonthlyAchievement />,
+      },
+
+      {
+        path: "exams",
+        element: <TeacherExams />,
+      },
+
+      {
+        path: "notifications",
+        element: <TeacherStudentCare />,
+      },
+
+      {
+        path: "reports",
+        element: <TeacherReports />,
+      },
+
+      {
+        path: "profile",
+        element: <TeacherProfile />,
+      },
+
+      {
+        path: "settings",
+        element: <TeacherSettings />,
+      },
+    ],
+  },
 
   {
-  path: "halaqat",
-  element: <TeacherHalaqat />,
-},
+    path: "/student",
+    element: <StudentLayout />,
 
-    {
-      path: "monthly-achievement",
-      element: <TeacherMonthlyAchievement />,
-    },
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/student/dashboard" replace />,
+      },
 
-    {
-      path: "exams",
-      element: <TeacherExams />,
-    },
+      {
+        path: "dashboard",
+        element: <StudentDashboard />,
+      },
 
-    {
-      path: "reports",
-      element: <TeacherReports />,
-    },
+      {
+        path: "halaqa",
+        element: <MyHalaqa />,
+      },
 
-    {
-      path: "profile",
-      element: <TeacherProfile />,
-    },
+      {
+        path: "classmates",
+        element: <Classmates />,
+      },
 
-    {
-      path: "settings",
-      element: <TeacherSettings />,
-    },
-{
-  path: "monthly-plan",
-  element: <TeacherMonthlyPlan />,
-},
-{
-  path: "notifications",
-  element: <TeacherStudentCare />,
-},
-  ],
-},
+      {
+        path: "recitations",
+        element: <StudentRecitations />,
+      },
 
+      {
+        path: "monthly-plan",
+        element: <StudentMonthlyPlan />,
+      },
+
+      {
+        path: "monthly-achievement",
+        element: <StudentMonthlyAchievement />,
+      },
+
+      {
+        path: "attendance",
+        element: <StudentAttendance />,
+      },
+
+      {
+        path: "points",
+        element: <StudentPoints />,
+      },
+
+      {
+        path: "exams",
+        element: <StudentExams />,
+      },
+
+      {
+        path: "notifications",
+        element: <StudentNotifications />,
+      },
+
+      {
+        path: "settings",
+        element: <StudentSettings />,
+      },
+
+      {
+        path: "profile",
+        element: <StudentProfile />,
+      },
+    ],
+  },
 
   {
     path: "*",
