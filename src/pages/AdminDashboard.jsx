@@ -20,6 +20,7 @@ import {
   Gift,
   ArrowUpLeft,
   Sparkles,
+  UserRoundCheck,
 } from "lucide-react";
 
 /* =========================================================
@@ -684,6 +685,13 @@ export default function AdminDashboard() {
           "عرض المعلمين وربطهم بالحلقات",
         icon: GraduationCap,
         path: "/admin/teachers",
+      },
+      {
+        title: "طلبات الالتحاق",
+        description:
+          "اعتماد طلبات المعلمين والطلاب",
+        icon: UserRoundCheck,
+        path: "/admin/join-requests",
       },
       {
         title: "الحلقات",

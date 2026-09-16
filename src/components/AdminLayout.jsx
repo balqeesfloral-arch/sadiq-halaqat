@@ -22,6 +22,7 @@ import {
   Gift,
   GraduationCap,
   LayoutDashboard,
+  LogOut,
   Menu,
   Mic2,
   Search,
@@ -287,6 +288,12 @@ export default function AdminLayout() {
       () => new Date()
     );
 
+  const [
+    loggingOut,
+    setLoggingOut,
+  ] =
+    useState(false);
+
   /* =====================================================
      Persist collapse
   ===================================================== */
@@ -507,6 +514,45 @@ export default function AdminLayout() {
   }, []);
 
   /* =====================================================
+     Logout
+     Local scope only: no global sign-out request.
+  ===================================================== */
+
+  async function handleLogout() {
+    if (loggingOut) {
+      return;
+    }
+
+    setLoggingOut(true);
+
+    try {
+      const { error } =
+        await supabase.auth.signOut({
+          scope: "local",
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      window.location.replace(
+        "/login"
+      );
+    } catch (error) {
+      console.error(
+        "ADMIN LOGOUT:",
+        error
+      );
+
+      setLoggingOut(false);
+
+      window.alert(
+        "تعذر تسجيل الخروج. حاول مرة أخرى."
+      );
+    }
+  }
+
+  /* =====================================================
      Derived
   ===================================================== */
 
@@ -589,7 +635,10 @@ export default function AdminLayout() {
 
       <div className="admin-layout-brand">
         <div className="admin-layout-logo">
-          ص
+          <img
+            src="/icon-512.png"
+            alt="شعار الصديق"
+          />
         </div>
 
         {!sidebarCollapsed && (
@@ -813,30 +862,60 @@ export default function AdminLayout() {
 
       {/* FOOTER */}
 
-      <div
-        className={
-          sidebarCollapsed
-            ? "admin-layout-sidebar-footer collapsed"
-            : "admin-layout-sidebar-footer"
-        }
-      >
-        <div className="admin-layout-sidebar-footer-icon">
-          <ShieldCheck
-            size={16}
-          />
+      <div className="admin-layout-sidebar-footer-wrap">
+        <div
+          className={
+            sidebarCollapsed
+              ? "admin-layout-sidebar-footer collapsed"
+              : "admin-layout-sidebar-footer"
+          }
+        >
+          <div className="admin-layout-sidebar-footer-icon">
+            <ShieldCheck
+              size={16}
+            />
+          </div>
+
+          {!sidebarCollapsed && (
+            <div>
+              <strong>
+                نظام الصديق
+              </strong>
+
+              <span>
+                بيئة متابعة تعليمية
+              </span>
+            </div>
+          )}
         </div>
 
-        {!sidebarCollapsed && (
-          <div>
-            <strong>
-              نظام الصديق
-            </strong>
+        <button
+          type="button"
+          className={
+            sidebarCollapsed
+              ? "admin-layout-logout-button collapsed"
+              : "admin-layout-logout-button"
+          }
+          onClick={handleLogout}
+          disabled={loggingOut}
+          title={
+            sidebarCollapsed
+              ? "تسجيل الخروج"
+              : undefined
+          }
+        >
+          <LogOut
+            size={17}
+          />
 
+          {!sidebarCollapsed && (
             <span>
-              بيئة متابعة تعليمية
+              {loggingOut
+                ? "جارٍ تسجيل الخروج..."
+                : "تسجيل الخروج"}
             </span>
-          </div>
-        )}
+          )}
+        </button>
       </div>
     </div>
   );
@@ -1022,75 +1101,118 @@ export default function AdminLayout() {
       <style>
         {`
           :root {
-            --sadiq-green-950: #0A2F2A;
-            --sadiq-green-900: #0F4C45;
-            --sadiq-green-800: #115E59;
-            --sadiq-green-700: #0F766E;
-            --sadiq-gold: #B99037;
-            --sadiq-text: #31453B;
-            --sadiq-muted: #89958E;
-            --sadiq-border: #E4EAE6;
+            --sadiq-green-1000: #031E1B;
+            --sadiq-green-950: #062B27;
+            --sadiq-green-900: #0A3C36;
+            --sadiq-green-800: #0F5148;
+            --sadiq-green-700: #12685B;
+            --sadiq-green-600: #17806F;
+
+            --sadiq-gold-500: #C8A84B;
+            --sadiq-gold-400: #D9BE70;
+            --sadiq-gold-100: #FFF8E6;
+
+            --sadiq-text: #253A33;
+            --sadiq-muted: #7D8D86;
+            --sadiq-border: #DDE7E2;
             --sadiq-surface: #FFFFFF;
+            --sadiq-ivory: #FBFCF9;
+
+            --sadiq-shadow:
+              0 18px 60px rgba(7, 47, 42, .08);
+
+            --sadiq-shadow-soft:
+              0 8px 28px rgba(7, 47, 42, .06);
           }
 
           .admin-layout-shell {
             position: relative;
-
             display: flex;
-
             min-height: 100vh;
-
+            min-height: 100dvh;
             overflow-x: hidden;
-
-            color:
-              var(--sadiq-text);
-
+            color: var(--sadiq-text);
             background:
-              #F5F8F6;
+              linear-gradient(
+                180deg,
+                #F8FBF9 0%,
+                #F2F7F4 100%
+              );
+          }
+
+          .admin-layout-shell * {
+            box-sizing: border-box;
           }
 
           .admin-layout-background {
             position: fixed;
             inset: 0;
             z-index: 0;
-
             pointer-events: none;
-
+            overflow: hidden;
             background:
               radial-gradient(
-                circle at 10% 10%,
-                rgba(15,118,110,.045),
-                transparent 26%
+                circle at 8% 4%,
+                rgba(200,168,75,.10),
+                transparent 27%
               ),
               radial-gradient(
-                circle at 90% 18%,
-                rgba(185,144,55,.035),
-                transparent 24%
+                circle at 88% 14%,
+                rgba(18,104,91,.08),
+                transparent 30%
               ),
               linear-gradient(
                 180deg,
-                #F9FBFA,
-                #F3F7F5
+                #FAFCFA,
+                #F3F8F5
+              );
+          }
+
+          .admin-layout-background::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: .16;
+            background-image:
+              linear-gradient(
+                45deg,
+                transparent 48%,
+                rgba(15,81,72,.08) 49%,
+                rgba(15,81,72,.08) 51%,
+                transparent 52%
+              ),
+              linear-gradient(
+                -45deg,
+                transparent 48%,
+                rgba(200,168,75,.06) 49%,
+                rgba(200,168,75,.06) 51%,
+                transparent 52%
+              );
+            background-size: 120px 120px;
+            mask-image:
+              linear-gradient(
+                180deg,
+                rgba(0,0,0,.28),
+                transparent 62%
               );
           }
 
           .admin-layout-background::after {
             content: "";
-
             position: absolute;
-            inset: 0;
-
-            opacity: .025;
-
-            background-image:
+            top: -190px;
+            left: 50%;
+            width: 780px;
+            height: 420px;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            background:
               radial-gradient(
                 circle,
-                #0F766E 1px,
-                transparent 1px
+                rgba(200,168,75,.10),
+                transparent 70%
               );
-
-            background-size:
-              42px 42px;
+            filter: blur(14px);
           }
 
           /* =========================
@@ -1101,46 +1223,77 @@ export default function AdminLayout() {
             position: sticky;
             top: 0;
             z-index: 50;
-
-            width: 278px;
+            width: 296px;
             height: 100vh;
-
-            flex: 0 0 278px;
-
+            height: 100dvh;
+            flex: 0 0 296px;
             overflow: hidden;
-
             border-left:
-              1px solid
-              rgba(15,76,69,.09);
-
+              1px solid rgba(255,255,255,.08);
             background:
-              rgba(255,255,255,.90);
-
-            backdrop-filter:
-              blur(18px);
-
+              radial-gradient(
+                circle at 20% 0%,
+                rgba(217,190,112,.11),
+                transparent 24%
+              ),
+              linear-gradient(
+                180deg,
+                #0A3C36 0%,
+                #062F2A 54%,
+                #041F1C 100%
+              );
+            box-shadow:
+              -12px 0 44px rgba(5,35,31,.10);
             transition:
               width .22s ease,
               flex-basis .22s ease;
           }
 
+          .admin-layout-sidebar::before,
+          .admin-layout-mobile-drawer::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: 3px;
+            background:
+              linear-gradient(
+                90deg,
+                transparent,
+                var(--sadiq-gold-400),
+                transparent
+              );
+            opacity: .9;
+          }
+
           .admin-layout-sidebar.collapsed {
-            width: 82px;
-            flex-basis: 82px;
+            width: 88px;
+            flex-basis: 88px;
           }
 
           .admin-layout-sidebar-inner {
+            position: relative;
             display: flex;
             flex-direction: column;
-
             height: 100%;
-
-            padding: 13px 11px;
-
-            box-sizing: border-box;
+            min-height: 0;
+            padding: 16px 13px 13px;
           }
 
-          .admin-layout-sidebar-inner::-webkit-scrollbar,
+          .admin-layout-sidebar-inner::after {
+            content: "";
+            position: absolute;
+            top: 88px;
+            left: -80px;
+            width: 210px;
+            height: 210px;
+            border:
+              1px solid rgba(217,190,112,.06);
+            transform: rotate(45deg);
+            pointer-events: none;
+          }
+
           .admin-layout-nav::-webkit-scrollbar {
             width: 4px;
           }
@@ -1148,53 +1301,56 @@ export default function AdminLayout() {
           .admin-layout-nav::-webkit-scrollbar-thumb {
             border-radius: 999px;
             background:
-              rgba(15,76,69,.12);
+              rgba(255,255,255,.15);
           }
 
           /* BRAND */
 
           .admin-layout-brand {
             position: relative;
-
-            min-height: 48px;
-
+            z-index: 1;
+            min-height: 58px;
             display: flex;
             align-items: center;
-
-            gap: 9px;
-
-            padding: 3px 4px;
-
+            gap: 11px;
+            padding: 4px 5px 11px;
             margin-bottom: 10px;
+            border-bottom:
+              1px solid rgba(255,255,255,.08);
           }
 
           .admin-layout-logo {
-            width: 39px;
-            height: 39px;
-
-            flex: 0 0 39px;
-
-            border-radius: 12px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            color: #FFFFFF;
-
+            width: 45px;
+            height: 45px;
+            flex: 0 0 45px;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            padding: 5px;
+            border:
+              1px solid rgba(217,190,112,.28);
+            border-radius: 15px;
             background:
               linear-gradient(
                 145deg,
-                var(--sadiq-green-900),
-                var(--sadiq-green-700)
+                rgba(255,255,255,.13),
+                rgba(255,255,255,.05)
               );
-
             box-shadow:
-              0 8px 18px
-              rgba(15,76,69,.14);
+              inset 0 0 0 1px rgba(255,255,255,.04),
+              0 12px 25px rgba(0,0,0,.14);
+          }
 
-            font-size: 14px;
-            font-weight: 950;
+          .admin-layout-logo img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+            filter:
+              drop-shadow(
+                0 4px 8px
+                rgba(0,0,0,.12)
+              );
           }
 
           .admin-layout-brand-copy {
@@ -1204,88 +1360,75 @@ export default function AdminLayout() {
           .admin-layout-brand-copy > div {
             display: flex;
             align-items: center;
-
-            gap: 5px;
+            gap: 7px;
           }
 
           .admin-layout-brand-copy strong {
-            color:
-              var(--sadiq-green-900);
-
-            font-size: 13px;
+            color: #FFFFFF;
+            font-size: 18px;
+            line-height: 1.2;
             font-weight: 950;
           }
 
           .admin-layout-brand-copy > div span {
-            padding: 2px 5px;
-
+            padding: 3px 7px;
             border:
-              1px solid
-              rgba(185,144,55,.22);
-
+              1px solid rgba(217,190,112,.28);
             border-radius: 999px;
-
-            color: #8D6B24;
-            background: #FFF9EA;
-
-            font-size: 5px;
-            font-weight: 950;
+            color: #F4D98A;
+            background:
+              rgba(200,168,75,.10);
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: .06em;
           }
 
           .admin-layout-brand-copy small {
             display: block;
-
-            margin-top: 1px;
-
+            margin-top: 4px;
             color:
-              var(--sadiq-muted);
-
-            font-size: 6px;
+              rgba(255,255,255,.60);
+            font-size: 11px;
+            font-weight: 650;
           }
 
           /* PROFILE */
 
           .admin-layout-profile-card {
+            position: relative;
+            z-index: 1;
             display: flex;
             align-items: center;
-
-            gap: 8px;
-
-            margin-bottom: 9px;
-            padding: 8px;
-
+            gap: 10px;
+            margin-bottom: 11px;
+            padding: 11px;
             border:
-              1px solid
-              #E6ECE8;
-
-            border-radius: 12px;
-
+              1px solid rgba(255,255,255,.10);
+            border-radius: 15px;
             background:
               linear-gradient(
                 135deg,
-                #F8FBF9,
-                #FFFCF7
+                rgba(255,255,255,.10),
+                rgba(255,255,255,.045)
               );
+            box-shadow:
+              inset 0 1px 0
+              rgba(255,255,255,.05);
           }
 
           .admin-layout-profile-avatar {
-            width: 34px;
-            height: 34px;
-
-            flex: 0 0 34px;
-
-            border-radius: 10px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            color:
-              var(--sadiq-green-900);
-
-            background: #E9F4ED;
-
-            font-size: 10px;
+            width: 40px;
+            height: 40px;
+            flex: 0 0 40px;
+            display: grid;
+            place-items: center;
+            border:
+              1px solid rgba(217,190,112,.25);
+            border-radius: 13px;
+            color: #FCE9A7;
+            background:
+              rgba(200,168,75,.12);
+            font-size: 14px;
             font-weight: 950;
           }
 
@@ -1300,250 +1443,257 @@ export default function AdminLayout() {
           }
 
           .admin-layout-profile-copy span {
-            color: #9AA39D;
-            font-size: 5px;
+            color:
+              rgba(255,255,255,.52);
+            font-size: 10px;
+            font-weight: 700;
           }
 
           .admin-layout-profile-copy strong {
-            margin-top: 1px;
-
+            margin-top: 2px;
             overflow: hidden;
-
-            color: #3B4B41;
-
-            font-size: 7px;
-            font-weight: 950;
-
+            color: #FFFFFF;
+            font-size: 13px;
+            line-height: 1.45;
+            font-weight: 900;
             text-overflow: ellipsis;
             white-space: nowrap;
           }
 
           .admin-layout-profile-copy small {
-            margin-top: 1px;
-
-            color: #939D97;
-            font-size: 5px;
+            margin-top: 2px;
+            color:
+              rgba(255,255,255,.55);
+            font-size: 10px;
           }
 
           /* SEARCH */
 
           .admin-layout-search {
             position: relative;
-
-            min-height: 38px;
-
+            z-index: 1;
+            min-height: 42px;
             display: flex;
             align-items: center;
-
-            gap: 6px;
-
-            margin-bottom: 8px;
-            padding: 0 8px;
-
+            gap: 7px;
+            margin-bottom: 12px;
+            padding: 0 10px;
             border:
-              1px solid #E1E8E3;
+              1px solid rgba(255,255,255,.09);
+            border-radius: 12px;
+            color:
+              rgba(255,255,255,.57);
+            background:
+              rgba(255,255,255,.055);
+            transition:
+              border-color .16s ease,
+              background .16s ease;
+          }
 
-            border-radius: 10px;
-
-            color: #849089;
-            background: #F7FAF8;
+          .admin-layout-search:focus-within {
+            border-color:
+              rgba(217,190,112,.30);
+            background:
+              rgba(255,255,255,.08);
           }
 
           .admin-layout-search.collapsed {
             justify-content: center;
-
             padding: 0;
           }
 
           .admin-layout-search input {
             min-width: 0;
             flex: 1;
-
-            border: none;
-            outline: none;
-
-            color: #3D4D43;
+            border: 0;
+            outline: 0;
+            color: #FFFFFF;
             background: transparent;
-
             font-family: inherit;
-            font-size: 6.5px;
+            font-size: 12px;
+            font-weight: 650;
           }
 
           .admin-layout-search input::placeholder {
-            color: #A0A8A3;
+            color:
+              rgba(255,255,255,.42);
           }
 
           .admin-layout-search button {
-            width: 21px;
-            height: 21px;
-
-            border: none;
-            border-radius: 6px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            color: #77847C;
-            background: #EAF0EC;
-
+            width: 24px;
+            height: 24px;
+            border: 0;
+            border-radius: 7px;
+            display: grid;
+            place-items: center;
+            color:
+              rgba(255,255,255,.70);
+            background:
+              rgba(255,255,255,.08);
             cursor: pointer;
           }
 
           .admin-layout-search kbd {
-            padding: 2px 5px;
-
+            padding: 3px 6px;
             border:
-              1px solid #DFE6E1;
-
-            border-radius: 5px;
-
-            color: #929C96;
-            background: #FFFFFF;
-
+              1px solid rgba(255,255,255,.10);
+            border-radius: 6px;
+            color:
+              rgba(255,255,255,.48);
+            background:
+              rgba(0,0,0,.10);
             font-family: inherit;
-            font-size: 4.5px;
+            font-size: 9px;
           }
 
           /* NAV */
 
           .admin-layout-nav {
+            position: relative;
+            z-index: 1;
             min-height: 0;
             flex: 1;
-
             overflow-y: auto;
             overflow-x: hidden;
-
             padding-left: 2px;
           }
 
           .admin-layout-nav-section {
-            margin-bottom: 8px;
+            margin-bottom: 14px;
           }
 
           .admin-layout-nav-section-title {
-            padding: 0 8px 4px;
-
-            color: #9AA39D;
-
-            font-size: 5px;
+            padding: 0 10px 6px;
+            color:
+              rgba(255,255,255,.38);
+            font-size: 10px;
             font-weight: 900;
+            letter-spacing: .02em;
           }
 
           .admin-layout-nav-items {
             display: grid;
-            gap: 3px;
+            gap: 5px;
           }
 
           .admin-layout-nav-link {
             position: relative;
-
-            min-height: 36px;
-
+            min-height: 44px;
             display: flex;
             align-items: center;
-
-            gap: 7px;
-
-            padding: 0 8px;
-
+            gap: 9px;
+            padding: 0 10px;
             border:
               1px solid transparent;
-
-            border-radius: 9px;
-
-            color: #58665D;
-
+            border-radius: 12px;
+            color:
+              rgba(255,255,255,.72);
             text-decoration: none;
-
-            font-size: 6.5px;
-            font-weight: 850;
-
+            font-size: 12px;
+            font-weight: 780;
             transition:
               color .16s ease,
               background .16s ease,
               border-color .16s ease,
+              transform .16s ease,
+              box-shadow .16s ease;
+          }
+
+          .admin-layout-nav-link::before {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 50%;
+            width: 3px;
+            height: 20px;
+            border-radius: 999px;
+            transform:
+              translateY(-50%)
+              scaleY(.45);
+            opacity: 0;
+            background:
+              linear-gradient(
+                180deg,
+                var(--sadiq-gold-400),
+                var(--sadiq-gold-500)
+              );
+            transition:
+              opacity .16s ease,
               transform .16s ease;
           }
 
           .admin-layout-nav-link:hover {
-            color:
-              var(--sadiq-green-900);
-
-            background: #F2F7F4;
-
+            color: #FFFFFF;
+            background:
+              rgba(255,255,255,.07);
             transform:
-              translateX(-1px);
+              translateX(-2px);
           }
 
           .admin-layout-nav-link.active {
-            color:
-              var(--sadiq-green-900);
-
-            border-color: #D9E8DE;
-
+            color: #FFFFFF;
+            border-color:
+              rgba(217,190,112,.18);
             background:
               linear-gradient(
                 135deg,
-                #EDF7F1,
-                #F7FBF8
+                rgba(217,190,112,.15),
+                rgba(255,255,255,.065)
               );
-
             box-shadow:
-              inset -2px 0 0
-              var(--sadiq-green-700);
+              inset 0 1px 0
+              rgba(255,255,255,.04);
+          }
+
+          .admin-layout-nav-link.active::before {
+            opacity: 1;
+            transform:
+              translateY(-50%)
+              scaleY(1);
           }
 
           .admin-layout-nav-link.collapsed {
             justify-content: center;
-
             padding: 0;
           }
 
           .admin-layout-nav-icon {
-            width: 26px;
-            height: 26px;
-
-            flex: 0 0 26px;
-
-            border-radius: 8px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            color: #6C7971;
-
+            width: 30px;
+            height: 30px;
+            flex: 0 0 30px;
+            display: grid;
+            place-items: center;
+            border-radius: 9px;
+            color:
+              rgba(255,255,255,.60);
             transition:
               color .16s ease,
               background .16s ease;
           }
 
+          .admin-layout-nav-link:hover
+          .admin-layout-nav-icon {
+            color: #FFFFFF;
+          }
+
           .admin-layout-nav-link.active
           .admin-layout-nav-icon {
-            color:
-              var(--sadiq-green-900);
-
+            color: #F6DE93;
             background:
-              rgba(15,118,110,.075);
+              rgba(200,168,75,.10);
           }
 
           .admin-layout-nav-label {
             min-width: 0;
             flex: 1;
-
             overflow: hidden;
-
             text-overflow: ellipsis;
             white-space: nowrap;
           }
 
           .admin-layout-nav-arrow {
             opacity: 0;
-
-            color:
-              var(--sadiq-green-700);
-
+            color: #E7CC78;
             transition:
               opacity .16s ease,
               transform .16s ease;
@@ -1555,52 +1705,47 @@ export default function AdminLayout() {
           }
 
           .admin-layout-search-empty {
-            min-height: 120px;
-
+            min-height: 130px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
-
-            gap: 3px;
-
-            color: #9AA39D;
-
+            gap: 4px;
+            color:
+              rgba(255,255,255,.45);
             text-align: center;
           }
 
           .admin-layout-search-empty strong {
-            color: #66736B;
-            font-size: 6.5px;
+            color:
+              rgba(255,255,255,.78);
+            font-size: 12px;
           }
 
           .admin-layout-search-empty span {
-            font-size: 5px;
+            font-size: 10px;
           }
 
           /* SIDEBAR FOOTER */
 
+          .admin-layout-sidebar-footer-wrap {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 7px;
+            margin-top: 8px;
+          }
+
           .admin-layout-sidebar-footer {
             display: flex;
             align-items: center;
-
-            gap: 7px;
-
-            margin-top: 6px;
-            padding: 8px;
-
+            gap: 8px;
+            padding: 9px;
             border:
-              1px solid
-              rgba(15,76,69,.09);
-
-            border-radius: 11px;
-
+              1px solid rgba(255,255,255,.08);
+            border-radius: 12px;
             background:
-              linear-gradient(
-                135deg,
-                #F5FAF7,
-                #FFFDF7
-              );
+              rgba(255,255,255,.045);
           }
 
           .admin-layout-sidebar-footer.collapsed {
@@ -1608,21 +1753,15 @@ export default function AdminLayout() {
           }
 
           .admin-layout-sidebar-footer-icon {
-            width: 29px;
-            height: 29px;
-
-            flex: 0 0 29px;
-
-            border-radius: 8px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            color:
-              var(--sadiq-green-900);
-
-            background: #E6F2EA;
+            width: 32px;
+            height: 32px;
+            flex: 0 0 32px;
+            display: grid;
+            place-items: center;
+            border-radius: 9px;
+            color: #F1D681;
+            background:
+              rgba(200,168,75,.10);
           }
 
           .admin-layout-sidebar-footer strong,
@@ -1631,15 +1770,60 @@ export default function AdminLayout() {
           }
 
           .admin-layout-sidebar-footer strong {
-            color: #405046;
-            font-size: 6px;
+            color: #FFFFFF;
+            font-size: 11px;
+            font-weight: 850;
           }
 
           .admin-layout-sidebar-footer span {
-            margin-top: 1px;
+            margin-top: 2px;
+            color:
+              rgba(255,255,255,.47);
+            font-size: 9px;
+          }
 
-            color: #929C96;
-            font-size: 5px;
+          .admin-layout-logout-button {
+            width: 100%;
+            min-height: 41px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 12px;
+            border:
+              1px solid rgba(255,123,123,.18);
+            border-radius: 11px;
+            color: #FFD6D2;
+            background:
+              rgba(180,54,54,.10);
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 850;
+            cursor: pointer;
+            transition:
+              background .16s ease,
+              border-color .16s ease,
+              transform .16s ease;
+          }
+
+          .admin-layout-logout-button:hover {
+            border-color:
+              rgba(255,123,123,.30);
+            background:
+              rgba(180,54,54,.17);
+            transform:
+              translateY(-1px);
+          }
+
+          .admin-layout-logout-button.collapsed {
+            width: 100%;
+            padding: 0;
+          }
+
+          .admin-layout-logout-button:disabled {
+            opacity: .55;
+            cursor: wait;
+            transform: none;
           }
 
           /* =========================
@@ -1649,9 +1833,10 @@ export default function AdminLayout() {
           .admin-layout-main {
             position: relative;
             z-index: 1;
-
             min-width: 0;
             flex: 1;
+            min-height: 100vh;
+            min-height: 100dvh;
           }
 
           /* TOPBAR */
@@ -1660,87 +1845,95 @@ export default function AdminLayout() {
             position: sticky;
             top: 0;
             z-index: 40;
-
-            min-height: 68px;
-
+            min-height: 76px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-
-            gap: 12px;
-
-            padding: 9px 18px;
-
+            gap: 15px;
+            padding: 10px 22px;
             border-bottom:
-              1px solid
-              rgba(15,76,69,.08);
-
+              1px solid rgba(15,81,72,.08);
             background:
-              rgba(255,255,255,.88);
-
+              rgba(255,255,255,.91);
             backdrop-filter:
-              blur(16px);
+              blur(18px);
+            box-shadow:
+              0 8px 30px rgba(7,47,42,.035);
+          }
+
+          .admin-layout-topbar::after {
+            content: "";
+            position: absolute;
+            right: 24px;
+            left: 24px;
+            bottom: 0;
+            height: 1px;
+            background:
+              linear-gradient(
+                90deg,
+                transparent,
+                rgba(200,168,75,.22),
+                transparent
+              );
           }
 
           .admin-layout-topbar-start {
             display: flex;
             align-items: center;
-
-            gap: 8px;
-
+            gap: 10px;
             min-width: 0;
           }
 
           .admin-layout-menu-button {
-            width: 36px;
-            height: 36px;
-
-            flex: 0 0 36px;
-
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
             border:
-              1px solid #E1E8E3;
-
-            border-radius: 10px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
+              1px solid #DCE8E2;
+            border-radius: 13px;
+            display: grid;
+            place-items: center;
             color:
-              var(--sadiq-green-900);
-
-            background: #F8FBF9;
-
+              var(--sadiq-green-800);
+            background:
+              linear-gradient(
+                145deg,
+                #FFFFFF,
+                #F1F7F4
+              );
+            box-shadow:
+              0 6px 18px rgba(7,47,42,.055);
             cursor: pointer;
-
             transition:
               background .16s ease,
-              transform .16s ease;
+              transform .16s ease,
+              box-shadow .16s ease;
           }
 
           .admin-layout-menu-button:hover {
             background: #EDF6F1;
-
-            transform:
-              translateY(-1px);
+            transform: translateY(-1px);
+            box-shadow:
+              0 9px 22px rgba(7,47,42,.08);
           }
 
           .admin-layout-page-icon {
-            width: 35px;
-            height: 35px;
-
-            flex: 0 0 35px;
-
-            border-radius: 10px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
+            width: 43px;
+            height: 43px;
+            flex: 0 0 43px;
+            display: grid;
+            place-items: center;
+            border:
+              1px solid #D8E8E0;
+            border-radius: 13px;
             color:
-              var(--sadiq-green-900);
-
-            background: #EAF5EE;
+              var(--sadiq-green-800);
+            background:
+              linear-gradient(
+                145deg,
+                #EAF6F0,
+                #F8FCFA
+              );
           }
 
           .admin-layout-page-copy {
@@ -1749,23 +1942,18 @@ export default function AdminLayout() {
 
           .admin-layout-page-copy span {
             display: block;
-
             color: #9A792D;
-
-            font-size: 5.5px;
+            font-size: 10px;
             font-weight: 900;
           }
 
           .admin-layout-page-copy h1 {
-            margin: 1px 0 0;
-
+            margin: 2px 0 0;
             overflow: hidden;
-
-            color: #34463B;
-
-            font-size: 12px;
+            color: #263F36;
+            font-size: 19px;
+            line-height: 1.25;
             font-weight: 950;
-
             text-overflow: ellipsis;
             white-space: nowrap;
           }
@@ -1773,27 +1961,28 @@ export default function AdminLayout() {
           .admin-layout-topbar-end {
             display: flex;
             align-items: center;
-
-            gap: 7px;
+            gap: 8px;
           }
 
           .admin-layout-date-card {
             display: flex;
             align-items: center;
-
-            gap: 6px;
-
-            padding: 6px 8px;
-
+            gap: 8px;
+            min-height: 45px;
+            padding: 6px 10px;
             border:
-              1px solid #E3E9E5;
-
-            border-radius: 10px;
-
+              1px solid #E0E9E4;
+            border-radius: 12px;
             color:
-              var(--sadiq-green-900);
-
-            background: #FFFFFF;
+              var(--sadiq-green-800);
+            background:
+              linear-gradient(
+                145deg,
+                #FFFFFF,
+                #FBFCFA
+              );
+            box-shadow:
+              0 6px 18px rgba(7,47,42,.035);
           }
 
           .admin-layout-date-card strong,
@@ -1803,55 +1992,48 @@ export default function AdminLayout() {
 
           .admin-layout-date-card strong {
             color:
-              var(--sadiq-green-900);
-
-            font-size: 5.5px;
+              var(--sadiq-green-800);
+            font-size: 10px;
             font-weight: 900;
           }
 
           .admin-layout-date-card span {
-            margin-top: 1px;
-
-            color: #8B958F;
-            font-size: 5px;
+            margin-top: 2px;
+            color: #87948E;
+            font-size: 9px;
           }
 
           .admin-layout-topbar-profile {
             display: flex;
             align-items: center;
-
-            gap: 6px;
-
-            padding: 5px 7px;
-
+            gap: 8px;
+            min-height: 45px;
+            padding: 5px 8px 5px 11px;
             border:
-              1px solid #E3E9E5;
-
-            border-radius: 10px;
-
-            background: #FFFFFF;
+              1px solid #E0E9E4;
+            border-radius: 12px;
+            background:
+              #FFFFFF;
+            box-shadow:
+              0 6px 18px rgba(7,47,42,.035);
           }
 
           .admin-layout-topbar-avatar {
-            width: 29px;
-            height: 29px;
-
-            border-radius: 9px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
             color: #FFFFFF;
-
             background:
               linear-gradient(
                 145deg,
-                var(--sadiq-green-900),
-                var(--sadiq-green-700)
+                var(--sadiq-green-800),
+                var(--sadiq-green-600)
               );
-
-            font-size: 7px;
+            box-shadow:
+              0 6px 14px rgba(15,81,72,.16);
+            font-size: 11px;
             font-weight: 950;
           }
 
@@ -1861,24 +2043,19 @@ export default function AdminLayout() {
           }
 
           .admin-layout-topbar-profile strong {
-            max-width: 120px;
-
+            max-width: 140px;
             overflow: hidden;
-
-            color: #405046;
-
-            font-size: 6px;
+            color: #31463D;
+            font-size: 11px;
             font-weight: 900;
-
             text-overflow: ellipsis;
             white-space: nowrap;
           }
 
           .admin-layout-topbar-profile span {
-            margin-top: 1px;
-
-            color: #929C96;
-            font-size: 5px;
+            margin-top: 2px;
+            color: #8D9993;
+            font-size: 9px;
           }
 
           /* CONTENT */
@@ -1886,8 +2063,25 @@ export default function AdminLayout() {
           .admin-layout-content {
             position: relative;
             z-index: 1;
+            padding: 20px 22px 28px;
+          }
 
-            padding: 15px 18px 24px;
+          .admin-layout-content::before {
+            content: "";
+            position: absolute;
+            top: 8px;
+            right: 22px;
+            left: 22px;
+            height: 120px;
+            z-index: -1;
+            border-radius: 28px;
+            background:
+              linear-gradient(
+                135deg,
+                rgba(255,255,255,.48),
+                rgba(255,255,255,0)
+              );
+            pointer-events: none;
           }
 
           /* =========================
@@ -1898,16 +2092,10 @@ export default function AdminLayout() {
             position: fixed;
             inset: 0;
             z-index: 80;
-
             opacity: 0;
             visibility: hidden;
-
             background:
-              rgba(10,31,27,.48);
-
-            backdrop-filter:
-              blur(3px);
-
+              rgba(3,30,27,.62);
             transition:
               opacity .2s ease,
               visibility .2s ease;
@@ -1924,26 +2112,27 @@ export default function AdminLayout() {
             right: 0;
             bottom: 0;
             z-index: 90;
-
-            width: min(
-              290px,
-              88vw
-            );
-
+            width: min(310px, 90vw);
             transform:
               translateX(105%);
-
+            overflow: hidden;
             border-left:
-              1px solid
-              rgba(15,76,69,.10);
-
+              1px solid rgba(255,255,255,.08);
             background:
-              rgba(255,255,255,.98);
-
+              radial-gradient(
+                circle at 20% 0%,
+                rgba(217,190,112,.11),
+                transparent 24%
+              ),
+              linear-gradient(
+                180deg,
+                #0A3C36 0%,
+                #062F2A 54%,
+                #041F1C 100%
+              );
             box-shadow:
-              -20px 0 60px
-              rgba(10,31,27,.16);
-
+              -24px 0 70px
+              rgba(3,30,27,.28);
             transition:
               transform .22s ease;
           }
@@ -1955,24 +2144,19 @@ export default function AdminLayout() {
 
           .admin-layout-mobile-close {
             position: absolute;
-            left: 0;
-            top: 8px;
-
-            width: 31px;
-            height: 31px;
-
+            left: 3px;
+            top: 9px;
+            width: 34px;
+            height: 34px;
             border:
-              1px solid #E2E8E4;
-
-            border-radius: 9px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            color: #657169;
-            background: #FFFFFF;
-
+              1px solid rgba(255,255,255,.10);
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            color:
+              rgba(255,255,255,.76);
+            background:
+              rgba(255,255,255,.06);
             cursor: pointer;
           }
 
@@ -1980,15 +2164,13 @@ export default function AdminLayout() {
              RESPONSIVE
           ========================= */
 
-          @media
-          (max-width: 1050px) {
+          @media (max-width: 1120px) {
             .admin-layout-date-card {
               display: none;
             }
           }
 
-          @media
-          (max-width: 820px) {
+          @media (max-width: 820px) {
             .admin-layout-shell {
               display: block;
             }
@@ -1998,10 +2180,9 @@ export default function AdminLayout() {
             }
 
             .admin-layout-topbar {
-              min-height: 61px;
-
-              padding:
-                8px 11px;
+              min-height: 66px;
+              padding: 8px 11px;
+              backdrop-filter: none;
             }
 
             .admin-layout-page-icon {
@@ -2012,34 +2193,53 @@ export default function AdminLayout() {
               display: none;
             }
 
+            .admin-layout-topbar-profile {
+              padding: 5px;
+            }
+
             .admin-layout-content {
               padding:
-                11px 10px 20px;
+                13px 10px 22px;
+            }
+
+            .admin-layout-mobile-overlay {
+              backdrop-filter: none;
             }
           }
 
-          @media
-          (max-width: 430px) {
+          @media (max-width: 430px) {
             .admin-layout-page-copy span {
               display: none;
             }
 
             .admin-layout-page-copy h1 {
-              font-size: 10px;
+              max-width: 180px;
+              font-size: 15px;
             }
 
             .admin-layout-topbar {
               gap: 7px;
             }
+
+            .admin-layout-menu-button {
+              width: 39px;
+              height: 39px;
+              flex-basis: 39px;
+            }
+
+            .admin-layout-topbar-avatar {
+              width: 31px;
+              height: 31px;
+            }
           }
 
-          @media
-          (prefers-reduced-motion: reduce) {
+          @media (prefers-reduced-motion: reduce) {
             .admin-layout-sidebar,
             .admin-layout-mobile-drawer,
             .admin-layout-mobile-overlay,
             .admin-layout-nav-link,
-            .admin-layout-menu-button {
+            .admin-layout-menu-button,
+            .admin-layout-logout-button {
               transition: none !important;
             }
           }

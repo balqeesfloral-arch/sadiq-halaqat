@@ -1,0 +1,192 @@
+/* =========================================================
+   الصديق — Teacher Mobile Stats Compact
+   يطبق على بطاقات الإحصائيات فقط داخل بوابة المعلم.
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .teacher-main .td-stats-grid,
+  .teacher-main .teacher-students-stats,
+  .teacher-main .attendance-stats,
+  .teacher-main .recitation-stats,
+  .teacher-main .plan-stats,
+  .teacher-main .monthly-stats,
+  .teacher-main .care-stats,
+  .teacher-main .profile-stats,
+  .teacher-main .tp-stats,
+  .teacher-main .teacher-records-stats,
+  .teacher-main .teacher-exams-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .teacher-main .td-stat-card,
+  .teacher-main .teacher-student-stat,
+  .teacher-main .summary-card,
+  .teacher-main .recitation-stat,
+  .teacher-main .plan-stat,
+  .teacher-main .monthly-stat,
+  .teacher-main .care-stat,
+  .teacher-main .profile-stat,
+  .teacher-main .tp-stat,
+  .teacher-main .teacher-records-stat {
+    min-width: 0 !important;
+    min-height: 88px !important;
+    padding: 9px !important;
+    gap: 6px !important;
+    border-radius: 13px !important;
+  }
+
+  .teacher-main .td-stat-icon,
+  .teacher-main .teacher-student-stat-icon,
+  .teacher-main .summary-icon,
+  .teacher-main .recitation-stat-icon,
+  .teacher-main .plan-stat-icon,
+  .teacher-main .monthly-stat-icon,
+  .teacher-main .care-stat-icon,
+  .teacher-main .profile-stat-icon,
+  .teacher-main .tp-stat-icon,
+  .teacher-main .teacher-records-stat-icon {
+    width: 31px !important;
+    height: 31px !important;
+    flex: 0 0 31px !important;
+    border-radius: 9px !important;
+  }
+
+  .teacher-main .td-stat-body > strong,
+  .teacher-main .teacher-student-stat strong,
+  .teacher-main .summary-value,
+  .teacher-main .recitation-stat strong,
+  .teacher-main .plan-stat strong,
+  .teacher-main .monthly-stat strong,
+  .teacher-main .care-stat strong,
+  .teacher-main .profile-stat strong,
+  .teacher-main .tp-stat strong,
+  .teacher-main .teacher-records-stat strong {
+    font-size: 18px !important;
+    line-height: 1.08 !important;
+  }
+
+  .teacher-main .td-stat-body > span,
+  .teacher-main .teacher-student-stat-label,
+  .teacher-main .summary-label,
+  .teacher-main .recitation-stat span,
+  .teacher-main .plan-stat-content > span,
+  .teacher-main .monthly-stat-content > span,
+  .teacher-main .care-stat span,
+  .teacher-main .profile-stat span,
+  .teacher-main .tp-stat span,
+  .teacher-main .teacher-records-stat span {
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+
+  .teacher-main .td-stat-body > small,
+  .teacher-main .teacher-student-stat small,
+  .teacher-main .summary-subtitle,
+  .teacher-main .recitation-stat small,
+  .teacher-main .plan-stat small,
+  .teacher-main .monthly-stat small,
+  .teacher-main .care-stat small,
+  .teacher-main .profile-stat small,
+  .teacher-main .tp-stat small,
+  .teacher-main .teacher-records-stat small {
+    margin-top: 2px !important;
+    font-size: 7.5px !important;
+    line-height: 1.3 !important;
+  }
+}
+
+@media (max-width: 650px) {
+  .teacher-main .td-stats-grid,
+  .teacher-main .teacher-students-stats,
+  .teacher-main .attendance-stats,
+  .teacher-main .recitation-stats,
+  .teacher-main .plan-stats,
+  .teacher-main .monthly-stats,
+  .teacher-main .care-stats,
+  .teacher-main .profile-stats,
+  .teacher-main .tp-stats,
+  .teacher-main .teacher-records-stats,
+  .teacher-main .teacher-exams-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .teacher-main .td-stat-card,
+  .teacher-main .teacher-student-stat,
+  .teacher-main .summary-card,
+  .teacher-main .recitation-stat,
+  .teacher-main .plan-stat,
+  .teacher-main .monthly-stat,
+  .teacher-main .care-stat,
+  .teacher-main .profile-stat,
+  .teacher-main .tp-stat,
+  .teacher-main .teacher-records-stat {
+    min-height: 78px !important;
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+
+  .teacher-main .td-stat-card {
+    grid-template-columns: 29px minmax(0, 1fr) !important;
+  }
+
+  .teacher-main .td-stat-icon,
+  .teacher-main .teacher-student-stat-icon,
+  .teacher-main .summary-icon,
+  .teacher-main .recitation-stat-icon,
+  .teacher-main .plan-stat-icon,
+  .teacher-main .monthly-stat-icon,
+  .teacher-main .care-stat-icon,
+  .teacher-main .profile-stat-icon,
+  .teacher-main .tp-stat-icon,
+  .teacher-main .teacher-records-stat-icon {
+    width: 29px !important;
+    height: 29px !important;
+    flex-basis: 29px !important;
+  }
+
+  .teacher-main .td-stat-icon svg,
+  .teacher-main .teacher-student-stat-icon svg,
+  .teacher-main .summary-icon svg,
+  .teacher-main .recitation-stat-icon svg,
+  .teacher-main .plan-stat-icon svg,
+  .teacher-main .monthly-stat-icon svg,
+  .teacher-main .care-stat-icon svg,
+  .teacher-main .profile-stat-icon svg,
+  .teacher-main .tp-stat-icon svg,
+  .teacher-main .teacher-records-stat-icon svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .teacher-main .td-stat-body > strong,
+  .teacher-main .teacher-student-stat strong,
+  .teacher-main .summary-value,
+  .teacher-main .recitation-stat strong,
+  .teacher-main .plan-stat strong,
+  .teacher-main .monthly-stat strong,
+  .teacher-main .care-stat strong,
+  .teacher-main .profile-stat strong,
+  .teacher-main .tp-stat strong,
+  .teacher-main .teacher-records-stat strong {
+    font-size: 16px !important;
+  }
+
+  .teacher-main .td-stat-body > small,
+  .teacher-main .teacher-student-stat small,
+  .teacher-main .summary-subtitle,
+  .teacher-main .recitation-stat small,
+  .teacher-main .plan-stat small,
+  .teacher-main .monthly-stat small,
+  .teacher-main .care-stat small,
+  .teacher-main .profile-stat small,
+  .teacher-main .tp-stat small,
+  .teacher-main .teacher-records-stat small {
+    display: none !important;
+  }
+
+  .teacher-main .td-stat-mark {
+    display: none !important;
+  }
+}

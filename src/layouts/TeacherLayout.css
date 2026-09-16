@@ -9,6 +9,7 @@
   --tl-bg: #f4f7f5;
   --tl-border: #dfe8e4;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   background: var(--tl-bg);
   color: #173630;
@@ -23,6 +24,7 @@
 .teacher-sidebar {
   width: 276px;
   height: 100vh;
+  height: 100dvh;
   position: fixed;
   top: 0;
   right: 0;
@@ -336,7 +338,9 @@
 
 .teacher-workspace {
   width: calc(100% - 276px);
+  min-width: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   margin-right: 276px;
   transition: width .22s ease, margin-right .22s ease;
 }
@@ -512,6 +516,51 @@
 }
 
 @media (max-width: 900px) {
+  /* Mobile fullscreen stability:
+     dynamic viewport + fewer fixed blur layers prevent the narrow-screen freeze. */
+  .teacher-shell {
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  .teacher-sidebar,
+  .teacher-shell--collapsed .teacher-sidebar {
+    height: 100dvh;
+    max-height: 100dvh;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .teacher-workspace,
+  .teacher-shell--collapsed .teacher-workspace {
+    min-width: 0;
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  .teacher-main {
+    min-width: 0;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .teacher-main::before {
+    position: absolute;
+  }
+
+  .teacher-topbar,
+  .teacher-shell-overlay {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .teacher-menu-button,
+  .teacher-mobile-close,
+  .teacher-shell-overlay,
+  .teacher-nav-item {
+    touch-action: manipulation;
+  }
+
   .teacher-sidebar,
   .teacher-shell--collapsed .teacher-sidebar {
     width: min(286px, 86vw);

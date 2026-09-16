@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, UserRoundCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { supabase } from "../../lib/supabase";
 import {
@@ -176,15 +177,33 @@ export default function Dashboard() {
           <h1>لوحة المعلم</h1>
         </div>
 
-        <button
-          type="button"
-          className="td-refresh"
-          onClick={handleRefresh}
-          disabled={refreshing}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+          }}
         >
-          <RefreshCw className={refreshing ? "td-spin" : ""} size={17} />
-          {refreshing ? "جارٍ التحديث…" : "تحديث البيانات"}
-        </button>
+          <Link
+            to="/teacher/join-requests"
+            className="td-refresh"
+            style={{ textDecoration: "none" }}
+          >
+            <UserRoundCheck size={17} />
+            طلبات الالتحاق
+          </Link>
+
+          <button
+            type="button"
+            className="td-refresh"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={refreshing ? "td-spin" : ""} size={17} />
+            {refreshing ? "جارٍ التحديث…" : "تحديث البيانات"}
+          </button>
+        </div>
       </div>
 
       <TeacherHero

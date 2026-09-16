@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Archive,
   BarChart3,
   BellRing,
   BookOpen,
@@ -27,6 +28,7 @@ import {
 
 import { supabase } from "../lib/supabase";
 import "./TeacherLayout.css";
+import "./TeacherMobileStats.css";
 
 const MENU_GROUPS = [
   {
@@ -87,6 +89,11 @@ const MENU_GROUPS = [
         title: "الإشعارات",
         path: "/teacher/notifications",
         icon: BellRing,
+      },
+      {
+        title: "السجلات",
+        path: "/teacher/records",
+        icon: Archive,
       },
       {
         title: "التقارير",

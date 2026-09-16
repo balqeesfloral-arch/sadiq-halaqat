@@ -919,6 +919,26 @@ function buildWhatsAppMessage(alert) {
   }
 }
 
+function mapMessageTypeToStudentNotificationKind(messageType) {
+  switch (messageType) {
+    case "attendance":
+      return "attendance";
+
+    case "recitation":
+      return "recitation";
+
+    case "achievement":
+    case "monthly_plan":
+      return "progress";
+
+    case "student_followup":
+      return "motivation";
+
+    default:
+      return "info";
+  }
+}
+
 /* =========================================================
    PAGE
 ========================================================= */
@@ -1081,7 +1101,7 @@ export default function StudentCare() {
         error: profilesError,
       } = await supabase
         .from("profiles")
-        .select("id, full_name, user_number, phone, status, learning_goal")
+        .select("id, full_name, user_number, phone, status, learning_goal, guardian_name, guardian_phone, parent_name, parent_phone")
         .in("id", studentIds)
         .eq("role", "student");
 
@@ -1422,19 +1442,39 @@ export default function StudentCare() {
           Number(student.student_id)
         );
 
+        const guardianTablePhone =
+          guardian?.whatsapp_enabled !== false && guardian?.phone
+            ? guardian.phone
+            : "";
+
+        const guardianProfilePhone =
+          student.guardian_phone ||
+          student.parent_phone ||
+          "";
+
+        const studentPhone =
+          student.phone || "";
+
+        const contactPhone =
+          guardianTablePhone ||
+          guardianProfilePhone ||
+          studentPhone;
+
+        const usesGuardianPhone =
+          Boolean(guardianTablePhone || guardianProfilePhone);
+
         return {
           ...student,
           guardian,
-          contact_phone:
-            guardian?.whatsapp_enabled !== false && guardian?.phone
-              ? guardian.phone
-              : student.phone || "",
+          contact_phone: contactPhone,
           contact_name:
             guardian?.guardian_name ||
-            (guardian ? "ولي الأمر" : student.student_name),
-          contact_source: guardian?.phone
+            student.guardian_name ||
+            student.parent_name ||
+            (usesGuardianPhone ? "ولي الأمر" : student.student_name),
+          contact_source: usesGuardianPhone
             ? "guardian"
-            : student.phone
+            : studentPhone
               ? "student"
               : "none",
         };
@@ -1786,6 +1826,49 @@ export default function StudentCare() {
 
       if (error) throw error;
 
+      const recipient = recipients.find(
+        (row) =>
+          Number(row.id) === Number(compose.recipient_id)
+      );
+
+      if (recipient?.role === "student") {
+        const notificationTitle =
+          String(compose.subject || "").trim() ||
+          "رسالة من المعلم";
+
+        const notificationBody =
+          String(compose.body || "").trim();
+
+        const notificationKind =
+          mapMessageTypeToStudentNotificationKind(
+            compose.message_type
+          );
+
+        const {
+          error: notificationError,
+        } = await supabase.rpc(
+          "send_student_notification",
+          {
+            p_student_id: Number(compose.recipient_id),
+            p_title: notificationTitle,
+            p_body: notificationBody,
+            p_kind: notificationKind,
+            p_action_path: "/student/notifications",
+          }
+        );
+
+        if (notificationError) {
+          console.error(
+            "SEND STUDENT NOTIFICATION:",
+            notificationError
+          );
+
+          throw new Error(
+            "تم حفظ الرسالة في سجل المعلم، لكن تعذر إيصالها إلى حساب الطالب. تأكد من تفعيل student_notifications."
+          );
+        }
+      }
+
       setCompose({
         recipient_id: "",
         student_context_id: "",
@@ -1795,7 +1878,12 @@ export default function StudentCare() {
         reply_to_id: null,
       });
 
-      showToast("تم إرسال الرسالة داخل النظام", "success");
+      showToast(
+        recipient?.role === "student"
+          ? "تم إرسال الرسالة ووصلت إلى حساب الطالب"
+          : "تم إرسال الرسالة داخل النظام",
+        "success"
+      );
 
       await loadAll({ silent: false });
       setActiveTab("messages");
@@ -2476,7 +2564,7 @@ function AlertCard({
           {alert.student.contact_source === "guardian"
             ? `رقم التواصل: ${alert.student.contact_name || "ولي الأمر"}`
             : alert.student.contact_source === "student"
-              ? "لا يوجد ولي أمر أساسي؛ سيستخدم رقم الجوال الموجود في ملف الطالب."
+              ? "لم يوجد رقم صالح لولي الأمر؛ سيستخدم رقم جوال الطالب المسجل في ملفه."
               : "لا يوجد رقم تواصل مسجل."}
         </div>
       )}

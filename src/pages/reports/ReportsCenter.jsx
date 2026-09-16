@@ -1160,7 +1160,7 @@ const PRINT_CSS = `
   .report-student-identity{display:flex;align-items:center;gap:2mm;padding-bottom:2mm;border-bottom:1px solid #e8efec}
   .report-student-avatar{width:9mm;height:9mm;flex:0 0 9mm;display:grid;place-items:center;border-radius:2.6mm;background:#eaf7f1;color:#147a5e}
   .report-student-head{min-width:0;padding:0}
-  .report-student-head strong{display:block;overflow:hidden;font-size:9pt;line-height:1.35;color:#173a33;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+  .report-student-head strong{display:block;overflow:hidden;font-size:7.4pt;line-height:1.3;color:#173a33;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
   .report-student-head span{display:block;margin-top:.7mm;font-size:6.5pt;color:#8a9893}
   .report-student-details{display:grid;grid-template-columns:1fr;gap:0;margin-top:.5mm}
   .report-student-card .report-info-line{grid-column:auto}

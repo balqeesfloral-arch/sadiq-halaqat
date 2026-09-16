@@ -32,6 +32,7 @@ import MonthlyAchievement from "./pages/MonthlyAchievement";
 
 import TVLeaderboardPage from "./pages/TVLeaderboardPage";
 import SettingsPage from "./pages/SettingsPage";
+import JoinRequests from "./pages/JoinRequests";
 
 /* =========================================================
    Teacher Portal
@@ -51,6 +52,8 @@ import TeacherSettings from "./pages/teacher/Settings";
 import TeacherHalaqat from "./pages/teacher/Halaqat";
 import TeacherMonthlyPlan from "./pages/teacher/MonthlyPlan";
 import TeacherStudentCare from "./pages/teacher/StudentCare";
+import TeacherRecords from "./pages/teacher/Records";
+import TeacherJoinRequests from "./pages/teacher/JoinRequests";
 
 /* =========================================================
    Student Portal
@@ -167,6 +170,11 @@ const router = createBrowserRouter([
       },
 
       {
+        path: "join-requests",
+        element: <JoinRequests />,
+      },
+
+      {
         path: "students",
         element: <Students />,
       },
@@ -229,6 +237,11 @@ const router = createBrowserRouter([
       },
 
       {
+        path: "join-requests",
+        element: <TeacherJoinRequests />,
+      },
+
+      {
         path: "attendance",
         element: <TeacherAttendance />,
       },
@@ -267,6 +280,11 @@ const router = createBrowserRouter([
         path: "notifications",
         element: <TeacherStudentCare />,
       },
+
+{
+  path: "records",
+  element: <TeacherRecords />,
+},
 
       {
         path: "reports",

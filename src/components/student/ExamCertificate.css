@@ -1,0 +1,442 @@
+@import url("https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Kufi+Arabic:wght@500;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap");
+
+/* =========================================================
+   شهادة الصديق — IMAGE TEMPLATE PRO MAX
+   القالب صورة ثابتة، والبيانات المتغيرة تُرسم فوقها.
+========================================================= */
+
+.sec-pro-modal{
+  position:fixed;
+  inset:0;
+  z-index:100000;
+  width:100vw;
+  height:100dvh;
+  overflow:auto;
+  display:grid;
+  place-items:center;
+  padding:12px;
+  background:rgba(5,31,27,.72);
+  backdrop-filter:blur(10px);
+}
+
+.sec-pro-shell{
+  width:min(1320px,97vw);
+  max-height:97dvh;
+  overflow:auto;
+  border:1px solid rgba(255,255,255,.65);
+  border-radius:24px;
+  background:#f5f8f6;
+  box-shadow:0 34px 100px rgba(4,30,26,.34);
+}
+
+.sec-pro-toolbar{
+  position:sticky;
+  top:0;
+  z-index:10;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:11px 13px;
+  border-bottom:1px solid #dce6e2;
+  background:rgba(255,255,255,.98);
+}
+
+.sec-pro-toolbar-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#0f6b5d;
+}
+
+.sec-pro-toolbar-title strong,
+.sec-pro-toolbar-title span{
+  display:block;
+}
+
+.sec-pro-toolbar-title strong{
+  font-size:12px;
+  font-weight:900;
+}
+
+.sec-pro-toolbar-title span{
+  margin-top:2px;
+  color:#768781;
+  font-size:8px;
+}
+
+.sec-pro-toolbar-actions{
+  display:flex;
+  gap:6px;
+}
+
+.sec-pro-print-btn,
+.sec-pro-close{
+  min-height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border-radius:9px;
+  font-family:inherit;
+  font-size:9px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.sec-pro-print-btn{
+  padding:0 11px;
+  border:0;
+  background:linear-gradient(135deg,#0f6b5d,#073e36);
+  color:#fff;
+}
+
+.sec-pro-close{
+  width:36px;
+  border:1px solid #dce6e2;
+  background:#fff;
+  color:#72847d;
+}
+
+.sec-pro-preview-wrap{
+  padding:18px;
+  display:grid;
+  place-items:center;
+}
+
+.sec-pro-certificate{
+  position:relative;
+  overflow:hidden;
+  width:min(1180px,100%);
+  aspect-ratio:3508/2480;
+  background:#fffdf8;
+  box-shadow:0 22px 70px rgba(3,38,31,.16);
+  color:#173f35;
+  isolation:isolate;
+}
+
+.sec-pro-bg{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  pointer-events:none;
+  user-select:none;
+}
+
+/* الشعار داخل الدائرة الموجودة في القالب */
+.sec-pro-logo{
+  position:absolute;
+  z-index:2;
+  top:10.2%;
+  left:50%;
+  width:4.25%;
+  aspect-ratio:1;
+  object-fit:contain;
+  transform:translateX(-50%);
+}
+
+/* العنوان الثابت */
+.sec-pro-heading{
+  position:absolute;
+  z-index:3;
+  top:17.1%;
+  left:50%;
+  width:70%;
+  transform:translateX(-50%);
+  text-align:center;
+  font-family:"Noto Naskh Arabic","Amiri",serif;
+}
+
+.sec-pro-heading-small{
+  display:block;
+  color:#90701e;
+  font-size:clamp(8px,.82vw,12px);
+  font-weight:700;
+  letter-spacing:.02em;
+}
+
+.sec-pro-heading h2{
+  margin:.3% 0 0;
+  color:#0b4a40;
+  font-size:clamp(24px,3.1vw,45px);
+  line-height:1.25;
+  font-weight:700;
+}
+
+.sec-pro-heading p{
+  margin:.15% 0 0;
+  color:#72847d;
+  font-size:clamp(8px,.82vw,12px);
+  font-weight:600;
+}
+
+/* المحتوى الديناميكي */
+.sec-pro-content{
+  position:absolute;
+  z-index:3;
+  top:31.5%;
+  left:50%;
+  width:74%;
+  transform:translateX(-50%);
+  text-align:center;
+  font-family:"Noto Naskh Arabic","Amiri",serif;
+}
+
+.sec-pro-intro{
+  margin:0;
+  color:#526b63;
+  font-size:clamp(11px,1.15vw,17px);
+  line-height:1.8;
+  font-weight:600;
+}
+
+.sec-pro-student-name{
+  margin:1.2% 0 1%;
+  color:#0a4c42;
+  font-family:"Noto Kufi Arabic","Tahoma",sans-serif;
+  font-size:clamp(24px,3.35vw,50px);
+  line-height:1.38;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+
+.sec-pro-message{
+  margin:0;
+  color:#5c716a;
+  font-size:clamp(10px,1.02vw,15px);
+  line-height:1.8;
+  font-weight:600;
+}
+
+.sec-pro-exam-title{
+  max-width:76%;
+  margin:.7% auto 0;
+  color:#273f38;
+  font-size:clamp(15px,1.65vw,24px);
+  line-height:1.5;
+  font-weight:700;
+}
+
+.sec-pro-dua{
+  max-width:82%;
+  margin:.9% auto 0;
+  color:#687a74;
+  font-size:clamp(9px,.9vw,13.5px);
+  line-height:1.85;
+  font-weight:500;
+}
+
+.sec-pro-result-row{
+  width:56%;
+  min-width:360px;
+  display:grid;
+  grid-template-columns:1.08fr .92fr;
+  gap:1.8%;
+  margin:1.5% auto 0;
+}
+
+.sec-pro-result-box,
+.sec-pro-grade-box{
+  display:grid;
+  align-content:center;
+  min-height:72px;
+  padding:7px 10px;
+  border-radius:16px;
+  background:rgba(255,255,255,.74);
+  box-shadow:
+    inset 0 0 0 1px rgba(15,107,93,.08),
+    0 8px 22px rgba(11,74,64,.05);
+}
+
+.sec-pro-result-box span,
+.sec-pro-grade-box span{
+  color:#8a9893;
+  font-size:clamp(7px,.66vw,10px);
+  font-weight:700;
+}
+
+.sec-pro-result-box strong{
+  margin-top:2px;
+  color:#0f6b5d;
+  font-family:"Noto Kufi Arabic","Tahoma",sans-serif;
+  font-size:clamp(24px,3.5vw,52px);
+  line-height:1.1;
+  font-weight:800;
+}
+
+.sec-pro-result-box small{
+  margin-right:5px;
+  color:#7d8b86;
+  font-size:.33em;
+  font-weight:700;
+}
+
+.sec-pro-grade-box strong{
+  margin-top:5px;
+  color:#97751f;
+  font-family:"Noto Kufi Arabic","Tahoma",sans-serif;
+  font-size:clamp(12px,1.35vw,20px);
+  line-height:1.45;
+  font-weight:700;
+}
+
+/* أسفل الشهادة */
+.sec-pro-footer{
+  position:absolute;
+  z-index:3;
+  right:10%;
+  left:10%;
+  bottom:7.1%;
+  display:grid;
+  grid-template-columns:1fr 1.45fr 1fr;
+  align-items:end;
+  gap:16px;
+  font-family:"Noto Naskh Arabic","Amiri",serif;
+}
+
+.sec-pro-footer-item span,
+.sec-pro-footer-item strong,
+.sec-pro-footer-center span,
+.sec-pro-footer-center strong{
+  display:block;
+}
+
+.sec-pro-footer-item span,
+.sec-pro-footer-center span{
+  color:#929e99;
+  font-size:clamp(6px,.58vw,8.5px);
+  font-weight:600;
+}
+
+.sec-pro-footer-item strong,
+.sec-pro-footer-center strong{
+  margin-top:2px;
+  color:#345149;
+  font-size:clamp(7px,.7vw,10px);
+  font-weight:700;
+}
+
+.sec-pro-footer-right{
+  text-align:right;
+}
+
+.sec-pro-footer-left{
+  text-align:left;
+}
+
+.sec-pro-footer-left strong{
+  direction:ltr;
+  letter-spacing:.08em;
+}
+
+.sec-pro-footer-center{
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  gap:14px;
+  text-align:center;
+}
+
+.sec-pro-footer-center i{
+  width:1px;
+  height:29px;
+  background:linear-gradient(180deg,transparent,#c7a842,transparent);
+}
+
+/* الختمان أسفل القالب */
+.sec-pro-digital-seal{
+  position:absolute;
+  z-index:3;
+  bottom:10.7%;
+  width:11%;
+  display:grid;
+  justify-items:center;
+  gap:3px;
+  color:#8c6c1b;
+  font-family:"Noto Naskh Arabic","Amiri",serif;
+  text-align:center;
+}
+
+.sec-pro-digital-seal svg{
+  width:19%;
+  height:auto;
+  min-width:20px;
+}
+
+.sec-pro-digital-seal span{
+  font-size:clamp(5px,.52vw,8px);
+  font-weight:700;
+}
+
+.sec-pro-digital-seal-right{
+  right:5.5%;
+}
+
+.sec-pro-digital-seal-left{
+  left:5.5%;
+}
+
+/* Mobile preview */
+@media(max-width:760px){
+  .sec-pro-toolbar{
+    align-items:flex-start;
+  }
+
+  .sec-pro-toolbar-actions{
+    flex-direction:column;
+  }
+
+  .sec-pro-preview-wrap{
+    padding:8px;
+    overflow:auto;
+  }
+
+  .sec-pro-certificate{
+    width:100%;
+    min-width:820px;
+  }
+}
+
+/* Print */
+@media print{
+  @page{
+    size:A4 landscape;
+    margin:0;
+  }
+
+  body.sec-pro-printing{
+    margin:0!important;
+    background:#fff!important;
+  }
+
+  body.sec-pro-printing *{
+    visibility:hidden!important;
+  }
+
+  body.sec-pro-printing #exam-certificate-print-area,
+  body.sec-pro-printing #exam-certificate-print-area *{
+    visibility:visible!important;
+  }
+
+  body.sec-pro-printing #exam-certificate-print-area{
+    position:fixed!important;
+    inset:0!important;
+    width:297mm!important;
+    height:210mm!important;
+    aspect-ratio:auto!important;
+    margin:0!important;
+    box-shadow:none!important;
+    overflow:hidden!important;
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+  }
+
+  body.sec-pro-printing .sec-pro-bg{
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+  }
+}

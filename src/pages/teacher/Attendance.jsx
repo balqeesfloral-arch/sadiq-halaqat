@@ -1243,7 +1243,7 @@ export default function Attendance() {
       } =
         await supabase
           .from("attendance")
-          .select("id")
+          .select("id, status")
           .eq(
             "student_id",
             studentId
@@ -1273,7 +1273,33 @@ export default function Attendance() {
       const existingRecord =
         existingRows?.[0];
 
-      if (existingRecord) {
+      const shouldClear =
+        existingRecord?.status === status;
+
+      if (shouldClear) {
+        /*
+          إذا ضغط المعلم على نفس الحالة مرة ثانية
+          نحذف سجل الحضور لهذا الطالب في هذا اليوم،
+          فيرجع إلى "لم يسجل".
+        */
+        const {
+          error,
+        } =
+          await supabase
+            .from("attendance")
+            .delete()
+            .eq(
+              "id",
+              existingRecord.id
+            );
+
+        if (error) {
+          throw error;
+        }
+      } else if (existingRecord) {
+        /*
+          إذا اختار حالة مختلفة نعدل السجل الحالي.
+        */
         const {
           error,
         } =
@@ -1291,6 +1317,9 @@ export default function Attendance() {
           throw error;
         }
       } else {
+        /*
+          إذا لم يوجد سجل من الأساس ننشئه.
+        */
         const {
           error,
         } =
@@ -1328,42 +1357,44 @@ export default function Attendance() {
 
       setAttendance(
         (current) => {
+          const matchesRecord = (
+            record
+          ) =>
+            Number(
+              record.student_id
+            ) ===
+              Number(
+                studentId
+              ) &&
+            Number(
+              record.halaqa_id
+            ) ===
+              Number(
+                selectedHalaqa
+              ) &&
+            record.attendance_date ===
+              selectedDate;
+
           const exists =
             current.find(
-              (record) =>
-                Number(
-                  record.student_id
-                ) ===
-                  Number(
-                    studentId
-                  ) &&
-                Number(
-                  record.halaqa_id
-                ) ===
-                  Number(
-                    selectedHalaqa
-                  ) &&
-                record.attendance_date ===
-                  selectedDate
+              matchesRecord
             );
+
+          if (shouldClear) {
+            return current.filter(
+              (record) =>
+                !matchesRecord(
+                  record
+                )
+            );
+          }
 
           if (exists) {
             return current.map(
               (record) =>
-                Number(
-                  record.student_id
-                ) ===
-                  Number(
-                    studentId
-                  ) &&
-                Number(
-                  record.halaqa_id
-                ) ===
-                  Number(
-                    selectedHalaqa
-                  ) &&
-                record.attendance_date ===
-                  selectedDate
+                matchesRecord(
+                  record
+                )
                   ? {
                       ...record,
                       status,
@@ -2899,6 +2930,12 @@ function AttendanceButton({
       }
       disabled={disabled}
       onClick={onClick}
+      title={
+        active
+          ? `اضغط مرة أخرى لإلغاء "${label}"`
+          : `تسجيل الطالب: ${label}`
+      }
+      aria-pressed={active}
     >
       <Icon size={13} />
 

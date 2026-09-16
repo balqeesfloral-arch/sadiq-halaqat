@@ -68,7 +68,7 @@ export default function TeacherJoinOnboarding({
       const [directoryResult, requestsResult, assignmentsResult] =
         await Promise.all([
           supabase.rpc("get_teacher_join_directory"),
-          supabase.rpc("get_my_teacher_join_requests"),
+          supabase.rpc("get_my_join_requests_v2"),
           supabase.rpc("get_my_teacher_assignments"),
         ]);
 
@@ -101,19 +101,20 @@ export default function TeacherJoinOnboarding({
     try {
       setSending(true);
 
-      const { error } = await supabase.rpc("submit_teacher_join_request", {
+      const { error } = await supabase.rpc("submit_join_request_v2", {
         p_halaqa_id: selected.halaqa_id,
         p_note: note.trim() || null,
+        p_applicant_role: "teacher",
       });
 
       if (error) {
         const message = String(error.message || "");
 
-        if (message.includes("TEACHER_PENDING_REQUEST_EXISTS")) {
+        if ((message.includes("PENDING_REQUEST_EXISTS") || message.includes("TEACHER_PENDING_REQUEST_EXISTS"))) {
           throw new Error("لديك طلب انضمام قيد المراجعة بالفعل.");
         }
 
-        if (message.includes("TEACHER_ALREADY_ASSIGNED")) {
+        if ((message.includes("ALREADY_ASSIGNED") || message.includes("TEACHER_ALREADY_ASSIGNED"))) {
           await onMembershipChanged?.();
           return;
         }
@@ -137,7 +138,7 @@ export default function TeacherJoinOnboarding({
     try {
       setCancellingId(requestId);
 
-      const { error } = await supabase.rpc("cancel_teacher_join_request", {
+      const { error } = await supabase.rpc("cancel_join_request_v2", {
         p_request_id: requestId,
       });
 
