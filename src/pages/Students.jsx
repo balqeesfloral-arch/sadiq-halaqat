@@ -14,6 +14,7 @@ import {
   Clock3,
   Edit3,
   GraduationCap,
+  Hash,
   Home,
   Loader2,
   MapPin,
@@ -263,6 +264,40 @@ function getInitials(name) {
     parts[0].slice(0, 1) +
     parts[parts.length - 1].slice(0, 1)
   );
+}
+
+async function generateStudentNumber() {
+  // رقم إداري تلقائي قابل للقراءة. نتحقق من عدم تكراره قبل الحفظ.
+  // الشكل: S-000001
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_number")
+    .eq("role", "student")
+    .not("user_number", "is", null);
+
+  if (error) throw error;
+
+  let maxNumber = 0;
+
+  for (const row of data || []) {
+    const match = String(row.user_number || "").match(/(\d+)$/);
+    if (match) maxNumber = Math.max(maxNumber, Number(match[1]) || 0);
+  }
+
+  // نتحقق من الرقم المرشح حتى لو كانت هناك صيغ قديمة مختلفة.
+  for (let offset = 1; offset <= 100; offset += 1) {
+    const candidate = `S-${String(maxNumber + offset).padStart(6, "0")}`;
+    const { data: existing, error: checkError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_number", candidate)
+      .maybeSingle();
+
+    if (checkError) throw checkError;
+    if (!existing) return candidate;
+  }
+
+  throw new Error("تعذر توليد رقم طالب فريد. حاول مرة أخرى.");
 }
 
 /* =========================================================
@@ -629,16 +664,32 @@ export default function Students() {
      Modal
   ===================================================== */
 
-  function openCreate() {
-    setEditingStudent(null);
-    setForm({
-      ...EMPTY_FORM,
-      halaqa_id:
-        halaqat.length === 1
-          ? String(halaqat[0].id)
-          : "",
-    });
-    setModalOpen(true);
+  async function openCreate() {
+    try {
+      setEditingStudent(null);
+      setSaving(true);
+
+      const automaticNumber = await generateStudentNumber();
+
+      setForm({
+        ...EMPTY_FORM,
+        user_number: automaticNumber,
+        halaqa_id:
+          halaqat.length === 1
+            ? String(halaqat[0].id)
+            : "",
+      });
+
+      setModalOpen(true);
+    } catch (error) {
+      console.error("GENERATE STUDENT NUMBER:", error);
+      showToast(
+        error?.message || "تعذر توليد رقم الطالب تلقائيًا.",
+        "error"
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   function openEdit(student) {
@@ -725,15 +776,28 @@ export default function Students() {
 
   async function saveStudent() {
     const fullName = normalizeText(form.full_name);
-    const userNumber = normalizeText(form.user_number);
+    let userNumber = normalizeText(form.user_number);
 
     if (!fullName) {
       showToast("أدخل اسم الطالب.", "error");
       return;
     }
 
+    if (!userNumber && !editingStudent) {
+      try {
+        userNumber = await generateStudentNumber();
+        setForm((current) => ({ ...current, user_number: userNumber }));
+      } catch (error) {
+        showToast(
+          error?.message || "تعذر توليد رقم الطالب تلقائيًا.",
+          "error"
+        );
+        return;
+      }
+    }
+
     if (!userNumber) {
-      showToast("أدخل رقم الطالب.", "error");
+      showToast("رقم الطالب غير متوفر.", "error");
       return;
     }
 
@@ -1163,6 +1227,14 @@ export default function Students() {
           ) / students.length
         );
 
+  const attentionCount = students.filter((student) =>
+    student.status === "active" &&
+    (Number(student.attendance_rate || 0) < 70 ||
+      Number(student.recitations_count || 0) === 0 ||
+      !student.profile_complete ||
+      !student.halaqa_id)
+  ).length;
+
   const hasFilters =
     search ||
     statusFilter !== "all" ||
@@ -1271,6 +1343,14 @@ export default function Students() {
             incompleteCount > 0 ? "red" : "green"
           }
           sub="ولي الأمر / الجنس / الجنسية"
+        />
+
+        <StudentStat
+          label="تحتاج متابعة"
+          value={attentionCount}
+          icon={Sparkles}
+          tone={attentionCount > 0 ? "gold" : "green"}
+          sub="حضور / تسميع / ملف / حلقة"
         />
       </section>
 
@@ -1626,7 +1706,7 @@ export default function Students() {
           display: grid;
 
           grid-template-columns:
-            repeat(5, minmax(0,1fr));
+            repeat(6, minmax(0,1fr));
 
           gap: 8px;
         }
@@ -2320,6 +2400,26 @@ export default function Students() {
           font-size: 5.4px;
         }
 
+        .student-smart-alert {
+          display: flex;
+          align-items: flex-start;
+          gap: 5px;
+          margin-top: 7px;
+          padding: 7px 8px;
+          border: 1px solid #F0DFC0;
+          border-radius: 9px;
+          color: #85651F;
+          background: #FFF9ED;
+          font-size: 5px;
+          font-weight: 800;
+          line-height: 1.55;
+        }
+
+        .student-smart-alert svg {
+          flex: 0 0 auto;
+          margin-top: 1px;
+        }
+
         .student-card-actions {
           display: grid;
 
@@ -2459,7 +2559,8 @@ export default function Students() {
           align-items: center;
           justify-content: center;
 
-          padding: 16px;
+          /* نفس منطق نافذة المعلم: فراغ واضح عن التوب بار والحواف */
+          padding: clamp(76px, 9vh, 104px) clamp(18px, 3vw, 42px) clamp(20px, 3vh, 34px);
 
           background:
             rgba(10,29,24,.58);
@@ -2468,8 +2569,8 @@ export default function Students() {
         }
 
         .student-form-modal {
-          width: min(900px,100%);
-          max-height: calc(100vh - 32px);
+          width: min(760px, calc(100vw - 48px));
+          max-height: calc(100dvh - clamp(100px, 12vh, 138px));
 
           overflow: auto;
 
@@ -2673,6 +2774,24 @@ export default function Students() {
           line-height: 1.6;
         }
 
+        .student-auto-number-input {
+          color: #0F6848 !important;
+          background: #F0F8F3 !important;
+          font-weight: 950;
+          letter-spacing: .4px;
+          cursor: default;
+        }
+
+        .student-field-hint {
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          margin-top: 4px;
+          color: #8B958F;
+          font-size: 4.8px;
+          font-weight: 750;
+        }
+
         .student-form-field input:focus,
         .student-form-field select:focus,
         .student-form-field textarea:focus {
@@ -2811,6 +2930,17 @@ export default function Students() {
           }
         }
 
+        @media (min-width: 761px) and (max-width: 1180px) {
+          .student-form-overlay {
+            padding: 86px 24px 24px;
+          }
+
+          .student-form-modal {
+            width: min(720px, calc(100vw - 48px));
+            max-height: calc(100dvh - 110px);
+          }
+        }
+
         @media (max-width: 760px) {
           .students-page-hero {
             align-items: flex-start;
@@ -2844,15 +2974,15 @@ export default function Students() {
           }
 
           .student-form-overlay {
-            align-items: flex-end;
-
-            padding: 6px;
+            align-items: center;
+            justify-content: center;
+            padding: 82px 12px 14px;
           }
 
           .student-form-modal {
-            max-height: calc(100vh - 12px);
-
-            border-radius: 20px 20px 8px 8px;
+            width: min(100%, 620px);
+            max-height: calc(100dvh - 96px);
+            border-radius: 18px;
           }
 
           .student-form-grid {
@@ -2866,29 +2996,70 @@ export default function Students() {
           }
         }
 
-        @media (max-width: 470px) {
-          .students-stats-grid {
-            grid-template-columns: 1fr;
-          }
+@media (max-width: 470px) {
+  /* ===== STAT CARDS — MOBILE COMPACT ===== */
 
-          .student-card-primary-grid,
-          .student-performance-row,
-          .student-guardian-grid,
-          .student-card-actions,
-          .student-form-grid {
-            grid-template-columns: 1fr;
-          }
+  .students-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
 
-          .student-form-field.double,
-          .student-form-field.full {
-            grid-column: auto;
-          }
+  .students-stat-card {
+    min-height: 78px;
+    padding: 9px 10px;
+    border-radius: 12px;
+  }
 
-          .student-form-days {
-            grid-template-columns:
-              repeat(2,minmax(0,1fr));
-          }
-        }
+  .students-stat-card-head {
+    gap: 5px;
+  }
+
+  .students-stat-card-icon {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    border-radius: 9px;
+  }
+
+  .students-stat-card-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .students-stat-card-label {
+    font-size: 10px;
+    line-height: 1.3;
+  }
+
+  .students-stat-card strong {
+    margin-top: 5px;
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .students-stat-card small {
+    margin-top: 4px;
+    font-size: 8px;
+    line-height: 1.25;
+  }
+
+  .student-card-primary-grid,
+  .student-performance-row,
+  .student-guardian-grid,
+  .student-card-actions,
+  .student-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .student-form-field.double,
+  .student-form-field.full {
+    grid-column: auto;
+  }
+
+  .student-form-days {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
       `}</style>
     </div>
   );
@@ -3102,6 +3273,23 @@ function StudentCard({
         </strong>
       </div>
 
+      {active && (
+        Number(student.attendance_rate || 0) < 70 ||
+        Number(student.recitations_count || 0) === 0 ||
+        !student.profile_complete ||
+        !student.halaqa_id
+      ) && (
+        <div className="student-smart-alert">
+          <AlertTriangle size={12} />
+          <span>
+            متابعة إدارية: {!student.halaqa_id ? "غير مرتبط بحلقة • " : ""}
+            {!student.profile_complete ? "الملف غير مكتمل • " : ""}
+            {Number(student.attendance_rate || 0) < 70 ? "الحضور منخفض • " : ""}
+            {Number(student.recitations_count || 0) === 0 ? "لا يوجد تسميع" : ""}
+          </span>
+        </div>
+      )}
+
       <div className="student-card-actions">
         <button
           type="button"
@@ -3254,10 +3442,10 @@ function StudentFormModal({
                 label="رقم الطالب"
                 required
                 value={form.user_number}
-                onChange={(value) =>
-                  updateForm("user_number", value)
-                }
-                placeholder="مثال: S001"
+                onChange={() => {}}
+                placeholder="يُنشأ تلقائيًا"
+                readOnly
+                hint={editingStudent ? "رقم الطالب ثابت" : "تم توليده تلقائيًا بواسطة النظام"}
               />
 
               <Field
@@ -3679,6 +3867,8 @@ function Field({
   type = "text",
   textarea = false,
   className = "",
+  readOnly = false,
+  hint = "",
 }) {
   return (
     <div
@@ -3705,7 +3895,16 @@ function Field({
             onChange(event.target.value)
           }
           placeholder={placeholder}
+          readOnly={readOnly}
+          className={readOnly ? "student-auto-number-input" : ""}
         />
+      )}
+
+      {hint && (
+        <small className="student-field-hint">
+          <Hash size={10} />
+          {hint}
+        </small>
       )}
     </div>
   );

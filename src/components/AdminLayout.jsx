@@ -90,11 +90,7 @@ const sections = [
         path: `${BASE_PATH}/attendance`,
         icon: ClipboardCheck,
       },
-      {
-        name: "التسميع",
-        path: `${BASE_PATH}/recitations`,
-        icon: Mic2,
-      },
+     
       {
         name: "الاختبارات",
         path: `${BASE_PATH}/exams`,
@@ -1220,8 +1216,10 @@ export default function AdminLayout() {
           ========================= */
 
           .admin-layout-sidebar {
-            position: sticky;
+            position: fixed;
             top: 0;
+            right: 0;
+            bottom: 0;
             z-index: 50;
             width: 296px;
             height: 100vh;
@@ -1327,18 +1325,12 @@ export default function AdminLayout() {
             place-items: center;
             overflow: hidden;
             padding: 5px;
-            border:
-              1px solid rgba(217,190,112,.28);
+            border: 1px solid rgba(200,168,75,.34);
             border-radius: 15px;
-            background:
-              linear-gradient(
-                145deg,
-                rgba(255,255,255,.13),
-                rgba(255,255,255,.05)
-              );
+            background: #FFFFFF;
             box-shadow:
-              inset 0 0 0 1px rgba(255,255,255,.04),
-              0 12px 25px rgba(0,0,0,.14);
+              inset 0 0 0 1px rgba(255,255,255,.70),
+              0 10px 24px rgba(0,0,0,.12);
           }
 
           .admin-layout-logo img {
@@ -1834,16 +1826,27 @@ export default function AdminLayout() {
             position: relative;
             z-index: 1;
             min-width: 0;
-            flex: 1;
+            width: calc(100% - 296px);
+            margin-right: 296px;
             min-height: 100vh;
             min-height: 100dvh;
+            transition:
+              width .22s ease,
+              margin-right .22s ease;
+          }
+
+          .admin-layout-sidebar.collapsed ~ .admin-layout-main {
+            width: calc(100% - 88px);
+            margin-right: 88px;
           }
 
           /* TOPBAR */
 
           .admin-layout-topbar {
-            position: sticky;
+            position: relative;
             top: 0;
+            right: 296px;
+            left: 0;
             z-index: 40;
             min-height: 76px;
             display: flex;
@@ -1859,6 +1862,10 @@ export default function AdminLayout() {
               blur(18px);
             box-shadow:
               0 8px 30px rgba(7,47,42,.035);
+          }
+
+          .admin-layout-sidebar.collapsed ~ .admin-layout-main .admin-layout-topbar {
+            right: 88px;
           }
 
           .admin-layout-topbar::after {
@@ -2175,11 +2182,16 @@ export default function AdminLayout() {
               display: block;
             }
 
-            .admin-layout-main {
+            .admin-layout-main,
+            .admin-layout-sidebar.collapsed ~ .admin-layout-main {
               width: 100%;
+              margin-right: 0;
             }
 
-            .admin-layout-topbar {
+            .admin-layout-topbar,
+            .admin-layout-sidebar.collapsed ~ .admin-layout-main .admin-layout-topbar {
+              right: 0;
+              left: 0;
               min-height: 66px;
               padding: 8px 11px;
               backdrop-filter: none;
@@ -2199,7 +2211,7 @@ export default function AdminLayout() {
 
             .admin-layout-content {
               padding:
-                13px 10px 22px;
+                12px 10px 22px;
             }
 
             .admin-layout-mobile-overlay {
@@ -2243,6 +2255,52 @@ export default function AdminLayout() {
               transition: none !important;
             }
           }
+          /* =========================================================
+             FINAL LAYOUT JOIN
+             Sidebar + Topbar are one connected visual shell.
+             Topbar scrolls normally (NOT fixed/sticky).
+          ========================================================= */
+          .admin-layout-main {
+            position: relative !important;
+            min-width: 0 !important;
+          }
+
+          .admin-layout-topbar {
+            position: relative !important;
+            inset: auto !important;
+            top: auto !important;
+            right: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            box-sizing: border-box !important;
+          }
+
+          .admin-layout-sidebar.collapsed ~ .admin-layout-main .admin-layout-topbar {
+            right: auto !important;
+            left: auto !important;
+          }
+
+          .admin-layout-content {
+            padding-top: 18px !important;
+          }
+
+          @media (max-width: 1024px) {
+            .admin-layout-topbar {
+              width: 100% !important;
+              margin: 0 !important;
+              border-radius: 0 !important;
+            }
+
+            .admin-layout-content {
+              padding-top: 12px !important;
+            }
+          }
+
+
+
         `}
       </style>
     </div>

@@ -34,7 +34,7 @@ import "../styles/TVLeaderboardPage.css";
 import ornamentMain from "../assets/Z-5.png";
 import ornamentCorner from "../assets/Z-6.png";
 
-const PAGE_DURATION = 40;
+const PAGE_DURATION = 25;
 const DATA_REFRESH_INTERVAL = 60 * 1000;
 
 const QUOTES = [
@@ -87,6 +87,47 @@ function formatDate(date) {
     month: "long",
     year: "numeric",
   }).format(date);
+}
+
+
+function IlluminatedCorner({ className = "" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 180 180"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path className="ill-vine" d="M176 5C126 7 88 21 59 49C31 76 18 112 8 173" />
+      <path className="ill-fine" d="M174 17C134 20 102 32 78 54C49 81 34 119 26 160" />
+      <path className="ill-vine" d="M154 8c-6 23-18 39-37 49-19 10-36 12-50 28-15 17-17 40-21 59" />
+      <path className="ill-vine" d="M114 31c5 17 1 31-12 41-12 9-27 11-35 24-8 12-6 28-7 39" />
+
+      <path className="ill-leaf" d="M132 24c-15 0-25 7-30 21 15 1 26-5 30-21Z" />
+      <path className="ill-leaf" d="M109 50c-14-3-25 2-32 15 14 4 25-1 32-15Z" />
+      <path className="ill-leaf" d="M79 73c-13-5-25-2-34 9 12 7 24 4 34-9Z" />
+      <path className="ill-leaf" d="M55 103c-11-7-22-7-33 1 10 9 22 9 33-1Z" />
+
+      <path className="ill-leaf" d="M142 38c1 14 8 24 21 29 2-14-5-24-21-29Z" />
+      <path className="ill-leaf" d="M116 62c2 13 9 21 21 25 1-12-6-21-21-25Z" />
+      <path className="ill-leaf" d="M88 88c3 12 11 20 23 22 0-12-8-20-23-22Z" />
+
+      <path className="ill-vine" d="M50 118c14-3 24 0 30 10 6 10 4 21-3 31" />
+      <path className="ill-leaf" d="M73 126c8 3 13 9 14 18-9-1-14-7-14-18Z" />
+      <path className="ill-leaf" d="M63 137c-8 2-13 7-16 15 9 0 14-5 16-15Z" />
+
+      <path className="ill-vine" d="M164 5c-2 13-8 22-18 27" />
+      <path className="ill-leaf" d="M151 21c-7-5-9-12-7-20 8 4 10 11 7 20Z" />
+
+      <circle className="ill-dot" cx="116" cy="58" r="2.6" />
+      <circle className="ill-dot" cx="79" cy="84" r="2.2" />
+      <circle className="ill-dot" cx="48" cy="112" r="2.4" />
+      <circle className="ill-dot" cx="24" cy="148" r="1.9" />
+
+      <path className="ill-fine" d="M176 5h-33M176 5v33" />
+      <path className="ill-fine" d="M169 12h-24M169 12v24" />
+    </svg>
+  );
 }
 
 export default function TVLeaderboardPage() {
@@ -466,7 +507,9 @@ export default function TVLeaderboardPage() {
   const toggleFullscreen = async () => {
     try {
       if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
+        const target = document.querySelector(".tv-page");
+        if (!target) throw new Error("TV page not found");
+        await target.requestFullscreen();
         setIsFullscreen(true);
       } else {
         await document.exitFullscreen();
@@ -530,6 +573,11 @@ export default function TVLeaderboardPage() {
 
       <div className="tv-page__glow tv-page__glow--one" />
       <div className="tv-page__glow tv-page__glow--two" />
+
+      <IlluminatedCorner className="tv-illumination tv-illumination--tr" />
+      <IlluminatedCorner className="tv-illumination tv-illumination--tl" />
+      <IlluminatedCorner className="tv-illumination tv-illumination--br" />
+      <IlluminatedCorner className="tv-illumination tv-illumination--bl" />
 
       <main className="tv-shell">
         <header className="tv-header">
@@ -724,6 +772,522 @@ export default function TVLeaderboardPage() {
           }
         />
       </main>
+
+      <style>{`
+        /* =========================================================
+           الصِّدّيق TV — ILLUMINATED MANUSCRIPT EDITION
+           Visual layer only. No data/query/ranking behavior changed.
+           ========================================================= */
+
+        .tv-page {
+          --tv-ink: #123f34;
+          --tv-ink-deep: #062f28;
+          --tv-green: #075444;
+          --tv-green-2: #0b6954;
+          --tv-gold: #b78a2b;
+          --tv-gold-light: #e5c86f;
+          --tv-paper: #fbfaf5;
+          --tv-paper-2: #f5f0e4;
+          --tv-line: rgba(135, 105, 38, .20);
+          position: relative;
+          isolation: isolate;
+          min-height: 100vh;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 50% -10%, rgba(211,181,102,.16), transparent 34%),
+            radial-gradient(circle at 92% 12%, rgba(7,84,68,.13), transparent 28%),
+            radial-gradient(circle at 8% 88%, rgba(183,138,43,.10), transparent 30%),
+            linear-gradient(145deg, #f7f4ea 0%, #fcfbf7 45%, #f2eee2 100%) !important;
+          color: var(--tv-ink);
+        }
+
+        /* ورق مخطوط هادئ بدلاً من خلفية ألعاب أو neon */
+        .tv-page::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -4;
+          pointer-events: none;
+          opacity: .28;
+          background-image:
+            repeating-linear-gradient(
+              0deg,
+              rgba(92,70,28,.025) 0,
+              rgba(92,70,28,.025) 1px,
+              transparent 1px,
+              transparent 4px
+            );
+          mix-blend-mode: multiply;
+        }
+
+        /* إطار مستوحى من تذهيب صفحات المخطوطات */
+        .tv-page::after {
+          content: "";
+          position: fixed;
+          inset: 13px;
+          z-index: 2;
+          pointer-events: none;
+          border: 1px solid rgba(171,128,34,.34);
+          border-radius: 24px;
+          box-shadow:
+            inset 0 0 0 4px rgba(255,255,255,.62),
+            inset 0 0 0 5px rgba(171,128,34,.10);
+        }
+
+        .tv-background-pattern {
+          pointer-events: none !important;
+          filter: sepia(.22) saturate(.75) contrast(.9) !important;
+          opacity: .075 !important;
+          background-repeat: no-repeat !important;
+          background-size: contain !important;
+          mix-blend-mode: multiply;
+        }
+
+        .tv-background-pattern--one {
+          width: min(31vw, 520px) !important;
+          height: min(31vw, 520px) !important;
+          top: -9vw !important;
+          right: -8vw !important;
+          transform: rotate(8deg);
+        }
+
+        .tv-background-pattern--two {
+          width: min(28vw, 460px) !important;
+          height: min(28vw, 460px) !important;
+          left: -7vw !important;
+          bottom: -8vw !important;
+          transform: rotate(180deg);
+        }
+
+        .tv-page__glow {
+          opacity: .14 !important;
+          filter: blur(90px) !important;
+        }
+
+        .tv-page__glow--one {
+          background: #b78a2b !important;
+        }
+
+        .tv-page__glow--two {
+          background: #0b6954 !important;
+        }
+
+        .tv-shell {
+          position: relative;
+          z-index: 3;
+          width: 100% !important;
+          min-height: calc(100dvh - 38px);
+          margin: 19px auto !important;
+          padding: clamp(16px, 1.65vw, 30px) !important;
+          border: 1px solid rgba(160,124,43,.18);
+          border-radius: 25px;
+          background:
+            linear-gradient(rgba(255,255,255,.80), rgba(255,255,255,.80)),
+            linear-gradient(135deg, rgba(214,191,126,.10), transparent 42%);
+          box-shadow:
+            0 30px 90px rgba(24,49,39,.09),
+            inset 0 1px 0 rgba(255,255,255,.95);
+          backdrop-filter: blur(7px);
+        }
+
+        /* الهيدر: رسمي، هادئ، أقرب إلى واجهة مؤسسة */
+        .tv-header {
+          position: relative;
+          overflow: hidden;
+          padding: clamp(16px, 1.55vw, 25px) !important;
+          border: 1px solid rgba(201,166,73,.35) !important;
+          border-radius: 20px !important;
+          background:
+            linear-gradient(118deg, rgba(5,52,43,.985), rgba(7,82,66,.975) 66%, rgba(5,57,47,.985)) !important;
+          box-shadow: 0 16px 38px rgba(6,60,49,.13) !important;
+        }
+
+        .tv-header::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background:
+            radial-gradient(circle at 9% 50%, rgba(224,196,109,.13), transparent 22%),
+            linear-gradient(90deg, transparent, rgba(255,255,255,.025), transparent);
+        }
+
+        .tv-header::after {
+          content: "";
+          position: absolute;
+          right: 0;
+          left: 0;
+          bottom: 0;
+          height: 3px;
+          background: linear-gradient(90deg, transparent 3%, #a97e22 24%, #ead486 50%, #a97e22 76%, transparent 97%);
+          opacity: .76;
+        }
+
+        .tv-header__brand,
+        .tv-header__actions {
+          position: relative;
+          z-index: 1;
+        }
+
+        .tv-header__logo {
+          position: relative;
+          width: 58px !important;
+          height: 58px !important;
+          border-radius: 16px !important;
+          color: #f0d477 !important;
+          border: 1px solid rgba(235,207,121,.34) !important;
+          background:
+            linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.035)) !important;
+          box-shadow:
+            inset 0 0 0 4px rgba(255,255,255,.025),
+            0 10px 24px rgba(0,0,0,.12) !important;
+        }
+
+        .tv-header__logo::after {
+          content: "";
+          position: absolute;
+          inset: 6px;
+          border: 1px solid rgba(236,207,116,.18);
+          border-radius: 11px;
+        }
+
+        .tv-header__eyebrow {
+          color: #e6c86e !important;
+          letter-spacing: .02em;
+          font-size: clamp(10px, .75vw, 13px) !important;
+        }
+
+        .tv-header h1 {
+          margin-top: 4px !important;
+          color: #fffdf7 !important;
+          font-size: clamp(25px, 2.2vw, 39px) !important;
+          font-weight: 900 !important;
+          letter-spacing: -.025em;
+          text-shadow: none !important;
+        }
+
+        .tv-header p {
+          color: rgba(255,255,255,.68) !important;
+          font-size: clamp(10px, .8vw, 14px) !important;
+          letter-spacing: .01em;
+        }
+
+        .tv-clock-card,
+        .tv-icon-button {
+          border: 1px solid rgba(255,255,255,.14) !important;
+          background: rgba(255,255,255,.075) !important;
+          color: #fff !important;
+          box-shadow: none !important;
+          backdrop-filter: blur(8px);
+        }
+
+        .tv-clock-card {
+          border-radius: 13px !important;
+        }
+
+        .tv-clock-card svg {
+          color: #e4c669 !important;
+        }
+
+        .tv-clock-card span {
+          color: rgba(255,255,255,.61) !important;
+        }
+
+        .tv-icon-button {
+          border-radius: 12px !important;
+          transition: background .18s ease, border-color .18s ease, transform .18s ease !important;
+        }
+
+        .tv-icon-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          border-color: rgba(230,201,110,.40) !important;
+          background: rgba(255,255,255,.12) !important;
+        }
+
+        /* شريط النطاق: كرت إداري لا شريط ألعاب */
+        .tv-toolbar {
+          margin-top: 12px !important;
+          padding: 11px 13px !important;
+          border: 1px solid rgba(29,77,62,.12) !important;
+          border-radius: 16px !important;
+          background: rgba(255,255,255,.88) !important;
+          box-shadow: 0 7px 22px rgba(27,61,49,.045) !important;
+        }
+
+        .tv-section-label {
+          color: #284f42 !important;
+          font-weight: 850 !important;
+        }
+
+        .tv-section-label svg {
+          color: #ad8427 !important;
+        }
+
+        .tv-mini-stat {
+          border: 1px solid rgba(32,82,65,.10) !important;
+          border-radius: 12px !important;
+          background: #f8faf7 !important;
+          box-shadow: none !important;
+        }
+
+        .tv-mini-stat svg {
+          color: #a98022 !important;
+        }
+
+        .tv-mini-stat span {
+          color: #7f8d86 !important;
+        }
+
+        .tv-mini-stat strong {
+          color: #164b3c !important;
+        }
+
+        /* أي مكونات داخلية موجودة في ملفات منفصلة:
+           نوحّد لغتها البصرية بدون تغيير منطقها */
+        .tv-page [class*="quote"] {
+          border-color: rgba(182,139,42,.22) !important;
+          box-shadow: none !important;
+        }
+
+        .tv-page [class*="podium"] {
+          filter: saturate(.88);
+        }
+
+        .tv-page [class*="podium"] [class*="card"],
+        .tv-page [class*="leaderboard"] [class*="card"],
+        .tv-page [class*="table"] {
+          border-color: rgba(28,76,61,.12) !important;
+          box-shadow: 0 9px 28px rgba(25,62,49,.05) !important;
+        }
+
+        .tv-page [class*="leaderboard"] thead,
+        .tv-page [class*="table"] thead {
+          background: #f1f5f1 !important;
+          color: #456157 !important;
+        }
+
+        .tv-page [class*="leaderboard"] tbody tr:nth-child(even),
+        .tv-page [class*="table"] tbody tr:nth-child(even) {
+          background: rgba(247,249,246,.82) !important;
+        }
+
+        .tv-page [class*="leaderboard"] tbody tr:hover,
+        .tv-page [class*="table"] tbody tr:hover {
+          background: #f4f8f4 !important;
+        }
+
+        .tv-state-card {
+          min-height: 290px !important;
+          border: 1px solid rgba(34,79,64,.12) !important;
+          border-radius: 18px !important;
+          background: rgba(255,255,255,.86) !important;
+          color: #244c3f !important;
+          box-shadow: 0 12px 34px rgba(29,63,51,.05) !important;
+        }
+
+        .tv-state-card > svg {
+          color: #b2892d !important;
+        }
+
+        .tv-loader {
+          border-color: rgba(11,101,80,.16) !important;
+          border-top-color: #0b6954 !important;
+        }
+
+        /* زخرفة تذهيب نباتية حقيقية:
+           palmette + split leaves + scrolling vine */
+        .tv-illumination {
+          position: fixed;
+          z-index: 4;
+          width: clamp(105px, 10vw, 180px);
+          height: clamp(105px, 10vw, 180px);
+          pointer-events: none;
+          opacity: .28;
+          color: #a77d21;
+          filter: drop-shadow(0 2px 1px rgba(255,255,255,.55));
+        }
+
+        .tv-illumination--tr { top: 17px; right: 17px; }
+        .tv-illumination--tl { top: 17px; left: 17px; transform: scaleX(-1); }
+        .tv-illumination--br { bottom: 17px; right: 17px; transform: scaleY(-1); }
+        .tv-illumination--bl { bottom: 17px; left: 17px; transform: scale(-1); }
+
+        .tv-illumination .ill-vine {
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.45;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .tv-illumination .ill-leaf {
+          fill: currentColor;
+          opacity: .88;
+        }
+
+        .tv-illumination .ill-dot {
+          fill: #0a6652;
+          opacity: .62;
+        }
+
+        .tv-illumination .ill-fine {
+          fill: none;
+          stroke: currentColor;
+          stroke-width: .75;
+          opacity: .55;
+        }
+
+        /* تنعيم العناصر السفلية */
+        .tv-page footer,
+        .tv-page [class*="footer"] {
+          border-color: rgba(36,79,65,.11) !important;
+          color: #607269 !important;
+        }
+
+        @media (max-width: 900px) {
+          .tv-page::after {
+            inset: 7px;
+            border-radius: 18px;
+          }
+
+          .tv-shell {
+            width: 100% !important;
+            margin: 11px auto !important;
+            padding: 12px !important;
+            border-radius: 18px;
+          }
+
+          .tv-header {
+            padding: 15px !important;
+          }
+
+          .tv-illumination {
+            width: 100px;
+            height: 100px;
+            opacity: .18;
+          }
+
+          .tv-illumination--tr,
+          .tv-illumination--tl {
+            top: 8px;
+          }
+
+          .tv-illumination--br,
+          .tv-illumination--bl {
+            bottom: 8px;
+          }
+
+          .tv-illumination--tr,
+          .tv-illumination--br {
+            right: 8px;
+          }
+
+          .tv-illumination--tl,
+          .tv-illumination--bl {
+            left: 8px;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .tv-shell {
+            width: 100% !important;
+            margin: 7px auto !important;
+            padding: 8px !important;
+          }
+
+          .tv-header {
+            border-radius: 15px !important;
+          }
+
+          .tv-header__logo {
+            width: 44px !important;
+            height: 44px !important;
+          }
+
+          .tv-header h1 {
+            font-size: 20px !important;
+          }
+
+          .tv-toolbar {
+            border-radius: 13px !important;
+          }
+
+          .tv-illumination {
+            width: 76px;
+            height: 76px;
+            opacity: .12;
+          }
+        }
+
+
+        /* داخل لوحة الإدارة: لا نعتمد على 100vw حتى لا تُقص الصفحة بسبب الـ sidebar */
+        .tv-page {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+
+        .tv-shell {
+          box-sizing: border-box;
+          max-width: 1760px !important;
+        }
+
+        /* ملء الشاشة الحقيقي للعرض فقط: يخرج .tv-page من AdminLayout تلقائياً */
+        .tv-page:fullscreen,
+        .tv-page:-webkit-full-screen {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          max-width: none !important;
+          height: 100dvh !important;
+          min-height: 100dvh !important;
+          overflow: auto !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background:
+            radial-gradient(circle at 50% -10%, rgba(211,181,102,.16), transparent 34%),
+            radial-gradient(circle at 92% 12%, rgba(7,84,68,.13), transparent 28%),
+            radial-gradient(circle at 8% 88%, rgba(183,138,43,.10), transparent 30%),
+            linear-gradient(145deg, #f7f4ea 0%, #fcfbf7 45%, #f2eee2 100%) !important;
+        }
+
+        .tv-page:fullscreen .tv-shell,
+        .tv-page:-webkit-full-screen .tv-shell {
+          width: calc(100vw - 28px) !important;
+          max-width: none !important;
+          min-height: calc(100dvh - 28px) !important;
+          margin: 14px auto !important;
+          padding: clamp(16px, 1.35vw, 28px) !important;
+        }
+
+        .tv-page:fullscreen::after,
+        .tv-page:-webkit-full-screen::after {
+          position: fixed;
+          inset: 8px;
+        }
+
+        /* في الشاشة الكاملة نحافظ على المشهد كله داخل مساحة العرض قدر الإمكان */
+        @media (min-width: 1200px) and (min-height: 720px) {
+          .tv-page:fullscreen .tv-header,
+          .tv-page:-webkit-full-screen .tv-header {
+            padding-block: 17px !important;
+          }
+
+          .tv-page:fullscreen .tv-toolbar,
+          .tv-page:-webkit-full-screen .tv-toolbar {
+            margin-top: 9px !important;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .tv-page *,
+          .tv-page *::before,
+          .tv-page *::after {
+            animation-duration: .001ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: .001ms !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

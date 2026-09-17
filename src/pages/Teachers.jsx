@@ -25,6 +25,12 @@ import {
   UserCheck,
   UserX,
   AlertCircle,
+  Mail,
+  Hash,
+  Activity,
+  AlertTriangle,
+  UserPlus,
+  Eye,
 } from "lucide-react";
 
 export default function Teachers() {
@@ -39,6 +45,9 @@ export default function Teachers() {
   const [teacherNumber, setTeacherNumber] =
     useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showTeacherModal, setShowTeacherModal] = useState(false);
   const [gender, setGender] = useState("");
   const [educationStage, setEducationStage] =
     useState("");
@@ -71,6 +80,26 @@ export default function Teachers() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!showTeacherModal) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && !loading) {
+        closeTeacherModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showTeacherModal, loading]);
 
   // =====================================================
   // تحميل البيانات
@@ -185,6 +214,40 @@ export default function Teachers() {
   }
 
   // =====================================================
+  // رقم المعلم التلقائي + نافذة الإنشاء
+  // =====================================================
+
+  function generateTeacherNumber() {
+    const randomPart =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase()
+        : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+            .replace(/[^a-z0-9]/gi, "")
+            .slice(0, 10)
+            .toUpperCase();
+
+    return `TR-${randomPart}`;
+  }
+
+  function openCreateTeacher() {
+    clearForm();
+
+    // بيانات الدخول للمعلم الجديد يجب أن تبدأ فارغة دائمًا.
+    // لا نستخدم بريد أو كلمة مرور المستخدم/المشرف الحالي.
+    setEmail("");
+    setPassword("");
+
+    setTeacherNumber(generateTeacherNumber());
+    setShowTeacherModal(true);
+  }
+
+  function closeTeacherModal() {
+    if (loading) return;
+    setShowTeacherModal(false);
+    clearForm();
+  }
+
+  // =====================================================
   // حفظ المعلم
   // =====================================================
 
@@ -197,12 +260,26 @@ export default function Teachers() {
       return;
     }
 
-    if (!teacherNumber.trim()) {
-      showToast(
-        "أدخل رقم المعلم",
-        "error"
-      );
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      showToast("صيغة البريد الإلكتروني غير صحيحة", "error");
       return;
+    }
+
+    if (!editingId && !email.trim()) {
+      showToast("البريد الإلكتروني مطلوب لإنشاء حساب دخول للمعلم", "error");
+      return;
+    }
+
+    if (!editingId && password.length < 8) {
+      showToast("كلمة المرور يجب ألا تقل عن 8 أحرف", "error");
+      return;
+    }
+
+    const finalTeacherNumber =
+      teacherNumber.trim() || generateTeacherNumber();
+
+    if (!teacherNumber.trim()) {
+      setTeacherNumber(finalTeacherNumber);
     }
 
     setLoading(true);
@@ -223,10 +300,13 @@ export default function Teachers() {
                 fullName.trim(),
 
               user_number:
-                teacherNumber.trim(),
+                finalTeacherNumber,
 
               phone:
                 phone.trim() || null,
+
+              email:
+                email.trim() || null,
 
               gender:
                 gender || null,
@@ -280,13 +360,22 @@ else {
           role: "teacher",
 
           user_number:
-            teacherNumber.trim(),
+            finalTeacherNumber,
 
           full_name:
             fullName.trim(),
 
           phone:
             phone.trim() || null,
+
+          email:
+            email.trim() || null,
+
+          education_stage:
+            educationStage || null,
+
+          education_grade:
+            educationGrade || null,
 
           gender:
             gender || null,
@@ -353,6 +442,7 @@ showToast(
   "success"
 );
 
+setShowTeacherModal(false);
 clearForm();
 
 await loadData();
@@ -390,6 +480,10 @@ function editTeacher(teacher) {
       teacher.phone || ""
     );
 
+    setEmail(
+      teacher.email || ""
+    );
+
     setGender(
       teacher.gender || ""
     );
@@ -416,10 +510,7 @@ function editTeacher(teacher) {
       assignedIds
     );
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    setShowTeacherModal(true);
   }
 
   // =====================================================
@@ -432,6 +523,8 @@ function editTeacher(teacher) {
     setFullName("");
     setTeacherNumber("");
     setPhone("");
+    setEmail("");
+    setPassword("");
     setGender("");
     setEducationStage("");
     setEducationGrade("");
@@ -611,6 +704,12 @@ function editTeacher(teacher) {
             )
               .toLowerCase()
               .includes(text) ||
+            String(
+              teacher.email ||
+                ""
+            )
+              .toLowerCase()
+              .includes(text) ||
             (teacher.halaqat || [])
               .some((halaqa) =>
                 String(
@@ -670,6 +769,21 @@ function editTeacher(teacher) {
         0
     ).length;
 
+  const unassignedTeachers =
+    teachers.filter(
+      (teacher) => teacher.halaqatCount === 0
+    ).length;
+
+  const missingContactTeachers =
+    teachers.filter(
+      (teacher) => !teacher.phone && !teacher.email
+    ).length;
+
+  const coverageRate =
+    totalTeachers === 0
+      ? 0
+      : Math.round((assignedTeachers / totalTeachers) * 100);
+
   // =====================================================
   // الواجهة
   // =====================================================
@@ -677,6 +791,7 @@ function editTeacher(teacher) {
   return (
     <div
       dir="rtl"
+      className="teachers-page"
       style={{
         minHeight: "100vh",
         background:
@@ -690,18 +805,18 @@ function editTeacher(teacher) {
       }}
     >
       <div
+        className="teachers-page-inner"
         style={{
-          maxWidth:
-            "1450px",
-          margin:
-            "0 auto",
+          width: "100%",
+          maxWidth: "none",
+          margin: 0,
         }}
       >
         {/* ================================================= */}
         {/* HEADER */}
         {/* ================================================= */}
 
-        <header
+        <header className="teachers-main-header"
           style={{
             display:
               "flex",
@@ -805,38 +920,36 @@ function editTeacher(teacher) {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              loadData(
-                true
-              )
-            }
-            disabled={
-              initialLoading
-            }
-            style={
-              secondaryButton
-            }
-          >
-            <RefreshCw
-              size={16}
-              className={
-                initialLoading
-                  ? "spin"
-                  : ""
-              }
-            />
+          <div style={{ display: "flex", gap: "9px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => loadData(true)}
+              disabled={initialLoading}
+              style={secondaryButton}
+            >
+              <RefreshCw
+                size={16}
+                className={initialLoading ? "spin" : ""}
+              />
+              تحديث
+            </button>
 
-            تحديث
-          </button>
+            <button
+              type="button"
+              onClick={openCreateTeacher}
+              style={primaryButton}
+            >
+              <UserPlus size={17} />
+              إضافة معلم
+            </button>
+          </div>
         </header>
 
         {/* ================================================= */}
         {/* STATISTICS */}
         {/* ================================================= */}
 
-        <div
+        <div className="teachers-stats-grid"
           style={{
             display:
               "grid",
@@ -898,548 +1011,89 @@ function editTeacher(teacher) {
         </div>
 
         {/* ================================================= */}
-        {/* FORM */}
+        {/* SMART MANAGEMENT */}
         {/* ================================================= */}
 
-        <section
+        <section className="teachers-smart-hero"
           style={{
             ...cardStyle,
-            marginBottom:
-              "22px",
+            marginBottom: "20px",
+            background:
+              "linear-gradient(135deg,#0A3C36 0%,#0F5148 72%,#12685B 100%)",
+            color: "#fff",
+            border: "1px solid rgba(200,168,75,.24)",
+            overflow: "hidden",
+            position: "relative",
           }}
         >
-          <div
-  style={{
-    display:"flex",
-    justifyContent:"space-between",
-    alignItems:"center",
-    marginBottom:"28px",
-    paddingBottom:"22px",
-    borderBottom:"1px solid #E2E8F0"
-  }}
->
-
-  <div
-    style={{
-      display:"flex",
-      alignItems:"center",
-      gap:"18px"
-    }}
-  >
-
-    <div
-      style={{
-        width:"58px",
-        height:"58px",
-        borderRadius:"18px",
-        background:
-          editingId
-          ? "#EFF6FF"
-          : "#ECFDF5",
-        display:"flex",
-        alignItems:"center",
-        justifyContent:"center"
-      }}
-    >
-      {
-        editingId
-        ? <Pencil size={24}/>
-        : <Plus size={24}/>
-      }
-    </div>
-
-    <div>
-
-      <div
-        style={{
-          fontSize:"24px",
-          fontWeight:"900",
-          color:"#0F172A"
-        }}
-      >
-        {
-          editingId
-          ? "تعديل المعلم"
-          : "إضافة معلم جديد"
-        }
-      </div>
-
-      <div
-        style={{
-          marginTop:"6px",
-          color:"#64748B",
-          fontSize:"14px",
-          fontWeight:"500"
-        }}
-      >
-        إدارة بيانات المعلم وربطه بالحلقات
-      </div>
-
-    </div>
-
-  </div>
-
-  {
-    editingId && (
-
-      <button
-        type="button"
-        onClick={clearForm}
-        style={{
-          height:"48px",
-          padding:"0 18px",
-          border:"1px solid #E2E8F0",
-          background:"#FFFFFF",
-          borderRadius:"14px",
-          color:"#475569",
-          cursor:"pointer",
-          display:"flex",
-          alignItems:"center",
-          gap:"8px",
-          fontWeight:"700"
-        }}
-      >
-        <X size={16}/>
-        إلغاء التعديل
-      </button>
-
-    )
-  }
-
-</div>
-
-          {/* BASIC DATA */}
-
-          <div
+          <div className="teachers-smart-grid"
             style={{
-              display:
-                "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit,minmax(220px,1fr))",
-              gap:
-                "14px",
+              display: "grid",
+              gridTemplateColumns: "minmax(260px,1.2fr) minmax(300px,2fr)",
+              gap: "18px",
+              alignItems: "center",
             }}
           >
-            <FormField
-              label="اسم المعلم *"
-              value={
-                fullName
-              }
-              onChange={
-                setFullName
-              }
-              placeholder="مثال: محمد أحمد"
-              icon={
-                <UserRound
-                  size={17}
-                />
-              }
-            />
-
-            <FormField
-              label="رقم المعلم *"
-              value={
-                teacherNumber
-              }
-              onChange={
-                setTeacherNumber
-              }
-              placeholder="مثال: T001"
-              icon={
-                <ShieldCheck
-                  size={17}
-                />
-              }
-            />
-
-            <FormField
-              label="رقم الجوال"
-              value={
-                phone
-              }
-              onChange={
-                setPhone
-              }
-              placeholder="05xxxxxxxx"
-              icon={
-                <Phone
-                  size={17}
-                />
-              }
-            />
-
-            <SelectField
-              label="الجنس"
-              value={
-                gender
-              }
-              onChange={
-                setGender
-              }
-              options={[
-                {
-                  value:
-                    "male",
-                  label:
-                    "ذكر",
-                },
-                {
-                  value:
-                    "female",
-                  label:
-                    "أنثى",
-                },
-              ]}
-            />
-
-            <SelectField
-              label="المرحلة التعليمية"
-              value={
-                educationStage
-              }
-              onChange={
-                setEducationStage
-              }
-     options={[
-  {
-    value: "primary",
-    label: "ابتدائي",
-  },
-  {
-    value: "middle",
-    label: "متوسط",
-  },
-  {
-    value: "secondary",
-    label: "ثانوي",
-  },
-  {
-    value: "university",
-    label: "جامعي",
-  },
-  {
-    value: "other",
-    label: "أخرى",
-  },
-]}
-            />
-
-            <FormField
-              label="الصف / المستوى"
-              value={
-                educationGrade
-              }
-              onChange={
-                setEducationGrade
-              }
-              placeholder="مثال: المستوى الثالث"
-              icon={
-                <GraduationCap
-                  size={17}
-                />
-              }
-            />
-          </div>
-
-          {/* Halaqat */}
-
-          <div
-            style={{
-              marginTop:
-                "20px",
-            }}
-          >
-            <div
-              style={{
-                display:
-                  "flex",
-                alignItems:
-                  "center",
-                gap:
-                  "7px",
-                marginBottom:
-                  "9px",
-              }}
-            >
-              <BookOpen
-                size={17}
-                color="#0f5132"
-              />
-
-              <label
-                style={
-                  labelStyle
-                }
+            <div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  color: "#F1D681",
+                  fontSize: "11px",
+                  fontWeight: "900",
+                  marginBottom: "7px",
+                }}
               >
-                الحلقات المرتبط بها
-              </label>
+                <Activity size={15} />
+                مركز الإدارة والمتابعة
+              </div>
+
+              <h2 style={{ margin: 0, fontSize: "21px", fontWeight: "900" }}>
+                نظرة ذكية على هيئة التعليم
+              </h2>
+
+              <p
+                style={{
+                  margin: "7px 0 0",
+                  color: "rgba(255,255,255,.68)",
+                  fontSize: "12px",
+                  lineHeight: "1.8",
+                }}
+              >
+                اكتشف النواقص الإدارية بسرعة وتابع ربط المعلمين بالحلقات
+                واكتمال وسائل التواصل من مكان واحد.
+              </p>
             </div>
 
-            {halaqat.length ===
-            0 ? (
-              <div
-                style={{
-                  padding:
-                    "15px",
-                  borderRadius:
-                    "11px",
-                  background:
-                    "#fafafa",
-                  border:
-                    "1px dashed #d8ddd9",
-                  color:
-                    "#888",
-                  fontSize:
-                    "13px",
-                }}
-              >
-                لا توجد حلقات مضافة حاليًا.
-              </div>
-            ) : (
-              <div
-                style={{
-                  display:
-                    "grid",
-                  gridTemplateColumns:
-                    "repeat(auto-fill,minmax(220px,1fr))",
-                  gap:
-                    "9px",
-                }}
-              >
-                {halaqat.map(
-                  (halaqa) => {
-                    const selected =
-                      selectedHalaqat.includes(
-                        String(
-                          halaqa.id
-                        )
-                      );
-
-                    return (
-                      <button
-                        type="button"
-                        key={
-                          halaqa.id
-                        }
-                        onClick={() =>
-                          toggleHalaqa(
-                            halaqa.id
-                          )
-                        }
-                        style={{
-                          textAlign:
-                            "right",
-                          padding:
-                            "12px",
-                          borderRadius:
-                            "11px",
-                          border:
-                            selected
-                              ? "1px solid #0f5132"
-                              : "1px solid #e0e5e1",
-                          background:
-                            selected
-                              ? "#edf6f0"
-                              : "#fff",
-                          color:
-                            selected
-                              ? "#0f5132"
-                              : "#4f5953",
-                          cursor:
-                            "pointer",
-                          display:
-                            "flex",
-                          alignItems:
-                            "center",
-                          gap:
-                            "9px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width:
-                              "22px",
-                            height:
-                              "22px",
-                            borderRadius:
-                              "7px",
-                            border:
-                              selected
-                                ? "1px solid #0f5132"
-                                : "1px solid #cfd6d1",
-                            background:
-                              selected
-                                ? "#0f5132"
-                                : "#fff",
-                            color:
-                              "#fff",
-                            display:
-                              "flex",
-                            alignItems:
-                              "center",
-                            justifyContent:
-                              "center",
-                            flexShrink:
-                              0,
-                          }}
-                        >
-                          {selected && (
-                            <CheckCircle2
-                              size={
-                                15
-                              }
-                            />
-                          )}
-                        </div>
-
-                        <span
-                          style={{
-                            fontSize:
-                              "13px",
-                            fontWeight:
-                              selected
-                                ? "750"
-                                : "600",
-                          }}
-                        >
-                          {
-                            halaqa.name
-                          }
-                        </span>
-                      </button>
-                    );
-                  }
-                )}
-              </div>
-            )}
-
-            {selectedHalaqat.length >
-              0 && (
-              <div
-                style={{
-                  marginTop:
-                    "9px",
-                  color:
-                    "#0f5132",
-                  fontSize:
-                    "12px",
-                  fontWeight:
-                    "700",
-                }}
-              >
-                تم اختيار{" "}
-                {
-                  selectedHalaqat.length
-                }{" "}
-                حلقة
-              </div>
-            )}
-          </div>
-
-          {/* NOTES */}
-
-          <div
-            style={{
-              marginTop:
-                "18px",
-            }}
-          >
-            <label
-              style={
-                labelStyle
-              }
-            >
-              ملاحظات
-            </label>
-
-            <textarea
-              value={
-                notes
-              }
-              onChange={(e) =>
-                setNotes(
-                  e.target.value
-                )
-              }
-              placeholder="أي ملاحظات إضافية عن المعلم..."
-              rows={4}
+            <div
+              className="teachers-smart-metrics"
               style={{
-                ...inputStyle,
-                resize:
-                  "vertical",
-                minHeight:
-                  "95px",
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              display:
-                "flex",
-              gap:
-                "9px",
-              flexWrap:
-                "wrap",
-              marginTop:
-                "18px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={
-                saveTeacher
-              }
-              disabled={
-                loading
-              }
-              style={{
-                ...primaryButton,
-                opacity:
-                  loading
-                    ? 0.7
-                    : 1,
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))",
+                gap: "9px",
               }}
             >
-              {loading ? (
-                <RefreshCw
-                  size={17}
-                  className="spin"
-                />
-              ) : editingId ? (
-                <Save
-                  size={17}
-                />
-              ) : (
-                <Plus
-                  size={18}
-                />
-              )}
-
-              {loading
-                ? "جارٍ الحفظ..."
-                : editingId
-                ? "حفظ التعديلات"
-                : "إضافة المعلم"}
-            </button>
-
-            {editingId && (
-              <button
-                type="button"
-                onClick={
-                  clearForm
-                }
-                style={
-                  secondaryButton
-                }
-              >
-                <X
-                  size={16}
-                />
-
-                إلغاء
-              </button>
-            )}
+              <SmartMetric
+                label="تغطية الحلقات"
+                value={`${coverageRate}%`}
+                note={`${assignedTeachers} معلم مرتبط`}
+                icon={<ShieldCheck size={17} />}
+              />
+              <SmartMetric
+                label="بدون حلقة"
+                value={unassignedTeachers}
+                note={unassignedTeachers ? "تحتاج متابعة" : "الوضع مكتمل"}
+                icon={<AlertTriangle size={17} />}
+              />
+              <SmartMetric
+                label="بيانات تواصل ناقصة"
+                value={missingContactTeachers}
+                note="لا جوال ولا بريد"
+                icon={<Mail size={17} />}
+              />
+            </div>
           </div>
         </section>
 
@@ -1447,7 +1101,7 @@ function editTeacher(teacher) {
         {/* SEARCH */}
         {/* ================================================= */}
 
-        <section
+        <section className="teachers-filter-card"
           style={{
             ...cardStyle,
             padding:
@@ -1456,7 +1110,7 @@ function editTeacher(teacher) {
               "20px",
           }}
         >
-          <div
+          <div className="teachers-filter-grid"
             style={{
               display:
                 "grid",
@@ -1497,7 +1151,7 @@ function editTeacher(teacher) {
                       .value
                   )
                 }
-                placeholder="ابحث باسم المعلم أو رقمه أو جواله أو الحلقة..."
+                placeholder="ابحث بالاسم أو الرقم أو الجوال أو البريد أو الحلقة..."
                 style={{
                   ...inputStyle,
                   paddingRight:
@@ -1611,13 +1265,11 @@ function editTeacher(teacher) {
           />
         ) : (
           <div
+            className="teachers-list-grid"
             style={{
-              display:
-                "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit,minmax(320px,1fr))",
-              gap:
-                "17px",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+              gap: "17px",
             }}
           >
             {filteredTeachers.map(
@@ -1645,9 +1297,1634 @@ function editTeacher(teacher) {
         )}
       </div>
 
+
+      {/* ================================================= */}
+      {/* LEGENDARY CREATE / EDIT TEACHER MODAL */}
+      {/* ================================================= */}
+
+      {showTeacherModal && (
+        <div
+          className="teacher-modal-backdrop"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeTeacherModal();
+          }}
+        >
+          <div className="teacher-modal-shell">
+            <div className="teacher-modal-ornament teacher-modal-ornament-a" />
+            <div className="teacher-modal-ornament teacher-modal-ornament-b" />
+
+            <div className="teacher-modal-hero">
+              <div className="teacher-modal-hero-top">
+                <div className="teacher-modal-brand">
+                  <div className="teacher-modal-brand-icon">
+                    {editingId ? <Pencil size={24} /> : <GraduationCap size={27} />}
+                  </div>
+                  <div>
+                    <div className="teacher-modal-eyebrow">
+                      <ShieldCheck size={13} />
+                      نظام الصديق · إدارة هيئة التعليم
+                    </div>
+                    <h2>
+                      {editingId ? "تحديث ملف المعلم" : "إنشاء ملف معلم جديد"}
+                    </h2>
+                    <p>
+                      {editingId
+                        ? "حدّث البيانات الإدارية والتعليمية وربط الحلقات من مكان واحد."
+                        : "أنشئ ملفًا إداريًا متكاملًا للمعلم، وسيُمنح رقمًا تعريفيًا تلقائيًا."}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="teacher-modal-close"
+                  onClick={closeTeacherModal}
+                  aria-label="إغلاق"
+                >
+                  <X size={19} />
+                </button>
+              </div>
+
+              <div className="teacher-modal-steps">
+                <span className="active"><b>01</b> البيانات الأساسية</span>
+                <span><b>02</b> بيانات التواصل</span>
+                <span><b>03</b> التكليف والحلقات</span>
+              </div>
+            </div>
+
+            <div className="teacher-modal-body">
+              <div className="teacher-number-card">
+                <div className="teacher-number-icon"><Hash size={22} /></div>
+                <div className="teacher-number-copy">
+                  <span>الرقم التعريفي للمعلم</span>
+                  <strong>{teacherNumber || "سيُنشأ تلقائيًا"}</strong>
+                  <small>رقم فريد للاستخدام داخل نظام الصديق</small>
+                </div>
+                <div className="teacher-auto-badge">
+                  <CheckCircle2 size={14} />
+                  تلقائي
+                </div>
+              </div>
+
+              <div className="teacher-section-head">
+                <div className="teacher-section-icon"><UserRound size={18} /></div>
+                <div>
+                  <strong>البيانات الأساسية</strong>
+                  <span>المعلومات الرئيسية في الملف الإداري للمعلم</span>
+                </div>
+              </div>
+
+              <div className="teacher-form-grid">
+                <FormField
+                  label="اسم المعلم *"
+                  value={fullName}
+                  onChange={setFullName}
+                  placeholder="اكتب الاسم الرباعي"
+                  icon={<UserRound size={17} />}
+                />
+
+                <SelectField
+                  label="الجنس"
+                  value={gender}
+                  onChange={setGender}
+                  options={[
+                    { value: "male", label: "ذكر" },
+                    { value: "female", label: "أنثى" },
+                  ]}
+                />
+
+                <SelectField
+                  label="المرحلة التعليمية"
+                  value={educationStage}
+                  onChange={setEducationStage}
+                  options={[
+                    { value: "primary", label: "ابتدائي" },
+                    { value: "middle", label: "متوسط" },
+                    { value: "secondary", label: "ثانوي" },
+                    { value: "university", label: "جامعي" },
+                    { value: "other", label: "أخرى" },
+                  ]}
+                />
+
+                <FormField
+                  label="الصف / المستوى"
+                  value={educationGrade}
+                  onChange={setEducationGrade}
+                  placeholder="مثال: المستوى الثالث"
+                  icon={<GraduationCap size={17} />}
+                />
+              </div>
+
+              <div className="teacher-section-head teacher-section-gap">
+                <div className="teacher-section-icon gold"><Mail size={18} /></div>
+                <div>
+                  <strong>بيانات التواصل</strong>
+                  <span>
+                    أدخل بريد المعلم الجديد وكلمة مرور جديدة خاصة به
+                  </span>
+                </div>
+              </div>
+
+              <div className="teacher-form-grid">
+                <FormField
+                  label="رقم الجوال"
+                  value={phone}
+                  onChange={setPhone}
+                  placeholder="05xxxxxxxx"
+                  icon={<Phone size={17} />}
+                  dir="ltr"
+                />
+
+                <FormField
+                  label="البريد الإلكتروني"
+                  value={email}
+                  onChange={setEmail}
+                  placeholder="أدخل بريد المعلم الجديد"
+                  icon={<Mail size={17} />}
+                  type="email"
+                  dir="ltr"
+                  autoComplete="off"
+                />
+
+                {!editingId && (
+                  <FormField
+                    label="كلمة المرور *"
+                    value={password}
+                    onChange={setPassword}
+                    placeholder="أنشئ كلمة مرور للمعلم"
+                    icon={<ShieldCheck size={17} />}
+                    type="password"
+                    dir="ltr"
+                    autoComplete="new-password"
+                  />
+                )}
+              </div>
+
+              <div className="teacher-section-head teacher-section-gap">
+                <div className="teacher-section-icon"><BookOpen size={18} /></div>
+                <div>
+                  <strong>التكليف بالحلقات</strong>
+                  <span>اختر الحلقة أو الحلقات التي يتولى المعلم متابعتها</span>
+                </div>
+                {selectedHalaqat.length > 0 && (
+                  <div className="teacher-selected-count">
+                    {selectedHalaqat.length} محددة
+                  </div>
+                )}
+              </div>
+
+              <div className="teacher-halaqat-grid">
+                {halaqat.length === 0 ? (
+                  <div className="teacher-no-halaqat">
+                    <BookOpen size={20} />
+                    لا توجد حلقات مضافة حاليًا.
+                  </div>
+                ) : (
+                  halaqat.map((halaqa) => {
+                    const selected = selectedHalaqat.includes(String(halaqa.id));
+                    return (
+                      <button
+                        type="button"
+                        key={halaqa.id}
+                        className={
+                          selected
+                            ? "teacher-halaqa-choice selected"
+                            : "teacher-halaqa-choice"
+                        }
+                        onClick={() => toggleHalaqa(halaqa.id)}
+                      >
+                        <span className="teacher-halaqa-check">
+                          {selected && <CheckCircle2 size={14} />}
+                        </span>
+                        <span className="teacher-halaqa-name">{halaqa.name}</span>
+                        <span className="teacher-halaqa-state">
+                          {selected ? "تم الاختيار" : "اختيار"}
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="teacher-section-head teacher-section-gap">
+                <div className="teacher-section-icon muted"><Pencil size={17} /></div>
+                <div>
+                  <strong>ملاحظات إدارية</strong>
+                  <span>أي تفاصيل تساعد في المتابعة أو التكليف</span>
+                </div>
+              </div>
+
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="اكتب ملاحظات المتابعة أو التكليف هنا..."
+                rows={3}
+                className="teacher-notes-area"
+              />
+            </div>
+
+            <div className="teacher-modal-footer">
+              <div className="teacher-modal-footer-note">
+                <ShieldCheck size={16} />
+                سيتم حفظ الملف وربطه مباشرة ببيانات النظام.
+              </div>
+
+              <div className="teacher-modal-actions">
+                <button
+                  type="button"
+                  onClick={closeTeacherModal}
+                  disabled={loading}
+                  className="teacher-cancel-btn"
+                >
+                  إلغاء
+                </button>
+
+                <button
+                  type="button"
+                  onClick={saveTeacher}
+                  disabled={loading}
+                  className="teacher-save-btn"
+                >
+                  {loading ? (
+                    <RefreshCw size={18} className="spin" />
+                  ) : editingId ? (
+                    <Save size={18} />
+                  ) : (
+                    <UserPlus size={18} />
+                  )}
+                  {loading
+                    ? "جارٍ الحفظ..."
+                    : editingId
+                      ? "حفظ التعديلات"
+                      : "إنشاء ملف المعلم"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ================================================= */}
       {/* DELETE MODAL */}
       {/* ================================================= */}
+
+      <style>{`
+        @keyframes teacherSpin { to { transform: rotate(360deg); } }
+        @keyframes teacherModalIn { from { opacity: 0; transform: translateY(18px) scale(.975); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .spin { animation: teacherSpin .8s linear infinite; }
+
+        .teacher-modal-backdrop {
+          position: fixed;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 88px;
+          z-index: 2147483000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          /* على الشاشات الكبيرة نترك مساحة السايد بار الأيمن،
+             وبذلك يتمركز الـ Modal داخل مساحة المحتوى الفعلية لا داخل الشاشة كاملة */
+          padding: 22px 24px 22px 304px;
+          box-sizing: border-box;
+          background:
+            radial-gradient(circle at 50% 20%, rgba(17,91,77,.18), transparent 38%),
+            rgba(3,25,22,.72);
+          backdrop-filter: blur(12px);
+        }
+        .teacher-modal-shell {
+          position: relative;
+          isolation: isolate;
+          width: min(820px, 100%);
+          max-height: min(790px, calc(100dvh - 44px));
+          overflow-y: auto;
+          overflow-x: hidden;
+          margin: 0;
+          transform-origin: center center;
+          border: 1px solid rgba(201,168,73,.45);
+          border-radius: 28px;
+          background: #FBFCFA;
+          animation: teacherModalIn .24s cubic-bezier(.2,.8,.2,1);
+          box-shadow:
+            0 35px 110px rgba(0,24,20,.38),
+            0 0 0 1px rgba(255,255,255,.5) inset;
+        }
+        .teacher-modal-shell::-webkit-scrollbar { width: 6px; }
+        .teacher-modal-shell::-webkit-scrollbar-thumb {
+          background: #C9B36A;
+          border-radius: 999px;
+        }
+        .teacher-modal-ornament {
+          position: absolute;
+          z-index: 2;
+          width: 92px;
+          height: 92px;
+          border: 1px solid rgba(218,186,93,.18);
+          transform: rotate(45deg);
+          pointer-events: none;
+        }
+        .teacher-modal-ornament-a { top: -57px; left: 75px; }
+        .teacher-modal-ornament-b { top: 28px; right: -72px; }
+        .teacher-modal-hero {
+          position: relative;
+          padding: 25px 27px 19px;
+          overflow: hidden;
+          color: #fff;
+          background:
+            radial-gradient(circle at 12% 10%, rgba(214,183,91,.18), transparent 25%),
+            linear-gradient(135deg,#063C34 0%,#0A5146 56%,#0B6253 100%);
+        }
+        .teacher-modal-hero::after {
+          content: "";
+          position: absolute;
+          left: -35px;
+          bottom: -75px;
+          width: 190px;
+          height: 190px;
+          border: 1px solid rgba(230,203,121,.13);
+          border-radius: 50%;
+          box-shadow:
+            0 0 0 18px rgba(230,203,121,.025),
+            0 0 0 42px rgba(230,203,121,.018);
+        }
+        .teacher-modal-hero-top {
+          position: relative;
+          z-index: 3;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 18px;
+        }
+        .teacher-modal-brand {
+          display: flex;
+          align-items: flex-start;
+          gap: 15px;
+        }
+        .teacher-modal-brand-icon {
+          width: 55px;
+          height: 55px;
+          flex: 0 0 55px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(239,211,127,.45);
+          border-radius: 17px;
+          color: #F2D57D;
+          background: rgba(255,255,255,.08);
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+        }
+        .teacher-modal-eyebrow {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 5px;
+          color: #E9CC72;
+          font-size: 10px;
+          font-weight: 900;
+        }
+        .teacher-modal-brand h2 {
+          margin: 0;
+          font-size: 25px;
+          font-weight: 950;
+          letter-spacing: -.02em;
+        }
+        .teacher-modal-brand p {
+          max-width: 620px;
+          margin: 6px 0 0;
+          color: rgba(255,255,255,.66);
+          font-size: 11px;
+          line-height: 1.8;
+        }
+        .teacher-modal-close {
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(255,255,255,.16);
+          border-radius: 13px;
+          color: #fff;
+          background: rgba(255,255,255,.08);
+          cursor: pointer;
+          transition: .2s ease;
+        }
+        .teacher-modal-close:hover {
+          background: rgba(255,255,255,.15);
+          transform: rotate(4deg);
+        }
+        .teacher-modal-steps {
+          position: relative;
+          z-index: 3;
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-top: 20px;
+        }
+        .teacher-modal-steps span {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 7px 10px;
+          border: 1px solid rgba(255,255,255,.11);
+          border-radius: 999px;
+          color: rgba(255,255,255,.56);
+          background: rgba(255,255,255,.045);
+          font-size: 9px;
+          font-weight: 800;
+        }
+        .teacher-modal-steps span.active {
+          border-color: rgba(233,204,114,.35);
+          color: #F3D982;
+          background: rgba(233,204,114,.09);
+        }
+        .teacher-modal-steps b {
+          font-size: 8px;
+          opacity: .75;
+        }
+        .teacher-modal-body { padding: 21px 27px 24px; }
+        .teacher-number-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 23px;
+          padding: 13px 15px;
+          border: 1px solid #E6D8AA;
+          border-radius: 16px;
+          background:
+            linear-gradient(135deg,#FFF9E8 0%,#FFFCF4 65%,#F8FBF7 100%);
+          box-shadow: 0 8px 24px rgba(104,82,24,.045);
+        }
+        .teacher-number-icon {
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          display: grid;
+          place-items: center;
+          border-radius: 12px;
+          color: #8D6A17;
+          background: rgba(211,178,79,.14);
+        }
+        .teacher-number-copy { min-width: 0; flex: 1; }
+        .teacher-number-copy span,
+        .teacher-number-copy small { display: block; }
+        .teacher-number-copy span {
+          color: #947C40;
+          font-size: 9px;
+          font-weight: 800;
+        }
+        .teacher-number-copy strong {
+          display: block;
+          margin: 2px 0;
+          color: #173D34;
+          font-size: 15px;
+          letter-spacing: .06em;
+          direction: ltr;
+          text-align: right;
+        }
+        .teacher-number-copy small {
+          color: #9A9F99;
+          font-size: 8px;
+        }
+        .teacher-auto-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 9px;
+          border-radius: 999px;
+          color: #0A6653;
+          background: #E8F6EF;
+          font-size: 9px;
+          font-weight: 900;
+        }
+        .teacher-section-head {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+        .teacher-section-gap { margin-top: 23px; }
+        .teacher-section-icon {
+          width: 36px;
+          height: 36px;
+          flex: 0 0 36px;
+          display: grid;
+          place-items: center;
+          border-radius: 11px;
+          color: #0C604F;
+          background: #EAF5F0;
+        }
+        .teacher-section-icon.gold {
+          color: #8B691D;
+          background: #FBF3DA;
+        }
+        .teacher-section-icon.muted {
+          color: #66736C;
+          background: #F0F3F1;
+        }
+        .teacher-section-head strong,
+        .teacher-section-head span { display: block; }
+        .teacher-section-head strong {
+          color: #1D3D34;
+          font-size: 13px;
+          font-weight: 900;
+        }
+        .teacher-section-head span {
+          margin-top: 2px;
+          color: #8C9791;
+          font-size: 9px;
+        }
+        .teacher-selected-count {
+          margin-right: auto;
+          padding: 5px 8px;
+          border-radius: 999px;
+          color: #0B604F;
+          background: #EAF6F0;
+          font-size: 9px;
+          font-weight: 900;
+        }
+        .teacher-form-grid {
+          display: grid;
+          grid-template-columns: repeat(2,minmax(0,1fr));
+          gap: 13px;
+        }
+        .teacher-halaqat-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill,minmax(210px,1fr));
+          gap: 9px;
+        }
+        .teacher-halaqa-choice {
+          min-height: 54px;
+          display: grid;
+          grid-template-columns: 23px minmax(0,1fr) auto;
+          align-items: center;
+          gap: 8px;
+          padding: 9px 10px;
+          border: 1px solid #DFE7E2;
+          border-radius: 13px;
+          color: #53615A;
+          background: #fff;
+          font-family: inherit;
+          text-align: right;
+          cursor: pointer;
+          transition: .18s ease;
+        }
+        .teacher-halaqa-choice:hover {
+          border-color: #B8D1C7;
+          transform: translateY(-1px);
+          box-shadow: 0 7px 18px rgba(10,81,70,.06);
+        }
+        .teacher-halaqa-choice.selected {
+          border-color: #88B7A6;
+          color: #0B584A;
+          background: linear-gradient(135deg,#EDF8F3,#F7FBF9);
+          box-shadow: inset 3px 0 0 #C6A84D;
+        }
+        .teacher-halaqa-check {
+          width: 22px;
+          height: 22px;
+          display: grid;
+          place-items: center;
+          border: 1px solid #C9D7D0;
+          border-radius: 7px;
+        }
+        .teacher-halaqa-choice.selected .teacher-halaqa-check {
+          border-color: #0D5D4D;
+          color: #fff;
+          background: #0D5D4D;
+        }
+        .teacher-halaqa-name {
+          overflow: hidden;
+          color: inherit;
+          font-size: 10px;
+          font-weight: 850;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+        .teacher-halaqa-state {
+          color: #A0A8A3;
+          font-size: 8px;
+          font-weight: 800;
+        }
+        .teacher-halaqa-choice.selected .teacher-halaqa-state {
+          color: #9A7828;
+        }
+        .teacher-no-halaqat {
+          grid-column: 1/-1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 18px;
+          border: 1px dashed #D8E2DC;
+          border-radius: 13px;
+          color: #87928C;
+          background: #FAFBFA;
+          font-size: 11px;
+        }
+        .teacher-notes-area {
+          width: 100%;
+          min-height: 84px;
+          padding: 11px 12px;
+          box-sizing: border-box;
+          resize: vertical;
+          outline: none;
+          border: 1px solid #DDE5E0;
+          border-radius: 13px;
+          color: #263A33;
+          background: #fff;
+          font-family: inherit;
+          font-size: 11px;
+          line-height: 1.7;
+        }
+        .teacher-notes-area:focus {
+          border-color: #88B7A6;
+          box-shadow: 0 0 0 3px rgba(13,93,77,.06);
+        }
+        .teacher-modal-footer {
+          position: sticky;
+          bottom: 0;
+          z-index: 5;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          padding: 14px 27px;
+          border-top: 1px solid #E4EAE6;
+          background: rgba(255,255,255,.94);
+          backdrop-filter: blur(10px);
+        }
+        .teacher-modal-footer-note {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          color: #7D8983;
+          font-size: 9px;
+          font-weight: 700;
+        }
+        .teacher-modal-footer-note svg { color: #A88731; }
+        .teacher-modal-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .teacher-cancel-btn,
+        .teacher-save-btn {
+          min-height: 42px;
+          padding: 0 16px;
+          border-radius: 12px;
+          font-family: inherit;
+          font-size: 11px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+        .teacher-cancel-btn {
+          border: 1px solid #DDE5E0;
+          color: #5F6D66;
+          background: #fff;
+        }
+        .teacher-save-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          min-width: 155px;
+          border: 1px solid #0B594B;
+          color: #fff;
+          background: linear-gradient(135deg,#0B594B,#0B6A57);
+          box-shadow: 0 10px 24px rgba(11,89,75,.17);
+        }
+        .teacher-save-btn:hover { transform: translateY(-1px); }
+        .teacher-save-btn:disabled { opacity: .62; cursor: not-allowed; }
+
+        /* عند اختفاء/تصغير السايد بار نعيد التمركز على كامل الشاشة */
+        @media (max-width: 1180px) {
+          .teacher-modal-backdrop {
+            padding: 18px;
+          }
+          .teacher-modal-shell {
+            width: min(820px, 100%);
+          }
+        }
+
+        @media (max-width: 700px) {
+          .teacher-modal-backdrop { padding: 10px; align-items: center; justify-content: center; }
+          .teacher-modal-shell {
+            max-height: 94vh;
+            border-radius: 24px;
+          }
+          .teacher-modal-hero { padding: 20px 17px 16px; }
+          .teacher-modal-brand-icon {
+            width: 46px; height: 46px; flex-basis: 46px;
+          }
+          .teacher-modal-brand h2 { font-size: 20px; }
+          .teacher-modal-brand p { font-size: 9px; }
+          .teacher-modal-steps { gap: 5px; }
+          .teacher-modal-steps span { padding: 6px 8px; font-size: 8px; }
+          .teacher-modal-body { padding: 17px; }
+          .teacher-form-grid { grid-template-columns: 1fr; }
+          .teacher-halaqat-grid { grid-template-columns: 1fr; }
+          .teacher-modal-footer {
+            padding: 12px 17px;
+            align-items: stretch;
+            flex-direction: column;
+          }
+          .teacher-modal-footer-note { display: none; }
+          .teacher-modal-actions { display: grid; grid-template-columns: 1fr 1.4fr; }
+          .teacher-cancel-btn, .teacher-save-btn { width: 100%; }
+        }
+
+        /* ===== Modal positioning across all devices ===== */
+        @media (min-width: 1101px) {
+          .teacher-modal-backdrop {
+            /* AdminLayout collapsed sidebar width */
+            right: 88px;
+          }
+
+          body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+            /* AdminLayout expanded sidebar width */
+            right: 296px;
+          }
+        }
+
+        @media (max-width: 1100px) {
+          .teacher-modal-backdrop {
+            inset: 0;
+            padding:
+              max(14px, env(safe-area-inset-top))
+              max(14px, env(safe-area-inset-right))
+              max(14px, env(safe-area-inset-bottom))
+              max(14px, env(safe-area-inset-left));
+          }
+
+          .teacher-modal-shell {
+            width: min(760px, calc(100% - 8px));
+            max-height: calc(100dvh - 28px);
+          }
+        }
+
+        @media (max-width: 700px) {
+          .teacher-modal-backdrop {
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            padding:
+              max(10px, env(safe-area-inset-top))
+              max(10px, env(safe-area-inset-right))
+              max(10px, env(safe-area-inset-bottom))
+              max(10px, env(safe-area-inset-left));
+          }
+
+          .teacher-modal-shell {
+            width: 100%;
+            max-width: 560px;
+            max-height: calc(100dvh - 20px);
+            border-radius: 20px;
+          }
+
+          .teacher-modal-hero {
+            padding: 17px 14px 14px;
+          }
+
+          .teacher-modal-brand {
+            gap: 10px;
+          }
+
+          .teacher-modal-brand-icon {
+            width: 42px;
+            height: 42px;
+            flex-basis: 42px;
+            border-radius: 13px;
+          }
+
+          .teacher-modal-brand h2 {
+            font-size: 18px;
+          }
+
+          .teacher-modal-brand p {
+            font-size: 9px;
+            line-height: 1.6;
+          }
+
+          .teacher-modal-steps {
+            margin-top: 13px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+          }
+
+          .teacher-modal-steps::-webkit-scrollbar {
+            display: none;
+          }
+
+          .teacher-modal-steps span {
+            flex: 0 0 auto;
+            padding: 6px 8px;
+            font-size: 8px;
+          }
+
+          .teacher-modal-body {
+            padding: 14px;
+          }
+
+          .teacher-number-card {
+            margin-bottom: 17px;
+            padding: 11px 12px;
+          }
+
+          .teacher-number-copy strong {
+            font-size: 13px;
+          }
+
+          .teacher-form-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+
+          .teacher-halaqat-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .teacher-section-gap {
+            margin-top: 18px;
+          }
+
+          .teacher-modal-footer {
+            padding:
+              10px 14px
+              max(10px, env(safe-area-inset-bottom));
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .teacher-modal-footer-note {
+            display: none;
+          }
+
+          .teacher-modal-actions {
+            display: grid;
+            grid-template-columns: .75fr 1.35fr;
+            width: 100%;
+          }
+
+          .teacher-cancel-btn,
+          .teacher-save-btn {
+            width: 100%;
+            min-width: 0;
+          }
+        }
+
+        @media (max-width: 390px) {
+          .teacher-modal-backdrop {
+            padding: 6px;
+          }
+
+          .teacher-modal-shell {
+            max-height: calc(100dvh - 12px);
+            border-radius: 16px;
+          }
+
+          .teacher-modal-hero {
+            padding: 14px 11px 12px;
+          }
+
+          .teacher-modal-brand p {
+            display: none;
+          }
+
+          .teacher-modal-body {
+            padding: 11px;
+          }
+
+          .teacher-modal-close {
+            width: 36px;
+            height: 36px;
+            flex-basis: 36px;
+          }
+        }
+
+
+        /* ===== قاعدة المشروع: الـModal يتمركز في الشاشة كاملة على كل الأجهزة ===== */
+        .teacher-modal-backdrop,
+        body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
+          padding:
+            max(12px, env(safe-area-inset-top))
+            max(12px, env(safe-area-inset-right))
+            max(12px, env(safe-area-inset-bottom))
+            max(12px, env(safe-area-inset-left)) !important;
+          display: grid !important;
+          place-items: center !important;
+        }
+
+        .teacher-modal-shell {
+          margin: 0 !important;
+          width: min(680px, calc(100vw - 120px)) !important;
+          max-height: calc(100dvh - 56px) !important;
+          align-self: center !important;
+          justify-self: center !important;
+        }
+
+        @media (max-width: 700px) {
+          .teacher-modal-shell {
+            width: min(620px, calc(100vw - 32px)) !important;
+            max-height: calc(100dvh - 32px) !important;
+          }
+        }
+
+        @media (max-width: 390px) {
+          .teacher-modal-shell {
+            width: calc(100vw - 20px) !important;
+            max-height: calc(100dvh - 20px) !important;
+          }
+        }
+
+
+        /* =========================================================
+           قاعدة الصديق العامة:
+           Overlay = كامل الشاشة على كل الأجهزة
+           Dialog = صغير ومتمركز داخل الشاشة
+           ========================================================= */
+        .teacher-modal-backdrop,
+        body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
+          box-sizing: border-box !important;
+          display: grid !important;
+          place-items: center !important;
+          padding:
+            max(14px, env(safe-area-inset-top))
+            max(14px, env(safe-area-inset-right))
+            max(14px, env(safe-area-inset-bottom))
+            max(14px, env(safe-area-inset-left)) !important;
+        }
+
+        .teacher-modal-shell {
+          width: min(600px, calc(100vw - 180px)) !important;
+          max-width: 600px !important;
+          max-height: min(760px, calc(100dvh - 72px)) !important;
+          margin: 0 !important;
+          align-self: center !important;
+          justify-self: center !important;
+          border-radius: 22px !important;
+        }
+
+        /* Laptop / tablet */
+        @media (max-width: 1100px) {
+          .teacher-modal-shell {
+            width: min(590px, calc(100vw - 72px)) !important;
+            max-height: calc(100dvh - 48px) !important;
+          }
+        }
+
+        /* Mobile */
+        @media (max-width: 700px) {
+          .teacher-modal-backdrop,
+          body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100dvh !important;
+            padding:
+              max(10px, env(safe-area-inset-top))
+              max(10px, env(safe-area-inset-right))
+              max(10px, env(safe-area-inset-bottom))
+              max(10px, env(safe-area-inset-left)) !important;
+          }
+
+          .teacher-modal-shell {
+            width: calc(100vw - 28px) !important;
+            max-width: 540px !important;
+            max-height: calc(100dvh - 28px) !important;
+            border-radius: 18px !important;
+          }
+        }
+
+        @media (max-width: 390px) {
+          .teacher-modal-shell {
+            width: calc(100vw - 16px) !important;
+            max-height: calc(100dvh - 16px) !important;
+            border-radius: 15px !important;
+          }
+        }
+
+
+        /* =========================================================
+           TEACHERS PAGE — FINAL RESPONSIVE LAYOUT
+           Desktop = full available page width
+           Mobile = no horizontal clipping / no sidebar collision
+           ========================================================= */
+
+        .teachers-page {
+          width: 100% !important;
+          max-width: none !important;
+          min-width: 0 !important;
+          margin: 0 !important;
+          padding: clamp(14px, 1.6vw, 28px) !important;
+          overflow-x: clip !important;
+        }
+
+        .teachers-page-inner {
+          width: 100% !important;
+          max-width: none !important;
+          min-width: 0 !important;
+          margin: 0 !important;
+        }
+
+        .teachers-main-header,
+        .teachers-stats-grid,
+        .teachers-smart-hero,
+        .teachers-filter-card,
+        .teachers-list-grid {
+          width: 100% !important;
+          max-width: none !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+        }
+
+        /* Compact desktop statistics instead of oversized cards */
+        .teachers-stats-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          gap: 10px !important;
+          margin-bottom: 14px !important;
+        }
+
+        .teachers-stat-card {
+          min-width: 0 !important;
+          min-height: 76px !important;
+          padding: 12px 14px !important;
+          border-radius: 14px !important;
+          gap: 10px !important;
+        }
+
+        .teachers-stat-card > div:first-child {
+          width: 38px !important;
+          height: 38px !important;
+          flex-basis: 38px !important;
+          border-radius: 11px !important;
+        }
+
+        .teachers-stat-card > div:last-child > div:first-child {
+          font-size: 10px !important;
+          margin-bottom: 1px !important;
+        }
+
+        .teachers-stat-card > div:last-child > div:last-child {
+          font-size: 20px !important;
+          line-height: 1.05 !important;
+        }
+
+        /* Hero must never overflow on narrow widths */
+        .teachers-smart-hero {
+          padding: 16px !important;
+          margin-bottom: 14px !important;
+        }
+
+        .teachers-smart-grid {
+          width: 100% !important;
+          min-width: 0 !important;
+          grid-template-columns: minmax(230px, .95fr) minmax(0, 1.45fr) !important;
+          gap: 12px !important;
+        }
+
+        .teachers-smart-grid > * {
+          min-width: 0 !important;
+        }
+
+        .teachers-smart-metrics {
+          min-width: 0 !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          gap: 8px !important;
+        }
+
+        .teachers-smart-metric {
+          min-width: 0 !important;
+          min-height: 72px !important;
+          padding: 10px !important;
+        }
+
+        .teachers-smart-metric strong {
+          font-size: 20px !important;
+        }
+
+        /* Filters always fit their container */
+        .teachers-filter-card {
+          padding: 10px !important;
+          margin-bottom: 14px !important;
+        }
+
+        .teachers-filter-grid {
+          width: 100% !important;
+          min-width: 0 !important;
+          grid-template-columns: minmax(0, 1fr) minmax(150px, 190px) !important;
+          gap: 8px !important;
+        }
+
+        .teachers-filter-grid > * {
+          width: 100% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+        }
+
+        /* Modal: full-screen overlay on every device, dialog itself compact */
+        .teacher-modal-backdrop,
+        body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
+          margin: 0 !important;
+          display: grid !important;
+          place-items: center !important;
+          box-sizing: border-box !important;
+          padding:
+            max(12px, env(safe-area-inset-top))
+            max(12px, env(safe-area-inset-right))
+            max(12px, env(safe-area-inset-bottom))
+            max(12px, env(safe-area-inset-left)) !important;
+          overflow: hidden !important;
+        }
+
+        .teacher-modal-shell {
+          width: min(560px, calc(100vw - 160px)) !important;
+          max-width: 560px !important;
+          max-height: calc(100dvh - 56px) !important;
+          min-width: 0 !important;
+          margin: 0 !important;
+          align-self: center !important;
+          justify-self: center !important;
+          box-sizing: border-box !important;
+        }
+
+        @media (max-width: 1100px) {
+          .teachers-stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .teachers-smart-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          .teacher-modal-shell {
+            width: min(560px, calc(100vw - 64px)) !important;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .teachers-page {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 10px !important;
+            overflow-x: hidden !important;
+          }
+
+          .teachers-main-header {
+            gap: 10px !important;
+            margin-bottom: 12px !important;
+          }
+
+          .teachers-stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 7px !important;
+            margin-bottom: 10px !important;
+          }
+
+          .teachers-stat-card {
+            min-height: 64px !important;
+            padding: 9px !important;
+            gap: 7px !important;
+            border-radius: 12px !important;
+          }
+
+          .teachers-stat-card > div:first-child {
+            width: 34px !important;
+            height: 34px !important;
+            flex-basis: 34px !important;
+          }
+
+          .teachers-stat-card > div:last-child {
+            min-width: 0 !important;
+          }
+
+          .teachers-stat-card > div:last-child > div:first-child {
+            font-size: 9px !important;
+            white-space: normal !important;
+          }
+
+          .teachers-stat-card > div:last-child > div:last-child {
+            font-size: 18px !important;
+          }
+
+          .teachers-smart-hero {
+            padding: 13px !important;
+            border-radius: 16px !important;
+          }
+
+          .teachers-smart-grid {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 12px !important;
+          }
+
+          .teachers-smart-grid h2 {
+            font-size: 18px !important;
+          }
+
+          .teachers-smart-grid p {
+            font-size: 10px !important;
+            line-height: 1.65 !important;
+          }
+
+          .teachers-smart-metrics {
+            width: 100% !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 6px !important;
+          }
+
+          .teachers-smart-metric {
+            min-height: 68px !important;
+            padding: 8px !important;
+            border-radius: 11px !important;
+            overflow: hidden !important;
+          }
+
+          .teachers-smart-metric > div:first-child {
+            gap: 3px !important;
+            font-size: 8px !important;
+          }
+
+          .teachers-smart-metric strong {
+            font-size: 17px !important;
+          }
+
+          .teachers-smart-metric > span:last-child {
+            font-size: 7px !important;
+            line-height: 1.35 !important;
+          }
+
+          .teachers-filter-card {
+            padding: 8px !important;
+          }
+
+          .teachers-filter-grid {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 7px !important;
+          }
+
+          .teachers-filter-grid input,
+          .teachers-filter-grid select {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+          }
+
+          .teachers-list-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+          }
+
+          .teacher-modal-backdrop,
+          body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100dvh !important;
+            padding:
+              max(8px, env(safe-area-inset-top))
+              max(8px, env(safe-area-inset-right))
+              max(8px, env(safe-area-inset-bottom))
+              max(8px, env(safe-area-inset-left)) !important;
+          }
+
+          .teacher-modal-shell {
+            width: min(430px, calc(100vw - 24px)) !important;
+            max-width: calc(100vw - 24px) !important;
+            max-height: calc(100dvh - 20px) !important;
+            border-radius: 18px !important;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .teachers-page {
+            padding: 7px !important;
+          }
+
+          .teachers-stats-grid {
+            gap: 6px !important;
+          }
+
+          .teachers-stat-card {
+            min-height: 60px !important;
+            padding: 8px !important;
+          }
+
+          .teachers-smart-metrics {
+            grid-template-columns: 1fr !important;
+          }
+
+          .teachers-smart-metric {
+            min-height: 54px !important;
+          }
+
+          .teacher-modal-shell {
+            width: calc(100vw - 16px) !important;
+            max-width: calc(100vw - 16px) !important;
+            max-height: calc(100dvh - 16px) !important;
+            border-radius: 15px !important;
+          }
+        }
+
+
+        @media (max-width: 430px) {
+          .teacher-modal-backdrop {
+            padding-top: 70px;
+            padding-right: 8px;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            padding-left: 8px;
+          }
+          .teacher-modal-shell {
+            width: 100%;
+            max-height: calc(100dvh - 80px);
+            border-radius: 18px;
+          }
+          .teacher-modal-hero {
+            padding: 17px 14px 14px;
+          }
+          .teacher-modal-brand {
+            gap: 10px;
+          }
+          .teacher-modal-brand-icon {
+            width: 40px;
+            height: 40px;
+            flex-basis: 40px;
+            border-radius: 13px;
+          }
+          .teacher-modal-brand h2 {
+            font-size: 18px;
+          }
+          .teacher-modal-steps {
+            overflow-x: auto;
+            scrollbar-width: none;
+          }
+          .teacher-modal-steps::-webkit-scrollbar {
+            display: none;
+          }
+          .teacher-modal-steps span {
+            flex: 0 0 auto;
+            white-space: nowrap;
+          }
+          .teacher-modal-body {
+            padding: 14px;
+          }
+          .teacher-modal-footer {
+            padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+          }
+        }
+
+        @media (min-width: 701px) and (max-height: 760px) {
+          .teacher-modal-backdrop {
+            padding-top: 82px;
+            padding-bottom: 10px;
+          }
+          .teacher-modal-shell {
+            max-height: calc(100dvh - 92px);
+          }
+          .teacher-modal-hero {
+            padding-top: 18px;
+            padding-bottom: 14px;
+          }
+          .teacher-modal-body {
+            padding-top: 15px;
+            padding-bottom: 15px;
+          }
+        }
+
+        /* =========================================================
+           FINAL TEACHER MODAL — DEVICE ADAPTIVE
+           - Overlay covers the whole device.
+           - Dialog is deliberately compact.
+           - Clear breathing room below the topbar.
+           - Internal scrolling only.
+        ========================================================= */
+        .teacher-modal-backdrop,
+        body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 100000 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
+          box-sizing: border-box !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          overflow: hidden !important;
+          padding:
+            104px
+            max(22px, env(safe-area-inset-right))
+            24px
+            max(22px, env(safe-area-inset-left)) !important;
+        }
+
+        .teacher-modal-shell {
+          width: min(520px, calc(100vw - 150px)) !important;
+          max-width: 520px !important;
+          height: auto !important;
+          max-height: calc(100dvh - 142px) !important;
+          min-width: 0 !important;
+          margin: 0 !important;
+          border-radius: 22px !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          overscroll-behavior: contain !important;
+          scrollbar-gutter: stable;
+        }
+
+        .teacher-modal-hero {
+          padding: 18px 18px 15px !important;
+        }
+
+        .teacher-modal-body {
+          padding: 16px 18px !important;
+        }
+
+        .teacher-modal-footer {
+          padding: 10px 18px !important;
+        }
+
+        /* Laptop / small desktop */
+        @media (min-width: 701px) and (max-width: 1200px) {
+          .teacher-modal-backdrop,
+          body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+            padding: 96px 18px 20px !important;
+          }
+
+          .teacher-modal-shell {
+            width: min(500px, calc(100vw - 110px)) !important;
+            max-width: 500px !important;
+            max-height: calc(100dvh - 126px) !important;
+          }
+        }
+
+        /* Tablet */
+        @media (min-width: 521px) and (max-width: 700px) {
+          .teacher-modal-backdrop,
+          body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+            padding:
+              86px
+              max(18px, env(safe-area-inset-right))
+              max(16px, env(safe-area-inset-bottom))
+              max(18px, env(safe-area-inset-left)) !important;
+          }
+
+          .teacher-modal-shell {
+            width: min(480px, calc(100vw - 48px)) !important;
+            max-width: 480px !important;
+            max-height: calc(100dvh - 112px) !important;
+            border-radius: 20px !important;
+          }
+        }
+
+        /* Phones */
+        @media (max-width: 520px) {
+          .teacher-modal-backdrop,
+          body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+            align-items: center !important;
+            justify-content: center !important;
+            padding:
+              78px
+              max(14px, env(safe-area-inset-right))
+              max(12px, env(safe-area-inset-bottom))
+              max(14px, env(safe-area-inset-left)) !important;
+          }
+
+          .teacher-modal-shell {
+            width: calc(100vw - 32px) !important;
+            max-width: 430px !important;
+            max-height: calc(100dvh - 100px) !important;
+            border-radius: 18px !important;
+          }
+
+          .teacher-modal-hero {
+            padding: 15px 14px 13px !important;
+          }
+
+          .teacher-modal-brand-icon {
+            width: 38px !important;
+            height: 38px !important;
+            flex-basis: 38px !important;
+          }
+
+          .teacher-modal-brand h2 {
+            font-size: 17px !important;
+            line-height: 1.35 !important;
+          }
+
+          .teacher-modal-brand p {
+            font-size: 8px !important;
+          }
+
+          .teacher-modal-steps {
+            margin-top: 11px !important;
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            scrollbar-width: none !important;
+          }
+
+          .teacher-modal-steps::-webkit-scrollbar {
+            display: none !important;
+          }
+
+          .teacher-modal-steps span {
+            flex: 0 0 auto !important;
+            white-space: nowrap !important;
+            padding: 6px 8px !important;
+            font-size: 8px !important;
+          }
+
+          .teacher-modal-body {
+            padding: 13px 14px !important;
+          }
+
+          .teacher-number-card {
+            margin-bottom: 16px !important;
+            padding: 10px 11px !important;
+          }
+
+          .teacher-form-grid {
+            grid-template-columns: 1fr !important;
+            gap: 9px !important;
+          }
+
+          .teacher-halaqat-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          .teacher-section-gap {
+            margin-top: 17px !important;
+          }
+
+          .teacher-modal-footer {
+            padding:
+              9px 14px
+              max(9px, env(safe-area-inset-bottom)) !important;
+          }
+
+          .teacher-modal-footer-note {
+            display: none !important;
+          }
+
+          .teacher-modal-actions {
+            width: 100% !important;
+            display: grid !important;
+            grid-template-columns: .72fr 1.45fr !important;
+            gap: 8px !important;
+          }
+
+          .teacher-cancel-btn,
+          .teacher-save-btn {
+            width: 100% !important;
+            min-width: 0 !important;
+          }
+        }
+
+        /* Very small / short phones */
+        @media (max-width: 390px) {
+          .teacher-modal-backdrop,
+          body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+            padding:
+              72px
+              9px
+              max(9px, env(safe-area-inset-bottom))
+              9px !important;
+          }
+
+          .teacher-modal-shell {
+            width: calc(100vw - 18px) !important;
+            max-height: calc(100dvh - 90px) !important;
+            border-radius: 16px !important;
+          }
+
+          .teacher-modal-brand p {
+            display: none !important;
+          }
+        }
+
+        @media (max-height: 700px) and (min-width: 521px) {
+          .teacher-modal-backdrop,
+          body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
+            padding-top: 84px !important;
+            padding-bottom: 12px !important;
+          }
+
+          .teacher-modal-shell {
+            max-height: calc(100dvh - 102px) !important;
+          }
+        }
+
+      `}</style>
 
       {showDeleteModal && (
         <DeleteModal
@@ -1877,6 +3154,18 @@ function TeacherCard({
             teacher.education_stage ||
             "غير محدد"
           }
+        />
+
+        <InfoBox
+          icon={<Mail size={15} />}
+          label="البريد الإلكتروني"
+          value={teacher.email || "غير مسجل"}
+        />
+
+        <InfoBox
+          icon={<Hash size={15} />}
+          label="الرقم الإداري"
+          value={teacher.user_number || "غير مسجل"}
         />
       </div>
 
@@ -2118,6 +3407,9 @@ function FormField({
   onChange,
   placeholder,
   icon,
+  type = "text",
+  dir = "rtl",
+  autoComplete,
 }) {
   return (
     <div>
@@ -2157,6 +3449,9 @@ function FormField({
         )}
 
         <input
+          type={type}
+          dir={dir}
+          autoComplete={autoComplete}
           value={
             value
           }
@@ -2315,7 +3610,7 @@ function StatCard({
   icon,
 }) {
   return (
-    <div
+    <div className="teachers-stat-card"
       style={{
         background:
           "#fff",
@@ -2387,6 +3682,56 @@ function StatCard({
           {value}
         </div>
       </div>
+    </div>
+  );
+}
+
+
+function SmartMetric({ label, value, note, icon }) {
+  return (
+    <div className="teachers-smart-metric"
+      style={{
+        minHeight: "92px",
+        padding: "13px",
+        borderRadius: "14px",
+        border: "1px solid rgba(255,255,255,.12)",
+        background: "rgba(255,255,255,.08)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          color: "rgba(255,255,255,.66)",
+          fontSize: "10px",
+          fontWeight: "800",
+        }}
+      >
+        <span>{label}</span>
+        <span style={{ color: "#F1D681" }}>{icon}</span>
+      </div>
+      <strong
+        style={{
+          display: "block",
+          marginTop: "6px",
+          color: "#fff",
+          fontSize: "24px",
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </strong>
+      <span
+        style={{
+          display: "block",
+          marginTop: "6px",
+          color: "rgba(255,255,255,.55)",
+          fontSize: "9px",
+        }}
+      >
+        {note}
+      </span>
     </div>
   );
 }
@@ -2700,6 +4045,8 @@ function DeleteModal({
           </button>
         </div>
       </div>
+
+
     </div>
   );
 }
