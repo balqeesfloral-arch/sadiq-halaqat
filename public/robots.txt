@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sadiq-halaqat.vercel.app/sitemap.xml
