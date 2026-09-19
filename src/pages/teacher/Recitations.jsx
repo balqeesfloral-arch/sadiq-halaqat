@@ -315,7 +315,7 @@ export default function Recitations() {
   const [
     dateFilter,
     setDateFilter,
-  ] = useState("all");
+  ] = useState("today");
 
   /* =====================================================
      التحميل
@@ -1009,8 +1009,11 @@ export default function Recitations() {
           .trim()
           .toLowerCase();
 
+      const todayDate =
+        getLocalDate();
+
       const monthPrefix =
-        getLocalDate().slice(
+        todayDate.slice(
           0,
           7
         );
@@ -1055,6 +1058,14 @@ export default function Recitations() {
           const matchesDate =
             dateFilter ===
               "all" ||
+            (
+              dateFilter ===
+                "today" &&
+              String(
+                record.recitation_date ||
+                  ""
+              ) === todayDate
+            ) ||
             (
               dateFilter ===
                 "month" &&
@@ -3234,6 +3245,10 @@ export default function Recitations() {
             )
           }
         >
+          <option value="today">
+            هذا اليوم
+          </option>
+
           <option value="all">
             كل التواريخ
           </option>

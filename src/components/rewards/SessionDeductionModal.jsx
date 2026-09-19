@@ -10,10 +10,13 @@ import {
   syncStudentCurrentMonthPoints,
 } from "../../lib/pointsHijri";
 
+const EMPTY_TYPES = [];
+
 export default function SessionDeductionModal({
   open,
   student,
-  penaltyTypes = [],
+  rewardTypes,
+  penaltyTypes,
   selectedDate,
   selectedHalaqa,
   editingSession = null,
@@ -26,20 +29,21 @@ export default function SessionDeductionModal({
   const [showConfirm, setShowConfirm] = useState(false);
 
   const isEditing = Boolean(editingSession);
+  const availablePenaltyTypes = penaltyTypes ?? rewardTypes ?? EMPTY_TYPES;
 
   const visiblePenaltyTypes = useMemo(() => {
     const existingIds = new Set(
       (editingSession?.items || [])
-        .map((item) => Number(item.penalty_type_id))
+        .map((item) => Number(item.reward_type_id))
         .filter(Boolean)
     );
 
-    return penaltyTypes.filter(
+    return availablePenaltyTypes.filter(
       (item) =>
         item.type === "penalty" &&
         (item.is_active || existingIds.has(Number(item.id)))
     );
-  }, [penaltyTypes, editingSession]);
+  }, [availablePenaltyTypes, editingSession]);
 
   useEffect(() => {
     if (!open) return;
@@ -47,12 +51,12 @@ export default function SessionDeductionModal({
     if (editingSession) {
       const ids = new Set(
         editingSession.items
-          .map((item) => Number(item.penalty_type_id))
+          .map((item) => Number(item.reward_type_id))
           .filter(Boolean)
       );
 
       setSelectedPenalties(
-        penaltyTypes.filter(
+        availablePenaltyTypes.filter(
           (item) =>
             item.type === "penalty" &&
             ids.has(Number(item.id))
@@ -66,7 +70,7 @@ export default function SessionDeductionModal({
     }
 
     setShowConfirm(false);
-  }, [open, editingSession, penaltyTypes]);
+  }, [open, editingSession, availablePenaltyTypes]);
 
   const totalPoints = useMemo(
     () =>
@@ -105,12 +109,12 @@ export default function SessionDeductionModal({
 
       const existingByType = new Map(
         existingItems
-          .filter((item) => item.penalty_type_id)
-          .map((item) => [Number(item.penalty_type_id), item])
+          .filter((item) => item.reward_type_id)
+          .map((item) => [Number(item.reward_type_id), item])
       );
 
       const removeIds = existingItems
-        .filter((item) => !selectedIds.has(Number(item.penalty_type_id)))
+        .filter((item) => !selectedIds.has(Number(item.reward_type_id)))
         .map((item) => item.id);
 
       if (removeIds.length) {
@@ -123,7 +127,7 @@ export default function SessionDeductionModal({
       }
 
       const keepIds = existingItems
-        .filter((item) => selectedIds.has(Number(item.penalty_type_id)))
+        .filter((item) => selectedIds.has(Number(item.reward_type_id)))
         .map((item) => item.id);
 
       if (keepIds.length) {
@@ -146,9 +150,9 @@ export default function SessionDeductionModal({
         const rows = added.map((penalty) => ({
           session_id: sessionId,
           student_id: student.id,
-          points: penalty.points,
+          points: -Math.abs(Number(penalty.points || 0)),
           reason: penalty.name,
-          penalty_type_id: penalty.id,
+          reward_type_id: penalty.id,
           category: "deduction",
           halaqa_id: editingSession?.halaqa_id || selectedHalaqa,
           transaction_date: editingSession?.transaction_date || selectedDate,

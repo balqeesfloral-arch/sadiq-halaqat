@@ -33,6 +33,8 @@ import MonthlyAchievement from "./pages/MonthlyAchievement";
 import TVLeaderboardPage from "./pages/TVLeaderboardPage";
 import SettingsPage from "./pages/SettingsPage";
 import JoinRequests from "./pages/JoinRequests";
+import AdminInvoices from "./pages/AdminInvoices";
+import InvoicePage from "./pages/InvoicePage";
 
 /* =========================================================
    Teacher Portal
@@ -137,6 +139,16 @@ const router = createBrowserRouter([
       {
         path: "reports",
         element: <Reports />,
+      },
+
+      {
+        path: "invoices",
+        element: <AdminInvoices />,
+      },
+
+      {
+        path: "invoices/:invoiceId",
+        element: <InvoicePage />,
       },
 
       {

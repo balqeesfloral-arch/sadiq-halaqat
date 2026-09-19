@@ -8,6 +8,10 @@
 
 :root {
   --primary: #0F5132;
+  --app-primary: #0F5132;
+  --app-font-size: 16px;
+  --app-density: 1;
+  --app-radius: 14px;
   --background: #F4F7F6;
   --surface: #FFFFFF;
   --text: #1F2937;
@@ -68,4 +72,65 @@ p {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* =========================================================
+   SADIQ — GLOBAL APPEARANCE BRIDGE
+   SettingsPage writes these variables; the whole application
+   consumes them here.
+   ========================================================= */
+:root {
+}
+
+html {
+  font-size: var(--app-font-size);
+}
+
+body {
+  font-size: 1rem;
+}
+
+/* Bridge the legacy global primary token to the selected app color. */
+:root {
+  --primary: var(--app-primary);
+}
+
+/* Global density affects the main application shells without
+   rewriting every page component. */
+.admin-layout-main,
+.admin-main,
+.teacher-main,
+.student-main,
+.page-content,
+.main-content {
+  --ui-density: var(--app-density);
+}
+
+/* Common application controls that use the selected identity color. */
+button.primary,
+.btn-primary,
+.save-btn,
+.action-primary,
+.sidebar-item.active,
+.nav-item.active,
+.admin-nav-item.active {
+  --primary: var(--app-primary);
+}
+
+/* Corner preference is global and intentionally conservative:
+   it changes common surfaces, not every DOM element. */
+:root[data-app-corners="soft"] {
+  --app-radius: 8px;
+}
+:root[data-app-corners="rounded"] {
+  --app-radius: 14px;
+}
+
+.card,
+.dashboard-card,
+.stat-card,
+.panel,
+.modal-content,
+.dialog-content {
+  border-radius: var(--app-radius);
 }

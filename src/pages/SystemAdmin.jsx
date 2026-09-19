@@ -21,6 +21,7 @@ import {
   Menu,
   MessageCircle,
   MoreHorizontal,
+  Plus,
   RefreshCw,
   Search,
   Settings,
@@ -229,10 +230,11 @@ export default function SystemAdmin() {
 
       setAdminProfile(profile);
 
-      const [dashboardRes, mosquesRes, supervisorsRes, invitesRes, usersRes, auditRes] =
+      const [dashboardRes, mosquesRes, mosqueSectionsRes, supervisorsRes, invitesRes, usersRes, auditRes] =
         await Promise.all([
           supabase.rpc("get_system_admin_dashboard"),
           supabase.rpc("get_system_admin_mosques"),
+          supabase.rpc("get_system_admin_mosque_sections"),
           supabase.rpc("get_system_admin_supervisors"),
           supabase.rpc("get_system_admin_supervisor_invites"),
           supabase.rpc("get_system_admin_users"),
@@ -242,6 +244,7 @@ export default function SystemAdmin() {
       const errors = [
         dashboardRes.error,
         mosquesRes.error,
+        mosqueSectionsRes.error,
         supervisorsRes.error,
         invitesRes.error,
         usersRes.error,
@@ -251,7 +254,24 @@ export default function SystemAdmin() {
       if (errors.length) throw errors[0];
 
       setDashboard(normalizeArray(dashboardRes.data)[0] || null);
-      setMosques(normalizeArray(mosquesRes.data));
+
+      const mosqueSections = new Map(
+        normalizeArray(mosqueSectionsRes.data).map((row) => [
+          Number(row.mosque_id),
+          row.section || "men",
+        ])
+      );
+
+      setMosques(
+        normalizeArray(mosquesRes.data).map((mosque) => ({
+          ...mosque,
+          mosque_section:
+            mosque.mosque_section ||
+            mosque.section ||
+            mosqueSections.get(Number(mosque.mosque_id)) ||
+            "men",
+        }))
+      );
       setSupervisors(normalizeArray(supervisorsRes.data));
       setInvites(normalizeArray(invitesRes.data));
       setUsers(normalizeArray(usersRes.data));
@@ -331,6 +351,28 @@ export default function SystemAdmin() {
 
     return rows;
   }, [mosques, supervisors, invites]);
+
+  async function testActivateSubscription() {
+    const confirmed = window.confirm(
+      "سيتم تحويل اشتراك مسجد التقوى رقم 5 من الفترة التجريبية إلى اشتراك نشط إداريًا لمدة شهر حسب الخطة، مع فترة سماح 7 أيام بعد نهاية الفترة. هذا اختبار إداري وليس إثبات دفع مالي. هل تريد المتابعة؟"
+    );
+    if (!confirmed) return;
+
+    try {
+      const { data, error } = await supabase.rpc("admin_activate_subscription", {
+        p_mosque_id: 5,
+        p_reason: "اختبار End-to-End للتفعيل الإداري للاشتراك",
+      });
+
+      if (error) throw error;
+
+      console.log("SUBSCRIPTION ACTIVATION SUCCESS:", data);
+      notify(`نجح تفعيل الاشتراك إداريًا${data != null ? ` — Subscription ID: ${data}` : ""}.`);
+    } catch (error) {
+      console.error("SUBSCRIPTION ACTIVATION ERROR:", error);
+      notify(getErrorMessage(error), "error");
+    }
+  }
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -434,6 +476,14 @@ export default function SystemAdmin() {
           </div>
 
           <div className="sa-topbar-actions">
+            <button
+              className="sa-btn sa-btn-secondary"
+              type="button"
+              onClick={testActivateSubscription}
+              title="اختبار التفعيل الإداري لاشتراك مسجد التقوى رقم 5"
+            >
+              <ShieldCheck /> اختبار تفعيل الاشتراك
+            </button>
             <div className="sa-date-block">
               <strong>{formatGregorianToday()}</strong>
               <span>{formatHijriToday()}</span>
@@ -732,25 +782,88 @@ function QuickAction({ icon: Icon, title, text, onClick }) {
 function MosquesView({ mosques, notify, reload }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
   const [statusModal, setStatusModal] = useState(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    section: "men",
+    address: "",
+    notes: "",
+  });
   const [saving, setSaving] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return mosques.filter((mosque) => {
-      const matchSearch = !q || `${mosque.mosque_name || ""} ${mosque.mosque_address || ""}`.toLowerCase().includes(q);
+      const sectionLabel = mosque.mosque_section === "women" ? "نساء" : "رجال";
+      const matchSearch =
+        !q ||
+        `${mosque.mosque_name || ""} ${mosque.mosque_address || ""} ${sectionLabel}`
+          .toLowerCase()
+          .includes(q);
       const matchStatus = filter === "all" || mosque.mosque_status === filter;
-      return matchSearch && matchStatus;
+      const matchSection =
+        sectionFilter === "all" || mosque.mosque_section === sectionFilter;
+      return matchSearch && matchStatus && matchSection;
     });
-  }, [mosques, search, filter]);
+  }, [mosques, search, filter, sectionFilter]);
 
   function requestStatus(mosque, targetStatus) {
     setStatusModal({ mosque, targetStatus, reason: "" });
   }
 
+  function openCreate() {
+    setCreateForm({
+      name: "",
+      section: "men",
+      address: "",
+      notes: "",
+    });
+    setCreateOpen(true);
+  }
+
+  async function createMosque() {
+    const name = createForm.name.trim();
+    if (!name) {
+      notify("اكتب اسم المسجد أولًا.", "error");
+      return;
+    }
+
+    if (!["men", "women"].includes(createForm.section)) {
+      notify("اختر قسم المسجد: رجال أو نساء.", "error");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase.rpc("system_admin_create_mosque", {
+        p_name: name,
+        p_section: createForm.section,
+        p_address: createForm.address.trim() || null,
+        p_notes: createForm.notes.trim() || null,
+      });
+
+      if (error) throw error;
+
+      notify(
+        `تم إنشاء ${name} — ${createForm.section === "women" ? "نساء" : "رجال"} بنجاح.`
+      );
+      setCreateOpen(false);
+      await reload();
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function applyStatus() {
     if (!statusModal) return;
-    if (["inactive", "archived"].includes(statusModal.targetStatus) && !statusModal.reason.trim()) {
+    if (
+      ["inactive", "archived"].includes(statusModal.targetStatus) &&
+      !statusModal.reason.trim()
+    ) {
       notify("اكتب سبب التعطيل أو الأرشفة أولًا.", "error");
       return;
     }
@@ -763,7 +876,13 @@ function MosquesView({ mosques, notify, reload }) {
         p_reason: statusModal.reason.trim() || null,
       });
       if (error) throw error;
-      notify(statusModal.targetStatus === "active" ? "تم تفعيل المسجد بنجاح." : statusModal.targetStatus === "inactive" ? "تم تعطيل المسجد مع حفظ جميع بياناته." : "تمت أرشفة المسجد بنجاح.");
+      notify(
+        statusModal.targetStatus === "active"
+          ? "تم تفعيل المسجد بنجاح."
+          : statusModal.targetStatus === "inactive"
+            ? "تم تعطيل المسجد مع حفظ جميع بياناته."
+            : "تمت أرشفة المسجد بنجاح."
+      );
       setStatusModal(null);
       await reload();
     } catch (error) {
@@ -778,58 +897,296 @@ function MosquesView({ mosques, notify, reload }) {
       <SectionHero
         eyebrow="إدارة دورة حياة المسجد"
         title="المساجد"
-        description="فعّل أو عطّل أو أرشف المسجد دون حذف تاريخه، وراقب عدد الحلقات والطلاب والمشرفين المرتبطين به."
+        description="أنشئ أقسام الرجال والنساء كسجلات مستقلة، ثم فعّل أو عطّل أو أرشف كل قسم دون حذف تاريخه."
         icon={Building2}
+        action={
+          <button className="sa-btn sa-btn-primary" onClick={openCreate}>
+            <Plus /> إنشاء مسجد
+          </button>
+        }
       />
 
       <div className="sa-summary-strip">
         <SummaryChip label="إجمالي" value={mosques.length} />
-        <SummaryChip label="نشط" value={mosques.filter((m) => m.mosque_status === "active").length} tone="success" />
-        <SummaryChip label="معطل" value={mosques.filter((m) => m.mosque_status === "inactive").length} tone="warning" />
-        <SummaryChip label="مؤرشف" value={mosques.filter((m) => m.mosque_status === "archived").length} tone="neutral" />
-        <SummaryChip label="بلا مشرف" value={mosques.filter((m) => m.mosque_status !== "archived" && number(m.supervisors_count) === 0).length} tone="danger" />
+        <SummaryChip
+          label="رجال"
+          value={mosques.filter((m) => m.mosque_section === "men").length}
+          tone="info"
+        />
+        <SummaryChip
+          label="نساء"
+          value={mosques.filter((m) => m.mosque_section === "women").length}
+          tone="gold"
+        />
+        <SummaryChip
+          label="نشط"
+          value={mosques.filter((m) => m.mosque_status === "active").length}
+          tone="success"
+        />
+        <SummaryChip
+          label="بلا مشرف"
+          value={
+            mosques.filter(
+              (m) =>
+                m.mosque_status !== "archived" &&
+                number(m.supervisors_count) === 0
+            ).length
+          }
+          tone="danger"
+        />
       </div>
 
       <section className="sa-panel">
         <div className="sa-toolbar">
-          <div className="sa-search"><Search /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث باسم المسجد أو العنوان…" /></div>
-          <div className="sa-filter-tabs">
-            {[{ id: "all", label: "الكل" }, { id: "active", label: "نشط" }, { id: "inactive", label: "معطل" }, { id: "archived", label: "مؤرشف" }].map((item) => (
-              <button key={item.id} className={filter === item.id ? "is-active" : ""} onClick={() => setFilter(item.id)}>{item.label}</button>
-            ))}
+          <div className="sa-search">
+            <Search />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ابحث باسم المسجد أو العنوان أو القسم…"
+            />
+          </div>
+
+          <div className="sa-mosque-toolbar-filters">
+            <select
+              className="sa-compact-select"
+              value={sectionFilter}
+              onChange={(e) => setSectionFilter(e.target.value)}
+            >
+              <option value="all">كل الأقسام</option>
+              <option value="men">رجال</option>
+              <option value="women">نساء</option>
+            </select>
+
+            <div className="sa-filter-tabs">
+              {[
+                { id: "all", label: "الكل" },
+                { id: "active", label: "نشط" },
+                { id: "inactive", label: "معطل" },
+                { id: "archived", label: "مؤرشف" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  className={filter === item.id ? "is-active" : ""}
+                  onClick={() => setFilter(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="sa-table-wrap">
           <table className="sa-table">
-            <thead><tr><th>المسجد</th><th>الحالة</th><th>المشرفون</th><th>الحلقات</th><th>الطلاب الحاليون</th><th>الإجراءات</th></tr></thead>
+            <thead>
+              <tr>
+                <th>المسجد</th>
+                <th>القسم</th>
+                <th>الحالة</th>
+                <th>المشرفون</th>
+                <th>الحلقات</th>
+                <th>الطلاب الحاليون</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
             <tbody>
               {filtered.map((mosque) => (
                 <tr key={mosque.mosque_id}>
-                  <td><EntityCell icon={Building2} title={mosque.mosque_name} subtitle={mosque.mosque_address || "لم يحدد العنوان"} /></td>
-                  <td><StatusPill type="mosque" value={mosque.mosque_status} /></td>
-                  <td><strong className={number(mosque.supervisors_count) === 0 ? "sa-danger-text" : ""}>{number(mosque.supervisors_count)}</strong></td>
+                  <td>
+                    <EntityCell
+                      icon={Building2}
+                      title={mosque.mosque_name}
+                      subtitle={mosque.mosque_address || "لم يحدد العنوان"}
+                    />
+                  </td>
+                  <td>
+                    <span
+                      className={`sa-section-pill ${
+                        mosque.mosque_section === "women"
+                          ? "is-women"
+                          : "is-men"
+                      }`}
+                    >
+                      {mosque.mosque_section === "women" ? "نساء" : "رجال"}
+                    </span>
+                  </td>
+                  <td>
+                    <StatusPill type="mosque" value={mosque.mosque_status} />
+                  </td>
+                  <td>
+                    <strong
+                      className={
+                        number(mosque.supervisors_count) === 0
+                          ? "sa-danger-text"
+                          : ""
+                      }
+                    >
+                      {number(mosque.supervisors_count)}
+                    </strong>
+                  </td>
                   <td>{number(mosque.halaqat_count)}</td>
                   <td>{number(mosque.current_students_count)}</td>
                   <td>
                     <div className="sa-row-actions">
-                      {mosque.mosque_status !== "active" && <button className="sa-action-success" title="إعادة تفعيل المسجد" onClick={() => requestStatus(mosque, "active")}><CheckCircle2 /> تفعيل</button>}
-                      {mosque.mosque_status === "active" && <button className="sa-action-warning" title="تعطيل المسجد مع الاحتفاظ ببياناته" onClick={() => requestStatus(mosque, "inactive")}><CircleOff /> تعطيل</button>}
-                      {mosque.mosque_status !== "archived" && <button className="sa-action-neutral" title="أرشفة المسجد مع حفظ السجل التاريخي" onClick={() => requestStatus(mosque, "archived")}><Archive /> أرشفة</button>}
+                      {mosque.mosque_status !== "active" && (
+                        <button
+                          className="sa-action-success"
+                          title="إعادة تفعيل المسجد"
+                          onClick={() => requestStatus(mosque, "active")}
+                        >
+                          <CheckCircle2 /> تفعيل
+                        </button>
+                      )}
+                      {mosque.mosque_status === "active" && (
+                        <button
+                          className="sa-action-warning"
+                          title="تعطيل المسجد مع الاحتفاظ ببياناته"
+                          onClick={() => requestStatus(mosque, "inactive")}
+                        >
+                          <CircleOff /> تعطيل
+                        </button>
+                      )}
+                      {mosque.mosque_status !== "archived" && (
+                        <button
+                          className="sa-action-neutral"
+                          title="أرشفة المسجد مع حفظ السجل التاريخي"
+                          onClick={() => requestStatus(mosque, "archived")}
+                        >
+                          <Archive /> أرشفة
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {filtered.length === 0 && <EmptyState icon={Building2} title="لا توجد مساجد مطابقة" description="غيّر البحث أو الفلتر لعرض نتائج أخرى." />}
+
+          {filtered.length === 0 && (
+            <EmptyState
+              icon={Building2}
+              title="لا توجد مساجد مطابقة"
+              description="غيّر البحث أو الفلتر لعرض نتائج أخرى."
+            />
+          )}
         </div>
       </section>
 
+      {createOpen && (
+        <Modal
+          title="إنشاء مسجد"
+          subtitle="أنشئ قسم الرجال أو النساء كسجل مستقل داخل النظام."
+          onClose={() => !saving && setCreateOpen(false)}
+        >
+          <Field label="اسم المسجد" required>
+            <input
+              value={createForm.name}
+              onChange={(e) =>
+                setCreateForm((prev) => ({ ...prev, name: e.target.value }))
+              }
+              placeholder="مثال: مسجد الصديق"
+              autoFocus
+            />
+          </Field>
+
+          <Field label="القسم" required>
+            <div className="sa-section-choice">
+              <button
+                type="button"
+                className={createForm.section === "men" ? "is-selected" : ""}
+                onClick={() =>
+                  setCreateForm((prev) => ({ ...prev, section: "men" }))
+                }
+              >
+                <span className="sa-section-choice-mark">
+                  {createForm.section === "men" && <Check />}
+                </span>
+                <div>
+                  <strong>رجال</strong>
+                  <small>حلقات ومعلمون وطلاب قسم الرجال</small>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className={createForm.section === "women" ? "is-selected" : ""}
+                onClick={() =>
+                  setCreateForm((prev) => ({ ...prev, section: "women" }))
+                }
+              >
+                <span className="sa-section-choice-mark">
+                  {createForm.section === "women" && <Check />}
+                </span>
+                <div>
+                  <strong>نساء</strong>
+                  <small>حلقات ومعلمات وطالبات قسم النساء</small>
+                </div>
+              </button>
+            </div>
+          </Field>
+
+          <Field label="العنوان">
+            <input
+              value={createForm.address}
+              onChange={(e) =>
+                setCreateForm((prev) => ({ ...prev, address: e.target.value }))
+              }
+              placeholder="عنوان المسجد — اختياري"
+            />
+          </Field>
+
+          <Field label="ملاحظات">
+            <textarea
+              rows={3}
+              value={createForm.notes}
+              onChange={(e) =>
+                setCreateForm((prev) => ({ ...prev, notes: e.target.value }))
+              }
+              placeholder="ملاحظات إدارية — اختياري"
+            />
+          </Field>
+
+          <div className="sa-callout info">
+            يمكن استخدام نفس اسم المسجد مرتين، مثل «مسجد الصديق — رجال» و«مسجد
+            الصديق — نساء». كل قسم سيكون له رقم مسجد مستقل وبيانات مستقلة.
+          </div>
+
+          <ModalActions
+            onCancel={() => setCreateOpen(false)}
+            onConfirm={createMosque}
+            saving={saving}
+            confirmLabel="إنشاء المسجد"
+          />
+        </Modal>
+      )}
+
       {statusModal && (
-        <Modal title={statusModal.targetStatus === "active" ? "تفعيل المسجد" : statusModal.targetStatus === "inactive" ? "تعطيل المسجد" : "أرشفة المسجد"} onClose={() => !saving && setStatusModal(null)}>
-          <div className="sa-modal-entity"><span><Building2 /></span><div><strong>{statusModal.mosque.mosque_name}</strong><small>{statusModal.mosque.mosque_address || "بدون عنوان"}</small></div></div>
-          <div className={`sa-callout ${statusModal.targetStatus === "active" ? "success" : "warning"}`}>
+        <Modal
+          title={
+            statusModal.targetStatus === "active"
+              ? "تفعيل المسجد"
+              : statusModal.targetStatus === "inactive"
+                ? "تعطيل المسجد"
+                : "أرشفة المسجد"
+          }
+          onClose={() => !saving && setStatusModal(null)}
+        >
+          <div className="sa-modal-entity">
+            <span><Building2 /></span>
+            <div>
+              <strong>
+                {statusModal.mosque.mosque_name} —{" "}
+                {statusModal.mosque.mosque_section === "women" ? "نساء" : "رجال"}
+              </strong>
+              <small>{statusModal.mosque.mosque_address || "بدون عنوان"}</small>
+            </div>
+          </div>
+          <div
+            className={`sa-callout ${
+              statusModal.targetStatus === "active" ? "success" : "warning"
+            }`}
+          >
             {statusModal.targetStatus === "active"
               ? "سيعود المسجد للظهور كمسجد نشط في النظام."
               : statusModal.targetStatus === "inactive"
@@ -838,14 +1195,30 @@ function MosquesView({ mosques, notify, reload }) {
           </div>
           {statusModal.targetStatus !== "active" && (
             <Field label="سبب الإجراء" required>
-              <textarea value={statusModal.reason} onChange={(e) => setStatusModal((prev) => ({ ...prev, reason: e.target.value }))} placeholder="اكتب سببًا واضحًا لسجل العمليات…" rows={4} />
+              <textarea
+                value={statusModal.reason}
+                onChange={(e) =>
+                  setStatusModal((prev) => ({
+                    ...prev,
+                    reason: e.target.value,
+                  }))
+                }
+                placeholder="اكتب سببًا واضحًا لسجل العمليات…"
+                rows={4}
+              />
             </Field>
           )}
           <ModalActions
             onCancel={() => setStatusModal(null)}
             onConfirm={applyStatus}
             saving={saving}
-            confirmLabel={statusModal.targetStatus === "active" ? "تفعيل المسجد" : statusModal.targetStatus === "inactive" ? "تعطيل المسجد" : "أرشفة المسجد"}
+            confirmLabel={
+              statusModal.targetStatus === "active"
+                ? "تفعيل المسجد"
+                : statusModal.targetStatus === "inactive"
+                  ? "تعطيل المسجد"
+                  : "أرشفة المسجد"
+            }
             danger={statusModal.targetStatus !== "active"}
           />
         </Modal>
@@ -853,6 +1226,7 @@ function MosquesView({ mosques, notify, reload }) {
     </div>
   );
 }
+
 
 function SupervisorsView({ supervisors, mosques, notify, reload }) {
   const [search, setSearch] = useState("");

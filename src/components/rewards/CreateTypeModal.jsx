@@ -28,6 +28,7 @@ import {
 export default function CreateTypeModal({
   open,
   defaultType = "reward",
+  mosqueId,
   onClose,
   onSaved,
 }) {
@@ -194,6 +195,14 @@ export default function CreateTypeModal({
       return;
     }
 
+    if (!mosqueId) {
+      showToast(
+        "اختر المسجد أولًا.",
+        "error"
+      );
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -215,6 +224,9 @@ export default function CreateTypeModal({
 
             is_active:
               true,
+
+            mosque_id:
+              mosqueId,
           });
 
       if (error) {

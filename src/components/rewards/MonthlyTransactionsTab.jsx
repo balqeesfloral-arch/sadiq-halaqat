@@ -3,6 +3,7 @@ import {
   Gift,
   History,
   MinusCircle,
+  BookOpen,
   Pencil,
   Search,
   Trash2,
@@ -185,6 +186,26 @@ export default function MonthlyTransactionsTab({
             <tbody>
               {filteredSessions.map((session) => {
                 const grant = session.category === "grant";
+                const recitation = session.category === "recitation";
+                const deduction = !grant && !recitation;
+
+                const sessionLabel = grant
+                  ? "منح"
+                  : recitation
+                    ? "تسميع"
+                    : "خصم";
+
+                const sessionChipClass = grant
+                  ? "grant"
+                  : recitation
+                    ? "history"
+                    : "deduct";
+
+                const pointsColor = grant
+                  ? "#167352"
+                  : recitation
+                    ? (session.totalPoints >= 0 ? "#167352" : "#ad4439")
+                    : "#ad4439";
 
                 return (
                   <tr key={session.id}>
@@ -201,9 +222,15 @@ export default function MonthlyTransactionsTab({
                     </td>
 
                     <td>
-                      <span className={`tp-chip ${grant ? "grant" : "deduct"}`}>
-                        {grant ? <Gift size={12} /> : <MinusCircle size={12} />}
-                        &nbsp;{grant ? "منح" : "خصم"}
+                      <span className={`tp-chip ${sessionChipClass}`}>
+                        {grant ? (
+                          <Gift size={12} />
+                        ) : recitation ? (
+                          <BookOpen size={12} />
+                        ) : (
+                          <MinusCircle size={12} />
+                        )}
+                        &nbsp;{sessionLabel}
                       </span>
                     </td>
 
@@ -211,7 +238,7 @@ export default function MonthlyTransactionsTab({
                       <div className="tp-session-types">
                         {session.items.map((item) => (
                           <span
-                            className={`tp-chip ${grant ? "grant" : "deduct"}`}
+                            className={`tp-chip ${sessionChipClass}`}
                             key={item.id}
                           >
                             {item.reward_name || item.reason || "نقطة"}
@@ -221,7 +248,7 @@ export default function MonthlyTransactionsTab({
                     </td>
 
                     <td>
-                      <strong style={{ color: grant ? "#167352" : "#ad4439" }}>
+                      <strong style={{ color: pointsColor }}>
                         {session.totalPoints > 0 ? "+" : ""}
                         {session.totalPoints}
                       </strong>
@@ -230,25 +257,37 @@ export default function MonthlyTransactionsTab({
                     <td>{session.transaction_date}</td>
 
                     <td>
-                      <div className="tp-action-group">
-                        <button
-                          type="button"
-                          className="tp-mini-btn history"
-                          onClick={() => onEdit?.(session)}
+                      {recitation ? (
+                        <span
+                          style={{
+                            color: "#64748B",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                          }}
                         >
-                          <Pencil size={13} />
-                          تعديل
-                        </button>
+                          يُدار من صفحة التسميع
+                        </span>
+                      ) : (
+                        <div className="tp-action-group">
+                          <button
+                            type="button"
+                            className="tp-mini-btn history"
+                            onClick={() => onEdit?.(session)}
+                          >
+                            <Pencil size={13} />
+                            تعديل
+                          </button>
 
-                        <button
-                          type="button"
-                          className="tp-mini-btn deduct"
-                          onClick={() => setConfirmDelete(session)}
-                        >
-                          <Trash2 size={13} />
-                          حذف
-                        </button>
-                      </div>
+                          <button
+                            type="button"
+                            className="tp-mini-btn deduct"
+                            onClick={() => setConfirmDelete(session)}
+                          >
+                            <Trash2 size={13} />
+                            حذف
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );

@@ -10,6 +10,8 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
+  CalendarOff,
+  Trash2,
   Check,
   CheckCircle2,
   CircleSlash2,
@@ -174,6 +176,90 @@ function formatShortDate(
   }
 }
 
+
+/* =========================================================
+   أيام التسميع + تحويل الهجري
+========================================================= */
+
+const RECITATION_DAY_ALIASES = {
+  0: ["sun", "sunday", "الأحد", "الاحد"],
+  1: ["mon", "monday", "الاثنين", "الإثنين"],
+  2: ["tue", "tuesday", "الثلاثاء"],
+  3: ["wed", "wednesday", "الأربعاء", "الاربعاء"],
+  4: ["thu", "thursday", "الخميس"],
+  5: ["fri", "friday", "الجمعة"],
+  6: ["sat", "saturday", "السبت"],
+};
+
+function normalizeDayValue(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isStudentScheduledOnDate(student, dateString) {
+  const days = Array.isArray(student?.recitation_days)
+    ? student.recitation_days.filter(Boolean)
+    : [];
+
+  /* حفاظًا على الطلاب القدامى: إذا لم تحدد أيام، لا نقفل الحضور. */
+  if (days.length === 0) return true;
+
+  const weekday = parseLocalDate(dateString).getDay();
+  const aliases = RECITATION_DAY_ALIASES[weekday] || [];
+  const normalized = days.map(normalizeDayValue);
+
+  return aliases.some((alias) =>
+    normalized.includes(normalizeDayValue(alias))
+  );
+}
+
+function getRecitationDaysCount(student) {
+  return Array.isArray(student?.recitation_days)
+    ? new Set(student.recitation_days.filter(Boolean).map(normalizeDayValue)).size
+    : 0;
+}
+
+function getHijriParts(dateString) {
+  try {
+    const parts = new Intl.DateTimeFormat(
+      "en-US-u-ca-islamic-umalqura",
+      { year: "numeric", month: "numeric", day: "numeric" }
+    ).formatToParts(parseLocalDate(dateString));
+
+    const value = (type) =>
+      Number(parts.find((part) => part.type === type)?.value || 0);
+
+    return { year: value("year"), month: value("month"), day: value("day") };
+  } catch {
+    return { year: 0, month: 0, day: 0 };
+  }
+}
+
+function hijriToGregorian(year, month, day) {
+  const approxGregorianYear = Number(year) + 579;
+  const start = new Date(approxGregorianYear - 1, 0, 1, 12);
+  const end = new Date(approxGregorianYear + 1, 11, 31, 12);
+
+  for (let cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+    const gregorian = getLocalDate(cursor);
+    const hijri = getHijriParts(gregorian);
+    if (
+      hijri.year === Number(year) &&
+      hijri.month === Number(month) &&
+      hijri.day === Number(day)
+    ) {
+      return gregorian;
+    }
+  }
+
+  return null;
+}
+
+const HIJRI_MONTHS = [
+  "محرم", "صفر", "ربيع الأول", "ربيع الآخر",
+  "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
+  "رمضان", "شوال", "ذو القعدة", "ذو الحجة",
+];
+
 /* =========================================================
    الصفحة
 ========================================================= */
@@ -205,6 +291,15 @@ export default function Attendance() {
     attendance,
     setAttendance,
   ] = useState([]);
+
+  const [holidays, setHolidays] = useState([]);
+  const [showHolidays, setShowHolidays] = useState(false);
+  const [holidayTitle, setHolidayTitle] = useState("إجازة");
+  const initialHijri = getHijriParts(getLocalDate());
+  const [holidayHijriYear, setHolidayHijriYear] = useState(initialHijri.year);
+  const [holidayHijriMonth, setHolidayHijriMonth] = useState(initialHijri.month);
+  const [holidayHijriDay, setHolidayHijriDay] = useState(initialHijri.day);
+  const [holidaySaving, setHolidaySaving] = useState(false);
 
   /* =====================================================
      FILTERS
@@ -280,6 +375,15 @@ export default function Attendance() {
     selectedDate,
     halaqat,
   ]);
+
+
+  useEffect(() => {
+    if (selectedHalaqa) {
+      loadHolidays();
+    } else {
+      setHolidays([]);
+    }
+  }, [selectedHalaqa]);
 
   /* =====================================================
      LOAD TEACHER HALAQAT
@@ -629,7 +733,8 @@ export default function Attendance() {
             user_number,
             phone,
             status,
-            is_active
+            is_active,
+            recitation_days
           `)
           .in(
             "id",
@@ -791,6 +896,105 @@ export default function Attendance() {
   }
 
   /* =====================================================
+     HOLIDAYS
+  ===================================================== */
+
+  async function loadHolidays() {
+    if (!selectedHalaqa) return;
+
+    const { data, error } = await supabase
+      .from("attendance_holidays")
+      .select("id, halaqa_id, holiday_date, title, created_at")
+      .eq("halaqa_id", Number(selectedHalaqa))
+      .order("holiday_date", { ascending: false });
+
+    if (error) {
+      console.error("LOAD ATTENDANCE HOLIDAYS:", error);
+      showToast("تعذر تحميل الإجازات", "error");
+      return;
+    }
+
+    setHolidays(data || []);
+  }
+
+  const selectedHoliday = useMemo(
+    () => holidays.find((item) => item.holiday_date === selectedDate) || null,
+    [holidays, selectedDate]
+  );
+
+  async function addHoliday() {
+    if (!selectedHalaqa) {
+      showToast("اختر الحلقة أولًا", "error");
+      return;
+    }
+
+    const gregorianDate = hijriToGregorian(
+      holidayHijriYear,
+      holidayHijriMonth,
+      holidayHijriDay
+    );
+
+    if (!gregorianDate) {
+      showToast("التاريخ الهجري المحدد غير صحيح", "error");
+      return;
+    }
+
+    setHolidaySaving(true);
+    try {
+      const { error } = await supabase
+        .from("attendance_holidays")
+        .insert({
+          halaqa_id: Number(selectedHalaqa),
+          holiday_date: gregorianDate,
+          title: holidayTitle.trim() || "إجازة",
+          created_by: teacher?.id || null,
+        });
+
+      if (error) throw error;
+
+      showToast(
+        `تمت إضافة الإجازة: ${formatHijriDate(gregorianDate)}`,
+        "success"
+      );
+      await loadHolidays();
+    } catch (error) {
+      showToast(
+        error?.code === "23505"
+          ? "هذا التاريخ مسجل كإجازة مسبقًا"
+          : error.message || "تعذر إضافة الإجازة",
+        "error"
+      );
+    } finally {
+      setHolidaySaving(false);
+    }
+  }
+
+  async function removeHoliday(id) {
+    if (!window.confirm("هل تريد حذف هذه الإجازة؟")) return;
+
+    const { error } = await supabase
+      .from("attendance_holidays")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      showToast(error.message || "تعذر حذف الإجازة", "error");
+      return;
+    }
+
+    showToast("تم حذف الإجازة", "success");
+    await loadHolidays();
+  }
+
+  function openHolidaysModal() {
+    const hijri = getHijriParts(selectedDate);
+    setHolidayHijriYear(hijri.year);
+    setHolidayHijriMonth(hijri.month);
+    setHolidayHijriDay(hijri.day);
+    setShowHolidays(true);
+  }
+
+  /* =====================================================
      Halaqa access
   ===================================================== */
 
@@ -852,10 +1056,16 @@ export default function Attendance() {
   function getHalaqaStats(
     halaqaId
   ) {
-    const halaqaStudents =
+    const allHalaqaStudents =
       getStudentsForHalaqa(
         halaqaId
       );
+
+    const halaqaStudents = selectedHoliday
+      ? []
+      : allHalaqaStudents.filter((student) =>
+          isStudentScheduledOnDate(student, selectedDate)
+        );
 
     const total =
       halaqaStudents.length;
@@ -1205,6 +1415,20 @@ export default function Attendance() {
       return;
     }
 
+    if (selectedHoliday) {
+      showToast(`هذا اليوم إجازة: ${selectedHoliday.title}`, "info");
+      return;
+    }
+
+    const targetStudent = getStudentsForHalaqa(selectedHalaqa).find(
+      (student) => Number(student.student_id) === Number(studentId)
+    );
+
+    if (targetStudent && !isStudentScheduledOnDate(targetStudent, selectedDate)) {
+      showToast("هذا اليوم ليس ضمن أيام التسميع المحددة للطالب", "info");
+      return;
+    }
+
     const studentExists =
       getStudentsForHalaqa(
         selectedHalaqa
@@ -1477,6 +1701,15 @@ export default function Attendance() {
       getStudentsForHalaqa(
         selectedHalaqa
       );
+
+    if (selectedHoliday) {
+      showToast(`هذا اليوم إجازة: ${selectedHoliday.title}`, "info");
+      return;
+    }
+
+    halaqaStudents = halaqaStudents.filter((student) =>
+      isStudentScheduledOnDate(student, selectedDate)
+    );
 
     /*
       الخيار الآمن:
@@ -1823,29 +2056,29 @@ export default function Attendance() {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="attendance-refresh"
-          onClick={
-            refreshData
-          }
-          disabled={loading}
-        >
-          <RefreshCw
-            size={17}
-            className={
-              loading
-                ? "spin"
-                : ""
-            }
-          />
-
-          <span
-            className="refresh-text"
+        <div className="attendance-hero-actions">
+          <button
+            type="button"
+            className="attendance-refresh holiday-button"
+            onClick={openHolidaysModal}
           >
-            تحديث البيانات
-          </span>
-        </button>
+            <CalendarOff size={17} />
+            <span className="refresh-text">الإجازات</span>
+          </button>
+
+          <button
+            type="button"
+            className="attendance-refresh"
+            onClick={refreshData}
+            disabled={loading}
+          >
+            <RefreshCw
+              size={17}
+              className={loading ? "spin" : ""}
+            />
+            <span className="refresh-text">تحديث البيانات</span>
+          </button>
+        </div>
       </section>
 
       {/* =================================================
@@ -2000,6 +2233,16 @@ export default function Attendance() {
           </div>
         </div>
       </section>
+
+      {selectedHoliday && (
+        <div className="holiday-lock-banner">
+          <CalendarOff size={18} />
+          <div>
+            <strong>اليوم إجازة — تسجيل الحضور مقفل</strong>
+            <span>{selectedHoliday.title} • {formatHijriDate(selectedDate)} • {formatGregorianDate(selectedDate)}</span>
+          </div>
+        </div>
+      )}
 
       {/* =================================================
           GLOBAL STATS
@@ -2509,9 +2752,9 @@ export default function Attendance() {
                           savingStudentId ===
                           student.student_id
                         }
-                        onSave={
-                          saveAttendance
-                        }
+                        onSave={saveAttendance}
+                        scheduled={isStudentScheduledOnDate(student, selectedDate)}
+                        holiday={Boolean(selectedHoliday)}
                       />
                     );
                   }
@@ -2520,6 +2763,64 @@ export default function Attendance() {
             </div>
           </section>
         )}
+
+      {showHolidays && (
+        <div className="holiday-modal-backdrop" onMouseDown={() => setShowHolidays(false)}>
+          <div className="holiday-modal" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="holiday-modal-head">
+              <div>
+                <span>إدارة أيام الإجازات</span>
+                <strong>{selectedHalaqaData?.name || "الحلقة"}</strong>
+              </div>
+              <button type="button" onClick={() => setShowHolidays(false)}><X size={18} /></button>
+            </div>
+
+            <div className="holiday-form">
+              <label>
+                <span>اسم الإجازة</span>
+                <input value={holidayTitle} onChange={(e) => setHolidayTitle(e.target.value)} placeholder="مثال: إجازة نهاية الأسبوع" />
+              </label>
+
+              <div className="hijri-picker-label">التاريخ الهجري (أم القرى)</div>
+              <div className="hijri-picker-grid">
+                <select value={holidayHijriDay} onChange={(e) => setHolidayHijriDay(Number(e.target.value))}>
+                  {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => <option key={day} value={day}>{day}</option>)}
+                </select>
+                <select value={holidayHijriMonth} onChange={(e) => setHolidayHijriMonth(Number(e.target.value))}>
+                  {HIJRI_MONTHS.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
+                </select>
+                <select value={holidayHijriYear} onChange={(e) => setHolidayHijriYear(Number(e.target.value))}>
+                  {Array.from({ length: 7 }, (_, i) => initialHijri.year - 2 + i).map((year) => <option key={year} value={year}>{year} هـ</option>)}
+                </select>
+              </div>
+
+              <div className="holiday-gregorian-preview">
+                يُحفظ في الجدول بالميلادي: <strong>{hijriToGregorian(holidayHijriYear, holidayHijriMonth, holidayHijriDay) || "تاريخ غير صالح"}</strong>
+              </div>
+
+              <button type="button" className="holiday-save-btn" onClick={addHoliday} disabled={holidaySaving}>
+                {holidaySaving ? <Loader2 size={16} className="spin" /> : <CalendarOff size={16} />}
+                إضافة الإجازة
+              </button>
+            </div>
+
+            <div className="holiday-list">
+              {holidays.length === 0 ? (
+                <div className="holiday-empty">لا توجد إجازات مسجلة لهذه الحلقة.</div>
+              ) : holidays.map((holiday) => (
+                <div className="holiday-item" key={holiday.id}>
+                  <div>
+                    <strong>{holiday.title}</strong>
+                    <span>{formatHijriDate(holiday.holiday_date)}</span>
+                    <small>{formatGregorianDate(holiday.holiday_date)}</small>
+                  </div>
+                  <button type="button" onClick={() => removeHoliday(holiday.id)} title="حذف الإجازة"><Trash2 size={15} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2765,6 +3066,8 @@ function StudentAttendanceRow({
   index,
   saving,
   onSave,
+  scheduled = true,
+  holiday = false,
 }) {
   return (
     <div
@@ -2815,6 +3118,13 @@ function StudentAttendanceRow({
               </>
             )}
           </div>
+          <div className="recitation-days-meta">
+            {getRecitationDaysCount(student) > 0
+              ? `${getRecitationDaysCount(student)} أيام تسميع أسبوعيًا`
+              : "أيام التسميع غير محددة"}
+            {!holiday && !scheduled && <span> • لا يوجد تسميع اليوم</span>}
+            {holiday && <span> • إجازة</span>}
+          </div>
         </div>
       </div>
 
@@ -2836,7 +3146,7 @@ function StudentAttendanceRow({
             record?.status ===
             "present"
           }
-          disabled={saving}
+          disabled={saving || holiday || !scheduled}
           onClick={() =>
             onSave(
               student.student_id,
@@ -2853,7 +3163,7 @@ function StudentAttendanceRow({
             record?.status ===
             "absent"
           }
-          disabled={saving}
+          disabled={saving || holiday || !scheduled}
           onClick={() =>
             onSave(
               student.student_id,
@@ -2870,7 +3180,7 @@ function StudentAttendanceRow({
             record?.status ===
             "late"
           }
-          disabled={saving}
+          disabled={saving || holiday || !scheduled}
           onClick={() =>
             onSave(
               student.student_id,
@@ -2887,7 +3197,7 @@ function StudentAttendanceRow({
             record?.status ===
             "excused"
           }
-          disabled={saving}
+          disabled={saving || holiday || !scheduled}
           onClick={() =>
             onSave(
               student.student_id,
@@ -3297,6 +3607,41 @@ function PageStyles() {
           opacity: .6;
           cursor: wait;
         }
+
+
+        .attendance-hero-actions { display:flex; align-items:center; gap:8px; position:relative; z-index:2; }
+        .holiday-button { color:#8a6a10; border-color:rgba(201,162,39,.35); background:#fffdf6; }
+        .holiday-lock-banner { margin:-6px 0 18px; padding:12px 16px; border:1px solid rgba(201,162,39,.28); border-radius:14px; background:#fffaf0; color:#72580d; display:flex; align-items:center; gap:10px; }
+        .holiday-lock-banner div { display:flex; flex-direction:column; gap:2px; }
+        .holiday-lock-banner strong { font-size:11px; }
+        .holiday-lock-banner span { font-size:9px; color:#8b7a49; }
+        .recitation-days-meta { margin-top:4px; font-size:8px; font-weight:800; color:#0f766e; }
+        .recitation-days-meta span { color:#9a7514; }
+
+        .holiday-modal-backdrop { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(5,35,25,.38); backdrop-filter:blur(4px); }
+        .holiday-modal { width:min(620px,96vw); max-height:82vh; overflow:auto; border:1px solid #dfe8e3; border-radius:22px; background:#fff; box-shadow:0 28px 80px rgba(8,45,31,.22); }
+        .holiday-modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid #edf1ef; background:linear-gradient(135deg,#f7fbf8,#fffdf7); }
+        .holiday-modal-head div { display:flex; flex-direction:column; gap:3px; }
+        .holiday-modal-head span { font-size:9px; color:#8b7a49; font-weight:900; }
+        .holiday-modal-head strong { font-size:16px; color:#173d2b; }
+        .holiday-modal-head button, .holiday-item button { width:34px; height:34px; border:1px solid #e2e9e5; border-radius:10px; background:#fff; color:#5f6c64; display:grid; place-items:center; cursor:pointer; }
+        .holiday-form { padding:16px 20px; border-bottom:1px solid #edf1ef; }
+        .holiday-form label { display:flex; flex-direction:column; gap:6px; }
+        .holiday-form label span, .hijri-picker-label { font-size:9px; font-weight:900; color:#53645a; }
+        .holiday-form input, .holiday-form select { width:100%; height:40px; border:1px solid #dfe7e2; border-radius:10px; padding:0 11px; background:#fff; color:#173d2b; font-family:inherit; outline:none; }
+        .hijri-picker-label { margin-top:14px; margin-bottom:6px; }
+        .hijri-picker-grid { display:grid; grid-template-columns:.7fr 1.3fr 1fr; gap:8px; }
+        .holiday-gregorian-preview { margin-top:9px; padding:9px 11px; border-radius:9px; background:#f5f8f6; color:#6b7770; font-size:9px; }
+        .holiday-save-btn { margin-top:12px; min-height:40px; padding:0 15px; border:0; border-radius:11px; background:#0f5132; color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:7px; font-family:inherit; font-size:10px; font-weight:900; cursor:pointer; }
+        .holiday-save-btn:disabled { opacity:.55; cursor:wait; }
+        .holiday-list { padding:10px 20px 18px; display:grid; gap:7px; }
+        .holiday-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 12px; border:1px solid #e7ece9; border-radius:12px; background:#fff; }
+        .holiday-item > div { display:flex; flex-direction:column; gap:2px; }
+        .holiday-item strong { font-size:10px; color:#173d2b; }
+        .holiday-item span { font-size:9px; color:#0f766e; }
+        .holiday-item small { font-size:8px; color:#8b958f; }
+        .holiday-item button { color:#b42318; }
+        .holiday-empty { padding:20px; text-align:center; color:#8b958f; font-size:10px; }
 
         /* =============================================
            DATE
@@ -5004,6 +5349,12 @@ function PageStyles() {
           .halaqa-mini-stats {
             gap: 4px;
           }
+        }
+        @media (max-width: 640px) {
+          .attendance-hero-actions { width:100%; }
+          .attendance-hero-actions .attendance-refresh { flex:1; }
+          .hijri-picker-grid { grid-template-columns:1fr; }
+          .holiday-modal { max-height:88vh; }
         }
       `}
     </style>

@@ -25,6 +25,7 @@ import {
   LogOut,
   Menu,
   Mic2,
+  ReceiptText,
   Search,
   Settings,
   ShieldCheck,
@@ -122,6 +123,11 @@ const sections = [
         name: "التقارير",
         path: `${BASE_PATH}/reports`,
         icon: BarChart3,
+      },
+      {
+        name: "الفواتير",
+        path: `${BASE_PATH}/invoices`,
+        icon: ReceiptText,
       },
       {
         name: "العرض على التلفزيون",

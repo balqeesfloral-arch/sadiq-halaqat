@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useToast } from "../components/Toast";
@@ -11,6 +11,8 @@ import {
   Loader2,
   LockKeyhole,
   LogIn,
+  Zap,
+  CheckCircle2,
   Mail,
   ShieldCheck,
   Sparkles,
@@ -38,11 +40,80 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [rememberLogin, setRememberLogin] = useState(true);
+  const [quickAccounts, setQuickAccounts] = useState([]);
 
   const dua = useMemo(
     () => DUAS[Math.floor(Math.random() * DUAS.length)],
     []
   );
+
+  useEffect(() => {
+    try {
+      const remembered = localStorage.getItem("sadiq_remember_login");
+      if (remembered) {
+        const parsed = JSON.parse(remembered);
+        setRememberLogin(parsed.enabled !== false);
+        if (parsed.mode === "staff" && parsed.identifier) {
+          setLoginMode("staff");
+          setIdentifier(parsed.identifier);
+        } else if (parsed.mode === "student" && parsed.identifier) {
+          setLoginMode("student");
+          setIdentifier(parsed.identifier);
+          setStudentNumber(parsed.studentNumber || "");
+        }
+      }
+
+      const accounts = JSON.parse(localStorage.getItem("sadiq_quick_accounts") || "[]");
+      if (Array.isArray(accounts)) setQuickAccounts(accounts.slice(0, 4));
+    } catch (error) {
+      console.warn("Could not read saved login preferences:", error);
+    }
+  }, []);
+
+  function rememberSuccessfulLogin(account) {
+    try {
+      if (rememberLogin) {
+        localStorage.setItem("sadiq_remember_login", JSON.stringify({
+          enabled: true,
+          mode: account.mode,
+          identifier: account.identifier,
+          studentNumber: account.studentNumber || "",
+        }));
+      } else {
+        localStorage.removeItem("sadiq_remember_login");
+      }
+
+      const existing = JSON.parse(localStorage.getItem("sadiq_quick_accounts") || "[]");
+      const next = [
+        account,
+        ...(Array.isArray(existing) ? existing : []).filter(
+          (item) => !(item.mode === account.mode && item.identifier === account.identifier)
+        ),
+      ].slice(0, 4);
+      localStorage.setItem("sadiq_quick_accounts", JSON.stringify(next));
+      setQuickAccounts(next);
+    } catch (error) {
+      console.warn("Could not save login preference:", error);
+    }
+  }
+
+  function chooseQuickAccount(account) {
+    setLoginMode(account.mode);
+    setIdentifier(account.identifier || "");
+    setStudentNumber(account.studentNumber || "");
+    setPassword("");
+    setErrorMessage("");
+  }
+
+  function removeQuickAccount(event, account) {
+    event.stopPropagation();
+    const next = quickAccounts.filter(
+      (item) => !(item.mode === account.mode && item.identifier === account.identifier)
+    );
+    setQuickAccounts(next);
+    localStorage.setItem("sadiq_quick_accounts", JSON.stringify(next));
+  }
 
   function switchMode(mode) {
     setLoginMode(mode);
@@ -146,6 +217,13 @@ export default function Login() {
       }
     }
 
+    rememberSuccessfulLogin({
+      mode: "staff",
+      identifier: email,
+      label: profile.full_name || email,
+      role: profile.role,
+    });
+
     showToast(`مرحبًا بك ${profile.full_name}`, "success");
 
     navigate(destination, {
@@ -235,6 +313,14 @@ export default function Login() {
     });
 
     if (sessionError) throw sessionError;
+
+    rememberSuccessfulLogin({
+      mode: "student",
+      identifier: fullName,
+      studentNumber: userNumber,
+      label: data?.profile?.full_name || fullName,
+      role: "student",
+    });
 
     showToast(
       `مرحبًا بك ${data?.profile?.full_name || fullName}`,
@@ -353,6 +439,44 @@ export default function Login() {
             </button>
           </div>
 
+          {quickAccounts.length > 0 && (
+            <section className="login-quick-access">
+              <div className="login-quick-head">
+                <div>
+                  <span><Zap size={14}/> الوصول السريع</span>
+                  <small>اختر حسابًا استخدمته سابقًا على هذا الجهاز</small>
+                </div>
+                <span className="login-quick-local"><ShieldCheck size={13}/> محفوظ على هذا الجهاز</span>
+              </div>
+              <div className="login-quick-list">
+                {quickAccounts.map((account, index) => (
+                  <button
+                    type="button"
+                    className={`login-quick-account ${loginMode === account.mode && identifier === account.identifier ? "selected" : ""}`}
+                    key={`${account.mode}-${account.identifier}-${index}`}
+                    onClick={() => chooseQuickAccount(account)}
+                  >
+                    <span className="login-quick-avatar">
+                      {account.mode === "student" ? <GraduationCap size={17}/> : <UserRound size={17}/>}
+                    </span>
+                    <span className="login-quick-copy">
+                      <strong>{account.label || account.identifier}</strong>
+                      <small>{account.mode === "student" ? `طالب • ${account.studentNumber || ""}` : account.identifier}</small>
+                    </span>
+                    <span className="login-quick-check"><CheckCircle2 size={16}/></span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="login-quick-remove"
+                      title="إزالة من الوصول السريع"
+                      onClick={(event) => removeQuickAccount(event, account)}
+                    >×</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
           <form className="login-pro-form" onSubmit={handleLogin}>
             <FormInput
               label={loginMode === "staff" ? "البريد الإلكتروني" : "اسم الطالب"}
@@ -395,6 +519,22 @@ export default function Login() {
                 dir="ltr"
               />
             )}
+
+            <label className="login-remember-row">
+              <input
+                type="checkbox"
+                checked={rememberLogin}
+                onChange={(e) => {
+                  setRememberLogin(e.target.checked);
+                  if (!e.target.checked) localStorage.removeItem("sadiq_remember_login");
+                }}
+              />
+              <span className="login-remember-toggle"><i /></span>
+              <span className="login-remember-copy">
+                <strong>حفظ تسجيل الدخول</strong>
+                <small>يتذكر بيانات التعريف فقط على هذا الجهاز — لا نحفظ كلمة المرور.</small>
+              </span>
+            </label>
 
             {errorMessage && <div className="login-pro-error">{errorMessage}</div>}
 

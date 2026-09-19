@@ -25,6 +25,7 @@ import { showToast } from "../Toast";
 export default function EditTypeModal({
   open,
   item,
+  mosqueId,
   onClose,
   onSaved,
 }) {
@@ -356,6 +357,14 @@ export default function EditTypeModal({
     setShowConfirm(false);
     setSaving(true);
 
+    if (!mosqueId || String(item?.mosque_id) !== String(mosqueId)) {
+      showToast(
+        "لا يمكن تعديل نوع تابع لمسجد آخر.",
+        "error"
+      );
+      return;
+    }
+
     try {
       /*
         نعيد التحقق من الاستخدام إذا
@@ -407,6 +416,10 @@ export default function EditTypeModal({
           .eq(
             "id",
             item.id
+          )
+          .eq(
+            "mosque_id",
+            mosqueId
           )
           .select("*")
           .single();

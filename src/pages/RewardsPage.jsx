@@ -63,6 +63,12 @@ export default function RewardsPage() {
   const [rewardTypes, setRewardTypes] =
     useState([]);
 
+  const [supervisorMosques, setSupervisorMosques] =
+    useState([]);
+
+  const [selectedMosque, setSelectedMosque] =
+    useState("");
+
   const [transactions, setTransactions] =
     useState([]);
 
@@ -93,19 +99,23 @@ const [editingTransaction, setEditingTransaction] =
   useState(null);
 
 const loadHalaqat =
-async () => {
+async (mosqueId = selectedMosque) => {
+
+  if (!mosqueId) {
+    setHalaqat([]);
+    return;
+  }
 
   const { data, error } =
     await supabase
-
       .from("halaqat")
-
       .select(`
         id,
         name,
-        main_teacher_id
+        main_teacher_id,
+        mosque_id
       `)
-
+      .eq("mosque_id", mosqueId)
       .order("name");
 
   if (error) {
@@ -114,11 +124,77 @@ async () => {
   }
 
   setHalaqat(data || []);
+};
 
+const loadSupervisorMosques =
+async () => {
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error(authError);
+    return;
+  }
+
+  const { data: profile, error: profileError } =
+    await supabase
+      .from("profiles")
+      .select("id")
+      .eq("auth_user_id", user.id)
+      .eq("role", "supervisor")
+      .single();
+
+  if (profileError || !profile) {
+    console.error(profileError);
+    return;
+  }
+
+  const { data, error } =
+    await supabase
+      .from("mosque_supervisors")
+      .select(`
+        mosque_id,
+        mosques (
+          id,
+          name,
+          status
+        )
+      `)
+      .eq("supervisor_id", profile.id);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const rows = (data || [])
+    .map((row) => row.mosques)
+    .filter((mosque) => mosque && mosque.status === "active");
+
+  setSupervisorMosques(rows);
+
+  setSelectedMosque((current) => {
+    if (
+      current &&
+      rows.some((mosque) => String(mosque.id) === String(current))
+    ) {
+      return current;
+    }
+
+    return rows[0]?.id ? String(rows[0].id) : "";
+  });
 };
 
 const loadRewardTypes =
-async () => {
+async (mosqueId = selectedMosque) => {
+
+  if (!mosqueId) {
+    setRewardTypes([]);
+    return;
+  }
 
   const { data, error } =
     await supabase
@@ -126,6 +202,8 @@ async () => {
       .from("reward_types")
 
       .select("*")
+
+      .eq("mosque_id", mosqueId)
 
       .order("points", {
         ascending: false,
@@ -374,15 +452,31 @@ async () => {
 
 useEffect(() => {
 
-  loadHalaqat();
+  loadSupervisorMosques();
 
   loadTeachers();
-
-  loadRewardTypes();
 
   loadTransactions();
 
 }, []);
+
+useEffect(() => {
+
+  setSelectedHalaqa("");
+  setSelectedTeacher("");
+  setStudents([]);
+  setAttendance([]);
+
+  if (!selectedMosque) {
+    setHalaqat([]);
+    setRewardTypes([]);
+    return;
+  }
+
+  loadHalaqat(selectedMosque);
+  loadRewardTypes(selectedMosque);
+
+}, [selectedMosque]);
 
 useEffect(() => {
 
@@ -518,8 +612,24 @@ useMemo(() => {
   transactions
 ]);
 
+const canUsePointsForStudent =
+(student) =>
+  student?.attendance === "present" ||
+  student?.attendance === "late";
+
 const openGrant =
 (student)=>{
+
+  if (!canUsePointsForStudent(student)) {
+    showToast(
+      student?.attendance === "excused"
+        ? "الطالب غائب بعذر؛ لا يمكن منحه نقاطًا لهذا اليوم."
+        : "الطالب غائب؛ لا يمكن منحه نقاطًا لهذا اليوم.",
+      "error"
+    );
+
+    return;
+  }
 
   setSelectedStudent(
     student
@@ -531,6 +641,17 @@ const openGrant =
 
 const openPenalty =
 (student)=>{
+
+  if (!canUsePointsForStudent(student)) {
+    showToast(
+      student?.attendance === "excused"
+        ? "الطالب غائب بعذر؛ لا يمكن خصم نقاط منه لهذا اليوم."
+        : "الطالب غائب؛ لا يمكن خصم نقاط منه لهذا اليوم.",
+      "error"
+    );
+
+    return;
+  }
 
   setSelectedStudent(
     student
@@ -568,6 +689,10 @@ async (item)=>{
       .eq(
         "id",
         item.id
+      )
+      .eq(
+        "mosque_id",
+        selectedMosque
       );
 
   if(error){
@@ -607,6 +732,10 @@ async (item)=>{
       .eq(
         "id",
         item.id
+      )
+      .eq(
+        "mosque_id",
+        selectedMosque
       );
 
   if(error){
@@ -746,6 +875,55 @@ return (
         إدارة نقاط الطلاب والمنح والخصومات
       </p>
 
+    </div>
+
+    <div
+      style={{
+        minWidth: "240px",
+      }}
+    >
+      <label
+        style={{
+          display: "block",
+          marginBottom: "6px",
+          color: "#64748B",
+          fontSize: "13px",
+          fontWeight: "800",
+        }}
+      >
+        المسجد الحالي
+      </label>
+
+      <select
+        value={selectedMosque}
+        onChange={(event) =>
+          setSelectedMosque(event.target.value)
+        }
+        style={{
+          width: "100%",
+          minHeight: "44px",
+          border: "1px solid #E2E8F0",
+          borderRadius: "12px",
+          background: "#FFFFFF",
+          padding: "0 12px",
+          font: "inherit",
+          fontWeight: "800",
+          color: "#0F172A",
+          outline: "none",
+        }}
+      >
+        {supervisorMosques.length === 0 && (
+          <option value="">
+            لا توجد مساجد مرتبطة
+          </option>
+        )}
+
+        {supervisorMosques.map((mosque) => (
+          <option key={mosque.id} value={mosque.id}>
+            {mosque.name}
+          </option>
+        ))}
+      </select>
     </div>
 
   </div>
@@ -1091,6 +1269,10 @@ return (
       createTypeOpen
     }
 
+    mosqueId={
+      selectedMosque
+    }
+
     onClose={()=>
       setCreateTypeOpen(
         false
@@ -1109,6 +1291,10 @@ return (
 
     open={
       editTypeOpen
+    }
+
+    mosqueId={
+      selectedMosque
     }
 
     item={

@@ -1,145 +1,22 @@
 import { useEffect, useState } from "react";
-import { Info } from "lucide-react";
-
+import { Info, Users, GraduationCap, BookOpen, Landmark, Database, CheckCircle2, RefreshCw } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 
-export default function AboutSystem() {
-  const [stats, setStats] =
-    useState({
-      students: 0,
-      teachers: 0,
-      halaqat: 0,
-      mosques: 0,
-    });
-
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  async function loadStats() {
-    const [
-      students,
-      teachers,
-      halaqat,
-      mosques,
-    ] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("*", {
-          count: "exact",
-          head: true,
-        })
-        .eq("role", "student"),
-
-      supabase
-        .from("profiles")
-        .select("*", {
-          count: "exact",
-          head: true,
-        })
-        .eq("role", "teacher"),
-
-      supabase
-        .from("halaqat")
-        .select("*", {
-          count: "exact",
-          head: true,
-        }),
-
-      supabase
-        .from("mosques")
-        .select("*", {
-          count: "exact",
-          head: true,
-        }),
-    ]);
-
-    setStats({
-      students:
-        students.count || 0,
-
-      teachers:
-        teachers.count || 0,
-
-      halaqat:
-        halaqat.count || 0,
-
-      mosques:
-        mosques.count || 0,
-    });
-  }
-
-  return (
-    <div className="settings-card">
-
-      <div className="section-title">
-        <Info size={22} />
-        <h2>
-          حول النظام
-        </h2>
-      </div>
-
-      <div className="about-box">
-
-        <h3>
-          برنامج الصديق
-        </h3>
-
-        <p>
-          نظام إدارة حلقات
-          القرآن الكريم
-        </p>
-
-        <p>
-          الإصدار 1.0.0
-        </p>
-
-      </div>
-
-      <div className="stats-grid">
-
-        <div className="stat-card">
-          <span>
-            الطلاب
-          </span>
-
-          <strong>
-            {stats.students}
-          </strong>
-        </div>
-
-        <div className="stat-card">
-          <span>
-            المعلمون
-          </span>
-
-          <strong>
-            {stats.teachers}
-          </strong>
-        </div>
-
-        <div className="stat-card">
-          <span>
-            الحلقات
-          </span>
-
-          <strong>
-            {stats.halaqat}
-          </strong>
-        </div>
-
-        <div className="stat-card">
-          <span>
-            المساجد
-          </span>
-
-          <strong>
-            {stats.mosques}
-          </strong>
-        </div>
-
-      </div>
-
-    </div>
-  );
+export default function AboutSystem(){
+ const [stats,setStats]=useState({students:0,teachers:0,halaqat:0,mosques:0}),[loading,setLoading]=useState(true),[healthy,setHealthy]=useState(true);
+ async function load(){setLoading(true);const results=await Promise.all([
+  supabase.from("profiles").select("id",{count:"exact",head:true}).eq("role","student"),
+  supabase.from("profiles").select("id",{count:"exact",head:true}).eq("role","teacher"),
+  supabase.from("halaqat").select("id",{count:"exact",head:true}),
+  supabase.from("mosques").select("id",{count:"exact",head:true})
+ ]);setHealthy(results.every(x=>!x.error));setStats({students:results[0].count||0,teachers:results[1].count||0,halaqat:results[2].count||0,mosques:results[3].count||0});setLoading(false)}
+ useEffect(()=>{load()},[]);
+ const items=[[Users,"الطلاب",stats.students],[GraduationCap,"المعلمون",stats.teachers],[BookOpen,"الحلقات",stats.halaqat],[Landmark,"المساجد",stats.mosques]];
+ return <div>
+  <section className="settings-panel-intro"><span className="settings-panel-intro__icon"><Info size={21}/></span><div><small>الصِّدّيق</small><h3>معلومات النظام</h3><p>ملخص مباشر مبني على البيانات الحالية، وليس أرقامًا ثابتة.</p></div><span className="real-badge">{healthy?<CheckCircle2 size={13}/>:<Database size={13}/>} {healthy?"قاعدة البيانات متصلة":"تحقق من الاتصال"}</span></section>
+  <section className="settings-real-card"><div className="settings-real-card__head"><div><Database size={17}/><span><strong>الإحصاءات الحالية</strong><small>تُقرأ مباشرة من Supabase</small></span></div><button className="btn-secondary" onClick={load}><RefreshCw size={13} className={loading?"settings-spin":""}/> تحديث</button></div>
+   <div className="system-stats-pro">{items.map(([Icon,label,value])=><div className="system-stat-pro" key={label}><Icon size={17}/><span>{label}</span><strong>{loading?"—":value}</strong></div>)}</div>
+  </section>
+  <div className="general-settings-note"><Info size={17}/><div><strong>برنامج الصِّدّيق لإدارة حلقات القرآن الكريم</strong><span>الإصدار المعروض في هذه الصفحة لا يُفترض من الواجهة؛ اربطه لاحقًا بإصدار النشر عند تجهيز نظام الإصدارات.</span></div></div>
+ </div>
 }

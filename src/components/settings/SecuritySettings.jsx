@@ -1,177 +1,31 @@
 import { useEffect, useState } from "react";
-import { Shield, Save } from "lucide-react";
-
+import { ShieldCheck, KeyRound, Mail, Save, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
-
 import { showToast } from "../../components/Toast";
 
-export default function SecuritySettings() {
-  const [loading, setLoading] =
-    useState(true);
-
-  const [saving, setSaving] =
-    useState(false);
-
-  const [form, setForm] = useState({
-    session_timeout_minutes: 60,
-    enable_activity_logs: "true",
-  });
-
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  async function loadSettings() {
-    try {
-      const { data, error } =
-        await supabase
-          .from("system_settings")
-          .select("*");
-
-      if (error) throw error;
-
-      const settings = {};
-
-      data.forEach((item) => {
-        settings[item.setting_key] =
-          item.setting_value;
-      });
-
-      setForm({
-        session_timeout_minutes:
-          Number(
-            settings.session_timeout_minutes
-          ) || 60,
-
-        enable_activity_logs:
-          settings.enable_activity_logs ||
-          "true",
-      });
-    } catch (error) {
-      console.error(error);
-
-      showToast(
-        "فشل تحميل إعدادات الأمان"
-      );
-    } finally {
-      setLoading(false);
-    }
+export default function SecuritySettings(){
+  const [email,setEmail]=useState(""),[password,setPassword]=useState(""),[confirm,setConfirm]=useState(""),[saving,setSaving]=useState(false);
+  useEffect(()=>{supabase.auth.getUser().then(({data})=>setEmail(data?.user?.email||""))},[]);
+  async function changePassword(){
+    if(password.length<8){showToast("كلمة المرور يجب ألا تقل عن 8 أحرف");return}
+    if(password!==confirm){showToast("تأكيد كلمة المرور غير مطابق");return}
+    try{setSaving(true);const {error}=await supabase.auth.updateUser({password});if(error)throw error;setPassword("");setConfirm("");showToast("تم تغيير كلمة المرور بنجاح")}
+    catch(e){console.error(e);showToast("تعذر تغيير كلمة المرور")}finally{setSaving(false)}
   }
-
-  function updateField(
-    field,
-    value
-  ) {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  }
-
-  async function saveAll() {
-    try {
-      setSaving(true);
-
-      for (const [key, value] of Object.entries(form)) {
-        await supabase
-          .from("system_settings")
-          .update({
-            setting_value: String(value),
-          })
-          .eq("setting_key", key);
-      }
-
-      showToast(
-        "تم حفظ إعدادات الأمان"
-      );
-    } catch (error) {
-      console.error(error);
-
-      showToast(
-        "فشل حفظ الإعدادات"
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="settings-card">
-        جاري التحميل...
+  return <div>
+    <section className="settings-panel-intro"><span className="settings-panel-intro__icon"><ShieldCheck size={21}/></span><div><small>Supabase Auth</small><h3>الحساب والأمان</h3><p>هذه الصفحة تغيّر بيانات المصادقة الحقيقية للحساب، ولا تعرض مفاتيح أمان وهمية.</p></div><span className="real-badge"><CheckCircle2 size={13}/> فعلي</span></section>
+    <section className="settings-real-card">
+      <div className="settings-real-card__head"><div><Mail size={17}/><span><strong>حساب تسجيل الدخول</strong><small>البريد المرتبط بجلسة المصادقة الحالية</small></span></div></div>
+      <div className="security-account"><i>{(email||"م").charAt(0).toUpperCase()}</i><div><strong>{email||"لا يوجد بريد"}</strong><small>حساب المصادقة الحالي</small></div></div>
+    </section>
+    <section className="settings-real-card">
+      <div className="settings-real-card__head"><div><KeyRound size={17}/><span><strong>تغيير كلمة المرور</strong><small>يتم التحديث مباشرة عبر Supabase Auth</small></span></div></div>
+      <div className="settings-real-grid">
+        <label className="settings-field"><span>كلمة المرور الجديدة</span><input type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="8 أحرف على الأقل"/></label>
+        <label className="settings-field"><span>تأكيد كلمة المرور</span><input type="password" autoComplete="new-password" value={confirm} onChange={e=>setConfirm(e.target.value)} placeholder="أعد كتابة كلمة المرور"/></label>
       </div>
-    );
-  }
-
-  return (
-    <div className="settings-card">
-      <div className="section-title">
-        <Shield size={22} />
-        <h2>الأمان</h2>
-      </div>
-
-      <div className="settings-grid">
-
-        <div className="field-group">
-          <label>
-            مهلة الجلسة (دقيقة)
-          </label>
-
-          <input
-            type="number"
-            value={
-              form.session_timeout_minutes
-            }
-            onChange={(e) =>
-              updateField(
-                "session_timeout_minutes",
-                e.target.value
-              )
-            }
-          />
-        </div>
-
-        <div className="field-group">
-          <label>
-            سجل النشاطات
-          </label>
-
-          <select
-            value={
-              form.enable_activity_logs
-            }
-            onChange={(e) =>
-              updateField(
-                "enable_activity_logs",
-                e.target.value
-              )
-            }
-          >
-            <option value="true">
-              مفعل
-            </option>
-
-            <option value="false">
-              غير مفعل
-            </option>
-          </select>
-        </div>
-
-      </div>
-
-      <div className="settings-actions">
-        <button
-          className="save-btn"
-          onClick={saveAll}
-          disabled={saving}
-        >
-          <Save size={18} />
-
-          {saving
-            ? "جاري الحفظ..."
-            : "حفظ الإعدادات"}
-        </button>
-      </div>
-    </div>
-  );
+      <div className="settings-actions-pro"><button className="btn-primary" disabled={saving||!password||!confirm} onClick={changePassword}><Save size={15}/>{saving?"جاري التحديث":"تحديث كلمة المرور"}</button></div>
+    </section>
+    <div className="general-settings-note"><AlertCircle size={17}/><div><strong>تم حذف مهلة الجلسة وسجل النشاطات من هذه الصفحة</strong><span>لأن النسخة السابقة كانت تحفظ القيم فقط ولم يكن هناك منطق في المشروع يطبقها فعليًا.</span></div></div>
+  </div>
 }

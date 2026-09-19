@@ -19,7 +19,6 @@ import {
   BarChart3,
   Gift,
   ArrowUpLeft,
-  Sparkles,
   UserRoundCheck,
 } from "lucide-react";
 
@@ -71,198 +70,47 @@ function average(values = []) {
   );
 }
 
-function LanternIcon() {
+function IslamicHeroOrnament() {
   return (
     <svg
-      width="24"
-      height="34"
-      viewBox="0 0 24 34"
+      className="supervisor-hero-ornament"
+      viewBox="0 0 720 360"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
-      <path
-        d="M9 3H15"
-        stroke="#D4AF37"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 3V7"
-        stroke="#D4AF37"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M7 8H17L16 12V24L12 29L8 24V12L7 8Z"
-        fill="rgba(212,175,55,.15)"
-        stroke="#D4AF37"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8 12H16"
-        stroke="#D4AF37"
-        strokeWidth="1.4"
-      />
-      <path
-        d="M9.5 15.5H14.5V21.5H9.5V15.5Z"
-        fill="#D4AF37"
-        fillOpacity="0.35"
-        stroke="#D4AF37"
-        strokeWidth="1.1"
-      />
+      <defs>
+        <pattern id="sadiqArabesque" width="96" height="96" patternUnits="userSpaceOnUse">
+          <path d="M48 4C55 20 64 29 80 36C64 43 55 52 48 68C41 52 32 43 16 36C32 29 41 20 48 4Z" stroke="currentColor" strokeWidth="1" />
+          <path d="M48 28C53 39 61 47 72 52C61 57 53 65 48 76C43 65 35 57 24 52C35 47 43 39 48 28Z" stroke="currentColor" strokeWidth="0.8" />
+          <circle cx="48" cy="48" r="18" stroke="currentColor" strokeWidth="0.7" />
+          <path d="M0 48H18M78 48H96M48 0V18M48 78V96" stroke="currentColor" strokeWidth="0.7" />
+        </pattern>
+        <linearGradient id="sadiqOrnamentFade" x1="720" y1="180" x2="110" y2="180" gradientUnits="userSpaceOnUse">
+          <stop stopColor="white" />
+          <stop offset="1" stopColor="white" stopOpacity="0" />
+        </linearGradient>
+        <mask id="sadiqOrnamentMask">
+          <rect width="720" height="360" fill="url(#sadiqOrnamentFade)" />
+        </mask>
+      </defs>
+      <g mask="url(#sadiqOrnamentMask)">
+        <rect width="720" height="360" fill="url(#sadiqArabesque)" />
+        <path d="M720 38H548C508 38 476 70 476 110V250C476 290 444 322 404 322H246" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M720 58H562C526 58 496 88 496 124V236C496 272 466 302 430 302H272" stroke="currentColor" strokeWidth="0.8" />
+      </g>
     </svg>
   );
 }
 
-function CrescentIcon() {
+function HeroSeal() {
   return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 28 28"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M18.6 5.2C16.8 4.6 14.8 4.5 12.9 5.1C8 6.6 5.2 11.8 6.8 16.7C8.4 21.6 13.6 24.3 18.5 22.7C20.6 22 22.3 20.7 23.5 19.1C21.7 19.7 19.7 19.8 17.8 19.2C12.9 17.6 10.2 12.4 11.8 7.5C12.3 6 13.2 4.7 14.3 3.7C15.8 3.8 17.3 4.3 18.6 5.2Z"
-        fill="rgba(212,175,55,.24)"
-        stroke="#D4AF37"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function StarIcon() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 22 22"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M11 2.7L12.9 8.1L18.7 8.3L14 11.8L15.7 17.3L11 13.9L6.3 17.3L8 11.8L3.3 8.3L9.1 8.1L11 2.7Z"
-        fill="rgba(212,175,55,.24)"
-        stroke="#D4AF37"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function CornerOrnament({ top, right, bottom, left, rotate = 0 }) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top,
-        right,
-        bottom,
-        left,
-        opacity: 0.18,
-        pointerEvents: "none",
-        transform: `rotate(${rotate}deg)`,
-      }}
-    >
-      <svg
-        width="150"
-        height="150"
-        viewBox="0 0 150 150"
-        fill="none"
-      >
-        <path
-          d="M8 60C28 60 44 44 44 24V8"
-          stroke="#D4AF37"
-          strokeWidth="2"
-        />
-        <path
-          d="M20 60C38 60 52 46 52 28V20"
-          stroke="#D4AF37"
-          strokeWidth="1.5"
-        />
-        <path
-          d="M8 84C28 84 44 100 44 120V136"
-          stroke="#D4AF37"
-          strokeWidth="2"
-        />
-        <circle
-          cx="44"
-          cy="44"
-          r="8"
-          stroke="#D4AF37"
-          strokeWidth="2"
-        />
-        <circle
-          cx="68"
-          cy="44"
-          r="5"
-          stroke="#D4AF37"
-          strokeWidth="1.6"
-        />
-        <path
-          d="M44 36L48 44L44 52L40 44L44 36Z"
-          fill="#D4AF37"
-          fillOpacity=".3"
-        />
+    <span className="supervisor-hero-seal" aria-hidden="true">
+      <svg viewBox="0 0 42 42" fill="none">
+        <path d="M21 3L26 11L35 12L31 21L35 30L26 31L21 39L16 31L7 30L11 21L7 12L16 11L21 3Z" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M21 11C23.5 16.5 26.5 19.5 32 22C26.5 24.5 23.5 27.5 21 33C18.5 27.5 15.5 24.5 10 22C15.5 19.5 18.5 16.5 21 11Z" stroke="currentColor" strokeWidth="1" />
       </svg>
-    </div>
-  );
-}
-
-function HangingDecoration({
-  left,
-  top = 0,
-  type = "lantern",
-}) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top,
-        left,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "6px",
-        pointerEvents: "none",
-      }}
-    >
-      <div
-        style={{
-          width: "1.5px",
-          height: "36px",
-          background:
-            "linear-gradient(180deg,rgba(212,175,55,.9),rgba(212,175,55,.25))",
-        }}
-      />
-
-      <div
-        style={{
-          width: "40px",
-          height: "40px",
-          borderRadius: "999px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "rgba(255,255,255,.05)",
-          border: "1px solid rgba(212,175,55,.18)",
-          boxShadow: "0 8px 20px rgba(0,0,0,.08)",
-        }}
-      >
-        {type === "lantern" ? (
-          <LanternIcon />
-        ) : type === "crescent" ? (
-          <CrescentIcon />
-        ) : (
-          <StarIcon />
-        )}
-      </div>
-    </div>
+    </span>
   );
 }
 
@@ -754,39 +602,14 @@ export default function AdminDashboard() {
       >
         {/* HERO */}
         <section className="supervisor-hero">
-          <CornerOrnament
-            top="-8px"
-            right="-8px"
-          />
-
-          <CornerOrnament
-            bottom="-8px"
-            left="-8px"
-            rotate={180}
-          />
-
-          <HangingDecoration
-            left="8%"
-            type="lantern"
-          />
-
-          <HangingDecoration
-            left="16%"
-            type="crescent"
-            top={10}
-          />
-
-          <HangingDecoration
-            left="24%"
-            type="star"
-            top={4}
-          />
+          <IslamicHeroOrnament />
+          <div className="supervisor-hero-frame" aria-hidden="true" />
 
           <div className="supervisor-hero-grid">
             <div className="supervisor-hero-content">
-              <div className="supervisor-hero-badge">
-                <Sparkles size={16} />
-                لوحة إشراف احترافية
+              <div className="supervisor-hero-eyebrow">
+                <HeroSeal />
+                <span>مركز الإشراف والمتابعة</span>
               </div>
 
               <h1 className="supervisor-hero-title">
@@ -794,22 +617,14 @@ export default function AdminDashboard() {
               </h1>
 
               <p className="supervisor-hero-text">
-                متابعة تشغيلية متقدمة للحلقات
-                والطلاب والمعلمين والاختبارات
-                والتسميع والإنجاز الشهري من
-                واجهة واحدة واضحة وسريعة.
+                رؤية موحّدة لأداء الحلقات والطلاب والمعلمين،
+                ومتابعة المؤشرات اليومية والإنجاز من مكان واحد.
               </p>
 
-              <div className="supervisor-hero-tags">
-                <span>
-                  متابعة يومية
-                </span>
-                <span>
-                  مؤشرات حيوية
-                </span>
-                <span>
-                  تقارير مباشرة
-                </span>
+              <div className="supervisor-hero-divider" aria-hidden="true">
+                <span />
+                <i />
+                <span />
               </div>
             </div>
 
@@ -1184,125 +999,186 @@ export default function AdminDashboard() {
           .supervisor-hero {
             position: relative;
             overflow: hidden;
-            border-radius: 28px;
+            isolation: isolate;
+            border-radius: 24px;
             background:
-              linear-gradient(135deg,#0F4C45 0%,#0A2F2A 100%);
-            border: 1px solid rgba(255,255,255,.06);
-            box-shadow:
-              0 22px 55px rgba(15,76,69,.18);
-            padding: 30px;
+              radial-gradient(circle at 84% 18%,rgba(196,160,78,.12),transparent 30%),
+              linear-gradient(125deg,#123F39 0%,#0B302C 52%,#082823 100%);
+            border: 1px solid rgba(199,166,91,.28);
+            box-shadow: 0 18px 46px rgba(8,40,35,.14);
+            padding: 34px;
           }
 
-          .supervisor-hero::after {
+          .supervisor-hero::before {
             content: "";
             position: absolute;
-            inset: 0;
-            opacity: .06;
+            inset: 7px;
+            z-index: 0;
             pointer-events: none;
-            background-image:
-              radial-gradient(circle,#D4AF37 1.2px,transparent 1.2px);
-            background-size: 28px 28px;
+            border: 1px solid rgba(226,199,132,.13);
+            border-radius: 18px;
+          }
+
+          .supervisor-hero-ornament {
+            position: absolute;
+            z-index: 0;
+            top: -46px;
+            right: -78px;
+            width: min(58%,720px);
+            height: auto;
+            color: #D8B968;
+            opacity: .13;
+            pointer-events: none;
+          }
+
+          .supervisor-hero-frame {
+            position: absolute;
+            z-index: 0;
+            width: 260px;
+            height: 260px;
+            left: -138px;
+            bottom: -154px;
+            border: 1px solid rgba(216,185,104,.16);
+            transform: rotate(45deg);
+            pointer-events: none;
+          }
+
+          .supervisor-hero-frame::before,
+          .supervisor-hero-frame::after {
+            content: "";
+            position: absolute;
+            inset: 18px;
+            border: 1px solid rgba(216,185,104,.11);
+          }
+
+          .supervisor-hero-frame::after {
+            inset: 42px;
           }
 
           .supervisor-hero-grid {
             position: relative;
             z-index: 2;
             display: grid;
-            grid-template-columns: 1.4fr .8fr;
-            gap: 24px;
+            grid-template-columns: minmax(0,1.35fr) minmax(290px,.65fr);
+            gap: 30px;
             align-items: center;
-            min-height: 220px;
+            min-height: 210px;
           }
 
           .supervisor-hero-content {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            align-items: flex-start;
+            gap: 13px;
+            padding-inline: 8px;
           }
 
-          .supervisor-hero-badge {
-            width: fit-content;
+          .supervisor-hero-eyebrow {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(255,255,255,.08);
-            color: #F8E7AF;
-            border: 1px solid rgba(212,175,55,.22);
-            border-radius: 999px;
-            padding: 10px 16px;
+            gap: 10px;
+            color: #E6CE8C;
             font-size: 13px;
             font-weight: 800;
+            letter-spacing: .15px;
+          }
+
+          .supervisor-hero-seal {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #D8B968;
+          }
+
+          .supervisor-hero-seal svg {
+            width: 100%;
+            height: 100%;
           }
 
           .supervisor-hero-title {
-            margin: 0;
+            margin: 2px 0 0;
             color: #FFFFFF;
-            font-size: 42px;
-            font-weight: 950;
-            line-height: 1.1;
+            font-size: clamp(34px,4vw,48px);
+            font-weight: 900;
+            line-height: 1.2;
+            letter-spacing: -.7px;
           }
 
           .supervisor-hero-text {
             margin: 0;
-            max-width: 760px;
-            color: rgba(255,255,255,.82);
-            font-size: 16px;
+            max-width: 690px;
+            color: rgba(244,248,246,.76);
+            font-size: 15px;
             line-height: 2;
           }
 
-          .supervisor-hero-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 4px;
+          .supervisor-hero-divider {
+            width: 190px;
+            display: grid;
+            grid-template-columns: 1fr 10px 1fr;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+            color: #D8B968;
           }
 
-          .supervisor-hero-tags span {
-            padding: 8px 14px;
-            border-radius: 999px;
-            background: rgba(255,255,255,.07);
-            border: 1px solid rgba(255,255,255,.08);
-            color: #F8FAFC;
-            font-size: 13px;
-            font-weight: 700;
+          .supervisor-hero-divider span {
+            height: 1px;
+            background: linear-gradient(90deg,transparent,currentColor);
+            opacity: .55;
+          }
+
+          .supervisor-hero-divider span:last-child {
+            background: linear-gradient(90deg,currentColor,transparent);
+          }
+
+          .supervisor-hero-divider i {
+            width: 8px;
+            height: 8px;
+            border: 1px solid currentColor;
+            transform: rotate(45deg);
+            opacity: .8;
           }
 
           .supervisor-hero-side {
             display: grid;
-            gap: 16px;
+            gap: 12px;
           }
 
           .supervisor-date-card,
           .supervisor-vital-card {
-            background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.10);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 18px;
+            position: relative;
+            background: rgba(255,255,255,.045);
+            border: 1px solid rgba(222,195,127,.18);
+            border-radius: 15px;
+            padding: 17px 18px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
           }
 
           .supervisor-date-card span,
           .supervisor-vital-head span {
             display: block;
-            color: #F2DE9E;
-            font-size: 13px;
+            color: #DCC37E;
+            font-size: 12px;
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 7px;
           }
 
           .supervisor-date-card strong {
             display: block;
             color: #FFFFFF;
-            font-size: 18px;
-            font-weight: 900;
+            font-size: 17px;
+            font-weight: 850;
             line-height: 1.8;
           }
 
           .supervisor-date-card small {
             display: block;
-            margin-top: 8px;
-            color: rgba(255,255,255,.75);
-            font-size: 13px;
+            margin-top: 5px;
+            color: rgba(255,255,255,.62);
+            font-size: 12px;
           }
 
           .supervisor-vital-head {
@@ -1314,31 +1190,30 @@ export default function AdminDashboard() {
 
           .supervisor-vital-head strong {
             color: #FFFFFF;
-            font-size: 32px;
-            font-weight: 950;
+            font-size: 28px;
+            font-weight: 900;
           }
 
           .supervisor-vital-bar {
             width: 100%;
-            height: 10px;
-            background: rgba(255,255,255,.10);
+            height: 6px;
+            background: rgba(255,255,255,.09);
             border-radius: 999px;
             overflow: hidden;
-            margin: 14px 0 12px;
+            margin: 13px 0 11px;
           }
 
           .supervisor-vital-fill {
             height: 100%;
             border-radius: 999px;
-            background:
-              linear-gradient(90deg,#D4AF37,#F3D97A);
+            background: linear-gradient(90deg,#B99745,#E1C979);
           }
 
           .supervisor-vital-card p {
             margin: 0;
-            color: rgba(255,255,255,.78);
-            font-size: 13px;
-            line-height: 1.9;
+            color: rgba(255,255,255,.66);
+            font-size: 12px;
+            line-height: 1.85;
           }
 
           /* METRIC CARDS */
@@ -1592,12 +1467,18 @@ export default function AdminDashboard() {
             }
 
             .supervisor-hero-title {
-              font-size: 30px;
+              font-size: 32px;
             }
 
             .supervisor-hero-text {
               font-size: 14px;
               line-height: 1.9;
+            }
+
+            .supervisor-hero-ornament {
+              width: 92%;
+              right: -36%;
+              opacity: .09;
             }
 
             .dashboard-section-head h2 {
@@ -1618,13 +1499,16 @@ export default function AdminDashboard() {
           }
 
           @media (max-width: 520px) {
-            .supervisor-hero-tags {
-              gap: 8px;
+            .supervisor-hero {
+              padding: 20px 16px;
             }
 
-            .supervisor-hero-tags span {
-              font-size: 12px;
-              padding: 7px 12px;
+            .supervisor-hero-grid {
+              gap: 20px;
+            }
+
+            .supervisor-hero-divider {
+              width: 150px;
             }
 
             .dashboard-action-card {

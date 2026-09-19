@@ -9,7 +9,6 @@ import {
   History,
   RotateCcw,
   Search,
-  Settings2,
   Sparkles,
   Trophy,
   Users,
@@ -21,9 +20,6 @@ import MonthlyTransactionsTab from "../../components/rewards/MonthlyTransactions
 import SessionGrantModal from "../../components/rewards/SessionGrantModal";
 import SessionDeductionModal from "../../components/rewards/SessionDeductionModal";
 
-import RewardTypesTab from "../../components/rewards/RewardTypesTab";
-import CreateTypeModal from "../../components/rewards/CreateTypeModal";
-import EditTypeModal from "../../components/rewards/EditTypeModal";
 
 import { showToast } from "../../components/Toast";
 
@@ -68,10 +64,6 @@ export default function RewardsPage() {
   const [grantOpen, setGrantOpen] = useState(false);
   const [penaltyOpen, setPenaltyOpen] = useState(false);
   const [editingSession, setEditingSession] = useState(null);
-
-  const [createTypeOpen, setCreateTypeOpen] = useState(false);
-  const [editTypeOpen, setEditTypeOpen] = useState(false);
-  const [editingType, setEditingType] = useState(null);
 
   const currentPeriod = useMemo(
     () => getCurrentHijriPeriod(),
@@ -377,13 +369,40 @@ export default function RewardsPage() {
     };
   }, [students, transactions]);
 
+  function canUsePointsForStudent(student) {
+    return (
+      student?.attendance === "present" ||
+      student?.attendance === "late"
+    );
+  }
+
   function openGrant(student) {
+    if (!canUsePointsForStudent(student)) {
+      showToast(
+        student?.attendance === "excused"
+          ? "الطالب غائب بعذر؛ لا يمكن منحه نقاطًا لهذا اليوم."
+          : "الطالب غائب؛ لا يمكن منحه نقاطًا لهذا اليوم.",
+        "error"
+      );
+      return;
+    }
+
     setEditingSession(null);
     setSelectedStudent(student);
     setGrantOpen(true);
   }
 
   function openPenalty(student) {
+    if (!canUsePointsForStudent(student)) {
+      showToast(
+        student?.attendance === "excused"
+          ? "الطالب غائب بعذر؛ لا يمكن خصم نقاط منه لهذا اليوم."
+          : "الطالب غائب؛ لا يمكن خصم نقاط منه لهذا اليوم.",
+        "error"
+      );
+      return;
+    }
+
     setEditingSession(null);
     setSelectedStudent(student);
     setPenaltyOpen(true);
@@ -409,7 +428,10 @@ export default function RewardsPage() {
     if (session.category === "grant") {
       setGrantOpen(true);
       setPenaltyOpen(false);
-    } else {
+      return;
+    }
+
+    if (session.category === "deduction") {
       setPenaltyOpen(true);
       setGrantOpen(false);
     }
@@ -423,36 +445,6 @@ export default function RewardsPage() {
   function closePenalty() {
     setPenaltyOpen(false);
     setEditingSession(null);
-  }
-
-  async function deleteType(item) {
-    const { error } = await supabase
-      .from("reward_types")
-      .delete()
-      .eq("id", item.id);
-
-    if (error) {
-      showToast("فشل الحذف", "error");
-      return;
-    }
-
-    showToast("تم الحذف", "success");
-    loadRewardTypes();
-  }
-
-  async function toggleType(item) {
-    const { error } = await supabase
-      .from("reward_types")
-      .update({ is_active: !item.is_active })
-      .eq("id", item.id);
-
-    if (error) {
-      showToast("فشل التحديث", "error");
-      return;
-    }
-
-    showToast("تم التحديث", "success");
-    loadRewardTypes();
   }
 
   async function deleteSession(session) {
@@ -502,7 +494,6 @@ export default function RewardsPage() {
 
   const tabs = [
     { key: "points", label: "المنح والخصومات", icon: Gift },
-    { key: "types", label: "إدارة الأنواع", icon: Settings2 },
     { key: "transactions", label: "سجل العمليات", icon: History },
   ];
 
@@ -665,23 +656,6 @@ export default function RewardsPage() {
         />
       )}
 
-      {activeTab === "types" && (
-        <section className="tp-premium-panel">
-          <div className="tp-panel-content">
-            <RewardTypesTab
-              rewardTypes={rewardTypes}
-              onCreate={() => setCreateTypeOpen(true)}
-              onEdit={(item) => {
-                setEditingType(item);
-                setEditTypeOpen(true);
-              }}
-              onDelete={deleteType}
-              onToggleStatus={toggleType}
-            />
-          </div>
-        </section>
-      )}
-
       {activeTab === "transactions" && (
         <MonthlyTransactionsTab
           transactions={transactions}
@@ -720,19 +694,6 @@ export default function RewardsPage() {
         }
         onClose={closePenalty}
         onSaved={refreshAll}
-      />
-
-      <CreateTypeModal
-        open={createTypeOpen}
-        onClose={() => setCreateTypeOpen(false)}
-        onSaved={loadRewardTypes}
-      />
-
-      <EditTypeModal
-        open={editTypeOpen}
-        item={editingType}
-        onClose={() => setEditTypeOpen(false)}
-        onSaved={loadRewardTypes}
       />
 
       {loading && (

@@ -9,6 +9,9 @@ import { ConfirmProvider } from "./context/ConfirmContext";
 
 import "./index.css";
 import "./styles/responsive.css";
+import { applyAppAppearance } from "./lib/appearance";
+
+applyAppAppearance();
 
 ReactDOM.createRoot(
   document.getElementById("root")
