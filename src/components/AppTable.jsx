@@ -22,7 +22,7 @@ export default function AppTable({
               <th
                 key={column.key}
                 style={{
-                  padding: "16px",
+                  padding: "calc(16px * var(--app-density,1))",
                   textAlign: "right",
                   background:
                     theme.colors.surfaceAlt,
@@ -43,7 +43,7 @@ export default function AppTable({
                 <td
                   key={column.key}
                   style={{
-                    padding: "14px 16px",
+                    padding: "calc(14px * var(--app-density,1)) calc(16px * var(--app-density,1))",
                     borderBottom:
                       `1px solid ${theme.colors.border}`,
                   }}

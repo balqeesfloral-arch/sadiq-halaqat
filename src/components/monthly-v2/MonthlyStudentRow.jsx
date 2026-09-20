@@ -32,7 +32,7 @@ const status =
 
       <td
         style={{
-          padding:"16px",
+          padding:"calc(16px * var(--app-density,1))",
           borderBottom:"1px solid #F1F5F9",
           fontWeight:"800",
           color:"#0F172A"
@@ -43,7 +43,7 @@ const status =
 
       <td
         style={{
-          padding:"12px",
+          padding:"calc(12px * var(--app-density,1))",
           borderBottom:"1px solid #F1F5F9"
         }}
       >
@@ -61,7 +61,7 @@ const status =
             width:"90px",
             height:"42px",
             border:"1px solid #E2E8F0",
-            borderRadius:"12px",
+            borderRadius:"calc(12px * var(--app-radius-scale,1))",
             textAlign:"center"
           }}
         />
@@ -101,7 +101,7 @@ const status =
 
       <td
         style={{
-          padding:"12px",
+          padding:"calc(12px * var(--app-density,1))",
           borderBottom:"1px solid #F1F5F9"
         }}
       >
@@ -119,7 +119,7 @@ const status =
             width:"90px",
             height:"42px",
             border:"1px solid #E2E8F0",
-            borderRadius:"12px",
+            borderRadius:"calc(12px * var(--app-radius-scale,1))",
             textAlign:"center"
           }}
         />
@@ -159,7 +159,7 @@ const status =
 
       <td
         style={{
-          padding:"12px",
+          padding:"calc(12px * var(--app-density,1))",
           borderBottom:"1px solid #F1F5F9"
         }}
       >
@@ -177,11 +177,11 @@ const status =
     width:"100%",
     height:"44px",
     border:"1px solid #E2E8F0",
-    borderRadius:"14px",
-    padding:"0 14px",
+    borderRadius:"calc(14px * var(--app-radius-scale,1))",
+    padding:"0 calc(14px * var(--app-density,1))",
     background:"#F8FAFC",
     color:"#0F172A",
-    fontSize:"14px",
+    fontSize:"calc(14px * var(--app-font-scale,1))",
     fontWeight:"600",
     outline:"none",
     transition:"all .2s"
@@ -191,7 +191,7 @@ const status =
 
       <td
         style={{
-          padding:"12px",
+          padding:"calc(12px * var(--app-density,1))",
           borderBottom:"1px solid #F1F5F9"
         }}
       >
@@ -209,8 +209,8 @@ const status =
             width:"100%",
             height:"42px",
             border:"1px solid #E2E8F0",
-            borderRadius:"12px",
-            padding:"0 12px"
+            borderRadius:"calc(12px * var(--app-radius-scale,1))",
+            padding:"0 calc(12px * var(--app-density,1))"
           }}
         />
       </td>
@@ -232,7 +232,7 @@ const status =
           ? "#92400E"
           : "#B91C1C",
 
-      padding:"8px 16px",
+      padding:"calc(8px * var(--app-density,1)) calc(16px * var(--app-density,1))",
       borderRadius:"999px",
       fontWeight:"800",
       display:"inline-block"

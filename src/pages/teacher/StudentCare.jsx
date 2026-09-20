@@ -2914,13 +2914,13 @@ function StudentCareStyles() {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 18px;
-        padding: 22px 24px;
+        gap: calc(18px * var(--app-density,1));
+        padding: calc(22px * var(--app-density,1)) calc(24px * var(--app-density,1));
         margin-bottom: 14px;
-        border: 1px solid rgba(15,81,50,.1);
-        border-radius: 23px;
-        background: linear-gradient(135deg,#fff 0%,#f5faf7 63%,#fffaf0 100%);
-        box-shadow: 0 13px 37px rgba(15,81,50,.05);
+        border: 1px solid color-mix(in srgb,var(--app-color-0f5132,#0f5132) 10%,transparent);
+        border-radius: calc(23px * var(--app-radius-scale,1));
+        background: linear-gradient(135deg,#fff 0%,var(--app-color-f5faf7,#f5faf7) 63%,#fffaf0 100%);
+        box-shadow: 0 13px 37px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
       }
 
       .care-hero::before {
@@ -2940,7 +2940,7 @@ function StudentCareStyles() {
         z-index: 2;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: calc(12px * var(--app-density,1));
         min-width: 0;
       }
 
@@ -2951,26 +2951,26 @@ function StudentCareStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 16px;
+        border-radius: calc(16px * var(--app-radius-scale,1));
         color: #fff;
-        background: linear-gradient(135deg,#0f5132,#0f766e);
-        box-shadow: 0 10px 24px rgba(15,81,50,.18);
+        background: linear-gradient(135deg,var(--app-color-0f5132,#0f5132),var(--app-color-0f766e,#0f766e));
+        box-shadow: 0 10px 24px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 18%,transparent);
       }
 
       .care-eyebrow {
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: calc(5px * var(--app-density,1));
         margin-bottom: 3px;
         color: #9a741f;
-        font-size: 9px;
+        font-size: calc(9px * var(--app-font-scale,1));
         font-weight: 900;
       }
 
       .care-hero h1 {
         margin: 0;
-        color: #173d2b;
-        font-size: 25px;
+        color: var(--app-color-173d2b,#173d2b);
+        font-size: calc(25px * var(--app-font-scale,1));
         font-weight: 950;
       }
 
@@ -2978,7 +2978,7 @@ function StudentCareStyles() {
         max-width: 590px;
         margin: 5px 0 0;
         color: #758079;
-        font-size: 10px;
+        font-size: calc(10px * var(--app-font-scale,1));
         line-height: 1.75;
       }
 
@@ -2986,15 +2986,15 @@ function StudentCareStyles() {
         position: relative;
         z-index: 2;
         min-height: 40px;
-        padding: 0 12px;
+        padding: 0 calc(12px * var(--app-density,1));
         border: 1px solid #dce4df;
-        border-radius: 10px;
+        border-radius: calc(10px * var(--app-radius-scale,1));
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        color: #0f5132;
+        gap: calc(6px * var(--app-density,1));
+        color: var(--app-color-0f5132,#0f5132);
         background: #fff;
-        font-size: 8px;
+        font-size: calc(8px * var(--app-font-scale,1));
         font-weight: 900;
         cursor: pointer;
       }
@@ -3002,7 +3002,7 @@ function StudentCareStyles() {
       .care-stats {
         display: grid;
         grid-template-columns: repeat(5,minmax(0,1fr));
-        gap: 9px;
+        gap: calc(9px * var(--app-density,1));
         margin-bottom: 14px;
       }
 
@@ -3010,10 +3010,10 @@ function StudentCareStyles() {
         min-width: 0;
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 12px;
+        gap: calc(8px * var(--app-density,1));
+        padding: calc(12px * var(--app-density,1));
         border: 1px solid #e5ebe7;
-        border-radius: 16px;
+        border-radius: calc(16px * var(--app-radius-scale,1));
         background: #fff;
         box-shadow: 0 6px 20px rgba(15,23,42,.025);
       }
@@ -3025,26 +3025,26 @@ function StudentCareStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 11px;
+        border-radius: calc(11px * var(--app-radius-scale,1));
       }
 
-      .care-stat.total .care-stat-icon { color:#0f5132;background:#edf7f1; }
+      .care-stat.total .care-stat-icon { color:var(--app-color-0f5132,#0f5132);background:var(--app-color-edf7f1,#edf7f1); }
       .care-stat.urgent .care-stat-icon { color:#b42318;background:#fff0ef; }
       .care-stat.attendance .care-stat-icon { color:#b45309;background:#fff7ed; }
-      .care-stat.plan .care-stat-icon { color:#0f766e;background:#edf8f7; }
+      .care-stat.plan .care-stat-icon { color:var(--app-color-0f766e,#0f766e);background:var(--app-color-edf8f7,#edf8f7); }
       .care-stat.messages .care-stat-icon { color:#927536;background:#fff8e7; }
 
       .care-stat span {
         display: block;
         color: #7f8a83;
-        font-size: 7px;
+        font-size: calc(7px * var(--app-font-scale,1));
       }
 
       .care-stat strong {
         display: block;
         margin-top: 1px;
-        color: #173d2b;
-        font-size: 18px;
+        color: var(--app-color-173d2b,#173d2b);
+        font-size: calc(18px * var(--app-font-scale,1));
         font-weight: 950;
       }
 
@@ -3052,58 +3052,58 @@ function StudentCareStyles() {
         display: block;
         margin-top: 1px;
         color: #9ba39e;
-        font-size: 6px;
+        font-size: calc(6px * var(--app-font-scale,1));
       }
 
       .care-tabs {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 6px;
+        gap: calc(6px * var(--app-density,1));
+        padding: calc(6px * var(--app-density,1));
         margin-bottom: 12px;
         border: 1px solid #e3e9e5;
-        border-radius: 14px;
+        border-radius: calc(14px * var(--app-radius-scale,1));
         background: #fff;
       }
 
       .care-tabs button {
         min-height: 37px;
-        padding: 0 11px;
+        padding: 0 calc(11px * var(--app-density,1));
         border: none;
-        border-radius: 9px;
+        border-radius: calc(9px * var(--app-radius-scale,1));
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: calc(5px * var(--app-density,1));
         color: #657269;
         background: transparent;
-        font-size: 8px;
+        font-size: calc(8px * var(--app-font-scale,1));
         font-weight: 850;
         cursor: pointer;
       }
 
       .care-tabs button.active {
         color: #fff;
-        background: linear-gradient(135deg,#0f5132,#0f766e);
+        background: linear-gradient(135deg,var(--app-color-0f5132,#0f5132),var(--app-color-0f766e,#0f766e));
       }
 
       .care-tabs button > span {
         min-width: 19px;
         height: 19px;
-        padding: 0 5px;
+        padding: 0 calc(5px * var(--app-density,1));
         border-radius: 999px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         color: inherit;
         background: rgba(255,255,255,.16);
-        font-size: 6px;
+        font-size: calc(6px * var(--app-font-scale,1));
       }
 
       .care-toolbar {
-        padding: 12px;
+        padding: calc(12px * var(--app-density,1));
         margin-bottom: 12px;
         border: 1px solid #e4eae6;
-        border-radius: 16px;
+        border-radius: calc(16px * var(--app-radius-scale,1));
         background: #fff;
       }
 
@@ -3111,32 +3111,32 @@ function StudentCareStyles() {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: calc(10px * var(--app-density,1));
         margin-bottom: 8px;
       }
 
       .view-switch {
         display: flex;
-        gap: 4px;
-        padding: 4px;
-        border-radius: 10px;
+        gap: calc(4px * var(--app-density,1));
+        padding: calc(4px * var(--app-density,1));
+        border-radius: calc(10px * var(--app-radius-scale,1));
         background: #f3f6f4;
       }
 
       .view-switch button {
         min-height: 31px;
-        padding: 0 9px;
+        padding: 0 calc(9px * var(--app-density,1));
         border: none;
-        border-radius: 7px;
+        border-radius: calc(7px * var(--app-radius-scale,1));
         color: #657269;
         background: transparent;
-        font-size: 7px;
+        font-size: calc(7px * var(--app-font-scale,1));
         font-weight: 850;
         cursor: pointer;
       }
 
       .view-switch button.active {
-        color: #0f5132;
+        color: var(--app-color-0f5132,#0f5132);
         background: #fff;
         box-shadow: 0 3px 10px rgba(15,23,42,.05);
       }
@@ -3157,13 +3157,13 @@ function StudentCareStyles() {
       .care-search input {
         width: 100%;
         height: 37px;
-        padding: 0 34px 0 32px;
+        padding: 0 calc(34px * var(--app-density,1)) 0 calc(32px * var(--app-density,1));
         border: 1px solid #dce4df;
-        border-radius: 9px;
+        border-radius: calc(9px * var(--app-radius-scale,1));
         outline: none;
         color: #33443a;
         background: #fbfdfc;
-        font-size: 8px;
+        font-size: calc(8px * var(--app-font-scale,1));
       }
 
       .care-search button {
@@ -3174,7 +3174,7 @@ function StudentCareStyles() {
         height: 25px;
         transform: translateY(-50%);
         border: none;
-        border-radius: 7px;
+        border-radius: calc(7px * var(--app-radius-scale,1));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -3186,7 +3186,7 @@ function StudentCareStyles() {
       .care-filters {
         display: grid;
         grid-template-columns: repeat(3,minmax(150px,1fr));
-        gap: 7px;
+        gap: calc(7px * var(--app-density,1));
       }
 
       .filter-select {
@@ -3197,13 +3197,13 @@ function StudentCareStyles() {
         width: 100%;
         height: 36px;
         appearance: none;
-        padding: 0 9px 0 28px;
+        padding: 0 calc(9px * var(--app-density,1)) 0 calc(28px * var(--app-density,1));
         border: 1px solid #dce4df;
-        border-radius: 9px;
+        border-radius: calc(9px * var(--app-radius-scale,1));
         outline: none;
         color: #425047;
         background: #fbfdfc;
-        font-size: 7px;
+        font-size: calc(7px * var(--app-font-scale,1));
         cursor: pointer;
       }
 
@@ -3219,15 +3219,15 @@ function StudentCareStyles() {
       .alerts-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit,minmax(min(100%,450px),1fr));
-        gap: 11px;
+        gap: calc(11px * var(--app-density,1));
       }
 
       .alert-card {
         position: relative;
         overflow: hidden;
-        padding: 14px;
+        padding: calc(14px * var(--app-density,1));
         border: 1px solid #e4eae6;
-        border-radius: 18px;
+        border-radius: calc(18px * var(--app-radius-scale,1));
         background: #fff;
         box-shadow: 0 7px 24px rgba(15,23,42,.035);
       }
@@ -3243,20 +3243,20 @@ function StudentCareStyles() {
       .alert-card.critical .alert-accent { background:#b42318; }
       .alert-card.high .alert-accent { background:#dc6b19; }
       .alert-card.medium .alert-accent { background:#c49a2d; }
-      .alert-card.low .alert-accent { background:#0f766e; }
+      .alert-card.low .alert-accent { background:var(--app-color-0f766e,#0f766e); }
 
       .alert-header {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 8px;
+        gap: calc(8px * var(--app-density,1));
         margin-bottom: 10px;
       }
 
       .alert-student {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: calc(8px * var(--app-density,1));
         min-width: 0;
       }
 
@@ -3267,15 +3267,15 @@ function StudentCareStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 12px;
-        color: #0f5132;
-        background: #edf7f1;
+        border-radius: calc(12px * var(--app-radius-scale,1));
+        color: var(--app-color-0f5132,#0f5132);
+        background: var(--app-color-edf7f1,#edf7f1);
       }
 
       .alert-student h3 {
         margin: 0;
         color: #293a30;
-        font-size: 11px;
+        font-size: calc(11px * var(--app-font-scale,1));
         font-weight: 950;
       }
 
@@ -3283,25 +3283,25 @@ function StudentCareStyles() {
         display: block;
         margin-top: 2px;
         color: #939c96;
-        font-size: 6px;
+        font-size: calc(6px * var(--app-font-scale,1));
       }
 
       .alert-badges {
         display: flex;
         flex-wrap: wrap;
         justify-content: flex-end;
-        gap: 4px;
+        gap: calc(4px * var(--app-density,1));
       }
 
       .severity-badge,
       .category-badge {
         min-height: 23px;
-        padding: 0 7px;
+        padding: 0 calc(7px * var(--app-density,1));
         border-radius: 999px;
         display: inline-flex;
         align-items: center;
-        gap: 3px;
-        font-size: 6px;
+        gap: calc(3px * var(--app-density,1));
+        font-size: calc(6px * var(--app-font-scale,1));
         font-weight: 850;
       }
 
@@ -3318,85 +3318,85 @@ function StudentCareStyles() {
       .alert-content h4 {
         margin: 0 0 4px;
         color: #203c2d;
-        font-size: 10px;
+        font-size: calc(10px * var(--app-font-scale,1));
         font-weight: 950;
       }
 
       .alert-content p {
         margin: 0;
         color: #748078;
-        font-size: 7px;
+        font-size: calc(7px * var(--app-font-scale,1));
         line-height: 1.75;
       }
 
       .alert-metrics {
         display: grid;
         grid-template-columns: repeat(auto-fit,minmax(90px,1fr));
-        gap: 5px;
+        gap: calc(5px * var(--app-density,1));
         margin-top: 9px;
       }
 
       .alert-metrics > div {
-        padding: 7px;
-        border-radius: 9px;
-        background: #f7faf8;
+        padding: calc(7px * var(--app-density,1));
+        border-radius: calc(9px * var(--app-radius-scale,1));
+        background: var(--app-color-f7faf8,#f7faf8);
       }
 
       .alert-metrics span {
         display: block;
         color: #929b95;
-        font-size: 5.7px;
+        font-size: calc(5.7px * var(--app-font-scale,1));
       }
 
       .alert-metrics strong {
         display: block;
         margin-top: 2px;
         color: #415047;
-        font-size: 7px;
+        font-size: calc(7px * var(--app-font-scale,1));
       }
 
       .recommended-action {
         display: flex;
         align-items: flex-start;
-        gap: 6px;
+        gap: calc(6px * var(--app-density,1));
         margin-top: 9px;
-        padding: 8px;
+        padding: calc(8px * var(--app-density,1));
         border: 1px solid #dcebe3;
-        border-radius: 10px;
-        color: #0f766e;
+        border-radius: calc(10px * var(--app-radius-scale,1));
+        color: var(--app-color-0f766e,#0f766e);
         background: #f4faf6;
       }
 
       .recommended-action span {
         display: block;
         color: #769084;
-        font-size: 5.7px;
+        font-size: calc(5.7px * var(--app-font-scale,1));
       }
 
       .recommended-action strong {
         display: block;
         margin-top: 2px;
         color: #3c6550;
-        font-size: 6.5px;
+        font-size: calc(6.5px * var(--app-font-scale,1));
         line-height: 1.55;
       }
 
       .alert-actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 5px;
+        gap: calc(5px * var(--app-density,1));
         margin-top: 9px;
       }
 
       .alert-actions button {
         min-height: 34px;
-        padding: 0 9px;
-        border-radius: 9px;
+        padding: 0 calc(9px * var(--app-density,1));
+        border-radius: calc(9px * var(--app-radius-scale,1));
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 4px;
-        font-size: 6.5px;
+        gap: calc(4px * var(--app-density,1));
+        font-size: calc(6.5px * var(--app-font-scale,1));
         font-weight: 900;
         cursor: pointer;
       }
@@ -3409,8 +3409,8 @@ function StudentCareStyles() {
 
       .internal-message-btn {
         border: 1px solid #cddfd5;
-        color: #0f5132;
-        background: #f5faf7;
+        color: var(--app-color-0f5132,#0f5132);
+        background: var(--app-color-f5faf7,#f5faf7);
       }
 
       .snooze-btn {
@@ -3422,69 +3422,69 @@ function StudentCareStyles() {
       .handled-btn {
         border: none;
         color: #fff;
-        background: linear-gradient(135deg,#0f5132,#0f766e);
+        background: linear-gradient(135deg,var(--app-color-0f5132,#0f5132),var(--app-color-0f766e,#0f766e));
       }
 
       .reopen-btn {
         border: 1px solid #d5ded8;
-        color: #0f5132;
+        color: var(--app-color-0f5132,#0f5132);
         background: #fff;
       }
 
       .contact-source-note {
         margin-top: 7px;
         color: #9aa29d;
-        font-size: 5.7px;
+        font-size: calc(5.7px * var(--app-font-scale,1));
       }
 
       .messages-layout {
         display: grid;
         grid-template-columns: 190px minmax(0,1fr);
-        gap: 10px;
+        gap: calc(10px * var(--app-density,1));
       }
 
       .messages-side {
         display: flex;
         flex-direction: column;
-        gap: 5px;
-        padding: 8px;
+        gap: calc(5px * var(--app-density,1));
+        padding: calc(8px * var(--app-density,1));
         border: 1px solid #e4eae6;
-        border-radius: 14px;
+        border-radius: calc(14px * var(--app-radius-scale,1));
         background: #fff;
         align-self: start;
       }
 
       .messages-side button {
         min-height: 38px;
-        padding: 0 9px;
+        padding: 0 calc(9px * var(--app-density,1));
         border: none;
-        border-radius: 9px;
+        border-radius: calc(9px * var(--app-radius-scale,1));
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: calc(5px * var(--app-density,1));
         color: #637068;
         background: transparent;
-        font-size: 7px;
+        font-size: calc(7px * var(--app-font-scale,1));
         font-weight: 850;
         cursor: pointer;
       }
 
       .messages-side button.active {
         color: #fff;
-        background: #0f5132;
+        background: var(--app-color-0f5132,#0f5132);
       }
 
       .messages-side button span {
         margin-right: auto;
         min-width: 18px;
         height: 18px;
-        padding: 0 5px;
+        padding: 0 calc(5px * var(--app-density,1));
         border-radius: 999px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         background: rgba(255,255,255,.16);
-        font-size: 6px;
+        font-size: calc(6px * var(--app-font-scale,1));
       }
 
       .messages-main {
@@ -3492,16 +3492,16 @@ function StudentCareStyles() {
       }
 
       .compose-card {
-        padding: 15px;
+        padding: calc(15px * var(--app-density,1));
         border: 1px solid #e4eae6;
-        border-radius: 17px;
+        border-radius: calc(17px * var(--app-radius-scale,1));
         background: #fff;
       }
 
       .compose-heading {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: calc(8px * var(--app-density,1));
         margin-bottom: 12px;
       }
 
@@ -3511,41 +3511,41 @@ function StudentCareStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 11px;
-        color: #0f5132;
-        background: #edf7f1;
+        border-radius: calc(11px * var(--app-radius-scale,1));
+        color: var(--app-color-0f5132,#0f5132);
+        background: var(--app-color-edf7f1,#edf7f1);
       }
 
       .compose-heading h2 {
         margin: 0;
         color: #2f4036;
-        font-size: 12px;
+        font-size: calc(12px * var(--app-font-scale,1));
       }
 
       .compose-heading p {
         margin: 3px 0 0;
         color: #929b95;
-        font-size: 6.5px;
+        font-size: calc(6.5px * var(--app-font-scale,1));
       }
 
       .reply-banner {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
+        gap: calc(8px * var(--app-density,1));
         margin-bottom: 10px;
-        padding: 7px 9px;
-        border-radius: 9px;
+        padding: calc(7px * var(--app-density,1)) calc(9px * var(--app-density,1));
+        border-radius: calc(9px * var(--app-radius-scale,1));
         color: #765a17;
         background: #fff8e7;
-        font-size: 6px;
+        font-size: calc(6px * var(--app-font-scale,1));
       }
 
       .reply-banner button {
         width: 24px;
         height: 24px;
         border: none;
-        border-radius: 7px;
+        border-radius: calc(7px * var(--app-radius-scale,1));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -3557,14 +3557,14 @@ function StudentCareStyles() {
       .compose-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        gap: calc(8px * var(--app-density,1));
       }
 
       .compose-field label {
         display: block;
         margin-bottom: 4px;
         color: #647168;
-        font-size: 6px;
+        font-size: calc(6px * var(--app-font-scale,1));
         font-weight: 850;
       }
 
@@ -3573,17 +3573,17 @@ function StudentCareStyles() {
       .compose-field textarea {
         width: 100%;
         border: 1px solid #dce4df;
-        border-radius: 9px;
+        border-radius: calc(9px * var(--app-radius-scale,1));
         outline: none;
         color: #3d4c43;
         background: #fbfdfc;
-        font-size: 7px;
+        font-size: calc(7px * var(--app-font-scale,1));
       }
 
       .compose-field input,
       .compose-field select {
         height: 37px;
-        padding: 0 8px;
+        padding: 0 calc(8px * var(--app-density,1));
       }
 
       .compose-select {
@@ -3592,7 +3592,7 @@ function StudentCareStyles() {
 
       .compose-select select {
         appearance: none;
-        padding-left: 28px;
+        padding-left: calc(28px * var(--app-density,1));
       }
 
       .compose-select > svg {
@@ -3609,7 +3609,7 @@ function StudentCareStyles() {
       }
 
       .compose-field textarea {
-        padding: 9px;
+        padding: calc(9px * var(--app-density,1));
         resize: vertical;
         line-height: 1.7;
       }
@@ -3622,32 +3622,32 @@ function StudentCareStyles() {
 
       .compose-footer button {
         min-height: 38px;
-        padding: 0 14px;
+        padding: 0 calc(14px * var(--app-density,1));
         border: none;
-        border-radius: 9px;
+        border-radius: calc(9px * var(--app-radius-scale,1));
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: calc(5px * var(--app-density,1));
         color: #fff;
-        background: linear-gradient(135deg,#0f5132,#0f766e);
-        font-size: 7px;
+        background: linear-gradient(135deg,var(--app-color-0f5132,#0f5132),var(--app-color-0f766e,#0f766e));
+        font-size: calc(7px * var(--app-font-scale,1));
         font-weight: 900;
         cursor: pointer;
       }
 
       .message-list {
         display: grid;
-        gap: 7px;
+        gap: calc(7px * var(--app-density,1));
       }
 
       .message-card {
         display: grid;
         grid-template-columns: 38px minmax(0,1fr) auto;
-        gap: 9px;
+        gap: calc(9px * var(--app-density,1));
         align-items: start;
-        padding: 12px;
+        padding: calc(12px * var(--app-density,1));
         border: 1px solid #e4eae6;
-        border-radius: 14px;
+        border-radius: calc(14px * var(--app-radius-scale,1));
         background: #fff;
         cursor: pointer;
       }
@@ -3655,7 +3655,7 @@ function StudentCareStyles() {
       .message-card.unread {
         border-color: #bfd7c9;
         background: #f7fcf9;
-        box-shadow: inset -3px 0 0 #0f766e;
+        box-shadow: inset -3px 0 0 var(--app-color-0f766e,#0f766e);
       }
 
       .message-avatar {
@@ -3664,9 +3664,9 @@ function StudentCareStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 11px;
-        color: #0f5132;
-        background: #edf7f1;
+        border-radius: calc(11px * var(--app-radius-scale,1));
+        color: var(--app-color-0f5132,#0f5132);
+        background: var(--app-color-edf7f1,#edf7f1);
       }
 
       .message-content {
@@ -3677,31 +3677,31 @@ function StudentCareStyles() {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 8px;
+        gap: calc(8px * var(--app-density,1));
       }
 
       .message-top strong {
         display: block;
         color: #35453b;
-        font-size: 8px;
+        font-size: calc(8px * var(--app-font-scale,1));
       }
 
       .message-top span,
       .message-top time {
         color: #929b95;
-        font-size: 5.7px;
+        font-size: calc(5.7px * var(--app-font-scale,1));
       }
 
       .message-content h4 {
         margin: 6px 0 3px;
         color: #294031;
-        font-size: 8px;
+        font-size: calc(8px * var(--app-font-scale,1));
       }
 
       .message-content p {
         margin: 0;
         color: #6f7b73;
-        font-size: 6.5px;
+        font-size: calc(6.5px * var(--app-font-scale,1));
         line-height: 1.65;
         white-space: pre-wrap;
       }
@@ -3709,38 +3709,38 @@ function StudentCareStyles() {
       .message-meta {
         display: flex;
         flex-wrap: wrap;
-        gap: 5px;
+        gap: calc(5px * var(--app-density,1));
         margin-top: 7px;
       }
 
       .message-meta span {
         min-height: 22px;
-        padding: 0 7px;
+        padding: 0 calc(7px * var(--app-density,1));
         border-radius: 999px;
         display: inline-flex;
         align-items: center;
-        gap: 3px;
+        gap: calc(3px * var(--app-density,1));
         color: #68756d;
         background: #f2f5f3;
-        font-size: 5.5px;
+        font-size: calc(5.5px * var(--app-font-scale,1));
       }
 
       .reply-btn {
         min-height: 30px;
-        padding: 0 8px;
+        padding: 0 calc(8px * var(--app-density,1));
         border: 1px solid #d6e1da;
-        border-radius: 8px;
-        color: #0f5132;
+        border-radius: calc(8px * var(--app-radius-scale,1));
+        color: var(--app-color-0f5132,#0f5132);
         background: #fff;
-        font-size: 6px;
+        font-size: calc(6px * var(--app-font-scale,1));
         font-weight: 850;
         cursor: pointer;
       }
 
       .communication-panel {
-        padding: 13px;
+        padding: calc(13px * var(--app-density,1));
         border: 1px solid #e4eae6;
-        border-radius: 16px;
+        border-radius: calc(16px * var(--app-radius-scale,1));
         background: #fff;
       }
 
@@ -3748,40 +3748,40 @@ function StudentCareStyles() {
         display: flex;
         align-items: flex-end;
         justify-content: space-between;
-        gap: 8px;
+        gap: calc(8px * var(--app-density,1));
         margin-bottom: 10px;
       }
 
       .panel-heading h2 {
         margin: 0;
         color: #293a30;
-        font-size: 13px;
+        font-size: calc(13px * var(--app-font-scale,1));
       }
 
       .panel-heading p {
         margin: 3px 0 0;
         color: #929b95;
-        font-size: 6.5px;
+        font-size: calc(6.5px * var(--app-font-scale,1));
       }
 
       .panel-heading > span {
         color: #7a877e;
-        font-size: 7px;
+        font-size: calc(7px * var(--app-font-scale,1));
       }
 
       .communication-list {
         display: grid;
-        gap: 6px;
+        gap: calc(6px * var(--app-density,1));
       }
 
       .communication-row {
         display: grid;
         grid-template-columns: 36px minmax(0,1fr) auto;
         align-items: center;
-        gap: 8px;
-        padding: 9px;
+        gap: calc(8px * var(--app-density,1));
+        padding: calc(9px * var(--app-density,1));
         border: 1px solid #e7ece9;
-        border-radius: 11px;
+        border-radius: calc(11px * var(--app-radius-scale,1));
         background: #fbfdfc;
       }
 
@@ -3791,7 +3791,7 @@ function StudentCareStyles() {
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 10px;
+        border-radius: calc(10px * var(--app-radius-scale,1));
         color: #168b55;
         background: #edf9f2;
       }
@@ -3799,25 +3799,25 @@ function StudentCareStyles() {
       .communication-info strong {
         display: block;
         color: #35453b;
-        font-size: 8px;
+        font-size: calc(8px * var(--app-font-scale,1));
       }
 
       .communication-info span {
         display: block;
         margin-top: 2px;
         color: #89938c;
-        font-size: 6px;
+        font-size: calc(6px * var(--app-font-scale,1));
       }
 
       .communication-date {
         color: #98a19b;
-        font-size: 6px;
+        font-size: calc(6px * var(--app-font-scale,1));
       }
 
       .care-empty {
-        padding: 50px 20px;
+        padding: calc(50px * var(--app-density,1)) calc(20px * var(--app-density,1));
         border: 1px dashed #cbd7d0;
-        border-radius: 18px;
+        border-radius: calc(18px * var(--app-radius-scale,1));
         text-align: center;
         background: #fff;
       }
@@ -3827,26 +3827,26 @@ function StudentCareStyles() {
         width: 55px;
         height: 55px;
         margin: 0 auto 10px;
-        border-radius: 16px;
+        border-radius: calc(16px * var(--app-radius-scale,1));
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #0f5132;
-        background: #edf7f1;
+        color: var(--app-color-0f5132,#0f5132);
+        background: var(--app-color-edf7f1,#edf7f1);
       }
 
       .care-empty h3,
       .care-page-loading h3 {
         margin: 0;
         color: #35453b;
-        font-size: 13px;
+        font-size: calc(13px * var(--app-font-scale,1));
       }
 
       .care-empty p,
       .care-page-loading p {
         margin: 4px 0 0;
         color: #8d9790;
-        font-size: 8px;
+        font-size: calc(8px * var(--app-font-scale,1));
       }
 
       .care-page-loading {
@@ -3879,11 +3879,11 @@ function StudentCareStyles() {
       @media (max-width: 760px) {
         .care-hero {
           align-items: flex-start;
-          padding: 16px;
+          padding: calc(16px * var(--app-density,1));
         }
 
         .care-hero h1 {
-          font-size: 20px;
+          font-size: calc(20px * var(--app-font-scale,1));
         }
 
         .care-hero p {
@@ -3963,7 +3963,7 @@ function StudentCareStyles() {
 
       @media (max-width: 430px) {
         .care-hero {
-          padding: 13px;
+          padding: calc(13px * var(--app-density,1));
         }
 
         .care-hero-icon {
@@ -3973,7 +3973,7 @@ function StudentCareStyles() {
         }
 
         .care-hero h1 {
-          font-size: 18px;
+          font-size: calc(18px * var(--app-font-scale,1));
         }
 
         .care-stats {

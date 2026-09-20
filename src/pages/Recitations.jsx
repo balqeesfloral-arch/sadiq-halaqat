@@ -1006,8 +1006,8 @@ const [selectedDate, setSelectedDate] =
     <div
       style={{
         marginTop:"10px",
-        padding:"12px 14px",
-        borderRadius:"12px",
+        padding:"calc(12px * var(--app-density,1)) calc(14px * var(--app-density,1))",
+        borderRadius:"calc(12px * var(--app-radius-scale,1))",
         background:"#ECFDF5",
         border:"1px solid #A7F3D0",
         color:"#065F46",
@@ -1038,16 +1038,16 @@ const [selectedDate, setSelectedDate] =
     style={{
       background:"#FFFFFF",
       border:"1px solid #E2E8F0",
-      borderRadius:"14px",
-      padding:"10px 12px",
+      borderRadius:"calc(14px * var(--app-radius-scale,1))",
+      padding:"calc(10px * var(--app-density,1)) calc(12px * var(--app-density,1))",
       display:"flex",
       alignItems:"center",
-      gap:"10px",
+      gap:"calc(10px * var(--app-density,1))",
       cursor:"pointer",
       minHeight:"58px",
       transition:"0.2s",
       boxShadow:
-        "0 2px 8px rgba(15,118,110,0.05)"
+        "0 2px 8px color-mix(in srgb,var(--app-color-0f766e,#0f766e) 5%,transparent)"
     }}
   >
 
@@ -1055,9 +1055,9 @@ const [selectedDate, setSelectedDate] =
       style={{
         width:"42px",
         height:"42px",
-        borderRadius:"12px",
+        borderRadius:"calc(12px * var(--app-radius-scale,1))",
         background:
-          "linear-gradient(135deg,#0F766E,#115E59)",
+          "linear-gradient(135deg,var(--app-color-0f766e,#0F766E),var(--app-color-115e59,#115E59))",
         display:"flex",
         alignItems:"center",
         justifyContent:"center",
@@ -1077,7 +1077,7 @@ const [selectedDate, setSelectedDate] =
 
       <div
         style={{
-          fontSize:"11px",
+          fontSize:"calc(11px * var(--app-font-scale,1))",
           color:"#64748B",
           fontWeight:"700",
           marginBottom:"2px"
@@ -1088,7 +1088,7 @@ const [selectedDate, setSelectedDate] =
 
       <div
         style={{
-          fontSize:"14px",
+          fontSize:"calc(14px * var(--app-font-scale,1))",
           fontWeight:"800",
           color:"#0F172A",
           whiteSpace:"nowrap",
@@ -1101,8 +1101,8 @@ const [selectedDate, setSelectedDate] =
 
       <div
         style={{
-          color:"#0F766E",
-          fontSize:"12px",
+          color:"var(--app-color-0f766e,#0F766E)",
+          fontSize:"calc(12px * var(--app-font-scale,1))",
           fontWeight:"700",
           marginTop:"2px"
         }}
@@ -1166,8 +1166,8 @@ const [selectedDate, setSelectedDate] =
       }
       style={{
         background:"#fff",
-        borderRadius:"18px",
-        padding:"14px",
+        borderRadius:"calc(18px * var(--app-radius-scale,1))",
+        padding:"calc(14px * var(--app-density,1))",
         width:"fit-content",
         boxShadow:
           "0 20px 50px rgba(0,0,0,.15)"

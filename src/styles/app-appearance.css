@@ -1,0 +1,65 @@
+:root { --app-primary:#0B5D4B; --app-font-size:16px; --app-font-scale:1; --app-density:1; --app-radius-scale:1; }
+html { font-size:var(--app-font-size,16px); }
+body { font-size:1rem; }
+html[data-app-smooth-scroll="true"] { scroll-behavior:smooth; }
+html[data-app-smooth-scroll="true"] :where(.admin-layout-main,.teacher-content,.student-content) { scroll-behavior:smooth; }
+@media screen {
+  html[data-app-reduced-motion="true"] #root *,html[data-app-reduced-motion="true"] #root *::before,html[data-app-reduced-motion="true"] #root *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+  html[data-app-reduced-motion="true"] { scroll-behavior:auto !important; }
+}
+@media (prefers-reduced-motion:reduce) {
+  html,html[data-app-smooth-scroll="true"] { scroll-behavior:auto !important; }
+  #root *,#root *::before,#root *::after { animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+}
+@media print {
+  html { font-size:16px !important; --app-font-size:16px !important; --app-font-scale:1 !important; --app-density:1 !important; --app-radius-scale:1 !important; --app-primary:#0B5D4B !important; --primary:#0F5132 !important;
+    --app-color-0b5d4b:#0b5d4b !important;
+    --app-color-0f5132:#0f5132 !important;
+    --app-color-0f4c45:#0f4c45 !important;
+    --app-color-0f766e:#0f766e !important;
+    --app-color-173d2b:#173d2b !important;
+    --app-color-147a5e:#147a5e !important;
+    --app-color-12685b:#12685b !important;
+    --app-color-082f2a:#082f2a !important;
+    --app-color-0f6848:#0f6848 !important;
+    --app-color-0f6b5d:#0f6b5d !important;
+    --app-color-115e59:#115e59 !important;
+    --app-color-0f704a:#0f704a !important;
+    --app-color-0b654f:#0b654f !important;
+    --app-color-073b32:#073b32 !important;
+    --app-color-075544:#075544 !important;
+    --app-color-0a4b3e:#0a4b3e !important;
+    --app-color-173d33:#173d33 !important;
+    --app-color-21493c:#21493c !important;
+    --app-color-244b3e:#244b3e !important;
+    --app-color-294d41:#294d41 !important;
+    --app-color-304f44:#304f44 !important;
+    --app-color-0f5b45:#0f5b45 !important;
+    --app-color-16614c:#16614c !important;
+    --app-color-0b433b:#0b433b !important;
+    --app-color-052b27:#052b27 !important;
+    --app-color-173630:#173630 !important;
+    --app-color-173b34:#173b34 !important;
+    --app-color-0d4f3c:#0d4f3c !important;
+    --app-color-0b4d3b:#0b4d3b !important;
+    --app-color-064e3b:#064e3b !important;
+    --app-color-0f3d2e:#0f3d2e !important;
+    --app-color-0b3f33:#0b3f33 !important;
+    --app-color-0d5b46:#0d5b46 !important;
+    --app-color-0d6b53:#0d6b53 !important;
+    --app-color-1b6e46:#1b6e46 !important;
+    --app-color-08351f:#08351f !important;
+    --app-color-edf7f1:#edf7f1 !important;
+    --app-color-edf5ef:#edf5ef !important;
+    --app-color-edf8f7:#edf8f7 !important;
+    --app-color-edf5f1:#edf5f1 !important;
+    --app-color-f5faf7:#f5faf7 !important;
+    --app-color-f8fbf9:#f8fbf9 !important;
+    --app-color-f7faf8:#f7faf8 !important;
+    --app-color-f4f8f7:#f4f8f7 !important;
+    --app-color-f4f7f5:#f4f7f5 !important;
+    --app-color-f3f7f5:#f3f7f5 !important;
+    --app-color-e8f2ed:#e8f2ed !important;
+    --app-color-f4f8f6:#f4f8f6 !important;
+  }
+}

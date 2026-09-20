@@ -6073,27 +6073,27 @@ function MonthlyPlanStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 18px;
+          gap: calc(18px * var(--app-density,1));
 
-          padding: 22px 24px;
+          padding: calc(22px * var(--app-density,1)) calc(24px * var(--app-density,1));
           margin-bottom: 14px;
 
           border:
-            1px solid rgba(15,81,50,.1);
+            1px solid color-mix(in srgb,var(--app-color-0f5132,#0f5132) 10%,transparent);
 
-          border-radius: 23px;
+          border-radius: calc(23px * var(--app-radius-scale,1));
 
           background:
             linear-gradient(
               135deg,
               #ffffff 0%,
-              #f5faf7 63%,
+              var(--app-color-f5faf7,#f5faf7) 63%,
               #fffaf0 100%
             );
 
           box-shadow:
             0 13px 37px
-            rgba(15,81,50,.05);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
         }
 
         .plan-hero::before {
@@ -6126,7 +6126,7 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
 
           min-width: 0;
         }
@@ -6137,7 +6137,7 @@ function MonthlyPlanStyles() {
 
           flex: 0 0 50px;
 
-          border-radius: 16px;
+          border-radius: calc(16px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -6148,35 +6148,35 @@ function MonthlyPlanStyles() {
           background:
             linear-gradient(
               135deg,
-              #0f5132,
-              #0f766e
+              var(--app-color-0f5132,#0f5132),
+              var(--app-color-0f766e,#0f766e)
             );
 
           box-shadow:
             0 10px 24px
-            rgba(15,81,50,.18);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 18%,transparent);
         }
 
         .plan-eyebrow {
           display: flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-bottom: 3px;
 
           color: #9a741f;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
         .plan-hero h1 {
           margin: 0;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 25px;
+          font-size: calc(25px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -6187,7 +6187,7 @@ function MonthlyPlanStyles() {
 
           color: #758079;
 
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           line-height: 1.75;
         }
 
@@ -6199,23 +6199,23 @@ function MonthlyPlanStyles() {
           flex-wrap: wrap;
           justify-content: flex-end;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
         }
 
         .hero-btn {
           min-height: 40px;
 
-          padding: 0 11px;
+          padding: 0 calc(11px * var(--app-density,1));
 
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -6245,8 +6245,8 @@ function MonthlyPlanStyles() {
           background:
             linear-gradient(
               135deg,
-              #0f5132,
-              #0f766e
+              var(--app-color-0f5132,#0f5132),
+              var(--app-color-0f766e,#0f766e)
             );
         }
 
@@ -6284,34 +6284,34 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
           margin-bottom: 12px;
-          padding: 9px 12px;
+          padding: calc(9px * var(--app-density,1)) calc(12px * var(--app-density,1));
 
           border:
             1px solid #efd9a7;
 
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
 
           color: #765a17;
           background: #fff8e7;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .plan-unsaved button {
           margin-right: auto;
 
           border: none;
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
-          padding: 6px 9px;
+          padding: calc(6px * var(--app-density,1)) calc(9px * var(--app-density,1));
 
           color: #fff;
           background: #8a6717;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -6325,15 +6325,15 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
-          padding: 10px 13px;
+          padding: calc(10px * var(--app-density,1)) calc(13px * var(--app-density,1));
           margin-bottom: 14px;
 
           border:
             1px solid #dcebe3;
 
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
 
           color: #37624c;
           background: #f4faf6;
@@ -6344,7 +6344,7 @@ function MonthlyPlanStyles() {
 
           margin-bottom: 1px;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .plan-flow-note span {
@@ -6352,7 +6352,7 @@ function MonthlyPlanStyles() {
 
           color: #678074;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           line-height: 1.65;
         }
 
@@ -6371,15 +6371,15 @@ function MonthlyPlanStyles() {
 
           align-items: center;
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
 
-          padding: 14px;
+          padding: calc(14px * var(--app-density,1));
           margin-bottom: 14px;
 
           border:
             1px solid #e3e9e5;
 
-          border-radius: 19px;
+          border-radius: calc(19px * var(--app-radius-scale,1));
 
           background: #fff;
 
@@ -6395,13 +6395,13 @@ function MonthlyPlanStyles() {
           border:
             1px solid #dfe6e2;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
           background: #fff;
 
           cursor: pointer;
@@ -6418,7 +6418,7 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
         }
 
         .plan-period-icon {
@@ -6427,14 +6427,14 @@ function MonthlyPlanStyles() {
 
           flex: 0 0 44px;
 
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .plan-period-content {
@@ -6449,14 +6449,14 @@ function MonthlyPlanStyles() {
 
           color: #8a958e;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .plan-period-selects {
           display: flex;
           align-items: center;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
         }
 
         .select-shell {
@@ -6470,19 +6470,19 @@ function MonthlyPlanStyles() {
           appearance: none;
 
           padding:
-            0 10px 0 28px;
+            0 calc(10px * var(--app-density,1)) 0 calc(28px * var(--app-density,1));
 
           border:
             1px solid #dce4df;
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           outline: none;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
           background: #fbfdfc;
 
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -6517,7 +6517,7 @@ function MonthlyPlanStyles() {
 
           color: #a0a8a3;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .period-gregorian
@@ -6526,13 +6526,13 @@ function MonthlyPlanStyles() {
           align-items: center;
           flex-wrap: wrap;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-top: 2px;
 
           color: #7b672f;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .period-gregorian b {
@@ -6542,17 +6542,17 @@ function MonthlyPlanStyles() {
         .period-current button {
           min-height: 34px;
 
-          padding: 0 10px;
+          padding: 0 calc(10px * var(--app-density,1));
 
           border:
             1px solid #cadcd1;
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
-          color: #0f5132;
-          background: #f5faf7;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-f5faf7,#f5faf7);
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 850;
 
           cursor: pointer;
@@ -6563,13 +6563,13 @@ function MonthlyPlanStyles() {
         ========================================== */
 
         .plan-scope-card {
-          padding: 13px;
+          padding: calc(13px * var(--app-density,1));
           margin-bottom: 14px;
 
           border:
             1px solid #e4eae6;
 
-          border-radius: 18px;
+          border-radius: calc(18px * var(--app-radius-scale,1));
 
           background: #fff;
 
@@ -6582,7 +6582,7 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           margin-bottom: 10px;
         }
@@ -6593,14 +6593,14 @@ function MonthlyPlanStyles() {
 
           flex: 0 0 34px;
 
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .plan-scope-heading
@@ -6609,7 +6609,7 @@ function MonthlyPlanStyles() {
 
           color: #33443a;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .plan-scope-heading
@@ -6620,7 +6620,7 @@ function MonthlyPlanStyles() {
 
           color: #939c96;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .plan-scope-grid {
@@ -6631,7 +6631,7 @@ function MonthlyPlanStyles() {
             minmax(250px,1.2fr)
             minmax(200px,.8fr);
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           align-items: end;
         }
@@ -6643,7 +6643,7 @@ function MonthlyPlanStyles() {
 
           color: #627067;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -6660,21 +6660,21 @@ function MonthlyPlanStyles() {
           border:
             1px solid #dce4df;
 
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           outline: none;
 
           color: #33443a;
           background: #fbfdfc;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .select-wrap select {
           appearance: none;
 
           padding:
-            0 9px 0 29px;
+            0 calc(9px * var(--app-density,1)) 0 calc(29px * var(--app-density,1));
         }
 
         .select-wrap > svg {
@@ -6707,7 +6707,7 @@ function MonthlyPlanStyles() {
 
         .search-wrap input {
           padding:
-            0 34px 0 31px;
+            0 calc(34px * var(--app-density,1)) 0 calc(31px * var(--app-density,1));
         }
 
         .search-wrap button {
@@ -6723,7 +6723,7 @@ function MonthlyPlanStyles() {
             translateY(-50%);
 
           border: none;
-          border-radius: 7px;
+          border-radius: calc(7px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -6738,12 +6738,12 @@ function MonthlyPlanStyles() {
         .halaqa-card {
           min-height: 55px;
 
-          padding: 8px 10px;
+          padding: calc(8px * var(--app-density,1)) calc(10px * var(--app-density,1));
 
           border:
             1px solid #eee0bd;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           background:
             linear-gradient(
@@ -6759,7 +6759,7 @@ function MonthlyPlanStyles() {
 
           color: #96865f;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .halaqa-card strong {
@@ -6769,7 +6769,7 @@ function MonthlyPlanStyles() {
 
           color: #70571a;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -6786,7 +6786,7 @@ function MonthlyPlanStyles() {
               minmax(0,1fr)
             );
 
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
 
           margin-bottom: 17px;
         }
@@ -6797,14 +6797,14 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
-          padding: 12px;
+          padding: calc(12px * var(--app-density,1));
 
           border:
             1px solid #e5ebe7;
 
-          border-radius: 16px;
+          border-radius: calc(16px * var(--app-radius-scale,1));
 
           background: #fff;
 
@@ -6819,7 +6819,7 @@ function MonthlyPlanStyles() {
 
           flex: 0 0 36px;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -6828,8 +6828,8 @@ function MonthlyPlanStyles() {
 
         .plan-stat.students
         .plan-stat-icon {
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .plan-stat.planned
@@ -6846,8 +6846,8 @@ function MonthlyPlanStyles() {
 
         .plan-stat.revision
         .plan-stat-icon {
-          color: #0f766e;
-          background: #edf8f7;
+          color: var(--app-color-0f766e,#0f766e);
+          background: var(--app-color-edf8f7,#edf8f7);
         }
 
         .plan-stat.approval
@@ -6865,7 +6865,7 @@ function MonthlyPlanStyles() {
 
           color: #7f8a83;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .plan-stat-content > strong {
@@ -6873,9 +6873,9 @@ function MonthlyPlanStyles() {
 
           margin-top: 1px;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 17px;
+          font-size: calc(17px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -6886,7 +6886,7 @@ function MonthlyPlanStyles() {
 
           color: #9ba39e;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           line-height: 1.4;
         }
 
@@ -6899,7 +6899,7 @@ function MonthlyPlanStyles() {
           align-items: flex-end;
           justify-content: space-between;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           margin-bottom: 10px;
         }
@@ -6907,9 +6907,9 @@ function MonthlyPlanStyles() {
         .plan-students-header h2 {
           margin: 0;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 17px;
+          font-size: calc(17px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -6918,7 +6918,7 @@ function MonthlyPlanStyles() {
 
           color: #909993;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .plan-students-header
@@ -6926,11 +6926,11 @@ function MonthlyPlanStyles() {
           display: inline-flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
           color: #758178;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -6950,7 +6950,7 @@ function MonthlyPlanStyles() {
               )
             );
 
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
         }
 
         .student-plan-card {
@@ -6959,12 +6959,12 @@ function MonthlyPlanStyles() {
 
           min-width: 0;
 
-          padding: 14px;
+          padding: calc(14px * var(--app-density,1));
 
           border:
             1px solid #e4eae6;
 
-          border-radius: 19px;
+          border-radius: calc(19px * var(--app-radius-scale,1));
 
           background: #fff;
 
@@ -6983,7 +6983,7 @@ function MonthlyPlanStyles() {
 
           box-shadow:
             0 13px 31px
-            rgba(15,81,50,.065);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 6.5%,transparent);
         }
 
         .student-plan-card.locked {
@@ -7007,7 +7007,7 @@ function MonthlyPlanStyles() {
           background:
             linear-gradient(
               90deg,
-              #0f5132,
+              var(--app-color-0f5132,#0f5132),
               #c9a227
             );
         }
@@ -7017,7 +7017,7 @@ function MonthlyPlanStyles() {
           align-items: flex-start;
           justify-content: space-between;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           margin-bottom: 10px;
         }
@@ -7026,7 +7026,7 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           min-width: 0;
         }
@@ -7037,14 +7037,14 @@ function MonthlyPlanStyles() {
 
           flex: 0 0 39px;
 
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .student-plan-identity
@@ -7055,7 +7055,7 @@ function MonthlyPlanStyles() {
 
           color: #293a30;
 
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 950;
 
           white-space: nowrap;
@@ -7070,7 +7070,7 @@ function MonthlyPlanStyles() {
 
           color: #939c96;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .student-plan-badges {
@@ -7078,14 +7078,14 @@ function MonthlyPlanStyles() {
           flex-wrap: wrap;
           justify-content: flex-end;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
         }
 
         .plan-source-badge,
         .plan-status-badge {
           min-height: 23px;
 
-          padding: 0 7px;
+          padding: 0 calc(7px * var(--app-density,1));
 
           border-radius: 999px;
 
@@ -7093,7 +7093,7 @@ function MonthlyPlanStyles() {
           align-items: center;
           justify-content: center;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -7140,15 +7140,15 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: flex-start;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
           margin-bottom: 9px;
-          padding: 8px 9px;
+          padding: calc(8px * var(--app-density,1)) calc(9px * var(--app-density,1));
 
           border:
             1px solid #fed7aa;
 
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           color: #9a4d08;
           background: #fff7ed;
@@ -7157,7 +7157,7 @@ function MonthlyPlanStyles() {
         .supervisor-note strong {
           display: block;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .supervisor-note span {
@@ -7167,7 +7167,7 @@ function MonthlyPlanStyles() {
 
           color: #a46127;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           line-height: 1.5;
         }
 
@@ -7181,14 +7181,14 @@ function MonthlyPlanStyles() {
           grid-template-columns:
             1fr 1.5fr;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
           margin-bottom: 9px;
-          padding: 8px;
+          padding: calc(8px * var(--app-density,1));
 
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
-          background: #f7faf8;
+          background: var(--app-color-f7faf8,#f7faf8);
         }
 
         .plan-live-source
@@ -7196,13 +7196,13 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
           min-width: 0;
 
           color: #7d8981;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .plan-live-source
@@ -7211,7 +7211,7 @@ function MonthlyPlanStyles() {
 
           color: #46554c;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
 
           white-space: nowrap;
           text-overflow: ellipsis;
@@ -7227,7 +7227,7 @@ function MonthlyPlanStyles() {
           grid-template-columns:
             1fr 1fr;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
 
         .student-plan-section {
@@ -7236,7 +7236,7 @@ function MonthlyPlanStyles() {
           border:
             1px solid #e4eae6;
 
-          border-radius: 14px;
+          border-radius: calc(14px * var(--app-radius-scale,1));
 
           background: #fbfdfc;
         }
@@ -7246,9 +7246,9 @@ function MonthlyPlanStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
 
-          padding: 9px 10px;
+          padding: calc(9px * var(--app-density,1)) calc(10px * var(--app-density,1));
 
           border-bottom:
             1px solid #e9eeeb;
@@ -7259,14 +7259,14 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
         }
 
         .plan-section-title
         strong {
           color: #33443a;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .student-plan-section.memorization
@@ -7278,7 +7278,7 @@ function MonthlyPlanStyles() {
         .student-plan-section.revision
         .plan-section-title
         > div {
-          color: #0f766e;
+          color: var(--app-color-0f766e,#0f766e);
         }
 
         /* Pace Badge */
@@ -7286,7 +7286,7 @@ function MonthlyPlanStyles() {
         .pace-badge {
           min-height: 22px;
 
-          padding: 0 6px;
+          padding: 0 calc(6px * var(--app-density,1));
 
           border-radius: 999px;
 
@@ -7294,7 +7294,7 @@ function MonthlyPlanStyles() {
           align-items: center;
           justify-content: center;
 
-          font-size: 5.8px;
+          font-size: calc(5.8px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -7342,9 +7342,9 @@ function MonthlyPlanStyles() {
             minmax(105px,1fr)
             minmax(65px,.55fr);
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
-          padding: 8px;
+          padding: calc(8px * var(--app-density,1));
         }
 
         .plan-field {
@@ -7358,7 +7358,7 @@ function MonthlyPlanStyles() {
 
           color: #738077;
 
-          font-size: 5.8px;
+          font-size: calc(5.8px * var(--app-font-scale,1));
           font-weight: 800;
         }
 
@@ -7370,18 +7370,18 @@ function MonthlyPlanStyles() {
           border:
             1px solid #dce4df;
 
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
           outline: none;
 
           color: #3b4a41;
           background: #fff;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .plan-field input {
-          padding: 0 7px;
+          padding: 0 calc(7px * var(--app-density,1));
         }
 
         .plan-select-wrap {
@@ -7392,7 +7392,7 @@ function MonthlyPlanStyles() {
           appearance: none;
 
           padding:
-            0 7px 0 23px;
+            0 calc(7px * var(--app-density,1)) 0 calc(23px * var(--app-density,1));
         }
 
         .plan-select-wrap > svg {
@@ -7429,10 +7429,10 @@ function MonthlyPlanStyles() {
           grid-template-columns:
             1fr .7fr;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
           padding:
-            0 8px 8px;
+            0 calc(8px * var(--app-density,1)) calc(8px * var(--app-density,1));
         }
 
         .plan-target-row label {
@@ -7442,7 +7442,7 @@ function MonthlyPlanStyles() {
 
           color: #6c7971;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -7455,19 +7455,19 @@ function MonthlyPlanStyles() {
           height: 35px;
 
           padding:
-            0 7px 0 37px;
+            0 calc(7px * var(--app-density,1)) 0 calc(37px * var(--app-density,1));
 
           border:
             1px solid #dce4df;
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           outline: none;
 
           color: #33443a;
           background: #fff;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .target-input span {
@@ -7481,16 +7481,16 @@ function MonthlyPlanStyles() {
 
           color: #89938c;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .target-summary {
-          padding: 7px 8px;
+          padding: calc(7px * var(--app-density,1)) calc(8px * var(--app-density,1));
 
           border:
             1px solid #e2e9e5;
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           background: #fff;
         }
@@ -7500,7 +7500,7 @@ function MonthlyPlanStyles() {
 
           color: #89938c;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .target-summary strong {
@@ -7508,16 +7508,16 @@ function MonthlyPlanStyles() {
 
           margin-top: 2px;
 
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
 
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
         .target-summary small {
           color: #89938c;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         /* ==========================================
@@ -7525,7 +7525,7 @@ function MonthlyPlanStyles() {
         ========================================== */
 
         .plan-progress {
-          padding: 8px 9px;
+          padding: calc(8px * var(--app-density,1)) calc(9px * var(--app-density,1));
 
           border-top:
             1px solid #e8edea;
@@ -7538,7 +7538,7 @@ function MonthlyPlanStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           margin-bottom: 6px;
         }
@@ -7548,19 +7548,19 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
         }
 
         .progress-heading span {
           color: #87928b;
 
-          font-size: 5.8px;
+          font-size: calc(5.8px * var(--app-font-scale,1));
         }
 
         .progress-heading strong {
           color: #425047;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .progress-track {
@@ -7588,7 +7588,7 @@ function MonthlyPlanStyles() {
           background:
             linear-gradient(
               90deg,
-              #0f5132,
+              var(--app-color-0f5132,#0f5132),
               #16a36d
             );
         }
@@ -7597,7 +7597,7 @@ function MonthlyPlanStyles() {
           background:
             linear-gradient(
               90deg,
-              #0f766e,
+              var(--app-color-0f766e,#0f766e),
               #2fa99d
             );
         }
@@ -7629,13 +7629,13 @@ function MonthlyPlanStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
           margin-top: 5px;
 
           color: #98a19b;
 
-          font-size: 5.5px;
+          font-size: calc(5.5px * var(--app-font-scale,1));
         }
 
         /* ==========================================
@@ -7648,7 +7648,7 @@ function MonthlyPlanStyles() {
           grid-template-columns:
             .8fr 1.2fr;
 
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
 
           margin-top: 8px;
         }
@@ -7657,13 +7657,13 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
           margin-bottom: 4px;
 
           color: #6c7971;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -7674,26 +7674,26 @@ function MonthlyPlanStyles() {
           border:
             1px solid #dce4df;
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           outline: none;
 
           color: #3d4c43;
           background: #fbfdfc;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .bottom-field input {
           height: 35px;
 
-          padding: 0 8px;
+          padding: 0 calc(8px * var(--app-density,1));
         }
 
         .bottom-field textarea {
           min-height: 52px;
 
-          padding: 7px;
+          padding: calc(7px * var(--app-density,1));
 
           resize: vertical;
 
@@ -7712,17 +7712,17 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: flex-start;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-top: 8px;
-          padding: 7px 8px;
+          padding: calc(7px * var(--app-density,1)) calc(8px * var(--app-density,1));
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           color: #65736a;
           background: #f2f5f3;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           line-height: 1.5;
         }
 
@@ -7740,7 +7740,7 @@ function MonthlyPlanStyles() {
           align-items: center;
           justify-content: center;
 
-          padding: 16px;
+          padding: calc(16px * var(--app-density,1));
 
           background:
             rgba(15,23,42,.58);
@@ -7758,7 +7758,7 @@ function MonthlyPlanStyles() {
 
           overflow-y: auto;
 
-          border-radius: 22px;
+          border-radius: calc(22px * var(--app-radius-scale,1));
 
           background: #f8faf9;
 
@@ -7777,9 +7777,9 @@ function MonthlyPlanStyles() {
           align-items: flex-start;
           justify-content: space-between;
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
 
-          padding: 15px 17px;
+          padding: calc(15px * var(--app-density,1)) calc(17px * var(--app-density,1));
 
           border-bottom:
             1px solid #e7ede9;
@@ -7795,7 +7795,7 @@ function MonthlyPlanStyles() {
         > div > span {
           color: #927536;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -7803,9 +7803,9 @@ function MonthlyPlanStyles() {
           margin:
             2px 0 0;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 15px;
+          font-size: calc(15px * var(--app-font-scale,1));
         }
 
         .template-header p {
@@ -7814,7 +7814,7 @@ function MonthlyPlanStyles() {
 
           color: #919a94;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .template-header
@@ -7823,7 +7823,7 @@ function MonthlyPlanStyles() {
           height: 35px;
 
           border: none;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -7836,17 +7836,17 @@ function MonthlyPlanStyles() {
         }
 
         .template-body {
-          padding: 12px;
+          padding: calc(12px * var(--app-density,1));
         }
 
         .template-section {
-          padding: 12px;
+          padding: calc(12px * var(--app-density,1));
           margin-bottom: 9px;
 
           border:
             1px solid #e4eae6;
 
-          border-radius: 14px;
+          border-radius: calc(14px * var(--app-radius-scale,1));
 
           background: #fff;
         }
@@ -7855,18 +7855,18 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-bottom: 10px;
 
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
         }
 
         .template-section-title
         strong {
           color: #34443a;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .template-range {
@@ -7875,7 +7875,7 @@ function MonthlyPlanStyles() {
           grid-template-columns:
             1fr .55fr 1fr .55fr;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
         }
 
         .template-target {
@@ -7890,7 +7890,7 @@ function MonthlyPlanStyles() {
 
           color: #657169;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -7903,16 +7903,16 @@ function MonthlyPlanStyles() {
           height: 36px;
 
           padding:
-            0 8px 0 38px;
+            0 calc(8px * var(--app-density,1)) 0 calc(38px * var(--app-density,1));
 
           border:
             1px solid #dce4df;
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           outline: none;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .template-target
@@ -7927,16 +7927,16 @@ function MonthlyPlanStyles() {
 
           color: #8b958e;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .template-notes {
-          padding: 12px;
+          padding: calc(12px * var(--app-density,1));
 
           border:
             1px solid #e4eae6;
 
-          border-radius: 14px;
+          border-radius: calc(14px * var(--app-radius-scale,1));
 
           background: #fff;
         }
@@ -7945,18 +7945,18 @@ function MonthlyPlanStyles() {
           width: 100%;
           min-height: 70px;
 
-          padding: 8px;
+          padding: calc(8px * var(--app-density,1));
 
           border:
             1px solid #dce4df;
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           outline: none;
 
           resize: vertical;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .template-footer {
@@ -7966,9 +7966,9 @@ function MonthlyPlanStyles() {
           display: flex;
           justify-content: flex-end;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
-          padding: 11px 13px;
+          padding: calc(11px * var(--app-density,1)) calc(13px * var(--app-density,1));
 
           border-top:
             1px solid #e7ede9;
@@ -7980,11 +7980,11 @@ function MonthlyPlanStyles() {
         .template-footer button {
           min-height: 38px;
 
-          padding: 0 13px;
+          padding: 0 calc(13px * var(--app-density,1));
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -8006,15 +8006,15 @@ function MonthlyPlanStyles() {
           display: inline-flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           color: #fff;
 
           background:
             linear-gradient(
               135deg,
-              #0f5132,
-              #0f766e
+              var(--app-color-0f5132,#0f5132),
+              var(--app-color-0f766e,#0f766e)
             );
         }
 
@@ -8023,12 +8023,12 @@ function MonthlyPlanStyles() {
         ========================================== */
 
         .plan-empty {
-          padding: 50px 20px;
+          padding: calc(50px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
           border:
             1px dashed #cbd7d0;
 
-          border-radius: 18px;
+          border-radius: calc(18px * var(--app-radius-scale,1));
 
           text-align: center;
 
@@ -8043,14 +8043,14 @@ function MonthlyPlanStyles() {
           margin:
             0 auto 10px;
 
-          border-radius: 16px;
+          border-radius: calc(16px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .plan-empty h3,
@@ -8059,7 +8059,7 @@ function MonthlyPlanStyles() {
 
           color: #35453b;
 
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
         }
 
         .plan-empty p,
@@ -8068,7 +8068,7 @@ function MonthlyPlanStyles() {
 
           color: #8d9790;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .plan-inline-loading {
@@ -8079,7 +8079,7 @@ function MonthlyPlanStyles() {
           justify-content: center;
           flex-direction: column;
 
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
 
           color: #718077;
 
@@ -8088,14 +8088,14 @@ function MonthlyPlanStyles() {
 
         .plan-inline-loading
         strong {
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .plan-inline-loading
         span {
           color: #979f9a;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .plan-page-loading {
@@ -8168,9 +8168,9 @@ function MonthlyPlanStyles() {
             align-items:
               flex-start;
 
-            padding: 16px;
+            padding: calc(16px * var(--app-density,1));
 
-            border-radius: 19px;
+            border-radius: calc(19px * var(--app-radius-scale,1));
           }
 
           .plan-hero-icon {
@@ -8181,7 +8181,7 @@ function MonthlyPlanStyles() {
           }
 
           .plan-hero h1 {
-            font-size: 20px;
+            font-size: calc(20px * var(--app-font-scale,1));
           }
 
           .plan-hero p {
@@ -8189,7 +8189,7 @@ function MonthlyPlanStyles() {
           }
 
           .plan-hero-actions {
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
           }
 
           .hero-btn {
@@ -8211,7 +8211,7 @@ function MonthlyPlanStyles() {
               minmax(0,1fr)
               37px;
 
-            gap: 6px;
+            gap: calc(6px * var(--app-density,1));
           }
 
           .period-current {
@@ -8260,11 +8260,11 @@ function MonthlyPlanStyles() {
                 minmax(0,1fr)
               );
 
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
           }
 
           .plan-stat {
-            padding: 10px;
+            padding: calc(10px * var(--app-density,1));
           }
 
           /* Student */
@@ -8304,15 +8304,15 @@ function MonthlyPlanStyles() {
             align-items:
               flex-end;
 
-            padding: 7px;
+            padding: calc(7px * var(--app-density,1));
           }
 
           .template-modal {
             max-height: 95dvh;
 
             border-radius:
-              21px 21px
-              9px 9px;
+              calc(21px * var(--app-radius-scale,1)) calc(21px * var(--app-radius-scale,1))
+              calc(9px * var(--app-radius-scale,1)) calc(9px * var(--app-radius-scale,1));
           }
 
           .template-range {
@@ -8325,11 +8325,11 @@ function MonthlyPlanStyles() {
           max-width: 430px
         ) {
           .plan-hero {
-            padding: 13px;
+            padding: calc(13px * var(--app-density,1));
           }
 
           .plan-hero h1 {
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
           }
 
           .plan-hero-icon {
@@ -8340,7 +8340,7 @@ function MonthlyPlanStyles() {
           }
 
           .plan-eyebrow {
-            font-size: 7px;
+            font-size: calc(7px * var(--app-font-scale,1));
           }
 
           .plan-stats {
@@ -8350,7 +8350,7 @@ function MonthlyPlanStyles() {
 
           .plan-stat-content
           > strong {
-            font-size: 14px;
+            font-size: calc(14px * var(--app-font-scale,1));
           }
 
           .plan-range-grid {
@@ -8373,8 +8373,8 @@ function MonthlyPlanStyles() {
         ========================================== */
 
         .monthly-plan-page {
-          --smart-green: #0f4c45;
-          --smart-deep: #082f2a;
+          --smart-green: var(--app-color-0f4c45,#0f4c45);
+          --smart-deep: var(--app-color-082f2a,#082f2a);
           --smart-gold: #d1b34c;
           --smart-ink: #173a33;
           --smart-muted: #71837c;
@@ -8383,22 +8383,22 @@ function MonthlyPlanStyles() {
 
         .plan-hero {
           min-height: 178px;
-          padding: 26px 28px;
-          border-radius: 25px;
+          padding: calc(26px * var(--app-density,1)) calc(28px * var(--app-density,1));
+          border-radius: calc(25px * var(--app-radius-scale,1));
           background:
             radial-gradient(circle at 10% 10%, rgba(209,179,76,.14), transparent 25%),
             linear-gradient(135deg, #ffffff 0%, #f4f9f6 68%, #fffaf0 100%);
-          box-shadow: 0 16px 38px rgba(8,47,42,.055);
+          box-shadow: 0 16px 38px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 5.5%,transparent);
         }
 
         .plan-hero h1 {
-          font-size: 29px;
+          font-size: calc(29px * var(--app-font-scale,1));
           line-height: 1.2;
         }
 
         .plan-hero p {
           max-width: 760px;
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
           line-height: 1.85;
         }
 
@@ -8414,35 +8414,35 @@ function MonthlyPlanStyles() {
         .plan-lock-note,
         .bottom-field label,
         .plan-field label {
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           line-height: 1.55;
         }
 
         .plan-students-header h2 {
-          font-size: 19px;
+          font-size: calc(19px * var(--app-font-scale,1));
         }
 
         .plan-students-header p,
         .plan-students-header > span {
-          font-size: 12px;
+          font-size: calc(12px * var(--app-font-scale,1));
         }
 
         .student-plan-card {
-          padding: 18px;
-          border-radius: 21px;
-          box-shadow: 0 10px 28px rgba(8,47,42,.045);
+          padding: calc(18px * var(--app-density,1));
+          border-radius: calc(21px * var(--app-radius-scale,1));
+          box-shadow: 0 10px 28px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 4.5%,transparent);
         }
 
         .student-plan-identity h3 {
-          font-size: 15px;
+          font-size: calc(15px * var(--app-font-scale,1));
           line-height: 1.4;
         }
 
         .smart-plan-schedule {
           margin-top: 13px;
-          padding: 12px 13px;
+          padding: calc(12px * var(--app-density,1)) calc(13px * var(--app-density,1));
           border: 1px solid #dfe9e5;
-          border-radius: 14px;
+          border-radius: calc(14px * var(--app-radius-scale,1));
           background: linear-gradient(135deg, #f8fbfa, #ffffff);
         }
 
@@ -8450,18 +8450,18 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
         }
 
         .smart-plan-schedule-head > div {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
           color: var(--smart-green);
         }
 
         .smart-plan-schedule-head strong {
-          font-size: 12px;
+          font-size: calc(12px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -8475,7 +8475,7 @@ function MonthlyPlanStyles() {
           align-content: center;
           justify-items: center;
           text-align: center;
-          border: 1px solid rgba(15,76,69,.12);
+          border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 12%,transparent);
           background:
             radial-gradient(circle at 15% 10%, rgba(209,179,76,.13), transparent 34%),
             linear-gradient(135deg, #f8fcfa, #ffffff);
@@ -8489,21 +8489,21 @@ function MonthlyPlanStyles() {
           right: 0;
           width: 4px;
           height: 100%;
-          background: linear-gradient(180deg, #0f4c45, #d1b34c);
+          background: linear-gradient(180deg, var(--app-color-0f4c45,#0f4c45), #d1b34c);
         }
 
         .monthly-target-card.clean-result span,
         .noorania-monthly-target.clean-result span {
           color: #71837c;
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
         .monthly-target-card.clean-result strong,
         .noorania-monthly-target.clean-result strong {
           margin-top: 6px;
-          color: #082f2a;
-          font-size: 20px;
+          color: var(--app-color-082f2a,#082f2a);
+          font-size: calc(20px * var(--app-font-scale,1));
           line-height: 1.35;
           font-weight: 950;
         }
@@ -8512,18 +8512,18 @@ function MonthlyPlanStyles() {
           min-height: 29px;
           display: inline-flex;
           align-items: center;
-          padding: 0 9px;
+          padding: 0 calc(9px * var(--app-density,1));
           border-radius: 999px;
           background: #eef7f3;
           color: #2d6c5c;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
         .smart-day-chips {
           display: flex;
           flex-wrap: wrap;
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
           margin-top: 9px;
         }
 
@@ -8531,12 +8531,12 @@ function MonthlyPlanStyles() {
           min-height: 29px;
           display: inline-flex;
           align-items: center;
-          padding: 0 9px;
+          padding: 0 calc(9px * var(--app-density,1));
           border: 1px solid #dce7e2;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
           background: #fff;
           color: #60766e;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -8548,20 +8548,20 @@ function MonthlyPlanStyles() {
 
         .smart-programs {
           display: grid;
-          gap: 13px;
+          gap: calc(13px * var(--app-density,1));
           margin-top: 13px;
         }
 
         .smart-program-block {
-          padding: 13px;
+          padding: calc(13px * var(--app-density,1));
           border: 1px solid #dfe8e4;
-          border-radius: 17px;
+          border-radius: calc(17px * var(--app-radius-scale,1));
           background: #fbfcfb;
         }
 
         .smart-program-block.quran-program {
           background:
-            radial-gradient(circle at 100% 0%, rgba(15,76,69,.045), transparent 26%),
+            radial-gradient(circle at 100% 0%, color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 4.5%,transparent), transparent 26%),
             #fbfdfc;
         }
 
@@ -8575,60 +8575,60 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
           margin-bottom: 10px;
         }
 
         .smart-program-title > div {
           display: inline-flex;
           align-items: center;
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
           color: var(--smart-green);
         }
 
         .smart-program-title strong {
           color: var(--smart-deep);
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
         .smart-program-title > span {
           color: #7c8f88;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 750;
         }
 
         .plan-sections {
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
         }
 
         .smart-plan-section {
-          padding: 14px;
-          border-radius: 15px;
+          padding: calc(14px * var(--app-density,1));
+          border-radius: calc(15px * var(--app-radius-scale,1));
           background: #fff;
         }
 
         .plan-section-title strong {
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
         }
 
         .pace-badge {
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
         }
 
         .daily-plan-editor {
           display: grid;
           grid-template-columns: minmax(0, 1.25fr) minmax(180px, .75fr);
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
           margin-top: 11px;
         }
 
         .daily-plan-input-block,
         .monthly-target-card {
           min-height: 112px;
-          padding: 11px;
+          padding: calc(11px * var(--app-density,1));
           border: 1px solid #e1e9e6;
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
           background: #f9fbfa;
         }
 
@@ -8636,14 +8636,14 @@ function MonthlyPlanStyles() {
         .monthly-target-card > span {
           display: block;
           color: #6f827b;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
         .daily-amount-control {
           display: grid;
           grid-template-columns: minmax(90px, 1fr) auto;
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
           margin-top: 7px;
         }
 
@@ -8655,19 +8655,19 @@ function MonthlyPlanStyles() {
           min-width: 0;
           height: 42px;
           border: 1px solid #d9e4df;
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
           outline: none;
           background: #fff;
           color: #294840;
           font-family: inherit;
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
           font-weight: 800;
         }
 
         .daily-amount-control > input,
         .noorania-daily-control input,
         .template-smart-amount input {
-          padding: 0 10px;
+          padding: 0 calc(10px * var(--app-density,1));
         }
 
         .daily-amount-control > input:focus,
@@ -8676,7 +8676,7 @@ function MonthlyPlanStyles() {
         .template-smart-amount input:focus,
         .template-smart-amount select:focus {
           border-color: #9fc7bb;
-          box-shadow: 0 0 0 4px rgba(15,76,69,.055);
+          box-shadow: 0 0 0 4px color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 5.5%,transparent);
         }
 
         .daily-unit-toggle {
@@ -8684,7 +8684,7 @@ function MonthlyPlanStyles() {
           grid-template-columns: repeat(2, 1fr);
           overflow: hidden;
           border: 1px solid #d9e4df;
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
           background: #fff;
         }
 
@@ -8693,7 +8693,7 @@ function MonthlyPlanStyles() {
           border: 0;
           background: transparent;
           color: #6f817b;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 900;
           cursor: pointer;
         }
@@ -8704,14 +8704,14 @@ function MonthlyPlanStyles() {
 
         .daily-unit-toggle button.active {
           background: #eaf7f1;
-          color: #147a5e;
+          color: var(--app-color-147a5e,#147a5e);
         }
 
         .daily-conversion-note {
           display: block;
           margin-top: 7px;
           color: #83948e;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           line-height: 1.5;
         }
 
@@ -8724,7 +8724,7 @@ function MonthlyPlanStyles() {
           display: block;
           margin-top: 5px;
           color: var(--smart-deep);
-          font-size: 17px;
+          font-size: calc(17px * var(--app-font-scale,1));
           line-height: 1.35;
           font-weight: 950;
         }
@@ -8733,7 +8733,7 @@ function MonthlyPlanStyles() {
           display: block;
           margin-top: 5px;
           color: #81928c;
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           line-height: 1.5;
         }
 
@@ -8746,28 +8746,28 @@ function MonthlyPlanStyles() {
         }
 
         .smart-plan-progress .progress-heading span {
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .smart-plan-progress .progress-heading strong {
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           line-height: 1.45;
         }
 
         .advanced-route-details {
           margin-top: 10px;
           border-top: 1px dashed #dde5e2;
-          padding-top: 9px;
+          padding-top: calc(9px * var(--app-density,1));
         }
 
         .advanced-route-details > summary {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
           list-style: none;
           color: #687c75;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 850;
           cursor: pointer;
         }
@@ -8787,13 +8787,13 @@ function MonthlyPlanStyles() {
         .noorania-plan-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0,1fr));
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
         }
 
         .noorania-daily-card {
-          padding: 12px;
+          padding: calc(12px * var(--app-density,1));
           border: 1px solid #eadfb7;
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
           background: rgba(255,255,255,.88);
         }
 
@@ -8801,37 +8801,37 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
 
         .noorania-daily-title strong {
           color: #5c4914;
-          font-size: 12px;
+          font-size: calc(12px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
         .noorania-daily-title span {
           color: #9a8442;
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
         .noorania-daily-control {
           display: grid;
           grid-template-columns: 1fr 100px;
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
           margin-top: 8px;
         }
 
         .noorania-daily-control select,
         .template-smart-amount select {
-          padding: 0 8px;
+          padding: 0 calc(8px * var(--app-density,1));
         }
 
         .noorania-monthly-target {
           margin-top: 9px;
-          padding: 9px;
-          border-radius: 10px;
+          padding: calc(9px * var(--app-density,1));
+          border-radius: calc(10px * var(--app-radius-scale,1));
           background: #fff9e8;
         }
 
@@ -8843,30 +8843,30 @@ function MonthlyPlanStyles() {
 
         .noorania-monthly-target span {
           color: #9b8240;
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 800;
         }
 
         .noorania-monthly-target strong {
           margin-top: 3px;
           color: #5e4c19;
-          font-size: 15px;
+          font-size: calc(15px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
         .noorania-monthly-target small {
           margin-top: 3px;
           color: #9a8a61;
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .noorania-plan-note {
           display: flex;
           align-items: center;
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
           margin-top: 9px;
           color: #8e742c;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           line-height: 1.5;
           font-weight: 800;
         }
@@ -8874,13 +8874,13 @@ function MonthlyPlanStyles() {
         .template-smart-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0,1fr));
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
         }
 
         .template-smart-amount {
-          padding: 10px;
+          padding: calc(10px * var(--app-density,1));
           border: 1px solid #e0e8e5;
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
           background: #f9fbfa;
         }
 
@@ -8888,14 +8888,14 @@ function MonthlyPlanStyles() {
           display: block;
           margin-bottom: 6px;
           color: #566c65;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
         .template-smart-amount > div {
           display: grid;
           grid-template-columns: 1fr 90px;
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
         }
 
         .plan-field input,
@@ -8904,7 +8904,7 @@ function MonthlyPlanStyles() {
         .bottom-field textarea,
         .plan-filter-control input,
         .plan-filter-control select {
-          font-size: 12px;
+          font-size: calc(12px * var(--app-font-scale,1));
         }
 
         @media (max-width: 900px) {
@@ -8923,11 +8923,11 @@ function MonthlyPlanStyles() {
 
         @media (max-width: 560px) {
           .plan-hero h1 {
-            font-size: 22px;
+            font-size: calc(22px * var(--app-font-scale,1));
           }
 
           .plan-hero p {
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
           }
 
           .daily-amount-control {
@@ -8940,7 +8940,7 @@ function MonthlyPlanStyles() {
 
           .smart-plan-progress .progress-heading {
             grid-template-columns: 1fr;
-            gap: 6px;
+            gap: calc(6px * var(--app-density,1));
           }
 
           .noorania-daily-control,
@@ -8955,25 +8955,25 @@ function MonthlyPlanStyles() {
 
         .plan-grid {
           grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
         }
 
         .plan-summary-card {
           position: relative;
           overflow: hidden;
           min-height: 220px;
-          padding: 16px;
+          padding: calc(16px * var(--app-density,1));
           border: 1px solid #dfe8e4;
-          border-radius: 19px;
+          border-radius: calc(19px * var(--app-radius-scale,1));
           background: linear-gradient(180deg, #fff, #fbfdfc);
-          box-shadow: 0 10px 26px rgba(8,47,42,.045);
+          box-shadow: 0 10px 26px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 4.5%,transparent);
           transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
         }
 
         .plan-summary-card:hover {
           transform: translateY(-2px);
           border-color: #bdd5cd;
-          box-shadow: 0 16px 34px rgba(8,47,42,.075);
+          box-shadow: 0 16px 34px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 7.5%,transparent);
         }
 
         .plan-summary-card.locked { background: #fbfcfb; }
@@ -8984,24 +8984,24 @@ function MonthlyPlanStyles() {
           right: 0;
           width: 4px;
           height: 100%;
-          background: linear-gradient(180deg, #0f4c45, #d1b34c);
+          background: linear-gradient(180deg, var(--app-color-0f4c45,#0f4c45), #d1b34c);
         }
 
         .plan-summary-header {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
         }
 
-        .student-plan-identity.compact { gap: 10px; }
+        .student-plan-identity.compact { gap: calc(10px * var(--app-density,1)); }
         .compact-avatar { width: 42px; height: 42px; flex-basis: 42px; }
         .plan-summary-name { min-width: 0; }
         .plan-summary-name h3 {
           margin: 0;
           overflow: hidden;
-          color: #173d33;
-          font-size: 15px;
+          color: var(--app-color-173d33,#173d33);
+          font-size: calc(15px * var(--app-font-scale,1));
           line-height: 1.4;
           font-weight: 950;
           white-space: nowrap;
@@ -9011,32 +9011,32 @@ function MonthlyPlanStyles() {
           display: block;
           margin-top: 4px;
           color: #82918b;
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 750;
         }
         .compact-badges .plan-source-badge,
         .compact-badges .plan-status-badge {
           min-height: 25px;
-          padding: 0 8px;
-          font-size: 9px;
+          padding: 0 calc(8px * var(--app-density,1));
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .plan-summary-days {
           display: grid;
           grid-template-columns: 18px auto 1fr;
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
           align-items: center;
           margin-top: 13px;
-          padding: 9px 10px;
-          border-radius: 11px;
-          background: #f4f8f6;
+          padding: calc(9px * var(--app-density,1)) calc(10px * var(--app-density,1));
+          border-radius: calc(11px * var(--app-radius-scale,1));
+          background: var(--app-color-f4f8f6,#f4f8f6);
           color: #587068;
         }
-        .plan-summary-days span { font-size: 10px; font-weight: 850; }
+        .plan-summary-days span { font-size: calc(10px * var(--app-font-scale,1)); font-weight: 850; }
         .plan-summary-days strong {
           overflow: hidden;
           color: #345048;
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 900;
           white-space: nowrap;
           text-overflow: ellipsis;
@@ -9045,39 +9045,39 @@ function MonthlyPlanStyles() {
         .plan-summary-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0,1fr));
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
           margin-top: 10px;
         }
         .plan-summary-item {
           min-height: 76px;
-          padding: 10px;
+          padding: calc(10px * var(--app-density,1));
           border: 1px solid #e5ece9;
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
           background: #fff;
         }
         .plan-summary-item span,
         .plan-summary-item strong,
         .plan-summary-item small { display: block; }
-        .plan-summary-item span { color: #81928b; font-size: 10px; font-weight: 800; }
-        .plan-summary-item strong { margin-top: 4px; color: #173d33; font-size: 13px; font-weight: 950; }
-        .plan-summary-item small { margin-top: 4px; color: #9b8a57; font-size: 9px; font-weight: 750; }
+        .plan-summary-item span { color: #81928b; font-size: calc(10px * var(--app-font-scale,1)); font-weight: 800; }
+        .plan-summary-item strong { margin-top: 4px; color: var(--app-color-173d33,#173d33); font-size: calc(13px * var(--app-font-scale,1)); font-weight: 950; }
+        .plan-summary-item small { margin-top: 4px; color: #9b8a57; font-size: calc(9px * var(--app-font-scale,1)); font-weight: 750; }
 
         .plan-summary-footer {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
           margin-top: 12px;
-          padding-top: 11px;
+          padding-top: calc(11px * var(--app-density,1));
           border-top: 1px solid #edf1ef;
         }
         .plan-summary-state {
           min-width: 0;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
           color: #72847d;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 750;
         }
         .plan-view-button {
@@ -9085,17 +9085,17 @@ function MonthlyPlanStyles() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          padding: 0 13px;
+          gap: calc(6px * var(--app-density,1));
+          padding: 0 calc(13px * var(--app-density,1));
           border: 0;
-          border-radius: 10px;
-          background: #0f4c45;
+          border-radius: calc(10px * var(--app-radius-scale,1));
+          background: var(--app-color-0f4c45,#0f4c45);
           color: #fff;
           font-family: inherit;
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 900;
           cursor: pointer;
-          box-shadow: 0 8px 18px rgba(15,76,69,.14);
+          box-shadow: 0 8px 18px color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 14.000000000000002%,transparent);
         }
 
         .plan-details-overlay {
@@ -9104,7 +9104,7 @@ function MonthlyPlanStyles() {
           z-index: 10020;
           display: grid;
           place-items: center;
-          padding: 18px;
+          padding: calc(18px * var(--app-density,1));
           background: rgba(3,24,21,.58);
           backdrop-filter: blur(7px);
         }
@@ -9113,7 +9113,7 @@ function MonthlyPlanStyles() {
           max-height: calc(100vh - 36px);
           overflow: auto;
           border: 1px solid rgba(255,255,255,.5);
-          border-radius: 23px;
+          border-radius: calc(23px * var(--app-radius-scale,1));
           background: #fff;
           box-shadow: 0 36px 100px rgba(3,27,23,.28);
         }
@@ -9124,27 +9124,27 @@ function MonthlyPlanStyles() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 14px;
-          padding: 17px 19px;
+          gap: calc(14px * var(--app-density,1));
+          padding: calc(17px * var(--app-density,1)) calc(19px * var(--app-density,1));
           border-bottom: 1px solid #e4ece8;
           background: rgba(255,255,255,.97);
           backdrop-filter: blur(12px);
         }
-        .plan-details-eyebrow { color: #9a7a27; font-size: 10px; font-weight: 900; }
-        .plan-details-header h2 { margin: 2px 0 0; color: #0f3b32; font-size: 19px; font-weight: 950; }
-        .plan-details-header p { margin: 3px 0 0; color: #83938d; font-size: 10px; }
+        .plan-details-eyebrow { color: #9a7a27; font-size: calc(10px * var(--app-font-scale,1)); font-weight: 900; }
+        .plan-details-header h2 { margin: 2px 0 0; color: #0f3b32; font-size: calc(19px * var(--app-font-scale,1)); font-weight: 950; }
+        .plan-details-header p { margin: 3px 0 0; color: #83938d; font-size: calc(10px * var(--app-font-scale,1)); }
         .plan-details-close {
           width: 38px;
           height: 38px;
           display: grid;
           place-items: center;
           border: 1px solid #dfe8e4;
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
           background: #fff;
           color: #587068;
           cursor: pointer;
         }
-        .plan-details-body { padding: 17px 18px 22px; }
+        .plan-details-body { padding: calc(17px * var(--app-density,1)) calc(18px * var(--app-density,1)) calc(22px * var(--app-density,1)); }
         .modal-schedule { margin-bottom: 13px; }
         .modal-programs .smart-program-block { margin-top: 12px; }
         .modal-bottom-fields { margin-top: 13px; }
@@ -9156,19 +9156,19 @@ function MonthlyPlanStyles() {
           z-index: 5;
           display: flex;
           justify-content: flex-end;
-          padding: 11px 18px;
+          padding: calc(11px * var(--app-density,1)) calc(18px * var(--app-density,1));
           border-top: 1px solid #e5ece9;
           background: rgba(250,252,251,.97);
         }
         .plan-details-footer button {
           min-height: 39px;
-          padding: 0 16px;
+          padding: 0 calc(16px * var(--app-density,1));
           border: 0;
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
           background: #eef4f1;
           color: #3d5c53;
           font-family: inherit;
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 900;
           cursor: pointer;
         }
@@ -9179,32 +9179,32 @@ function MonthlyPlanStyles() {
         .plan-details-modal .noorania-daily-title strong,
         .plan-details-modal .bottom-field label,
         .plan-details-modal .daily-plan-input-block label,
-        .plan-details-modal .plan-field label { font-size: 11px; }
+        .plan-details-modal .plan-field label { font-size: calc(11px * var(--app-font-scale,1)); }
         .plan-details-modal input,
         .plan-details-modal select,
-        .plan-details-modal textarea { font-size: 12px; }
+        .plan-details-modal textarea { font-size: calc(12px * var(--app-font-scale,1)); }
         .plan-details-modal .daily-plan-editor {
           grid-template-columns: minmax(0,1fr) 155px;
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
         }
         .plan-details-modal .monthly-target-card.clean-result,
         .plan-details-modal .noorania-monthly-target.clean-result {
           min-height: 70px;
-          padding: 9px;
+          padding: calc(9px * var(--app-density,1));
         }
         .plan-details-modal .monthly-target-card.clean-result strong,
-        .plan-details-modal .noorania-monthly-target.clean-result strong { font-size: 16px; }
+        .plan-details-modal .noorania-monthly-target.clean-result strong { font-size: calc(16px * var(--app-font-scale,1)); }
         .plan-details-modal .progress-heading span,
         .plan-details-modal .progress-foot,
-        .plan-details-modal .pace-badge { font-size: 9px; }
-        .plan-details-modal .progress-heading strong { font-size: 11px; }
-        .plan-details-modal .smart-day-chips span { font-size: 10px; }
+        .plan-details-modal .pace-badge { font-size: calc(9px * var(--app-font-scale,1)); }
+        .plan-details-modal .progress-heading strong { font-size: calc(11px * var(--app-font-scale,1)); }
+        .plan-details-modal .smart-day-chips span { font-size: calc(10px * var(--app-font-scale,1)); }
 
         @media (max-width: 700px) {
           .plan-grid { grid-template-columns: 1fr; }
           .plan-summary-grid { grid-template-columns: 1fr 1fr; }
-          .plan-details-overlay { align-items: end; padding: 6px; }
-          .plan-details-modal { max-height: calc(100vh - 12px); border-radius: 20px 20px 8px 8px; }
+          .plan-details-overlay { align-items: end; padding: calc(6px * var(--app-density,1)); }
+          .plan-details-modal { max-height: calc(100vh - 12px); border-radius: calc(20px * var(--app-radius-scale,1)) calc(20px * var(--app-radius-scale,1)) calc(8px * var(--app-radius-scale,1)) calc(8px * var(--app-radius-scale,1)); }
           .plan-details-modal .plan-sections,
           .plan-details-modal .noorania-plan-grid,
           .plan-details-modal .plan-card-bottom { grid-template-columns: 1fr; }

@@ -223,7 +223,7 @@ function NotificationContainer({
 
           display: "flex",
           flexDirection: "column",
-          gap: "10px",
+          gap: "calc(10px * var(--app-density,1))",
 
           direction: "rtl",
 
@@ -331,13 +331,13 @@ function Notification({
         display: "flex",
         alignItems: "flex-start",
 
-        gap: "11px",
+        gap: "calc(11px * var(--app-density,1))",
 
         width: "100%",
 
         boxSizing: "border-box",
 
-        padding: "13px",
+        padding: "calc(13px * var(--app-density,1))",
 
         background:
           config.background,
@@ -345,7 +345,7 @@ function Notification({
         border:
           `1px solid ${config.border}`,
 
-        borderRadius: "15px",
+        borderRadius: "calc(15px * var(--app-radius-scale,1))",
 
         boxShadow:
           "0 14px 40px rgba(0,0,0,0.12)",
@@ -363,7 +363,7 @@ function Notification({
 
           flexShrink: 0,
 
-          borderRadius: "11px",
+          borderRadius: "calc(11px * var(--app-radius-scale,1))",
 
           background: "#fff",
 
@@ -387,13 +387,13 @@ function Notification({
         style={{
           flex: 1,
           minWidth: 0,
-          paddingTop: "1px",
+          paddingTop: "calc(1px * var(--app-density,1))",
         }}
       >
         <div
           style={{
             color: config.color,
-            fontSize: "13px",
+            fontSize: "calc(13px * var(--app-font-scale,1))",
             fontWeight: "800",
             marginBottom: "3px",
           }}
@@ -404,7 +404,7 @@ function Notification({
         <div
           style={{
             color: "#4c554f",
-            fontSize: "12px",
+            fontSize: "calc(12px * var(--app-font-scale,1))",
             lineHeight: 1.75,
             wordBreak: "break-word",
           }}
@@ -432,7 +432,7 @@ function Notification({
 
           cursor: "pointer",
 
-          borderRadius: "8px",
+          borderRadius: "calc(8px * var(--app-radius-scale,1))",
 
           display: "flex",
           alignItems: "center",

@@ -83,7 +83,7 @@ export default function StudentSettings() {
         <button
           type="button"
           className="student-choice"
-          style={{ minHeight: 45, width: "fit-content", paddingInline: 18 }}
+          style={{ minHeight: 45, width: "fit-content", paddingInline: "calc(18px * var(--app-density,1))" }}
           onClick={() => setValue(DEFAULT_STUDENT_PREFERENCES)}
         >
           استعادة الإعدادات الافتراضية

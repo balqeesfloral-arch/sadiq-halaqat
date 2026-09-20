@@ -34,7 +34,7 @@ export default function ConfirmModal({
         alignItems: "center",
         justifyContent: "center",
 
-        padding: "20px",
+        padding: "calc(20px * var(--app-density,1))",
 
         boxSizing: "border-box",
       }}
@@ -46,9 +46,9 @@ export default function ConfirmModal({
 
           background: "#fff",
 
-          borderRadius: "22px",
+          borderRadius: "calc(22px * var(--app-radius-scale,1))",
 
-          padding: "25px",
+          padding: "calc(25px * var(--app-density,1))",
 
           boxShadow:
             "0 25px 80px rgba(0,0,0,0.22)",
@@ -73,7 +73,7 @@ export default function ConfirmModal({
             border: "none",
             background: "#f5f5f5",
 
-            borderRadius: "9px",
+            borderRadius: "calc(9px * var(--app-radius-scale,1))",
 
             color: "#666",
 
@@ -92,7 +92,7 @@ export default function ConfirmModal({
             width: "58px",
             height: "58px",
 
-            borderRadius: "17px",
+            borderRadius: "calc(17px * var(--app-radius-scale,1))",
 
             background: danger
               ? "#fff1f0"
@@ -118,8 +118,8 @@ export default function ConfirmModal({
         <h2
           style={{
             margin: "0 0 8px",
-            color: "#173d2b",
-            fontSize: "20px",
+            color: "var(--app-color-173d2b,#173d2b)",
+            fontSize: "calc(20px * var(--app-font-scale,1))",
           }}
         >
           {title}
@@ -129,7 +129,7 @@ export default function ConfirmModal({
           style={{
             margin: "0 0 22px",
             color: "#707770",
-            fontSize: "14px",
+            fontSize: "calc(14px * var(--app-font-scale,1))",
             lineHeight: 1.8,
           }}
         >
@@ -141,7 +141,7 @@ export default function ConfirmModal({
             display: "grid",
             gridTemplateColumns:
               "1fr 1fr",
-            gap: "9px",
+            gap: "calc(9px * var(--app-density,1))",
           }}
         >
           <button
@@ -149,7 +149,7 @@ export default function ConfirmModal({
             onClick={onCancel}
             style={{
               height: "45px",
-              borderRadius: "10px",
+              borderRadius: "calc(10px * var(--app-radius-scale,1))",
 
               border:
                 "1px solid #ddd",
@@ -171,13 +171,13 @@ export default function ConfirmModal({
             onClick={onConfirm}
             style={{
               height: "45px",
-              borderRadius: "10px",
+              borderRadius: "calc(10px * var(--app-radius-scale,1))",
 
               border: "none",
 
               background: danger
                 ? "#b42318"
-                : "#0f5132",
+                : "var(--app-color-0f5132,#0f5132)",
 
               color: "#fff",
 

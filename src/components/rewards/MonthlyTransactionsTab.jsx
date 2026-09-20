@@ -165,7 +165,7 @@ export default function MonthlyTransactionsTab({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="ابحث باسم الطالب أو النوع"
-              style={{ paddingLeft: 36 }}
+              style={{ paddingLeft: "calc(36px * var(--app-density,1))" }}
             />
           </div>
         </header>
@@ -261,7 +261,7 @@ export default function MonthlyTransactionsTab({
                         <span
                           style={{
                             color: "#64748B",
-                            fontSize: "12px",
+                            fontSize: "calc(12px * var(--app-font-scale,1))",
                             fontWeight: 700,
                           }}
                         >

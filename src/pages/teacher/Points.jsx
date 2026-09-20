@@ -580,7 +580,7 @@ export default function RewardsPage() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="اكتب اسم الطالب"
-                  style={{ paddingLeft: 36 }}
+                  style={{ paddingLeft: "calc(36px * var(--app-density,1))" }}
                 />
               </div>
             </div>

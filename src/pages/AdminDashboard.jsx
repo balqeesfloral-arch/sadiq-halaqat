@@ -950,38 +950,38 @@ export default function AdminDashboard() {
         {`
           .supervisor-dashboard {
             display: grid;
-            gap: 24px;
+            gap: calc(24px * var(--app-density,1));
           }
 
           .dashboard-section {
             display: grid;
-            gap: 16px;
+            gap: calc(16px * var(--app-density,1));
           }
 
           .dashboard-section-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 14px;
+            gap: calc(14px * var(--app-density,1));
             flex-wrap: wrap;
           }
 
           .dashboard-section-head h2 {
             margin: 0;
             color: #0F172A;
-            font-size: 24px;
+            font-size: calc(24px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
           .dashboard-section-head p {
             margin: 6px 0 0;
             color: #64748B;
-            font-size: 14px;
+            font-size: calc(14px * var(--app-font-scale,1));
           }
 
           .dashboard-grid {
             display: grid;
-            gap: 18px;
+            gap: calc(18px * var(--app-density,1));
           }
 
           .metrics-4,
@@ -1000,13 +1000,13 @@ export default function AdminDashboard() {
             position: relative;
             overflow: hidden;
             isolation: isolate;
-            border-radius: 24px;
+            border-radius: calc(24px * var(--app-radius-scale,1));
             background:
               radial-gradient(circle at 84% 18%,rgba(196,160,78,.12),transparent 30%),
               linear-gradient(125deg,#123F39 0%,#0B302C 52%,#082823 100%);
             border: 1px solid rgba(199,166,91,.28);
             box-shadow: 0 18px 46px rgba(8,40,35,.14);
-            padding: 34px;
+            padding: calc(34px * var(--app-density,1));
           }
 
           .supervisor-hero::before {
@@ -1016,7 +1016,7 @@ export default function AdminDashboard() {
             z-index: 0;
             pointer-events: none;
             border: 1px solid rgba(226,199,132,.13);
-            border-radius: 18px;
+            border-radius: calc(18px * var(--app-radius-scale,1));
           }
 
           .supervisor-hero-ornament {
@@ -1060,7 +1060,7 @@ export default function AdminDashboard() {
             z-index: 2;
             display: grid;
             grid-template-columns: minmax(0,1.35fr) minmax(290px,.65fr);
-            gap: 30px;
+            gap: calc(30px * var(--app-density,1));
             align-items: center;
             min-height: 210px;
           }
@@ -1069,16 +1069,16 @@ export default function AdminDashboard() {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 13px;
-            padding-inline: 8px;
+            gap: calc(13px * var(--app-density,1));
+            padding-inline: calc(8px * var(--app-density,1));
           }
 
           .supervisor-hero-eyebrow {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
             color: #E6CE8C;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             font-weight: 800;
             letter-spacing: .15px;
           }
@@ -1100,7 +1100,7 @@ export default function AdminDashboard() {
           .supervisor-hero-title {
             margin: 2px 0 0;
             color: #FFFFFF;
-            font-size: clamp(34px,4vw,48px);
+            font-size: clamp(calc(34px * var(--app-font-scale,1)),4vw,calc(48px * var(--app-font-scale,1)));
             font-weight: 900;
             line-height: 1.2;
             letter-spacing: -.7px;
@@ -1109,8 +1109,8 @@ export default function AdminDashboard() {
           .supervisor-hero-text {
             margin: 0;
             max-width: 690px;
-            color: rgba(244,248,246,.76);
-            font-size: 15px;
+            color: color-mix(in srgb,var(--app-color-f4f8f6,#f4f8f6) 76%,transparent);
+            font-size: calc(15px * var(--app-font-scale,1));
             line-height: 2;
           }
 
@@ -1119,7 +1119,7 @@ export default function AdminDashboard() {
             display: grid;
             grid-template-columns: 1fr 10px 1fr;
             align-items: center;
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
             margin-top: 5px;
             color: #D8B968;
           }
@@ -1144,7 +1144,7 @@ export default function AdminDashboard() {
 
           .supervisor-hero-side {
             display: grid;
-            gap: 12px;
+            gap: calc(12px * var(--app-density,1));
           }
 
           .supervisor-date-card,
@@ -1152,8 +1152,8 @@ export default function AdminDashboard() {
             position: relative;
             background: rgba(255,255,255,.045);
             border: 1px solid rgba(222,195,127,.18);
-            border-radius: 15px;
-            padding: 17px 18px;
+            border-radius: calc(15px * var(--app-radius-scale,1));
+            padding: calc(17px * var(--app-density,1)) calc(18px * var(--app-density,1));
             box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
           }
 
@@ -1161,7 +1161,7 @@ export default function AdminDashboard() {
           .supervisor-vital-head span {
             display: block;
             color: #DCC37E;
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
             font-weight: 800;
             margin-bottom: 7px;
           }
@@ -1169,7 +1169,7 @@ export default function AdminDashboard() {
           .supervisor-date-card strong {
             display: block;
             color: #FFFFFF;
-            font-size: 17px;
+            font-size: calc(17px * var(--app-font-scale,1));
             font-weight: 850;
             line-height: 1.8;
           }
@@ -1178,19 +1178,19 @@ export default function AdminDashboard() {
             display: block;
             margin-top: 5px;
             color: rgba(255,255,255,.62);
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
           }
 
           .supervisor-vital-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
           }
 
           .supervisor-vital-head strong {
             color: #FFFFFF;
-            font-size: 28px;
+            font-size: calc(28px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
@@ -1212,7 +1212,7 @@ export default function AdminDashboard() {
           .supervisor-vital-card p {
             margin: 0;
             color: rgba(255,255,255,.66);
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
             line-height: 1.85;
           }
 
@@ -1223,8 +1223,8 @@ export default function AdminDashboard() {
             overflow: hidden;
             background: #FFFFFF;
             border: 1px solid #E8EEF0;
-            border-radius: 24px;
-            padding: 22px;
+            border-radius: calc(24px * var(--app-radius-scale,1));
+            padding: calc(22px * var(--app-density,1));
             box-shadow:
               0 12px 35px rgba(15,23,42,.05);
           }
@@ -1241,25 +1241,25 @@ export default function AdminDashboard() {
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            gap: 14px;
+            gap: calc(14px * var(--app-density,1));
           }
 
           .dashboard-metric-title {
             color: #0F172A;
-            font-size: 15px;
+            font-size: calc(15px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
           .dashboard-metric-subtitle {
             margin-top: 6px;
             color: #64748B;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
           }
 
           .dashboard-metric-icon {
             width: 54px;
             height: 54px;
-            border-radius: 18px;
+            border-radius: calc(18px * var(--app-radius-scale,1));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1267,7 +1267,7 @@ export default function AdminDashboard() {
 
           .dashboard-metric-value {
             margin-top: 18px;
-            font-size: 38px;
+            font-size: calc(38px * var(--app-font-scale,1));
             font-weight: 950;
             letter-spacing: -1px;
             line-height: 1;
@@ -1276,7 +1276,7 @@ export default function AdminDashboard() {
           .dashboard-metric-note {
             margin-top: 12px;
             color: #64748B;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             line-height: 1.8;
           }
 
@@ -1285,11 +1285,11 @@ export default function AdminDashboard() {
           .dashboard-status-card {
             background: #FFFFFF;
             border: 1px solid #E8EEF0;
-            border-radius: 22px;
-            padding: 18px;
+            border-radius: calc(22px * var(--app-radius-scale,1));
+            padding: calc(18px * var(--app-density,1));
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: calc(14px * var(--app-density,1));
             box-shadow:
               0 8px 25px rgba(15,23,42,.04);
           }
@@ -1297,7 +1297,7 @@ export default function AdminDashboard() {
           .dashboard-status-icon {
             width: 48px;
             height: 48px;
-            border-radius: 16px;
+            border-radius: calc(16px * var(--app-radius-scale,1));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1306,17 +1306,17 @@ export default function AdminDashboard() {
           .dashboard-status-copy {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
           }
 
           .dashboard-status-copy span {
             color: #64748B;
-            font-size: 14px;
+            font-size: calc(14px * var(--app-font-scale,1));
             font-weight: 700;
           }
 
           .dashboard-status-copy strong {
-            font-size: 28px;
+            font-size: calc(28px * var(--app-font-scale,1));
             font-weight: 950;
             line-height: 1;
           }
@@ -1326,14 +1326,14 @@ export default function AdminDashboard() {
           .dashboard-vital-badge {
             min-width: 86px;
             height: 44px;
-            border-radius: 14px;
+            border-radius: calc(14px * var(--app-radius-scale,1));
             background:
               linear-gradient(135deg,#0F766E,#115E59);
             color: #FFFFFF;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 17px;
+            font-size: calc(17px * var(--app-font-scale,1));
             font-weight: 900;
             box-shadow:
               0 10px 24px rgba(15,118,110,.22);
@@ -1342,8 +1342,8 @@ export default function AdminDashboard() {
           .dashboard-health-card {
             background: #FFFFFF;
             border: 1px solid #E8EEF0;
-            border-radius: 22px;
-            padding: 20px;
+            border-radius: calc(22px * var(--app-radius-scale,1));
+            padding: calc(20px * var(--app-density,1));
             box-shadow:
               0 8px 24px rgba(15,23,42,.04);
           }
@@ -1352,18 +1352,18 @@ export default function AdminDashboard() {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
             margin-bottom: 14px;
           }
 
           .dashboard-health-head strong {
             color: #0F172A;
-            font-size: 15px;
+            font-size: calc(15px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
           .dashboard-health-head span {
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
@@ -1383,7 +1383,7 @@ export default function AdminDashboard() {
           .dashboard-health-description {
             margin-top: 12px;
             color: #64748B;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             line-height: 1.8;
           }
 
@@ -1393,11 +1393,11 @@ export default function AdminDashboard() {
             width: 100%;
             border: 1px solid #E8EEF0;
             background: #FFFFFF;
-            border-radius: 22px;
-            padding: 18px;
+            border-radius: calc(22px * var(--app-radius-scale,1));
+            padding: calc(18px * var(--app-density,1));
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: calc(14px * var(--app-density,1));
             text-align: right;
             cursor: pointer;
             box-shadow:
@@ -1419,11 +1419,11 @@ export default function AdminDashboard() {
             width: 50px;
             height: 50px;
             flex: 0 0 50px;
-            border-radius: 16px;
+            border-radius: calc(16px * var(--app-radius-scale,1));
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #0F766E;
+            color: var(--app-color-0f766e,#0F766E);
             background: #ECFDF5;
             border: 1px solid #D1FAE5;
           }
@@ -1433,18 +1433,18 @@ export default function AdminDashboard() {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: calc(5px * var(--app-density,1));
           }
 
           .dashboard-action-copy strong {
             color: #0F172A;
-            font-size: 15px;
+            font-size: calc(15px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
           .dashboard-action-copy span {
             color: #64748B;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             line-height: 1.8;
           }
 
@@ -1462,16 +1462,16 @@ export default function AdminDashboard() {
 
           @media (max-width: 768px) {
             .supervisor-hero {
-              padding: 22px 18px;
-              border-radius: 22px;
+              padding: calc(22px * var(--app-density,1)) calc(18px * var(--app-density,1));
+              border-radius: calc(22px * var(--app-radius-scale,1));
             }
 
             .supervisor-hero-title {
-              font-size: 32px;
+              font-size: calc(32px * var(--app-font-scale,1));
             }
 
             .supervisor-hero-text {
-              font-size: 14px;
+              font-size: calc(14px * var(--app-font-scale,1));
               line-height: 1.9;
             }
 
@@ -1482,15 +1482,15 @@ export default function AdminDashboard() {
             }
 
             .dashboard-section-head h2 {
-              font-size: 20px;
+              font-size: calc(20px * var(--app-font-scale,1));
             }
 
             .dashboard-metric-value {
-              font-size: 30px;
+              font-size: calc(30px * var(--app-font-scale,1));
             }
 
             .dashboard-status-copy strong {
-              font-size: 24px;
+              font-size: calc(24px * var(--app-font-scale,1));
             }
 
             .dashboard-vital-badge {
@@ -1500,11 +1500,11 @@ export default function AdminDashboard() {
 
           @media (max-width: 520px) {
             .supervisor-hero {
-              padding: 20px 16px;
+              padding: calc(20px * var(--app-density,1)) calc(16px * var(--app-density,1));
             }
 
             .supervisor-hero-grid {
-              gap: 20px;
+              gap: calc(20px * var(--app-density,1));
             }
 
             .supervisor-hero-divider {
@@ -1512,7 +1512,7 @@ export default function AdminDashboard() {
             }
 
             .dashboard-action-card {
-              padding: 16px;
+              padding: calc(16px * var(--app-density,1));
             }
           }
         `}

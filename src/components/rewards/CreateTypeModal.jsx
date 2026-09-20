@@ -682,7 +682,7 @@ export default function CreateTypeModal({
             align-items: center;
             justify-content: center;
 
-            padding: 18px;
+            padding: calc(18px * var(--app-density,1));
 
             background:
               rgba(10, 30, 24, .58);
@@ -702,7 +702,7 @@ export default function CreateTypeModal({
               rgba(255,255,255,.52);
 
             border-radius:
-              24px;
+              calc(24px * var(--app-radius-scale,1));
 
             background:
               #ffffff;
@@ -740,7 +740,7 @@ export default function CreateTypeModal({
             position: relative;
 
             padding:
-              18px 20px;
+              calc(18px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
             border-bottom:
               1px solid #E8EEE9;
@@ -765,7 +765,7 @@ export default function CreateTypeModal({
               1px solid #DFE7E2;
 
             border-radius:
-              10px;
+              calc(10px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -787,9 +787,9 @@ export default function CreateTypeModal({
             display: flex;
             align-items: center;
 
-            gap: 11px;
+            gap: calc(11px * var(--app-density,1));
 
-            padding-left: 44px;
+            padding-left: calc(44px * var(--app-density,1));
           }
 
           .reward-type-main-icon {
@@ -799,7 +799,7 @@ export default function CreateTypeModal({
             flex: 0 0 46px;
 
             border-radius:
-              14px;
+              calc(14px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -835,11 +835,11 @@ export default function CreateTypeModal({
             display: flex;
             align-items: center;
 
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
 
             color: #A07C2B;
 
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
             font-weight: 900;
 
             margin-bottom: 2px;
@@ -850,7 +850,7 @@ export default function CreateTypeModal({
 
             color: #243B2E;
 
-            font-size: 19px;
+            font-size: calc(19px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
@@ -860,7 +860,7 @@ export default function CreateTypeModal({
 
             color: #87928B;
 
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
             line-height: 1.55;
           }
 
@@ -869,7 +869,7 @@ export default function CreateTypeModal({
           ========================= */
 
           .reward-type-body {
-            padding: 18px 20px;
+            padding: calc(18px * var(--app-density,1)) calc(20px * var(--app-density,1));
           }
 
           .reward-field {
@@ -880,13 +880,13 @@ export default function CreateTypeModal({
             display: flex;
             align-items: center;
 
-            gap: 3px;
+            gap: calc(3px * var(--app-density,1));
 
             margin-bottom: 6px;
 
             color: #526158;
 
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
@@ -902,7 +902,7 @@ export default function CreateTypeModal({
               1px solid #DCE5DF;
 
             border-radius:
-              11px;
+              calc(11px * var(--app-radius-scale,1));
 
             background:
               #FBFDFC;
@@ -916,13 +916,13 @@ export default function CreateTypeModal({
             height: 44px;
 
             padding:
-              0 13px;
+              0 calc(13px * var(--app-density,1));
 
             outline: none;
 
             color: #33443A;
 
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
           }
 
           .reward-field > input:focus,
@@ -952,7 +952,7 @@ export default function CreateTypeModal({
             height: 44px;
 
             padding:
-              0 13px;
+              0 calc(13px * var(--app-density,1));
 
             border: none;
             outline: none;
@@ -961,16 +961,16 @@ export default function CreateTypeModal({
             background:
               transparent;
 
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
           }
 
           .reward-points-shell > span {
             padding:
-              0 13px;
+              0 calc(13px * var(--app-density,1));
 
             color: #7B877F;
 
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
@@ -981,7 +981,7 @@ export default function CreateTypeModal({
 
             color: #99A19C;
 
-            font-size: 8px;
+            font-size: calc(8px * var(--app-font-scale,1));
             line-height: 1.5;
           }
 
@@ -990,13 +990,13 @@ export default function CreateTypeModal({
             align-items: center;
             justify-content: space-between;
 
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
 
             margin-top: 5px;
 
             color: #99A19C;
 
-            font-size: 8px;
+            font-size: calc(8px * var(--app-font-scale,1));
           }
 
           /* =========================
@@ -1007,14 +1007,14 @@ export default function CreateTypeModal({
             display: flex;
             align-items: flex-start;
 
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
 
-            padding: 12px;
+            padding: calc(12px * var(--app-density,1));
 
             margin-top: 16px;
 
             border-radius:
-              14px;
+              calc(14px * var(--app-radius-scale,1));
           }
 
           .reward-type-preview.reward {
@@ -1048,7 +1048,7 @@ export default function CreateTypeModal({
             flex: 0 0 37px;
 
             border-radius:
-              11px;
+              calc(11px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -1077,7 +1077,7 @@ export default function CreateTypeModal({
             align-items: center;
             justify-content: space-between;
 
-            gap: 12px;
+            gap: calc(12px * var(--app-density,1));
           }
 
           .reward-preview-top span,
@@ -1088,7 +1088,7 @@ export default function CreateTypeModal({
           .reward-preview-top span {
             color: #8B958F;
 
-            font-size: 8px;
+            font-size: calc(8px * var(--app-font-scale,1));
           }
 
           .reward-preview-top strong {
@@ -1096,7 +1096,7 @@ export default function CreateTypeModal({
 
             color: #35473C;
 
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
           }
 
           .reward-preview-points {
@@ -1104,7 +1104,7 @@ export default function CreateTypeModal({
 
             color: #0F5132;
 
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
             font-weight: 950;
 
             direction: ltr;
@@ -1118,7 +1118,7 @@ export default function CreateTypeModal({
           .reward-preview-points small {
             margin-left: 3px;
 
-            font-size: 7px;
+            font-size: calc(7px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
@@ -1135,7 +1135,7 @@ export default function CreateTypeModal({
             display: flex;
             align-items: flex-start;
 
-            gap: 6px;
+            gap: calc(6px * var(--app-density,1));
 
             color: #65736A;
           }
@@ -1148,7 +1148,7 @@ export default function CreateTypeModal({
           .reward-preview-note strong {
             color: #4A5B50;
 
-            font-size: 8px;
+            font-size: calc(8px * var(--app-font-scale,1));
           }
 
           .reward-preview-note span {
@@ -1156,7 +1156,7 @@ export default function CreateTypeModal({
 
             color: #87928B;
 
-            font-size: 7px;
+            font-size: calc(7px * var(--app-font-scale,1));
             line-height: 1.55;
           }
 
@@ -1169,10 +1169,10 @@ export default function CreateTypeModal({
             align-items: center;
             justify-content: space-between;
 
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
 
             padding:
-              13px 20px;
+              calc(13px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
             border-top:
               1px solid #E9EEEB;
@@ -1184,14 +1184,14 @@ export default function CreateTypeModal({
           .reward-keyboard-tip {
             color: #9BA39E;
 
-            font-size: 7px;
+            font-size: calc(7px * var(--app-font-scale,1));
           }
 
           .reward-type-actions {
             display: flex;
             align-items: center;
 
-            gap: 6px;
+            gap: calc(6px * var(--app-density,1));
           }
 
           .reward-cancel-button,
@@ -1199,12 +1199,12 @@ export default function CreateTypeModal({
             min-height: 39px;
 
             padding:
-              0 13px;
+              0 calc(13px * var(--app-density,1));
 
             border-radius:
-              9px;
+              calc(9px * var(--app-radius-scale,1));
 
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
             font-weight: 900;
 
             cursor: pointer;
@@ -1225,7 +1225,7 @@ export default function CreateTypeModal({
             align-items: center;
             justify-content: center;
 
-            gap: 5px;
+            gap: calc(5px * var(--app-density,1));
 
             color: #FFFFFF;
           }
@@ -1279,7 +1279,7 @@ export default function CreateTypeModal({
               align-items:
                 flex-end;
 
-              padding: 7px;
+              padding: calc(7px * var(--app-density,1));
             }
 
             .reward-type-modal {
@@ -1288,23 +1288,23 @@ export default function CreateTypeModal({
                 calc(100vh - 14px);
 
               border-radius:
-                22px 22px
-                10px 10px;
+                calc(22px * var(--app-radius-scale,1)) calc(22px * var(--app-radius-scale,1))
+                calc(10px * var(--app-radius-scale,1)) calc(10px * var(--app-radius-scale,1));
             }
 
             .reward-type-header {
               padding:
-                16px;
+                calc(16px * var(--app-density,1));
             }
 
             .reward-type-body {
               padding:
-                15px 16px;
+                calc(15px * var(--app-density,1)) calc(16px * var(--app-density,1));
             }
 
             .reward-type-footer {
               padding:
-                12px 16px;
+                calc(12px * var(--app-density,1)) calc(16px * var(--app-density,1));
             }
 
             .reward-type-heading {
@@ -1312,12 +1312,12 @@ export default function CreateTypeModal({
                 flex-start;
 
               padding-left:
-                38px;
+                calc(38px * var(--app-density,1));
             }
 
             .reward-type-heading h2 {
               font-size:
-                17px;
+                calc(17px * var(--app-font-scale,1));
             }
 
             .reward-keyboard-tip {

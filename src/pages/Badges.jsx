@@ -686,7 +686,7 @@ export default function Teachers() {
         background:
           "linear-gradient(135deg,#f7f5ef 0%,#f0f5f1 50%,#f8f6f0 100%)",
         padding:
-          "28px",
+          "calc(28px * var(--app-density,1))",
         boxSizing:
           "border-box",
         color:
@@ -714,7 +714,7 @@ export default function Teachers() {
             alignItems:
               "center",
             gap:
-              "15px",
+              "calc(15px * var(--app-density,1))",
             flexWrap:
               "wrap",
             marginBottom:
@@ -728,7 +728,7 @@ export default function Teachers() {
               alignItems:
                 "center",
               gap:
-                "13px",
+                "calc(13px * var(--app-density,1))",
             }}
           >
             <button
@@ -755,9 +755,9 @@ export default function Teachers() {
                 height:
                   "52px",
                 borderRadius:
-                  "15px",
+                  "calc(15px * var(--app-radius-scale,1))",
                 background:
-                  "#0f5132",
+                  "var(--app-color-0f5132,#0f5132)",
                 color:
                   "#fff",
                 display:
@@ -767,7 +767,7 @@ export default function Teachers() {
                 justifyContent:
                   "center",
                 boxShadow:
-                  "0 8px 20px rgba(15,81,50,.16)",
+                  "0 8px 20px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 16%,transparent)",
               }}
             >
               <GraduationCap
@@ -784,9 +784,9 @@ export default function Teachers() {
                   margin:
                     0,
                   color:
-                    "#173d2b",
+                    "var(--app-color-173d2b,#173d2b)",
                   fontSize:
-                    "29px",
+                    "calc(29px * var(--app-font-scale,1))",
                   fontWeight:
                     "850",
                 }}
@@ -801,7 +801,7 @@ export default function Teachers() {
                   color:
                     "#7d8680",
                   fontSize:
-                    "13px",
+                    "calc(13px * var(--app-font-scale,1))",
                 }}
               >
                 إدارة بيانات المعلمين وربطهم بالحلقات
@@ -847,7 +847,7 @@ export default function Teachers() {
             gridTemplateColumns:
               "repeat(auto-fit,minmax(210px,1fr))",
             gap:
-              "14px",
+              "calc(14px * var(--app-density,1))",
             marginBottom:
               "22px",
           }}
@@ -921,7 +921,7 @@ export default function Teachers() {
               alignItems:
                 "center",
               gap:
-                "12px",
+                "calc(12px * var(--app-density,1))",
               flexWrap:
                 "wrap",
               marginBottom:
@@ -935,7 +935,7 @@ export default function Teachers() {
                 alignItems:
                   "center",
                 gap:
-                  "11px",
+                  "calc(11px * var(--app-density,1))",
               }}
             >
               <div
@@ -960,9 +960,9 @@ export default function Teachers() {
                     margin:
                       0,
                     color:
-                      "#173d2b",
+                      "var(--app-color-173d2b,#173d2b)",
                     fontSize:
-                      "19px",
+                      "calc(19px * var(--app-font-scale,1))",
                   }}
                 >
                   {editingId
@@ -977,7 +977,7 @@ export default function Teachers() {
                     color:
                       "#89918c",
                     fontSize:
-                      "12px",
+                      "calc(12px * var(--app-font-scale,1))",
                   }}
                 >
                   البيانات الأساسية وربط المعلم بالحلقات
@@ -1013,7 +1013,7 @@ export default function Teachers() {
               gridTemplateColumns:
                 "repeat(auto-fit,minmax(220px,1fr))",
               gap:
-                "14px",
+                "calc(14px * var(--app-density,1))",
             }}
           >
             <FormField
@@ -1168,7 +1168,7 @@ export default function Teachers() {
                 alignItems:
                   "center",
                 gap:
-                  "7px",
+                  "calc(7px * var(--app-density,1))",
                 marginBottom:
                   "9px",
               }}
@@ -1192,9 +1192,9 @@ export default function Teachers() {
               <div
                 style={{
                   padding:
-                    "15px",
+                    "calc(15px * var(--app-density,1))",
                   borderRadius:
-                    "11px",
+                    "calc(11px * var(--app-radius-scale,1))",
                   background:
                     "#fafafa",
                   border:
@@ -1202,7 +1202,7 @@ export default function Teachers() {
                   color:
                     "#888",
                   fontSize:
-                    "13px",
+                    "calc(13px * var(--app-font-scale,1))",
                 }}
               >
                 لا توجد حلقات مضافة حاليًا.
@@ -1215,7 +1215,7 @@ export default function Teachers() {
                   gridTemplateColumns:
                     "repeat(auto-fill,minmax(220px,1fr))",
                   gap:
-                    "9px",
+                    "calc(9px * var(--app-density,1))",
                 }}
               >
                 {halaqat.map(
@@ -1242,12 +1242,12 @@ export default function Teachers() {
                           textAlign:
                             "right",
                           padding:
-                            "12px",
+                            "calc(12px * var(--app-density,1))",
                           borderRadius:
-                            "11px",
+                            "calc(11px * var(--app-radius-scale,1))",
                           border:
                             selected
-                              ? "1px solid #0f5132"
+                              ? "1px solid var(--app-color-0f5132,#0f5132)"
                               : "1px solid #e0e5e1",
                           background:
                             selected
@@ -1255,7 +1255,7 @@ export default function Teachers() {
                               : "#fff",
                           color:
                             selected
-                              ? "#0f5132"
+                              ? "var(--app-color-0f5132,#0f5132)"
                               : "#4f5953",
                           cursor:
                             "pointer",
@@ -1264,7 +1264,7 @@ export default function Teachers() {
                           alignItems:
                             "center",
                           gap:
-                            "9px",
+                            "calc(9px * var(--app-density,1))",
                         }}
                       >
                         <div
@@ -1274,14 +1274,14 @@ export default function Teachers() {
                             height:
                               "22px",
                             borderRadius:
-                              "7px",
+                              "calc(7px * var(--app-radius-scale,1))",
                             border:
                               selected
-                                ? "1px solid #0f5132"
+                                ? "1px solid var(--app-color-0f5132,#0f5132)"
                                 : "1px solid #cfd6d1",
                             background:
                               selected
-                                ? "#0f5132"
+                                ? "var(--app-color-0f5132,#0f5132)"
                                 : "#fff",
                             color:
                               "#fff",
@@ -1307,7 +1307,7 @@ export default function Teachers() {
                         <span
                           style={{
                             fontSize:
-                              "13px",
+                              "calc(13px * var(--app-font-scale,1))",
                             fontWeight:
                               selected
                                 ? "750"
@@ -1332,9 +1332,9 @@ export default function Teachers() {
                   marginTop:
                     "9px",
                   color:
-                    "#0f5132",
+                    "var(--app-color-0f5132,#0f5132)",
                   fontSize:
-                    "12px",
+                    "calc(12px * var(--app-font-scale,1))",
                   fontWeight:
                     "700",
                 }}
@@ -1390,7 +1390,7 @@ export default function Teachers() {
               display:
                 "flex",
               gap:
-                "9px",
+                "calc(9px * var(--app-density,1))",
               flexWrap:
                 "wrap",
               marginTop:
@@ -1463,7 +1463,7 @@ export default function Teachers() {
           style={{
             ...cardStyle,
             padding:
-              "15px",
+              "calc(15px * var(--app-density,1))",
             marginBottom:
               "20px",
           }}
@@ -1475,7 +1475,7 @@ export default function Teachers() {
               gridTemplateColumns:
                 "minmax(250px,1fr) 210px",
               gap:
-                "10px",
+                "calc(10px * var(--app-density,1))",
             }}
           >
             <div
@@ -1513,7 +1513,7 @@ export default function Teachers() {
                 style={{
                   ...inputStyle,
                   paddingRight:
-                    "43px",
+                    "calc(43px * var(--app-density,1))",
                 }}
               />
             </div>
@@ -1569,9 +1569,9 @@ export default function Teachers() {
                 margin:
                   0,
                 color:
-                  "#173d2b",
+                  "var(--app-color-173d2b,#173d2b)",
                 fontSize:
-                  "20px",
+                  "calc(20px * var(--app-font-scale,1))",
               }}
             >
               قائمة المعلمين
@@ -1584,7 +1584,7 @@ export default function Teachers() {
                 color:
                   "#89918c",
                 fontSize:
-                  "12px",
+                  "calc(12px * var(--app-font-scale,1))",
               }}
             >
               عرض{" "}
@@ -1629,7 +1629,7 @@ export default function Teachers() {
               gridTemplateColumns:
                 "repeat(auto-fit,minmax(320px,1fr))",
               gap:
-                "17px",
+                "calc(17px * var(--app-density,1))",
             }}
           >
             {filteredTeachers.map(
@@ -1706,9 +1706,9 @@ function TeacherCard({
         background:
           "#fff",
         borderRadius:
-          "18px",
+          "calc(18px * var(--app-radius-scale,1))",
         padding:
-          "20px",
+          "calc(20px * var(--app-density,1))",
         border:
           active
             ? "1px solid #e1eae4"
@@ -1728,7 +1728,7 @@ function TeacherCard({
           alignItems:
             "flex-start",
           gap:
-            "10px",
+            "calc(10px * var(--app-density,1))",
           marginBottom:
             "17px",
         }}
@@ -1740,7 +1740,7 @@ function TeacherCard({
             alignItems:
               "center",
             gap:
-              "11px",
+              "calc(11px * var(--app-density,1))",
             minWidth:
               0,
           }}
@@ -1752,11 +1752,11 @@ function TeacherCard({
               height:
                 "52px",
               borderRadius:
-                "15px",
+                "calc(15px * var(--app-radius-scale,1))",
               background:
-                "linear-gradient(145deg,#edf5ef,#dfeae3)",
+                "linear-gradient(145deg,var(--app-color-edf5ef,#edf5ef),#dfeae3)",
               color:
-                "#0f5132",
+                "var(--app-color-0f5132,#0f5132)",
               display:
                 "flex",
               alignItems:
@@ -1786,9 +1786,9 @@ function TeacherCard({
                 margin:
                   0,
                 color:
-                  "#173d2b",
+                  "var(--app-color-173d2b,#173d2b)",
                 fontSize:
-                  "18px",
+                  "calc(18px * var(--app-font-scale,1))",
                 fontWeight:
                   "800",
                 whiteSpace:
@@ -1809,7 +1809,7 @@ function TeacherCard({
                 color:
                   "#89918c",
                 fontSize:
-                  "12px",
+                  "calc(12px * var(--app-font-scale,1))",
                 marginTop:
                   "4px",
               }}
@@ -1826,19 +1826,19 @@ function TeacherCard({
         <span
           style={{
             padding:
-              "5px 10px",
+              "calc(5px * var(--app-density,1)) calc(10px * var(--app-density,1))",
             borderRadius:
-              "20px",
+              "calc(20px * var(--app-radius-scale,1))",
             background:
               active
                 ? "#e7f5ec"
                 : "#f1f1f1",
             color:
               active
-                ? "#0f5132"
+                ? "var(--app-color-0f5132,#0f5132)"
                 : "#777",
             fontSize:
-              "11px",
+              "calc(11px * var(--app-font-scale,1))",
             fontWeight:
               "750",
             flexShrink:
@@ -1860,7 +1860,7 @@ function TeacherCard({
           gridTemplateColumns:
             "1fr 1fr",
           gap:
-            "8px",
+            "calc(8px * var(--app-density,1))",
           marginBottom:
             "15px",
         }}
@@ -1901,9 +1901,9 @@ function TeacherCard({
           border:
             "1px solid #edf0ed",
           borderRadius:
-            "13px",
+            "calc(13px * var(--app-radius-scale,1))",
           padding:
-            "13px",
+            "calc(13px * var(--app-density,1))",
           marginBottom:
             "15px",
         }}
@@ -1917,7 +1917,7 @@ function TeacherCard({
             justifyContent:
               "space-between",
             gap:
-              "8px",
+              "calc(8px * var(--app-density,1))",
             marginBottom:
               "9px",
           }}
@@ -1929,11 +1929,11 @@ function TeacherCard({
               alignItems:
                 "center",
               gap:
-                "6px",
+                "calc(6px * var(--app-density,1))",
               color:
                 "#6e7771",
               fontSize:
-                "12px",
+                "calc(12px * var(--app-font-scale,1))",
             }}
           >
             <BookOpen
@@ -1946,9 +1946,9 @@ function TeacherCard({
           <strong
             style={{
               color:
-                "#0f5132",
+                "var(--app-color-0f5132,#0f5132)",
               fontSize:
-                "13px",
+                "calc(13px * var(--app-font-scale,1))",
             }}
           >
             {
@@ -1964,7 +1964,7 @@ function TeacherCard({
               color:
                 "#999",
               fontSize:
-                "12px",
+                "calc(12px * var(--app-font-scale,1))",
             }}
           >
             لا توجد حلقات مرتبطة
@@ -1977,7 +1977,7 @@ function TeacherCard({
               flexWrap:
                 "wrap",
               gap:
-                "6px",
+                "calc(6px * var(--app-density,1))",
             }}
           >
             {teacher.halaqat.map(
@@ -1988,15 +1988,15 @@ function TeacherCard({
                   }
                   style={{
                     padding:
-                      "5px 8px",
+                      "calc(5px * var(--app-density,1)) calc(8px * var(--app-density,1))",
                     borderRadius:
-                      "8px",
+                      "calc(8px * var(--app-radius-scale,1))",
                     background:
                       "#eaf4ed",
                     color:
-                      "#0f5132",
+                      "var(--app-color-0f5132,#0f5132)",
                     fontSize:
-                      "11px",
+                      "calc(11px * var(--app-font-scale,1))",
                     fontWeight:
                       "700",
                   }}
@@ -2021,7 +2021,7 @@ function TeacherCard({
             color:
               "#747c77",
             fontSize:
-              "12px",
+              "calc(12px * var(--app-font-scale,1))",
             lineHeight:
               "1.7",
           }}
@@ -2049,7 +2049,7 @@ function TeacherCard({
           gridTemplateColumns:
             "1fr 1fr",
           gap:
-            "8px",
+            "calc(8px * var(--app-density,1))",
         }}
       >
         <button
@@ -2184,9 +2184,7 @@ function FormField({
           style={{
             ...inputStyle,
             paddingRight:
-              icon
-                ? "42px"
-                : "12px",
+              (icon) ? ("calc(42px * var(--app-density,1))") : ("calc(12px * var(--app-density,1))"),
           }}
         />
       </div>
@@ -2268,9 +2266,9 @@ function InfoBox({
         background:
           "#fafafa",
         borderRadius:
-          "10px",
+          "calc(10px * var(--app-radius-scale,1))",
         padding:
-          "10px",
+          "calc(10px * var(--app-density,1))",
         minWidth:
           0,
       }}
@@ -2282,11 +2280,11 @@ function InfoBox({
           alignItems:
             "center",
           gap:
-            "5px",
+            "calc(5px * var(--app-density,1))",
           color:
             "#8a928c",
           fontSize:
-            "10px",
+            "calc(10px * var(--app-font-scale,1))",
           marginBottom:
             "4px",
         }}
@@ -2300,7 +2298,7 @@ function InfoBox({
           color:
             "#3f4943",
           fontSize:
-            "12px",
+            "calc(12px * var(--app-font-scale,1))",
           fontWeight:
             "700",
           overflow:
@@ -2332,15 +2330,15 @@ function StatCard({
         background:
           "#fff",
         borderRadius:
-          "16px",
+          "calc(16px * var(--app-radius-scale,1))",
         padding:
-          "18px",
+          "calc(18px * var(--app-density,1))",
         display:
           "flex",
         alignItems:
           "center",
         gap:
-          "13px",
+          "calc(13px * var(--app-density,1))",
         border:
           "1px solid #e4e9e5",
         boxShadow:
@@ -2354,11 +2352,11 @@ function StatCard({
           height:
             "46px",
           borderRadius:
-            "13px",
+            "calc(13px * var(--app-radius-scale,1))",
           background:
-            "#edf5ef",
+            "var(--app-color-edf5ef,#edf5ef)",
           color:
-            "#0f5132",
+            "var(--app-color-0f5132,#0f5132)",
           display:
             "flex",
           alignItems:
@@ -2378,7 +2376,7 @@ function StatCard({
             color:
               "#818a84",
             fontSize:
-              "11px",
+              "calc(11px * var(--app-font-scale,1))",
             marginBottom:
               "3px",
           }}
@@ -2389,9 +2387,9 @@ function StatCard({
         <div
           style={{
             color:
-              "#173d2b",
+              "var(--app-color-173d2b,#173d2b)",
             fontSize:
-              "24px",
+              "calc(24px * var(--app-font-scale,1))",
             fontWeight:
               "850",
           }}
@@ -2413,7 +2411,7 @@ function LoadingState() {
       style={{
         ...cardStyle,
         padding:
-          "55px 20px",
+          "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
         textAlign:
           "center",
         color:
@@ -2431,7 +2429,7 @@ function LoadingState() {
           marginTop:
             "12px",
           fontSize:
-            "13px",
+            "calc(13px * var(--app-font-scale,1))",
         }}
       >
         جاري تحميل المعلمين...
@@ -2453,7 +2451,7 @@ function EmptyState({
       style={{
         ...cardStyle,
         padding:
-          "55px 20px",
+          "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
         textAlign:
           "center",
       }}
@@ -2467,11 +2465,11 @@ function EmptyState({
           margin:
             "0 auto 14px",
           borderRadius:
-            "17px",
+            "calc(17px * var(--app-radius-scale,1))",
           background:
-            "#edf5ef",
+            "var(--app-color-edf5ef,#edf5ef)",
           color:
-            "#0f5132",
+            "var(--app-color-0f5132,#0f5132)",
           display:
             "flex",
           alignItems:
@@ -2511,7 +2509,7 @@ function EmptyState({
           color:
             "#929993",
           fontSize:
-            "12px",
+            "calc(12px * var(--app-font-scale,1))",
         }}
       >
         {hasSearch
@@ -2568,7 +2566,7 @@ function DeleteModal({
         justifyContent:
           "center",
         padding:
-          "20px",
+          "calc(20px * var(--app-density,1))",
       }}
       onMouseDown={(e) => {
         if (
@@ -2588,9 +2586,9 @@ function DeleteModal({
           background:
             "#fff",
           borderRadius:
-            "20px",
+            "calc(20px * var(--app-radius-scale,1))",
           padding:
-            "25px",
+            "calc(25px * var(--app-density,1))",
           boxShadow:
             "0 25px 80px rgba(0,0,0,.2)",
         }}
@@ -2602,7 +2600,7 @@ function DeleteModal({
             height:
               "48px",
             borderRadius:
-              "14px",
+              "calc(14px * var(--app-radius-scale,1))",
             background:
               "#fff0ef",
             color:
@@ -2629,7 +2627,7 @@ function DeleteModal({
             color:
               "#28332d",
             fontSize:
-              "19px",
+              "calc(19px * var(--app-font-scale,1))",
           }}
         >
           حذف المعلم
@@ -2642,7 +2640,7 @@ function DeleteModal({
             color:
               "#707872",
             fontSize:
-              "13px",
+              "calc(13px * var(--app-font-scale,1))",
             lineHeight:
               "1.8",
           }}
@@ -2666,7 +2664,7 @@ function DeleteModal({
             display:
               "flex",
             gap:
-              "8px",
+              "calc(8px * var(--app-density,1))",
             marginTop:
               "22px",
           }}
@@ -2724,9 +2722,9 @@ const cardStyle = {
   background:
     "#fff",
   borderRadius:
-    "18px",
+    "calc(18px * var(--app-radius-scale,1))",
   padding:
-    "22px",
+    "calc(22px * var(--app-density,1))",
   border:
     "1px solid #e4e9e5",
   boxShadow:
@@ -2739,11 +2737,11 @@ const inputStyle = {
   height:
     "46px",
   padding:
-    "0 12px",
+    "0 calc(12px * var(--app-density,1))",
   border:
     "1px solid #d8ded9",
   borderRadius:
-    "10px",
+    "calc(10px * var(--app-radius-scale,1))",
   outline:
     "none",
   boxSizing:
@@ -2753,7 +2751,7 @@ const inputStyle = {
   color:
     "#26332c",
   fontSize:
-    "13px",
+    "calc(13px * var(--app-font-scale,1))",
   direction:
     "rtl",
 };
@@ -2764,7 +2762,7 @@ const labelStyle = {
   color:
     "#465149",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
   fontWeight:
     "750",
   marginBottom:
@@ -2775,13 +2773,13 @@ const primaryButton = {
   border:
     "none",
   background:
-    "#0f5132",
+    "var(--app-color-0f5132,#0f5132)",
   color:
     "#fff",
   borderRadius:
-    "10px",
+    "calc(10px * var(--app-radius-scale,1))",
   padding:
-    "11px 20px",
+    "calc(11px * var(--app-density,1)) calc(20px * var(--app-density,1))",
   cursor:
     "pointer",
   display:
@@ -2791,9 +2789,9 @@ const primaryButton = {
   justifyContent:
     "center",
   gap:
-    "7px",
+    "calc(7px * var(--app-density,1))",
   fontSize:
-    "13px",
+    "calc(13px * var(--app-font-scale,1))",
   fontWeight:
     "750",
 };
@@ -2806,9 +2804,9 @@ const secondaryButton = {
   color:
     "#4e5952",
   borderRadius:
-    "10px",
+    "calc(10px * var(--app-radius-scale,1))",
   padding:
-    "10px 15px",
+    "calc(10px * var(--app-density,1)) calc(15px * var(--app-density,1))",
   cursor:
     "pointer",
   display:
@@ -2818,9 +2816,9 @@ const secondaryButton = {
   justifyContent:
     "center",
   gap:
-    "7px",
+    "calc(7px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
   fontWeight:
     "700",
 };
@@ -2835,9 +2833,9 @@ const iconButtonStyle = {
   background:
     "#fff",
   color:
-    "#173d2b",
+    "var(--app-color-173d2b,#173d2b)",
   borderRadius:
-    "11px",
+    "calc(11px * var(--app-radius-scale,1))",
   cursor:
     "pointer",
   display:
@@ -2854,11 +2852,11 @@ const sectionIconStyle = {
   height:
     "41px",
   borderRadius:
-    "12px",
+    "calc(12px * var(--app-radius-scale,1))",
   background:
-    "#edf5ef",
+    "var(--app-color-edf5ef,#edf5ef)",
   color:
-    "#0f5132",
+    "var(--app-color-0f5132,#0f5132)",
   display:
     "flex",
   alignItems:
@@ -2871,13 +2869,13 @@ const actionButtonStyle = {
   border:
     "1px solid #d9e3dc",
   background:
-    "#f8fbf9",
+    "var(--app-color-f8fbf9,#f8fbf9)",
   color:
-    "#0f5132",
+    "var(--app-color-0f5132,#0f5132)",
   borderRadius:
-    "9px",
+    "calc(9px * var(--app-radius-scale,1))",
   padding:
-    "10px",
+    "calc(10px * var(--app-density,1))",
   cursor:
     "pointer",
   fontWeight:
@@ -2889,9 +2887,9 @@ const actionButtonStyle = {
   justifyContent:
     "center",
   gap:
-    "6px",
+    "calc(6px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
 };
 
 const actionSecondaryButtonStyle = {
@@ -2902,9 +2900,9 @@ const actionSecondaryButtonStyle = {
   color:
     "#59615c",
   borderRadius:
-    "9px",
+    "calc(9px * var(--app-radius-scale,1))",
   padding:
-    "10px",
+    "calc(10px * var(--app-density,1))",
   cursor:
     "pointer",
   fontWeight:
@@ -2916,9 +2914,9 @@ const actionSecondaryButtonStyle = {
   justifyContent:
     "center",
   gap:
-    "6px",
+    "calc(6px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
 };
 
 const deleteButtonStyle = {
@@ -2931,9 +2929,9 @@ const deleteButtonStyle = {
   color:
     "#b42318",
   borderRadius:
-    "9px",
+    "calc(9px * var(--app-radius-scale,1))",
   padding:
-    "10px",
+    "calc(10px * var(--app-density,1))",
   cursor:
     "pointer",
   fontWeight:
@@ -2945,7 +2943,7 @@ const deleteButtonStyle = {
   justifyContent:
     "center",
   gap:
-    "6px",
+    "calc(6px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
 };

@@ -727,16 +727,16 @@ export default function RewardTypesTab({
               align-items: center;
               justify-content: space-between;
 
-              gap: 14px;
+              gap: calc(14px * var(--app-density,1));
 
               margin-bottom: 12px;
 
-              padding: 14px 16px;
+              padding: calc(14px * var(--app-density,1)) calc(16px * var(--app-density,1));
 
               border:
                 1px solid #E5EBE7;
 
-              border-radius: 17px;
+              border-radius: calc(17px * var(--app-radius-scale,1));
 
               background:
                 linear-gradient(
@@ -755,7 +755,7 @@ export default function RewardTypesTab({
               display: flex;
               align-items: center;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
 
               min-width: 0;
             }
@@ -766,7 +766,7 @@ export default function RewardTypesTab({
 
               flex: 0 0 42px;
 
-              border-radius: 12px;
+              border-radius: calc(12px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -790,13 +790,13 @@ export default function RewardTypesTab({
               display: flex;
               align-items: center;
 
-              gap: 3px;
+              gap: calc(3px * var(--app-density,1));
 
               margin-bottom: 1px;
 
               color: #98772C;
 
-              font-size: 6.5px;
+              font-size: calc(6.5px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
@@ -805,7 +805,7 @@ export default function RewardTypesTab({
 
               color: #35463C;
 
-              font-size: 13px;
+              font-size: calc(13px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -814,7 +814,7 @@ export default function RewardTypesTab({
 
               color: #8D9791;
 
-              font-size: 6.5px;
+              font-size: calc(6.5px * var(--app-font-scale,1));
               line-height: 1.5;
             }
 
@@ -826,7 +826,7 @@ export default function RewardTypesTab({
                   minmax(80px,1fr)
                 );
 
-              gap: 6px;
+              gap: calc(6px * var(--app-density,1));
 
               flex: 0 0 auto;
             }
@@ -834,12 +834,12 @@ export default function RewardTypesTab({
             .reward-types-overview > div {
               min-width: 88px;
 
-              padding: 7px 9px;
+              padding: calc(7px * var(--app-density,1)) calc(9px * var(--app-density,1));
 
               border:
                 1px solid #E4EAE6;
 
-              border-radius: 10px;
+              border-radius: calc(10px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
             }
@@ -852,7 +852,7 @@ export default function RewardTypesTab({
             .reward-types-overview span {
               color: #929B95;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
             }
 
             .reward-types-overview strong {
@@ -860,7 +860,7 @@ export default function RewardTypesTab({
 
               color: #3E4E44;
 
-              font-size: 11px;
+              font-size: calc(11px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -882,16 +882,16 @@ export default function RewardTypesTab({
               justify-content:
                 space-between;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
 
               margin-bottom: 12px;
 
-              padding: 8px;
+              padding: calc(8px * var(--app-density,1));
 
               border:
                 1px solid #E7ECE9;
 
-              border-radius: 13px;
+              border-radius: calc(13px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
             }
@@ -923,19 +923,19 @@ export default function RewardTypesTab({
               height: 38px;
 
               padding:
-                0 32px 0 31px;
+                0 calc(32px * var(--app-density,1)) 0 calc(31px * var(--app-density,1));
 
               border:
                 1px solid #DDE5E0;
 
-              border-radius: 9px;
+              border-radius: calc(9px * var(--app-radius-scale,1));
 
               outline: none;
 
               color: #3D4D43;
               background: #FBFDFC;
 
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
             }
 
             .reward-types-search input:focus {
@@ -960,7 +960,7 @@ export default function RewardTypesTab({
                 translateY(-50%);
 
               border: none;
-              border-radius: 6px;
+              border-radius: calc(6px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -976,11 +976,11 @@ export default function RewardTypesTab({
               display: flex;
               align-items: center;
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
 
               color: #876B2A;
 
-              font-size: 5.8px;
+              font-size: calc(5.8px * var(--app-font-scale,1));
               line-height: 1.45;
             }
 
@@ -996,7 +996,7 @@ export default function RewardTypesTab({
               border:
                 1px solid #E5EBE7;
 
-              border-radius: 16px;
+              border-radius: calc(16px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
 
@@ -1011,9 +1011,9 @@ export default function RewardTypesTab({
               justify-content:
                 space-between;
 
-              gap: 12px;
+              gap: calc(12px * var(--app-density,1));
 
-              padding: 12px 14px;
+              padding: calc(12px * var(--app-density,1)) calc(14px * var(--app-density,1));
 
               border-bottom:
                 1px solid #EDF1EE;
@@ -1030,7 +1030,7 @@ export default function RewardTypesTab({
               display: flex;
               align-items: center;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               min-width: 0;
             }
@@ -1041,7 +1041,7 @@ export default function RewardTypesTab({
 
               flex: 0 0 34px;
 
-              border-radius: 10px;
+              border-radius: calc(10px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1065,7 +1065,7 @@ export default function RewardTypesTab({
 
               color: #9A792D;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
@@ -1074,7 +1074,7 @@ export default function RewardTypesTab({
 
               color: #3C4C42;
 
-              font-size: 10px;
+              font-size: calc(10px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -1083,7 +1083,7 @@ export default function RewardTypesTab({
 
               color: #929B95;
 
-              font-size: 5.7px;
+              font-size: calc(5.7px * var(--app-font-scale,1));
               line-height: 1.45;
             }
 
@@ -1091,7 +1091,7 @@ export default function RewardTypesTab({
               display: flex;
               align-items: center;
 
-              gap: 7px;
+              gap: calc(7px * var(--app-density,1));
 
               flex: 0 0 auto;
             }
@@ -1100,18 +1100,18 @@ export default function RewardTypesTab({
               display: flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
             }
 
             .reward-types-section-counters span {
               min-height: 27px;
 
-              padding: 0 7px;
+              padding: 0 calc(7px * var(--app-density,1));
 
               border:
                 1px solid #E3E9E5;
 
-              border-radius: 8px;
+              border-radius: calc(8px * var(--app-radius-scale,1));
 
               display: inline-flex;
               align-items: center;
@@ -1119,7 +1119,7 @@ export default function RewardTypesTab({
               color: #7B877F;
               background: #FFFFFF;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
               font-weight: 850;
             }
 
@@ -1132,16 +1132,16 @@ export default function RewardTypesTab({
             .reward-types-create {
               min-height: 31px;
 
-              padding: 0 9px;
+              padding: 0 calc(9px * var(--app-density,1));
 
               border: none;
-              border-radius: 8px;
+              border-radius: calc(8px * var(--app-radius-scale,1));
 
               display: inline-flex;
               align-items: center;
               justify-content: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               color: #FFFFFF;
 
@@ -1152,7 +1152,7 @@ export default function RewardTypesTab({
                   #0F766E
                 );
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               font-weight: 900;
 
               cursor: pointer;
@@ -1192,9 +1192,9 @@ export default function RewardTypesTab({
                   )
                 );
 
-              gap: 9px;
+              gap: calc(9px * var(--app-density,1));
 
-              padding: 12px;
+              padding: calc(12px * var(--app-density,1));
             }
 
             .reward-type-card {
@@ -1203,12 +1203,12 @@ export default function RewardTypesTab({
               min-width: 0;
               overflow: hidden;
 
-              padding: 11px;
+              padding: calc(11px * var(--app-density,1));
 
               border:
                 1px solid #E5EBE7;
 
-              border-radius: 13px;
+              border-radius: calc(13px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
 
@@ -1277,14 +1277,14 @@ export default function RewardTypesTab({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
             }
 
             .reward-type-card-identity {
               display: flex;
               align-items: center;
 
-              gap: 7px;
+              gap: calc(7px * var(--app-density,1));
 
               min-width: 0;
             }
@@ -1295,7 +1295,7 @@ export default function RewardTypesTab({
 
               flex: 0 0 30px;
 
-              border-radius: 9px;
+              border-radius: calc(9px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1322,7 +1322,7 @@ export default function RewardTypesTab({
             .reward-type-card-identity small {
               color: #99A19C;
 
-              font-size: 5px;
+              font-size: calc(5px * var(--app-font-scale,1));
             }
 
             .reward-type-card-identity strong {
@@ -1332,7 +1332,7 @@ export default function RewardTypesTab({
 
               color: #3D4C42;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
               font-weight: 950;
 
               text-overflow: ellipsis;
@@ -1342,16 +1342,16 @@ export default function RewardTypesTab({
             .reward-type-status {
               min-height: 23px;
 
-              padding: 0 6px;
+              padding: 0 calc(6px * var(--app-density,1));
 
               border-radius: 999px;
 
               display: inline-flex;
               align-items: center;
 
-              gap: 3px;
+              gap: calc(3px * var(--app-density,1));
 
-              font-size: 5.2px;
+              font-size: calc(5.2px * var(--app-font-scale,1));
               font-weight: 900;
 
               white-space: nowrap;
@@ -1381,7 +1381,7 @@ export default function RewardTypesTab({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               margin-top: 13px;
             }
@@ -1394,13 +1394,13 @@ export default function RewardTypesTab({
             .reward-type-value-row > div > span {
               color: #98A09B;
 
-              font-size: 5.3px;
+              font-size: calc(5.3px * var(--app-font-scale,1));
             }
 
             .reward-type-value-row > div > strong {
               margin-top: 1px;
 
-              font-size: 20px;
+              font-size: calc(20px * var(--app-font-scale,1));
               font-weight: 950;
 
               direction: ltr;
@@ -1421,28 +1421,28 @@ export default function RewardTypesTab({
 
               color: #8F9992;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
               font-weight: 800;
             }
 
             .reward-type-id {
               color: #9AA29D;
 
-              font-size: 5.4px;
+              font-size: calc(5.4px * var(--app-font-scale,1));
             }
 
             .reward-type-card-note {
               min-height: 30px;
 
               margin-top: 8px;
-              padding-top: 7px;
+              padding-top: calc(7px * var(--app-density,1));
 
               border-top:
                 1px solid #EEF2EF;
 
               color: #8C9690;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
               line-height: 1.55;
             }
 
@@ -1459,7 +1459,7 @@ export default function RewardTypesTab({
                   minmax(0,1fr)
                 );
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
 
               margin-top: 9px;
             }
@@ -1467,18 +1467,18 @@ export default function RewardTypesTab({
             .reward-type-action {
               min-height: 32px;
 
-              padding: 0 6px;
+              padding: 0 calc(6px * var(--app-density,1));
 
               border: none;
-              border-radius: 8px;
+              border-radius: calc(8px * var(--app-radius-scale,1));
 
               display: inline-flex;
               align-items: center;
               justify-content: center;
 
-              gap: 3px;
+              gap: calc(3px * var(--app-density,1));
 
-              font-size: 5.7px;
+              font-size: calc(5.7px * var(--app-font-scale,1));
               font-weight: 900;
 
               cursor: pointer;
@@ -1525,14 +1525,14 @@ export default function RewardTypesTab({
               justify-content: center;
               flex-direction: column;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               margin: 12px;
 
               border:
                 1px dashed #DDE5E0;
 
-              border-radius: 12px;
+              border-radius: calc(12px * var(--app-radius-scale,1));
 
               color: #929C96;
               background: #FBFDFC;
@@ -1546,7 +1546,7 @@ export default function RewardTypesTab({
 
               margin-bottom: 2px;
 
-              border-radius: 11px;
+              border-radius: calc(11px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1565,7 +1565,7 @@ export default function RewardTypesTab({
             .reward-types-empty strong {
               color: #57645C;
 
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
             }
 
             .reward-types-empty p {
@@ -1573,27 +1573,27 @@ export default function RewardTypesTab({
 
               margin: 0;
 
-              font-size: 5.7px;
+              font-size: calc(5.7px * var(--app-font-scale,1));
             }
 
             .reward-types-empty button {
               min-height: 29px;
 
               margin-top: 4px;
-              padding: 0 8px;
+              padding: 0 calc(8px * var(--app-density,1));
 
               border: none;
-              border-radius: 8px;
+              border-radius: calc(8px * var(--app-radius-scale,1));
 
               display: inline-flex;
               align-items: center;
 
-              gap: 3px;
+              gap: calc(3px * var(--app-density,1));
 
               color: #FFFFFF;
               background: #0F6848;
 
-              font-size: 5.7px;
+              font-size: calc(5.7px * var(--app-font-scale,1));
               font-weight: 900;
 
               cursor: pointer;

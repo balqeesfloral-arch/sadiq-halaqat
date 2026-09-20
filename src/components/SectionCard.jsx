@@ -11,8 +11,8 @@ export default function SectionCard({
       style={{
         background: theme.colors.card,
         border: `1px solid ${theme.colors.border}`,
-        borderRadius: theme.radius.lg,
-        padding: 24,
+        borderRadius: `calc(${theme.radius.lg}px * var(--app-radius-scale,1))`,
+        padding: "calc(24px * var(--app-density,1))",
         boxShadow: theme.shadows.card,
       }}
     >
@@ -23,7 +23,7 @@ export default function SectionCard({
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: 20,
-            gap: 16,
+            gap: "calc(16px * var(--app-density,1))",
           }}
         >
           <div>
@@ -32,7 +32,7 @@ export default function SectionCard({
                 style={{
                   margin: 0,
                   color: theme.colors.text,
-                  fontSize: 20,
+                  fontSize: "calc(20px * var(--app-font-scale,1))",
                   fontWeight: 800,
                 }}
               >
@@ -45,7 +45,7 @@ export default function SectionCard({
                 style={{
                   margin: "6px 0 0",
                   color: theme.colors.textMuted,
-                  fontSize: 13,
+                  fontSize: "calc(13px * var(--app-font-scale,1))",
                 }}
               >
                 {subtitle}

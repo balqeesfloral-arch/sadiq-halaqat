@@ -129,7 +129,7 @@ export default function AppSelect({
           marginBottom: 8,
           fontWeight: 600,
           color: "#0F172A",
-          fontSize: 14,
+          fontSize: "calc(14px * var(--app-font-scale,1))",
         }}
       >
         {label}
@@ -152,20 +152,20 @@ export default function AppSelect({
           minHeight: 54,
           border:
             "1px solid #E2E8F0",
-          borderRadius: 14,
+          borderRadius: "calc(14px * var(--app-radius-scale,1))",
           background:
             "#fff",
           cursor:
             disabled
               ? "not-allowed"
               : "pointer",
-          padding: 10,
+          padding: "calc(10px * var(--app-density,1))",
           display: "flex",
           alignItems:
             "center",
           justifyContent:
             "space-between",
-          gap: 10,
+          gap: "calc(10px * var(--app-density,1))",
         }}
       >
         <div
@@ -174,7 +174,7 @@ export default function AppSelect({
             display: "flex",
             flexWrap:
               "wrap",
-            gap: 6,
+            gap: "calc(6px * var(--app-density,1))",
           }}
         >
           {!multiple &&
@@ -230,12 +230,12 @@ export default function AppSelect({
                     borderRadius:
                       999,
                     padding:
-                      "4px 10px",
+                      "calc(4px * var(--app-density,1)) calc(10px * var(--app-density,1))",
                     display:
                       "flex",
                     alignItems:
                       "center",
-                    gap: 4,
+                    gap: "calc(4px * var(--app-density,1))",
                   }}
                 >
                   {
@@ -277,7 +277,7 @@ export default function AppSelect({
               "#fff",
             border:
               "1px solid #E2E8F0",
-            borderRadius: 16,
+            borderRadius: "calc(16px * var(--app-radius-scale,1))",
             boxShadow:
               "0 10px 30px rgba(0,0,0,.08)",
             zIndex: 999,
@@ -288,7 +288,7 @@ export default function AppSelect({
           {searchable && (
             <div
               style={{
-                padding: 10,
+                padding: "calc(10px * var(--app-density,1))",
                 borderBottom:
                   "1px solid #F1F5F9",
               }}
@@ -299,13 +299,13 @@ export default function AppSelect({
                     "flex",
                   alignItems:
                     "center",
-                  gap: 8,
+                  gap: "calc(8px * var(--app-density,1))",
                   border:
                     "1px solid #E2E8F0",
                   borderRadius:
-                    12,
+                    "calc(12px * var(--app-radius-scale,1))",
                   padding:
-                    "8px 12px",
+                    "calc(8px * var(--app-density,1)) calc(12px * var(--app-density,1))",
                 }}
               >
                 <Search
@@ -359,7 +359,7 @@ export default function AppSelect({
                   }
                   style={{
                     padding:
-                      "12px 14px",
+                      "calc(12px * var(--app-density,1)) calc(14px * var(--app-density,1))",
                     display:
                       "flex",
                     alignItems:

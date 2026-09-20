@@ -543,7 +543,7 @@ export default function StudentsPointsTable({
             border:
               1px solid #E5EBE7;
 
-            border-radius: 18px;
+            border-radius: calc(18px * var(--app-radius-scale,1));
 
             background:
               #FFFFFF;
@@ -563,10 +563,10 @@ export default function StudentsPointsTable({
             justify-content:
               space-between;
 
-            gap: 14px;
+            gap: calc(14px * var(--app-density,1));
 
             padding:
-              14px 16px;
+              calc(14px * var(--app-density,1)) calc(16px * var(--app-density,1));
 
             border-bottom:
               1px solid #EDF1EE;
@@ -584,7 +584,7 @@ export default function StudentsPointsTable({
             display: flex;
             align-items: center;
 
-            gap: 9px;
+            gap: calc(9px * var(--app-density,1));
 
             min-width: 0;
           }
@@ -595,7 +595,7 @@ export default function StudentsPointsTable({
 
             flex: 0 0 40px;
 
-            border-radius: 12px;
+            border-radius: calc(12px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -606,26 +606,26 @@ export default function StudentsPointsTable({
             background:
               linear-gradient(
                 145deg,
-                #0F5132,
-                #0F766E
+                var(--app-color-0f5132,#0F5132),
+                var(--app-color-0f766e,#0F766E)
               );
 
             box-shadow:
               0 7px 17px
-              rgba(15,81,50,.12);
+              color-mix(in srgb,var(--app-color-0f5132,#0f5132) 12%,transparent);
           }
 
           .students-points-eyebrow {
             display: flex;
             align-items: center;
 
-            gap: 3px;
+            gap: calc(3px * var(--app-density,1));
 
             margin-bottom: 1px;
 
             color: #98772C;
 
-            font-size: 6px;
+            font-size: calc(6px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
@@ -634,7 +634,7 @@ export default function StudentsPointsTable({
 
             color: #35463C;
 
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
@@ -643,7 +643,7 @@ export default function StudentsPointsTable({
 
             color: #8D9791;
 
-            font-size: 6px;
+            font-size: calc(6px * var(--app-font-scale,1));
             line-height: 1.5;
           }
 
@@ -656,7 +656,7 @@ export default function StudentsPointsTable({
                 minmax(82px,1fr)
               );
 
-            gap: 5px;
+            gap: calc(5px * var(--app-density,1));
 
             flex: 0 0 auto;
           }
@@ -664,12 +664,12 @@ export default function StudentsPointsTable({
           .students-points-header-stats > div {
             min-width: 84px;
 
-            padding: 7px 8px;
+            padding: calc(7px * var(--app-density,1)) calc(8px * var(--app-density,1));
 
             border:
               1px solid #E4EAE6;
 
-            border-radius: 9px;
+            border-radius: calc(9px * var(--app-radius-scale,1));
 
             background: #FFFFFF;
           }
@@ -682,7 +682,7 @@ export default function StudentsPointsTable({
           .students-points-header-stats span {
             color: #929B95;
 
-            font-size: 5px;
+            font-size: calc(5px * var(--app-font-scale,1));
           }
 
           .students-points-header-stats strong {
@@ -690,7 +690,7 @@ export default function StudentsPointsTable({
 
             color: #3E4E44;
 
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
@@ -715,10 +715,10 @@ export default function StudentsPointsTable({
             align-items: center;
             flex-wrap: wrap;
 
-            gap: 5px;
+            gap: calc(5px * var(--app-density,1));
 
             padding:
-              8px 16px;
+              calc(8px * var(--app-density,1)) calc(16px * var(--app-density,1));
 
             border-bottom:
               1px solid #EDF1EE;
@@ -730,16 +730,16 @@ export default function StudentsPointsTable({
             min-height: 25px;
 
             padding:
-              0 7px;
+              0 calc(7px * var(--app-density,1));
 
             border-radius: 999px;
 
             display: inline-flex;
             align-items: center;
 
-            gap: 3px;
+            gap: calc(3px * var(--app-density,1));
 
-            font-size: 5.5px;
+            font-size: calc(5.5px * var(--app-font-scale,1));
             font-weight: 850;
           }
 
@@ -786,9 +786,9 @@ export default function StudentsPointsTable({
                 )
               );
 
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
 
-            padding: 12px;
+            padding: calc(12px * var(--app-density,1));
           }
 
           /* =========================
@@ -801,12 +801,12 @@ export default function StudentsPointsTable({
             min-width: 0;
             overflow: hidden;
 
-            padding: 12px;
+            padding: calc(12px * var(--app-density,1));
 
             border:
               1px solid #E5EBE7;
 
-            border-radius: 14px;
+            border-radius: calc(14px * var(--app-radius-scale,1));
 
             background: #FFFFFF;
 
@@ -841,7 +841,7 @@ export default function StudentsPointsTable({
               linear-gradient(
                 90deg,
                 transparent,
-                #0F766E,
+                var(--app-color-0f766e,#0F766E),
                 #B18A32,
                 transparent
               );
@@ -853,14 +853,14 @@ export default function StudentsPointsTable({
             justify-content:
               space-between;
 
-            gap: 9px;
+            gap: calc(9px * var(--app-density,1));
           }
 
           .student-points-identity {
             display: flex;
             align-items: center;
 
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
 
             min-width: 0;
           }
@@ -871,7 +871,7 @@ export default function StudentsPointsTable({
 
             flex: 0 0 38px;
 
-            border-radius: 11px;
+            border-radius: calc(11px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -882,16 +882,16 @@ export default function StudentsPointsTable({
             background:
               linear-gradient(
                 145deg,
-                #0F5132,
-                #0F766E
+                var(--app-color-0f5132,#0F5132),
+                var(--app-color-0f766e,#0F766E)
               );
 
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
             font-weight: 950;
 
             box-shadow:
               0 6px 14px
-              rgba(15,81,50,.11);
+              color-mix(in srgb,var(--app-color-0f5132,#0f5132) 11%,transparent);
           }
 
           .student-points-name {
@@ -907,7 +907,7 @@ export default function StudentsPointsTable({
           .student-points-name span {
             color: #9AA29D;
 
-            font-size: 5px;
+            font-size: calc(5px * var(--app-font-scale,1));
           }
 
           .student-points-name strong {
@@ -917,7 +917,7 @@ export default function StudentsPointsTable({
 
             color: #3A4A40;
 
-            font-size: 8.5px;
+            font-size: calc(8.5px * var(--app-font-scale,1));
             font-weight: 950;
 
             text-overflow: ellipsis;
@@ -929,7 +929,7 @@ export default function StudentsPointsTable({
 
             color: #929B95;
 
-            font-size: 5px;
+            font-size: calc(5px * var(--app-font-scale,1));
           }
 
           .student-points-history-icon {
@@ -941,7 +941,7 @@ export default function StudentsPointsTable({
             border:
               1px solid #DCE7DF;
 
-            border-radius: 9px;
+            border-radius: calc(9px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -970,18 +970,18 @@ export default function StudentsPointsTable({
                 minmax(0,1fr)
               );
 
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
 
             margin-top: 12px;
           }
 
           .student-points-info {
-            padding: 8px;
+            padding: calc(8px * var(--app-density,1));
 
             border:
               1px solid #E7ECE9;
 
-            border-radius: 10px;
+            border-radius: calc(10px * var(--app-radius-scale,1));
 
             background: #FBFDFC;
           }
@@ -993,22 +993,22 @@ export default function StudentsPointsTable({
 
             color: #939C96;
 
-            font-size: 5px;
+            font-size: calc(5px * var(--app-font-scale,1));
           }
 
           .student-attendance-badge {
             min-height: 24px;
 
-            padding: 0 6px;
+            padding: 0 calc(6px * var(--app-density,1));
 
-            border-radius: 7px;
+            border-radius: calc(7px * var(--app-radius-scale,1));
 
             display: inline-flex;
             align-items: center;
 
-            gap: 3px;
+            gap: calc(3px * var(--app-density,1));
 
-            font-size: 5.5px;
+            font-size: calc(5.5px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
@@ -1044,7 +1044,7 @@ export default function StudentsPointsTable({
           .student-points-balance {
             display: block;
 
-            font-size: 15px;
+            font-size: calc(15px * var(--app-font-scale,1));
             font-weight: 950;
 
             direction: ltr;
@@ -1068,7 +1068,7 @@ export default function StudentsPointsTable({
 
             color: #8F9992;
 
-            font-size: 5px;
+            font-size: calc(5px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
@@ -1080,20 +1080,20 @@ export default function StudentsPointsTable({
             display: flex;
             align-items: flex-start;
 
-            gap: 5px;
+            gap: calc(5px * var(--app-density,1));
 
             margin-top: 8px;
-            padding: 7px 8px;
+            padding: calc(7px * var(--app-density,1)) calc(8px * var(--app-density,1));
 
             border:
               1px solid #E6E9E7;
 
-            border-radius: 9px;
+            border-radius: calc(9px * var(--app-radius-scale,1));
 
             color: #707A74;
             background: #F8FAF9;
 
-            font-size: 5.3px;
+            font-size: calc(5.3px * var(--app-font-scale,1));
             line-height: 1.45;
           }
 
@@ -1107,7 +1107,7 @@ export default function StudentsPointsTable({
             grid-template-columns:
               1fr 1fr auto;
 
-            gap: 5px;
+            gap: calc(5px * var(--app-density,1));
 
             margin-top: 10px;
           }
@@ -1115,25 +1115,25 @@ export default function StudentsPointsTable({
           .student-points-action {
             min-height: 34px;
 
-            padding: 0 8px;
+            padding: 0 calc(8px * var(--app-density,1));
 
             border: none;
-            border-radius: 8px;
+            border-radius: calc(8px * var(--app-radius-scale,1));
 
             display: inline-flex;
             align-items: center;
             justify-content: center;
 
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
 
-            font-size: 5.7px;
+            font-size: calc(5.7px * var(--app-font-scale,1));
             font-weight: 900;
 
             cursor: pointer;
           }
 
           .student-points-action.grant {
-            color: #0F704A;
+            color: var(--app-color-0f704a,#0F704A);
             background: #EAF7EE;
           }
 
@@ -1169,14 +1169,14 @@ export default function StudentsPointsTable({
             justify-content: center;
             flex-direction: column;
 
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
 
             margin: 12px;
 
             border:
               1px dashed #DDE5E0;
 
-            border-radius: 13px;
+            border-radius: calc(13px * var(--app-radius-scale,1));
 
             color: #929C96;
             background: #FBFDFC;
@@ -1190,20 +1190,20 @@ export default function StudentsPointsTable({
 
             margin-bottom: 3px;
 
-            border-radius: 12px;
+            border-radius: calc(12px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
             justify-content: center;
 
             color: #0F6B49;
-            background: #EDF7F1;
+            background: var(--app-color-edf7f1,#EDF7F1);
           }
 
           .students-points-empty strong {
             color: #57645C;
 
-            font-size: 8px;
+            font-size: calc(8px * var(--app-font-scale,1));
           }
 
           .students-points-empty p {
@@ -1213,7 +1213,7 @@ export default function StudentsPointsTable({
 
             color: #929B95;
 
-            font-size: 5.7px;
+            font-size: calc(5.7px * var(--app-font-scale,1));
             line-height: 1.5;
           }
 
@@ -1238,7 +1238,7 @@ export default function StudentsPointsTable({
           @media
           (max-width: 620px) {
             .students-points-header {
-              padding: 12px 13px;
+              padding: calc(12px * var(--app-density,1)) calc(13px * var(--app-density,1));
             }
 
             .students-points-heading p {
@@ -1252,14 +1252,14 @@ export default function StudentsPointsTable({
 
             .students-points-status-bar {
               padding:
-                8px 13px;
+                calc(8px * var(--app-density,1)) calc(13px * var(--app-density,1));
             }
 
             .students-points-grid {
               grid-template-columns:
                 1fr;
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
             }
           }
 

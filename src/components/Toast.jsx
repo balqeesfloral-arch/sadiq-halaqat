@@ -130,17 +130,17 @@ function Toast({
           "1px solid #e5e9e6",
 
         borderRadius:
-          "15px",
+          "calc(15px * var(--app-radius-scale,1))",
 
         padding:
-          "13px 14px",
+          "calc(13px * var(--app-density,1)) calc(14px * var(--app-density,1))",
 
         display:
           "flex",
         alignItems:
           "center",
         gap:
-          "11px",
+          "calc(11px * var(--app-density,1))",
 
         boxShadow:
           "0 15px 40px rgba(0,0,0,.13)",
@@ -158,7 +158,7 @@ animation:
           flexShrink:
             0,
           borderRadius:
-            "11px",
+            "calc(11px * var(--app-radius-scale,1))",
 
           background:
             config.background,
@@ -185,9 +185,9 @@ animation:
         <div
           style={{
             color:
-              "#173d2b",
+              "var(--app-color-173d2b,#173d2b)",
             fontSize:
-              "13px",
+              "calc(13px * var(--app-font-scale,1))",
             fontWeight:
               "800",
             marginBottom:
@@ -202,7 +202,7 @@ animation:
             color:
               "#69736d",
             fontSize:
-              "12px",
+              "calc(12px * var(--app-font-scale,1))",
             lineHeight:
               "1.6",
           }}
@@ -284,7 +284,7 @@ function getToastConfig(
     title:
       "تم بنجاح",
     color:
-      "#0f5132",
+      "var(--app-color-0f5132,#0f5132)",
     background:
       "#eaf6ee",
     icon: (

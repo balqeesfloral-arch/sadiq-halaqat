@@ -24,12 +24,12 @@ export default function AppPage({
         <div
           style={{
             ...theme.card,
-            padding: 28,
+            padding: "calc(28px * var(--app-density,1))",
             marginBottom: 24,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: 20,
+            gap: "calc(20px * var(--app-density,1))",
             flexWrap: "wrap",
           }}
         >
@@ -38,7 +38,7 @@ export default function AppPage({
               <h1
                 style={{
                   margin: 0,
-                  fontSize: 32,
+                  fontSize: "calc(32px * var(--app-font-scale,1))",
                   fontWeight: 900,
                   color: theme.colors.text,
                 }}
@@ -53,7 +53,7 @@ export default function AppPage({
                   marginTop: 8,
                   marginBottom: 0,
                   color: theme.colors.textMuted,
-                  fontSize: 15,
+                  fontSize: "calc(15px * var(--app-font-scale,1))",
                 }}
               >
                 {description}
@@ -65,7 +65,7 @@ export default function AppPage({
             <div
               style={{
                 display: "flex",
-                gap: 12,
+                gap: "calc(12px * var(--app-density,1))",
                 flexWrap: "wrap",
               }}
             >
@@ -83,7 +83,7 @@ export default function AppPage({
             display: "grid",
             gridTemplateColumns:
               "repeat(auto-fit,minmax(220px,1fr))",
-            gap: 20,
+            gap: "calc(20px * var(--app-density,1))",
             marginBottom: 24,
           }}
         >

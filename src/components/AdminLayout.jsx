@@ -1107,7 +1107,7 @@ export default function AdminLayout() {
             --sadiq-green-950: #062B27;
             --sadiq-green-900: #0A3C36;
             --sadiq-green-800: #0F5148;
-            --sadiq-green-700: #12685B;
+            --sadiq-green-700: var(--app-color-12685b,#12685B);
             --sadiq-green-600: #17806F;
 
             --sadiq-gold-500: #C8A84B;
@@ -1137,7 +1137,7 @@ export default function AdminLayout() {
             background:
               linear-gradient(
                 180deg,
-                #F8FBF9 0%,
+                var(--app-color-f8fbf9,#F8FBF9) 0%,
                 #F2F7F4 100%
               );
           }
@@ -1160,7 +1160,7 @@ export default function AdminLayout() {
               ),
               radial-gradient(
                 circle at 88% 14%,
-                rgba(18,104,91,.08),
+                color-mix(in srgb,var(--app-color-12685b,#12685b) 8%,transparent),
                 transparent 30%
               ),
               linear-gradient(
@@ -1282,7 +1282,7 @@ export default function AdminLayout() {
             flex-direction: column;
             height: 100%;
             min-height: 0;
-            padding: 16px 13px 13px;
+            padding: calc(16px * var(--app-density,1)) calc(13px * var(--app-density,1)) calc(13px * var(--app-density,1));
           }
 
           .admin-layout-sidebar-inner::after {
@@ -1316,8 +1316,8 @@ export default function AdminLayout() {
             min-height: 58px;
             display: flex;
             align-items: center;
-            gap: 11px;
-            padding: 4px 5px 11px;
+            gap: calc(11px * var(--app-density,1));
+            padding: calc(4px * var(--app-density,1)) calc(5px * var(--app-density,1)) calc(11px * var(--app-density,1));
             margin-bottom: 10px;
             border-bottom:
               1px solid rgba(255,255,255,.08);
@@ -1330,9 +1330,9 @@ export default function AdminLayout() {
             display: grid;
             place-items: center;
             overflow: hidden;
-            padding: 5px;
+            padding: calc(5px * var(--app-density,1));
             border: 1px solid rgba(200,168,75,.34);
-            border-radius: 15px;
+            border-radius: calc(15px * var(--app-radius-scale,1));
             background: #FFFFFF;
             box-shadow:
               inset 0 0 0 1px rgba(255,255,255,.70),
@@ -1358,25 +1358,25 @@ export default function AdminLayout() {
           .admin-layout-brand-copy > div {
             display: flex;
             align-items: center;
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
           }
 
           .admin-layout-brand-copy strong {
             color: #FFFFFF;
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
             line-height: 1.2;
             font-weight: 950;
           }
 
           .admin-layout-brand-copy > div span {
-            padding: 3px 7px;
+            padding: calc(3px * var(--app-density,1)) calc(7px * var(--app-density,1));
             border:
               1px solid rgba(217,190,112,.28);
             border-radius: 999px;
             color: #F4D98A;
             background:
               rgba(200,168,75,.10);
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
             font-weight: 900;
             letter-spacing: .06em;
           }
@@ -1386,7 +1386,7 @@ export default function AdminLayout() {
             margin-top: 4px;
             color:
               rgba(255,255,255,.60);
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
             font-weight: 650;
           }
 
@@ -1397,12 +1397,12 @@ export default function AdminLayout() {
             z-index: 1;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
             margin-bottom: 11px;
-            padding: 11px;
+            padding: calc(11px * var(--app-density,1));
             border:
               1px solid rgba(255,255,255,.10);
-            border-radius: 15px;
+            border-radius: calc(15px * var(--app-radius-scale,1));
             background:
               linear-gradient(
                 135deg,
@@ -1422,11 +1422,11 @@ export default function AdminLayout() {
             place-items: center;
             border:
               1px solid rgba(217,190,112,.25);
-            border-radius: 13px;
+            border-radius: calc(13px * var(--app-radius-scale,1));
             color: #FCE9A7;
             background:
               rgba(200,168,75,.12);
-            font-size: 14px;
+            font-size: calc(14px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
@@ -1443,7 +1443,7 @@ export default function AdminLayout() {
           .admin-layout-profile-copy span {
             color:
               rgba(255,255,255,.52);
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
             font-weight: 700;
           }
 
@@ -1451,7 +1451,7 @@ export default function AdminLayout() {
             margin-top: 2px;
             overflow: hidden;
             color: #FFFFFF;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             line-height: 1.45;
             font-weight: 900;
             text-overflow: ellipsis;
@@ -1462,7 +1462,7 @@ export default function AdminLayout() {
             margin-top: 2px;
             color:
               rgba(255,255,255,.55);
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
           }
 
           /* SEARCH */
@@ -1473,12 +1473,12 @@ export default function AdminLayout() {
             min-height: 42px;
             display: flex;
             align-items: center;
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
             margin-bottom: 12px;
-            padding: 0 10px;
+            padding: 0 calc(10px * var(--app-density,1));
             border:
               1px solid rgba(255,255,255,.09);
-            border-radius: 12px;
+            border-radius: calc(12px * var(--app-radius-scale,1));
             color:
               rgba(255,255,255,.57);
             background:
@@ -1508,7 +1508,7 @@ export default function AdminLayout() {
             color: #FFFFFF;
             background: transparent;
             font-family: inherit;
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
             font-weight: 650;
           }
 
@@ -1521,7 +1521,7 @@ export default function AdminLayout() {
             width: 24px;
             height: 24px;
             border: 0;
-            border-radius: 7px;
+            border-radius: calc(7px * var(--app-radius-scale,1));
             display: grid;
             place-items: center;
             color:
@@ -1532,16 +1532,16 @@ export default function AdminLayout() {
           }
 
           .admin-layout-search kbd {
-            padding: 3px 6px;
+            padding: calc(3px * var(--app-density,1)) calc(6px * var(--app-density,1));
             border:
               1px solid rgba(255,255,255,.10);
-            border-radius: 6px;
+            border-radius: calc(6px * var(--app-radius-scale,1));
             color:
               rgba(255,255,255,.48);
             background:
               rgba(0,0,0,.10);
             font-family: inherit;
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
           }
 
           /* NAV */
@@ -1553,7 +1553,7 @@ export default function AdminLayout() {
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            padding-left: 2px;
+            padding-left: calc(2px * var(--app-density,1));
           }
 
           .admin-layout-nav-section {
@@ -1561,17 +1561,17 @@ export default function AdminLayout() {
           }
 
           .admin-layout-nav-section-title {
-            padding: 0 10px 6px;
+            padding: 0 calc(10px * var(--app-density,1)) calc(6px * var(--app-density,1));
             color:
               rgba(255,255,255,.38);
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
             font-weight: 900;
             letter-spacing: .02em;
           }
 
           .admin-layout-nav-items {
             display: grid;
-            gap: 5px;
+            gap: calc(5px * var(--app-density,1));
           }
 
           .admin-layout-nav-link {
@@ -1579,15 +1579,15 @@ export default function AdminLayout() {
             min-height: 44px;
             display: flex;
             align-items: center;
-            gap: 9px;
-            padding: 0 10px;
+            gap: calc(9px * var(--app-density,1));
+            padding: 0 calc(10px * var(--app-density,1));
             border:
               1px solid transparent;
-            border-radius: 12px;
+            border-radius: calc(12px * var(--app-radius-scale,1));
             color:
               rgba(255,255,255,.72);
             text-decoration: none;
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
             font-weight: 780;
             transition:
               color .16s ease,
@@ -1661,7 +1661,7 @@ export default function AdminLayout() {
             flex: 0 0 30px;
             display: grid;
             place-items: center;
-            border-radius: 9px;
+            border-radius: calc(9px * var(--app-radius-scale,1));
             color:
               rgba(255,255,255,.60);
             transition:
@@ -1708,7 +1708,7 @@ export default function AdminLayout() {
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
             color:
               rgba(255,255,255,.45);
             text-align: center;
@@ -1717,11 +1717,11 @@ export default function AdminLayout() {
           .admin-layout-search-empty strong {
             color:
               rgba(255,255,255,.78);
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
           }
 
           .admin-layout-search-empty span {
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
           }
 
           /* SIDEBAR FOOTER */
@@ -1730,18 +1730,18 @@ export default function AdminLayout() {
             position: relative;
             z-index: 1;
             display: grid;
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
             margin-top: 8px;
           }
 
           .admin-layout-sidebar-footer {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 9px;
+            gap: calc(8px * var(--app-density,1));
+            padding: calc(9px * var(--app-density,1));
             border:
               1px solid rgba(255,255,255,.08);
-            border-radius: 12px;
+            border-radius: calc(12px * var(--app-radius-scale,1));
             background:
               rgba(255,255,255,.045);
           }
@@ -1756,7 +1756,7 @@ export default function AdminLayout() {
             flex: 0 0 32px;
             display: grid;
             place-items: center;
-            border-radius: 9px;
+            border-radius: calc(9px * var(--app-radius-scale,1));
             color: #F1D681;
             background:
               rgba(200,168,75,.10);
@@ -1769,7 +1769,7 @@ export default function AdminLayout() {
 
           .admin-layout-sidebar-footer strong {
             color: #FFFFFF;
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
             font-weight: 850;
           }
 
@@ -1777,7 +1777,7 @@ export default function AdminLayout() {
             margin-top: 2px;
             color:
               rgba(255,255,255,.47);
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
           }
 
           .admin-layout-logout-button {
@@ -1786,16 +1786,16 @@ export default function AdminLayout() {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 0 12px;
+            gap: calc(8px * var(--app-density,1));
+            padding: 0 calc(12px * var(--app-density,1));
             border:
               1px solid rgba(255,123,123,.18);
-            border-radius: 11px;
+            border-radius: calc(11px * var(--app-radius-scale,1));
             color: #FFD6D2;
             background:
               rgba(180,54,54,.10);
             font-family: inherit;
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
             font-weight: 850;
             cursor: pointer;
             transition:
@@ -1858,8 +1858,8 @@ export default function AdminLayout() {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 15px;
-            padding: 10px 22px;
+            gap: calc(15px * var(--app-density,1));
+            padding: calc(10px * var(--app-density,1)) calc(22px * var(--app-density,1));
             border-bottom:
               1px solid rgba(15,81,72,.08);
             background:
@@ -1893,7 +1893,7 @@ export default function AdminLayout() {
           .admin-layout-topbar-start {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
             min-width: 0;
           }
 
@@ -1903,7 +1903,7 @@ export default function AdminLayout() {
             flex: 0 0 42px;
             border:
               1px solid #DCE8E2;
-            border-radius: 13px;
+            border-radius: calc(13px * var(--app-radius-scale,1));
             display: grid;
             place-items: center;
             color:
@@ -1938,7 +1938,7 @@ export default function AdminLayout() {
             place-items: center;
             border:
               1px solid #D8E8E0;
-            border-radius: 13px;
+            border-radius: calc(13px * var(--app-radius-scale,1));
             color:
               var(--sadiq-green-800);
             background:
@@ -1956,7 +1956,7 @@ export default function AdminLayout() {
           .admin-layout-page-copy span {
             display: block;
             color: #9A792D;
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
@@ -1964,7 +1964,7 @@ export default function AdminLayout() {
             margin: 2px 0 0;
             overflow: hidden;
             color: #263F36;
-            font-size: 19px;
+            font-size: calc(19px * var(--app-font-scale,1));
             line-height: 1.25;
             font-weight: 950;
             text-overflow: ellipsis;
@@ -1974,18 +1974,18 @@ export default function AdminLayout() {
           .admin-layout-topbar-end {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
           }
 
           .admin-layout-date-card {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
             min-height: 45px;
-            padding: 6px 10px;
+            padding: calc(6px * var(--app-density,1)) calc(10px * var(--app-density,1));
             border:
               1px solid #E0E9E4;
-            border-radius: 12px;
+            border-radius: calc(12px * var(--app-radius-scale,1));
             color:
               var(--sadiq-green-800);
             background:
@@ -2006,25 +2006,25 @@ export default function AdminLayout() {
           .admin-layout-date-card strong {
             color:
               var(--sadiq-green-800);
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
           .admin-layout-date-card span {
             margin-top: 2px;
             color: #87948E;
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
           }
 
           .admin-layout-topbar-profile {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
             min-height: 45px;
-            padding: 5px 8px 5px 11px;
+            padding: calc(5px * var(--app-density,1)) calc(8px * var(--app-density,1)) calc(5px * var(--app-density,1)) calc(11px * var(--app-density,1));
             border:
               1px solid #E0E9E4;
-            border-radius: 12px;
+            border-radius: calc(12px * var(--app-radius-scale,1));
             background:
               #FFFFFF;
             box-shadow:
@@ -2036,7 +2036,7 @@ export default function AdminLayout() {
             height: 34px;
             display: grid;
             place-items: center;
-            border-radius: 10px;
+            border-radius: calc(10px * var(--app-radius-scale,1));
             color: #FFFFFF;
             background:
               linear-gradient(
@@ -2046,7 +2046,7 @@ export default function AdminLayout() {
               );
             box-shadow:
               0 6px 14px rgba(15,81,72,.16);
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
@@ -2059,7 +2059,7 @@ export default function AdminLayout() {
             max-width: 140px;
             overflow: hidden;
             color: #31463D;
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
             font-weight: 900;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -2068,7 +2068,7 @@ export default function AdminLayout() {
           .admin-layout-topbar-profile span {
             margin-top: 2px;
             color: #8D9993;
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
           }
 
           /* CONTENT */
@@ -2076,7 +2076,7 @@ export default function AdminLayout() {
           .admin-layout-content {
             position: relative;
             z-index: 1;
-            padding: 20px 22px 28px;
+            padding: calc(20px * var(--app-density,1)) calc(22px * var(--app-density,1)) calc(28px * var(--app-density,1));
           }
 
           .admin-layout-content::before {
@@ -2087,7 +2087,7 @@ export default function AdminLayout() {
             left: 22px;
             height: 120px;
             z-index: -1;
-            border-radius: 28px;
+            border-radius: calc(28px * var(--app-radius-scale,1));
             background:
               linear-gradient(
                 135deg,
@@ -2163,7 +2163,7 @@ export default function AdminLayout() {
             height: 34px;
             border:
               1px solid rgba(255,255,255,.10);
-            border-radius: 10px;
+            border-radius: calc(10px * var(--app-radius-scale,1));
             display: grid;
             place-items: center;
             color:
@@ -2199,7 +2199,7 @@ export default function AdminLayout() {
               right: 0;
               left: 0;
               min-height: 66px;
-              padding: 8px 11px;
+              padding: calc(8px * var(--app-density,1)) calc(11px * var(--app-density,1));
               backdrop-filter: none;
             }
 
@@ -2212,12 +2212,12 @@ export default function AdminLayout() {
             }
 
             .admin-layout-topbar-profile {
-              padding: 5px;
+              padding: calc(5px * var(--app-density,1));
             }
 
             .admin-layout-content {
               padding:
-                12px 10px 22px;
+                calc(12px * var(--app-density,1)) calc(10px * var(--app-density,1)) calc(22px * var(--app-density,1));
             }
 
             .admin-layout-mobile-overlay {
@@ -2232,11 +2232,11 @@ export default function AdminLayout() {
 
             .admin-layout-page-copy h1 {
               max-width: 180px;
-              font-size: 15px;
+              font-size: calc(15px * var(--app-font-scale,1));
             }
 
             .admin-layout-topbar {
-              gap: 7px;
+              gap: calc(7px * var(--app-density,1));
             }
 
             .admin-layout-menu-button {
@@ -2290,7 +2290,7 @@ export default function AdminLayout() {
           }
 
           .admin-layout-content {
-            padding-top: 18px !important;
+            padding-top: calc(18px * var(--app-density,1)) !important;
           }
 
           @media (max-width: 1024px) {
@@ -2301,7 +2301,7 @@ export default function AdminLayout() {
             }
 
             .admin-layout-content {
-              padding-top: 12px !important;
+              padding-top: calc(12px * var(--app-density,1)) !important;
             }
           }
 

@@ -1479,7 +1479,7 @@ export default function GrantModal({
               align-items: center;
               justify-content: center;
 
-              padding: 18px;
+              padding: calc(18px * var(--app-density,1));
 
               background:
                 rgba(10, 30, 24, .60);
@@ -1503,7 +1503,7 @@ export default function GrantModal({
                 rgba(255,255,255,.50);
 
               border-radius:
-                24px;
+                calc(24px * var(--app-radius-scale,1));
 
               background:
                 #FFFFFF;
@@ -1550,10 +1550,10 @@ export default function GrantModal({
               justify-content:
                 space-between;
 
-              gap: 14px;
+              gap: calc(14px * var(--app-density,1));
 
               padding:
-                17px 20px;
+                calc(17px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
               border-bottom:
                 1px solid #E8EEE9;
@@ -1573,7 +1573,7 @@ export default function GrantModal({
               display: flex;
               align-items: center;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
             }
 
             .grant-main-icon {
@@ -1586,7 +1586,7 @@ export default function GrantModal({
                 1px solid #DCEADF;
 
               border-radius:
-                14px;
+                calc(14px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1597,26 +1597,26 @@ export default function GrantModal({
               background:
                 linear-gradient(
                   145deg,
-                  #0F5132,
-                  #0F766E
+                  var(--app-color-0f5132,#0F5132),
+                  var(--app-color-0f766e,#0F766E)
                 );
 
               box-shadow:
                 0 8px 20px
-                rgba(15,81,50,.14);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 14.000000000000002%,transparent);
             }
 
             .grant-eyebrow {
               display: flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               margin-bottom: 2px;
 
               color: #94742D;
 
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
@@ -1625,7 +1625,7 @@ export default function GrantModal({
 
               color: #2E4136;
 
-              font-size: 19px;
+              font-size: calc(19px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -1635,7 +1635,7 @@ export default function GrantModal({
 
               color: #8A948E;
 
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
               line-height: 1.5;
             }
 
@@ -1649,7 +1649,7 @@ export default function GrantModal({
                 1px solid #E0E7E2;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1681,18 +1681,18 @@ export default function GrantModal({
               justify-content:
                 space-between;
 
-              gap: 12px;
+              gap: calc(12px * var(--app-density,1));
 
               margin:
                 14px 20px 10px;
 
-              padding: 11px 12px;
+              padding: calc(11px * var(--app-density,1)) calc(12px * var(--app-density,1));
 
               border:
                 1px solid #E3EAE5;
 
               border-radius:
-                14px;
+                calc(14px * var(--app-radius-scale,1));
 
               background:
                 linear-gradient(
@@ -1706,7 +1706,7 @@ export default function GrantModal({
               display: flex;
               align-items: center;
 
-              gap: 9px;
+              gap: calc(9px * var(--app-density,1));
 
               min-width: 0;
             }
@@ -1718,13 +1718,13 @@ export default function GrantModal({
               flex: 0 0 40px;
 
               border-radius:
-                12px;
+                calc(12px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
               justify-content: center;
 
-              color: #0F5132;
+              color: var(--app-color-0f5132,#0F5132);
               background: #E9F5ED;
             }
 
@@ -1737,7 +1737,7 @@ export default function GrantModal({
             .grant-student-main span {
               color: #8A948E;
 
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
             }
 
             .grant-student-main strong {
@@ -1745,7 +1745,7 @@ export default function GrantModal({
 
               color: #35463C;
 
-              font-size: 11px;
+              font-size: calc(11px * var(--app-font-scale,1));
             }
 
             .grant-student-main small {
@@ -1753,7 +1753,7 @@ export default function GrantModal({
 
               color: #9AA29D;
 
-              font-size: 6.5px;
+              font-size: calc(6.5px * var(--app-font-scale,1));
             }
 
             .grant-context {
@@ -1763,30 +1763,30 @@ export default function GrantModal({
                 flex-end;
               flex-wrap: wrap;
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
             }
 
             .grant-context span {
               min-height: 28px;
 
               padding:
-                0 8px;
+                0 calc(8px * var(--app-density,1));
 
               border:
                 1px solid #E3E9E5;
 
               border-radius:
-                8px;
+                calc(8px * var(--app-radius-scale,1));
 
               display: inline-flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               color: #6D7971;
               background: #FFFFFF;
 
-              font-size: 6.5px;
+              font-size: calc(6.5px * var(--app-font-scale,1));
               font-weight: 800;
             }
 
@@ -1803,25 +1803,25 @@ export default function GrantModal({
                   minmax(0,1fr)
                 );
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               padding:
-                0 20px 10px;
+                0 calc(20px * var(--app-density,1)) calc(10px * var(--app-density,1));
             }
 
             .grant-summary-card {
               display: flex;
               align-items: center;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
 
               border:
                 1px solid #E6ECE8;
 
               border-radius:
-                12px;
+                calc(12px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
             }
@@ -1841,14 +1841,14 @@ export default function GrantModal({
               flex: 0 0 34px;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
               justify-content: center;
 
-              color: #0F5132;
-              background: #EDF7F1;
+              color: var(--app-color-0f5132,#0F5132);
+              background: var(--app-color-edf7f1,#EDF7F1);
             }
 
             .grant-summary-card.positive
@@ -1865,7 +1865,7 @@ export default function GrantModal({
             .grant-summary-card span {
               color: #8A948E;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             .grant-summary-card strong {
@@ -1873,7 +1873,7 @@ export default function GrantModal({
 
               color: #3B4B41;
 
-              font-size: 13px;
+              font-size: calc(13px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -1882,7 +1882,7 @@ export default function GrantModal({
 
               color: #8A948E;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               font-weight: 800;
             }
 
@@ -1897,19 +1897,19 @@ export default function GrantModal({
 
             .grant-body {
               padding:
-                0 20px 16px;
+                0 calc(20px * var(--app-density,1)) calc(16px * var(--app-density,1));
             }
 
             .grant-section {
               margin-bottom: 10px;
 
-              padding: 12px;
+              padding: calc(12px * var(--app-density,1));
 
               border:
                 1px solid #E7ECE9;
 
               border-radius:
-                14px;
+                calc(14px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
             }
@@ -1924,7 +1924,7 @@ export default function GrantModal({
               justify-content:
                 space-between;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
 
               margin-bottom: 9px;
             }
@@ -1934,7 +1934,7 @@ export default function GrantModal({
 
               color: #405046;
 
-              font-size: 10px;
+              font-size: calc(10px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -1944,7 +1944,7 @@ export default function GrantModal({
 
               color: #929B95;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             .grant-section-side-icon {
@@ -1955,15 +1955,15 @@ export default function GrantModal({
               border: none;
 
               padding:
-                5px 7px;
+                calc(5px * var(--app-density,1)) calc(7px * var(--app-density,1));
 
               border-radius:
-                7px;
+                calc(7px * var(--app-radius-scale,1));
 
               color: #0F6A4A;
               background: #EDF8F1;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               font-weight: 850;
 
               cursor: pointer;
@@ -1995,20 +1995,20 @@ export default function GrantModal({
               height: 39px;
 
               padding:
-                0 34px 0 10px;
+                0 calc(34px * var(--app-density,1)) 0 calc(10px * var(--app-density,1));
 
               border:
                 1px solid #DDE5E0;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               outline: none;
 
               color: #3B4B41;
               background: #FBFDFC;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
             }
 
             .grant-search input:focus {
@@ -2017,7 +2017,7 @@ export default function GrantModal({
 
               box-shadow:
                 0 0 0 3px
-                rgba(15,81,50,.05);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
             }
 
             /* =========================
@@ -2036,19 +2036,19 @@ export default function GrantModal({
                   )
                 );
 
-              gap: 7px;
+              gap: calc(7px * var(--app-density,1));
             }
 
             .grant-type {
               min-height: 112px;
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
 
               border:
                 1px solid #E5EBE7;
 
               border-radius:
-                12px;
+                calc(12px * var(--app-radius-scale,1));
 
               text-align: right;
 
@@ -2073,7 +2073,7 @@ export default function GrantModal({
 
               box-shadow:
                 0 7px 18px
-                rgba(15,81,50,.045);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 4.5%,transparent);
             }
 
             .grant-type.selected {
@@ -2089,7 +2089,7 @@ export default function GrantModal({
 
               box-shadow:
                 0 8px 20px
-                rgba(15,81,50,.055);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5.5%,transparent);
             }
 
             .grant-type-top {
@@ -2098,7 +2098,7 @@ export default function GrantModal({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               margin-bottom: 8px;
             }
@@ -2108,7 +2108,7 @@ export default function GrantModal({
               height: 31px;
 
               border-radius:
-                9px;
+                calc(9px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -2126,7 +2126,7 @@ export default function GrantModal({
                 1px solid #DDE4E0;
 
               border-radius:
-                7px;
+                calc(7px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -2151,7 +2151,7 @@ export default function GrantModal({
 
               color: #465249;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
               line-height: 1.45;
             }
 
@@ -2160,7 +2160,7 @@ export default function GrantModal({
 
               color: #0F7A4F;
 
-              font-size: 15px;
+              font-size: calc(15px * var(--app-font-scale,1));
               font-weight: 950;
 
               direction: ltr;
@@ -2170,7 +2170,7 @@ export default function GrantModal({
             .grant-type-points small {
               margin-left: 3px;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               font-weight: 800;
             }
 
@@ -2186,13 +2186,13 @@ export default function GrantModal({
               justify-content: center;
               flex-direction: column;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               border:
                 1px dashed #E0E7E2;
 
               border-radius:
-                11px;
+                calc(11px * var(--app-radius-scale,1));
 
               color: #9AA39D;
               background: #FBFDFC;
@@ -2203,13 +2203,13 @@ export default function GrantModal({
             .grant-empty strong {
               color: #657169;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
             }
 
             .grant-empty span {
               max-width: 300px;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               line-height: 1.55;
             }
 
@@ -2221,20 +2221,20 @@ export default function GrantModal({
               width: 100%;
               min-height: 90px;
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
 
               border:
                 1px solid #DDE5E0;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               outline: none;
 
               color: #3F4E44;
               background: #FBFDFC;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
               line-height: 1.7;
 
               resize: vertical;
@@ -2246,7 +2246,7 @@ export default function GrantModal({
 
               box-shadow:
                 0 0 0 3px
-                rgba(15,81,50,.05);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
 
               background: #FFFFFF;
             }
@@ -2257,13 +2257,13 @@ export default function GrantModal({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               margin-top: 5px;
 
               color: #99A19C;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             /* =========================
@@ -2274,17 +2274,17 @@ export default function GrantModal({
               display: flex;
               align-items: flex-start;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
 
               border:
                 1px solid #D9E8DD;
 
               border-radius:
-                12px;
+                calc(12px * var(--app-radius-scale,1));
 
-              color: #0F6848;
+              color: var(--app-color-0f6848,#0F6848);
 
               background:
                 linear-gradient(
@@ -2300,7 +2300,7 @@ export default function GrantModal({
             }
 
             .grant-positive-note strong {
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
             }
 
             .grant-positive-note span {
@@ -2308,12 +2308,12 @@ export default function GrantModal({
 
               color: #728178;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               line-height: 1.55;
             }
 
             .grant-positive-note b {
-              color: #0F6848;
+              color: var(--app-color-0f6848,#0F6848);
             }
 
             /* =========================
@@ -2330,10 +2330,10 @@ export default function GrantModal({
               justify-content:
                 space-between;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
 
               padding:
-                12px 20px;
+                calc(12px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
               border-top:
                 1px solid #E9EEEB;
@@ -2355,23 +2355,23 @@ export default function GrantModal({
               align-items: center;
               flex-wrap: wrap;
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
             }
 
             .grant-footer-summary span {
               padding:
-                5px 7px;
+                calc(5px * var(--app-density,1)) calc(7px * var(--app-density,1));
 
               border:
                 1px solid #E1E8E3;
 
               border-radius:
-                8px;
+                calc(8px * var(--app-radius-scale,1));
 
               color: #7A867E;
               background: #FFFFFF;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             .grant-footer-summary b {
@@ -2382,7 +2382,7 @@ export default function GrantModal({
               display: flex;
               align-items: center;
 
-              gap: 6px;
+              gap: calc(6px * var(--app-density,1));
             }
 
             .grant-cancel-button,
@@ -2390,12 +2390,12 @@ export default function GrantModal({
               min-height: 40px;
 
               padding:
-                0 13px;
+                0 calc(13px * var(--app-density,1));
 
               border-radius:
-                9px;
+                calc(9px * var(--app-radius-scale,1));
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
               font-weight: 900;
 
               cursor: pointer;
@@ -2416,20 +2416,20 @@ export default function GrantModal({
               align-items: center;
               justify-content: center;
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
 
               color: #FFFFFF;
 
               background:
                 linear-gradient(
                   135deg,
-                  #0F5132,
-                  #0F766E
+                  var(--app-color-0f5132,#0F5132),
+                  var(--app-color-0f766e,#0F766E)
                 );
 
               box-shadow:
                 0 8px 18px
-                rgba(15,81,50,.13);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 13%,transparent);
             }
 
             .grant-cancel-button:disabled,
@@ -2465,7 +2465,7 @@ export default function GrantModal({
                 align-items:
                   flex-end;
 
-                padding: 7px;
+                padding: calc(7px * var(--app-density,1));
               }
 
               .grant-modal {
@@ -2474,13 +2474,13 @@ export default function GrantModal({
                   calc(100vh - 14px);
 
                 border-radius:
-                  22px 22px
-                  10px 10px;
+                  calc(22px * var(--app-radius-scale,1)) calc(22px * var(--app-radius-scale,1))
+                  calc(10px * var(--app-radius-scale,1)) calc(10px * var(--app-radius-scale,1));
               }
 
               .grant-header {
                 padding:
-                  14px 15px;
+                  calc(14px * var(--app-density,1)) calc(15px * var(--app-density,1));
               }
 
               .grant-heading p {
@@ -2509,7 +2509,7 @@ export default function GrantModal({
                   1fr 1fr;
 
                 padding:
-                  0 15px 8px;
+                  0 calc(15px * var(--app-density,1)) calc(8px * var(--app-density,1));
               }
 
               .grant-summary-grid
@@ -2520,7 +2520,7 @@ export default function GrantModal({
 
               .grant-body {
                 padding:
-                  0 15px 13px;
+                  0 calc(15px * var(--app-density,1)) calc(13px * var(--app-density,1));
               }
 
               .grant-types-grid {
@@ -2538,7 +2538,7 @@ export default function GrantModal({
                   column;
 
                 padding:
-                  10px 15px;
+                  calc(10px * var(--app-density,1)) calc(15px * var(--app-density,1));
               }
 
               .grant-footer-summary {
@@ -2564,7 +2564,7 @@ export default function GrantModal({
 
               .grant-heading h2 {
                 font-size:
-                  17px;
+                  calc(17px * var(--app-font-scale,1));
               }
 
               .grant-summary-grid {

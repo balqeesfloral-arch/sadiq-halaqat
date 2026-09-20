@@ -17,7 +17,7 @@ export default function PageHeader({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: "16px",
+        gap: "calc(16px * var(--app-density,1))",
         flexWrap: "wrap",
         marginBottom: "25px",
       }}
@@ -26,7 +26,7 @@ export default function PageHeader({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "12px",
+          gap: "calc(12px * var(--app-density,1))",
           minWidth: 0,
         }}
       >
@@ -40,9 +40,9 @@ export default function PageHeader({
               height: "42px",
               flexShrink: 0,
               border: "1px solid #dfe4e0",
-              borderRadius: "11px",
+              borderRadius: "calc(11px * var(--app-radius-scale,1))",
               background: "#fff",
-              color: "#173d2b",
+              color: "var(--app-color-173d2b,#173d2b)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -59,9 +59,9 @@ export default function PageHeader({
               width: "48px",
               height: "48px",
               flexShrink: 0,
-              borderRadius: "14px",
+              borderRadius: "calc(14px * var(--app-radius-scale,1))",
               background: "#eaf3ed",
-              color: "#0f5132",
+              color: "var(--app-color-0f5132,#0f5132)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -75,8 +75,8 @@ export default function PageHeader({
           <h1
             style={{
               margin: 0,
-              color: "#173d2b",
-              fontSize: "28px",
+              color: "var(--app-color-173d2b,#173d2b)",
+              fontSize: "calc(28px * var(--app-font-scale,1))",
               fontWeight: "800",
               lineHeight: 1.3,
             }}
@@ -89,7 +89,7 @@ export default function PageHeader({
               style={{
                 margin: "5px 0 0",
                 color: "#818983",
-                fontSize: "13px",
+                fontSize: "calc(13px * var(--app-font-scale,1))",
                 lineHeight: 1.6,
               }}
             >
@@ -104,7 +104,7 @@ export default function PageHeader({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
+            gap: "calc(8px * var(--app-density,1))",
             flexWrap: "wrap",
           }}
         >

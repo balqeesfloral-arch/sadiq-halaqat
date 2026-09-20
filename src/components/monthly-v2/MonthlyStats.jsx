@@ -20,20 +20,20 @@ export default function MonthlyStats({
 
   const cardStyle = {
     background: "#fff",
-    borderRadius: "18px",
-    padding: "20px",
+    borderRadius: "calc(18px * var(--app-radius-scale,1))",
+    padding: "calc(20px * var(--app-density,1))",
     border: "1px solid #E5E7EB",
     boxShadow:
       "0 4px 12px rgba(0,0,0,.05)",
     display: "flex",
     alignItems: "center",
-    gap: "16px"
+    gap: "calc(16px * var(--app-density,1))"
   };
 
   const iconBox = (bg) => ({
     width: "52px",
     height: "52px",
-    borderRadius: "14px",
+    borderRadius: "calc(14px * var(--app-radius-scale,1))",
     background: bg,
     display: "flex",
     alignItems: "center",
@@ -91,7 +91,7 @@ export default function MonthlyStats({
         display: "grid",
         gridTemplateColumns:
           "repeat(auto-fit,minmax(220px,1fr))",
-        gap: "16px",
+        gap: "calc(16px * var(--app-density,1))",
         marginBottom: "20px"
       }}
     >
@@ -110,7 +110,7 @@ export default function MonthlyStats({
             <div
               style={{
                 color: "#64748B",
-                fontSize: "13px",
+                fontSize: "calc(13px * var(--app-font-scale,1))",
                 marginBottom: "6px"
               }}
             >
@@ -119,7 +119,7 @@ export default function MonthlyStats({
 
             <div
               style={{
-                fontSize: "26px",
+                fontSize: "calc(26px * var(--app-font-scale,1))",
                 fontWeight: 700,
                 color: "#14532D"
               }}

@@ -2494,13 +2494,13 @@ function ProfileStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 18px;
+          gap: calc(18px * var(--app-density,1));
 
-          padding: 22px 24px;
+          padding: calc(22px * var(--app-density,1)) calc(24px * var(--app-density,1));
           margin-bottom: 14px;
 
-          border: 1px solid rgba(15,81,50,.10);
-          border-radius: 23px;
+          border: 1px solid color-mix(in srgb,var(--app-color-0f5132,#0f5132) 10%,transparent);
+          border-radius: calc(23px * var(--app-radius-scale,1));
 
           background:
             linear-gradient(
@@ -2512,7 +2512,7 @@ function ProfileStyles() {
 
           box-shadow:
             0 13px 37px
-            rgba(15,81,50,.05);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
         }
 
         .profile-hero::before {
@@ -2546,7 +2546,7 @@ function ProfileStyles() {
           display: flex;
           align-items: center;
 
-          gap: 14px;
+          gap: calc(14px * var(--app-density,1));
         }
 
         .profile-avatar-wrap {
@@ -2561,13 +2561,13 @@ function ProfileStyles() {
           overflow: hidden;
 
           border: 1px solid #dce8df;
-          border-radius: 24px;
+          border-radius: calc(24px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
 
           background:
             linear-gradient(
@@ -2578,7 +2578,7 @@ function ProfileStyles() {
 
           box-shadow:
             0 10px 26px
-            rgba(15,81,50,.08);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 8%,transparent);
         }
 
         .profile-avatar img {
@@ -2596,14 +2596,14 @@ function ProfileStyles() {
           height: 30px;
 
           border: 3px solid #fff;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
           color: #fff;
-          background: #0f5132;
+          background: var(--app-color-0f5132,#0f5132);
         }
 
         .profile-identity-text {
@@ -2614,13 +2614,13 @@ function ProfileStyles() {
           display: flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-bottom: 3px;
 
           color: #927536;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -2629,31 +2629,31 @@ function ProfileStyles() {
           align-items: center;
           flex-wrap: wrap;
 
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
         }
 
         .profile-name-row h1 {
           margin: 0;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 24px;
+          font-size: calc(24px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
         .profile-status {
           min-height: 25px;
 
-          padding: 0 8px;
+          padding: 0 calc(8px * var(--app-density,1));
 
           border-radius: 999px;
 
           display: inline-flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -2672,7 +2672,7 @@ function ProfileStyles() {
 
           color: #77827b;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .profile-meta {
@@ -2680,7 +2680,7 @@ function ProfileStyles() {
           align-items: center;
           flex-wrap: wrap;
 
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
 
           margin-top: 7px;
         }
@@ -2689,11 +2689,11 @@ function ProfileStyles() {
           display: inline-flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
           color: #87928b;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .profile-hero-actions {
@@ -2704,24 +2704,24 @@ function ProfileStyles() {
           align-items: center;
           flex-wrap: wrap;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
         }
 
         .profile-security-btn,
         .profile-logout-btn {
           min-height: 40px;
 
-          padding: 0 11px;
+          padding: 0 calc(11px * var(--app-density,1));
 
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -2735,8 +2735,8 @@ function ProfileStyles() {
           background:
             linear-gradient(
               135deg,
-              #0f5132,
-              #0f766e
+              var(--app-color-0f5132,#0f5132),
+              var(--app-color-0f766e,#0f766e)
             );
         }
 
@@ -2760,7 +2760,7 @@ function ProfileStyles() {
               minmax(0,1fr)
             );
 
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
 
           margin-bottom: 14px;
         }
@@ -2769,12 +2769,12 @@ function ProfileStyles() {
           display: flex;
           align-items: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
-          padding: 12px;
+          padding: calc(12px * var(--app-density,1));
 
           border: 1px solid #e5ebe7;
-          border-radius: 16px;
+          border-radius: calc(16px * var(--app-radius-scale,1));
 
           background: #fff;
 
@@ -2789,7 +2789,7 @@ function ProfileStyles() {
 
           flex: 0 0 38px;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -2797,13 +2797,13 @@ function ProfileStyles() {
         }
 
         .profile-stat.green .profile-stat-icon {
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .profile-stat.teal .profile-stat-icon {
-          color: #0f766e;
-          background: #edf8f7;
+          color: var(--app-color-0f766e,#0f766e);
+          background: var(--app-color-edf8f7,#edf8f7);
         }
 
         .profile-stat.gold .profile-stat-icon {
@@ -2821,7 +2821,7 @@ function ProfileStyles() {
 
           color: #7f8a83;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .profile-stat strong {
@@ -2829,9 +2829,9 @@ function ProfileStyles() {
 
           margin-top: 1px;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 18px;
+          font-size: calc(18px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -2842,7 +2842,7 @@ function ProfileStyles() {
 
           color: #9ba39e;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         /* =============================================
@@ -2856,16 +2856,16 @@ function ProfileStyles() {
             minmax(0,1.5fr)
             minmax(280px,.7fr);
 
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
 
           margin-bottom: 12px;
         }
 
         .profile-card {
-          padding: 16px;
+          padding: calc(16px * var(--app-density,1));
 
           border: 1px solid #e4eae6;
-          border-radius: 19px;
+          border-radius: calc(19px * var(--app-radius-scale,1));
 
           background: #fff;
 
@@ -2878,7 +2878,7 @@ function ProfileStyles() {
           display: flex;
           align-items: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           margin-bottom: 14px;
         }
@@ -2889,14 +2889,14 @@ function ProfileStyles() {
 
           flex: 0 0 36px;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .profile-card-heading h2 {
@@ -2904,7 +2904,7 @@ function ProfileStyles() {
 
           color: #2f4036;
 
-          font-size: 12px;
+          font-size: calc(12px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -2913,7 +2913,7 @@ function ProfileStyles() {
 
           color: #919a94;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         /* =============================================
@@ -2929,7 +2929,7 @@ function ProfileStyles() {
               minmax(0,1fr)
             );
 
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
         }
 
         .profile-avatar-field {
@@ -2943,7 +2943,7 @@ function ProfileStyles() {
 
           color: #66736b;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -2970,17 +2970,17 @@ function ProfileStyles() {
           height: 39px;
 
           padding:
-            0 34px 0 9px;
+            0 calc(34px * var(--app-density,1)) 0 calc(9px * var(--app-density,1));
 
           border: 1px solid #dce4df;
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           outline: none;
 
           color: #33443a;
           background: #fbfdfc;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .profile-field-shell input:focus {
@@ -2988,7 +2988,7 @@ function ProfileStyles() {
 
           box-shadow:
             0 0 0 3px
-            rgba(15,81,50,.05);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
         }
 
         .profile-field-shell input:disabled {
@@ -3004,7 +3004,7 @@ function ProfileStyles() {
 
           color: #9aa29d;
 
-          font-size: 5.7px;
+          font-size: calc(5.7px * var(--app-font-scale,1));
           line-height: 1.5;
         }
 
@@ -3013,17 +3013,17 @@ function ProfileStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           margin-top: 13px;
-          padding-top: 12px;
+          padding-top: calc(12px * var(--app-density,1));
 
           border-top: 1px solid #edf1ee;
         }
 
         .profile-change-hint {
           color: #8b958f;
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .profile-change-hint.changed {
@@ -3034,27 +3034,27 @@ function ProfileStyles() {
         .profile-save-btn {
           min-height: 38px;
 
-          padding: 0 13px;
+          padding: 0 calc(13px * var(--app-density,1));
 
           border: none;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           color: #fff;
 
           background:
             linear-gradient(
               135deg,
-              #0f5132,
-              #0f766e
+              var(--app-color-0f5132,#0f5132),
+              var(--app-color-0f766e,#0f766e)
             );
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -3071,19 +3071,19 @@ function ProfileStyles() {
 
         .account-info-list {
           display: grid;
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
         }
 
         .account-info {
           display: flex;
           align-items: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
-          padding: 9px;
+          padding: calc(9px * var(--app-density,1));
 
           border: 1px solid #e8edea;
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           background: #fbfdfc;
         }
@@ -3094,14 +3094,14 @@ function ProfileStyles() {
 
           flex: 0 0 33px;
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .account-info span {
@@ -3109,7 +3109,7 @@ function ProfileStyles() {
 
           color: #8b958f;
 
-          font-size: 5.7px;
+          font-size: calc(5.7px * var(--app-font-scale,1));
         }
 
         .account-info strong {
@@ -3119,7 +3119,7 @@ function ProfileStyles() {
 
           color: #3d4b42;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .account-info small {
@@ -3129,7 +3129,7 @@ function ProfileStyles() {
 
           color: #927536;
 
-          font-size: 5.5px;
+          font-size: calc(5.5px * var(--app-font-scale,1));
         }
 
         /* =============================================
@@ -3152,19 +3152,19 @@ function ProfileStyles() {
               )
             );
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
 
         .profile-halaqa-item {
           display: flex;
           align-items: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
-          padding: 10px;
+          padding: calc(10px * var(--app-density,1));
 
           border: 1px solid #e6ece8;
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
 
           background:
             linear-gradient(
@@ -3180,14 +3180,14 @@ function ProfileStyles() {
 
           flex: 0 0 37px;
 
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .halaqa-content {
@@ -3201,7 +3201,7 @@ function ProfileStyles() {
 
           color: #33443a;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
 
           white-space: nowrap;
           text-overflow: ellipsis;
@@ -3211,13 +3211,13 @@ function ProfileStyles() {
           display: flex;
           align-items: center;
 
-          gap: 3px;
+          gap: calc(3px * var(--app-density,1));
 
           margin-top: 2px;
 
           color: #818c85;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .halaqa-content small {
@@ -3227,21 +3227,21 @@ function ProfileStyles() {
 
           color: #9a7b30;
 
-          font-size: 5.7px;
+          font-size: calc(5.7px * var(--app-font-scale,1));
         }
 
         .profile-empty {
-          padding: 25px;
+          padding: calc(25px * var(--app-density,1));
 
           border: 1px dashed #d5ddd8;
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
 
           text-align: center;
 
           color: #8a958e;
           background: #fbfdfc;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         /* =============================================
@@ -3261,25 +3261,25 @@ function ProfileStyles() {
               minmax(0,1fr)
             );
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
 
         .security-action {
           min-height: 67px;
 
-          padding: 10px;
+          padding: calc(10px * var(--app-density,1));
 
           border: 1px solid #dfe7e2;
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
 
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
 
           text-align: right;
 
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
           background: #fbfdfc;
 
           cursor: pointer;
@@ -3298,13 +3298,13 @@ function ProfileStyles() {
 
           flex: 0 0 37px;
 
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          background: rgba(15,81,50,.06);
+          background: color-mix(in srgb,var(--app-color-0f5132,#0f5132) 6%,transparent);
         }
 
         .security-action.danger
@@ -3315,7 +3315,7 @@ function ProfileStyles() {
         .security-action strong {
           display: block;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .security-action span {
@@ -3325,7 +3325,7 @@ function ProfileStyles() {
 
           color: #89948d;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           line-height: 1.5;
         }
 
@@ -3343,7 +3343,7 @@ function ProfileStyles() {
           align-items: center;
           justify-content: center;
 
-          padding: 16px;
+          padding: calc(16px * var(--app-density,1));
 
           background: rgba(15,23,42,.58);
 
@@ -3355,7 +3355,7 @@ function ProfileStyles() {
 
           overflow: hidden;
 
-          border-radius: 21px;
+          border-radius: calc(21px * var(--app-radius-scale,1));
 
           background: #fff;
 
@@ -3369,9 +3369,9 @@ function ProfileStyles() {
           align-items: flex-start;
           justify-content: space-between;
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
 
-          padding: 15px 16px;
+          padding: calc(15px * var(--app-density,1)) calc(16px * var(--app-density,1));
 
           border-bottom: 1px solid #e8edea;
         }
@@ -3381,7 +3381,7 @@ function ProfileStyles() {
           display: flex;
           align-items: flex-start;
 
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
         }
 
         .password-modal-icon {
@@ -3390,14 +3390,14 @@ function ProfileStyles() {
 
           flex: 0 0 39px;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .password-modal-header h2 {
@@ -3405,7 +3405,7 @@ function ProfileStyles() {
 
           color: #2f4036;
 
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
         }
 
         .password-modal-header p {
@@ -3413,7 +3413,7 @@ function ProfileStyles() {
 
           color: #8c9690;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           line-height: 1.5;
         }
 
@@ -3423,7 +3423,7 @@ function ProfileStyles() {
           height: 34px;
 
           border: none;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -3436,7 +3436,7 @@ function ProfileStyles() {
         }
 
         .password-modal-body {
-          padding: 15px;
+          padding: calc(15px * var(--app-density,1));
         }
 
         .password-field {
@@ -3450,7 +3450,7 @@ function ProfileStyles() {
 
           color: #66736b;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -3474,17 +3474,17 @@ function ProfileStyles() {
           height: 40px;
 
           padding:
-            0 35px 0 40px;
+            0 calc(35px * var(--app-density,1)) 0 calc(40px * var(--app-density,1));
 
           border: 1px solid #dce4df;
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           outline: none;
 
           color: #33443a;
           background: #fbfdfc;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .password-field-shell button {
@@ -3498,7 +3498,7 @@ function ProfileStyles() {
           transform: translateY(-50%);
 
           border: none;
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -3519,11 +3519,11 @@ function ProfileStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           margin-bottom: 5px;
 
-          font-size: 5.7px;
+          font-size: calc(5.7px * var(--app-font-scale,1));
         }
 
         .password-strength-header
@@ -3552,7 +3552,7 @@ function ProfileStyles() {
           grid-template-columns:
             repeat(5,1fr);
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
         }
 
         .password-strength-bars span {
@@ -3584,24 +3584,24 @@ function ProfileStyles() {
 
           color: #b42318;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .password-security-note {
           display: flex;
           align-items: flex-start;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
-          padding: 8px;
+          padding: calc(8px * var(--app-density,1));
 
           border: 1px solid #dcebe3;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           color: #37624c;
           background: #f4faf6;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           line-height: 1.5;
         }
 
@@ -3609,9 +3609,9 @@ function ProfileStyles() {
           display: flex;
           justify-content: flex-end;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
-          padding: 11px 15px;
+          padding: calc(11px * var(--app-density,1)) calc(15px * var(--app-density,1));
 
           border-top: 1px solid #e8edea;
 
@@ -3622,11 +3622,11 @@ function ProfileStyles() {
         button {
           min-height: 37px;
 
-          padding: 0 12px;
+          padding: 0 calc(12px * var(--app-density,1));
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -3646,15 +3646,15 @@ function ProfileStyles() {
           align-items: center;
           justify-content: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           color: #fff;
 
           background:
             linear-gradient(
               135deg,
-              #0f5132,
-              #0f766e
+              var(--app-color-0f5132,#0f5132),
+              var(--app-color-0f766e,#0f766e)
             );
         }
 
@@ -3676,11 +3676,11 @@ function ProfileStyles() {
           justify-content: center;
           flex-direction: column;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           color: #718077;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         @keyframes profileSpin {
@@ -3726,14 +3726,14 @@ function ProfileStyles() {
           .profile-hero {
             align-items: flex-start;
 
-            padding: 15px;
+            padding: calc(15px * var(--app-density,1));
           }
 
           .profile-avatar {
             width: 67px;
             height: 67px;
 
-            border-radius: 19px;
+            border-radius: calc(19px * var(--app-radius-scale,1));
           }
 
           .profile-camera {
@@ -3742,18 +3742,18 @@ function ProfileStyles() {
           }
 
           .profile-name-row h1 {
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
           }
 
           .profile-meta {
             align-items: flex-start;
             flex-direction: column;
 
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
           }
 
           .profile-hero-actions {
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
           }
 
           .profile-security-btn,
@@ -3788,13 +3788,13 @@ function ProfileStyles() {
           .password-overlay {
             align-items: flex-end;
 
-            padding: 7px;
+            padding: calc(7px * var(--app-density,1));
           }
 
           .password-modal {
             border-radius:
-              20px 20px
-              8px 8px;
+              calc(20px * var(--app-radius-scale,1)) calc(20px * var(--app-radius-scale,1))
+              calc(8px * var(--app-radius-scale,1)) calc(8px * var(--app-radius-scale,1));
           }
         }
 
@@ -3807,7 +3807,7 @@ function ProfileStyles() {
           }
 
           .profile-stat strong {
-            font-size: 15px;
+            font-size: calc(15px * var(--app-font-scale,1));
           }
 
           .profile-identity {

@@ -395,7 +395,7 @@ const totalHalaqat =
         color: "#26332c",
         position: "relative",
         overflowX: "hidden",
-        padding: "25px 30px",
+        padding: "calc(25px * var(--app-density,1)) calc(30px * var(--app-density,1))",
         boxSizing: "border-box",
       }}
     >
@@ -413,15 +413,15 @@ const totalHalaqat =
             linear-gradient(
               45deg,
               transparent 42%,
-              #0f5132 43%,
-              #0f5132 57%,
+              var(--app-color-0f5132,#0f5132) 43%,
+              var(--app-color-0f5132,#0f5132) 57%,
               transparent 58%
             ),
             linear-gradient(
               -45deg,
               transparent 42%,
-              #0f5132 43%,
-              #0f5132 57%,
+              var(--app-color-0f5132,#0f5132) 43%,
+              var(--app-color-0f5132,#0f5132) 57%,
               transparent 58%
             )
           `,
@@ -447,7 +447,7 @@ const totalHalaqat =
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: "15px",
+            gap: "calc(15px * var(--app-density,1))",
             flexWrap: "wrap",
             marginBottom: "25px",
           }}
@@ -456,7 +456,7 @@ const totalHalaqat =
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "13px",
+              gap: "calc(13px * var(--app-density,1))",
             }}
           >
             <button
@@ -494,7 +494,7 @@ const totalHalaqat =
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "9px",
+              gap: "calc(9px * var(--app-density,1))",
               flexWrap: "wrap",
             }}
           >
@@ -550,7 +550,7 @@ const totalHalaqat =
             display: "grid",
             gridTemplateColumns:
               "repeat(auto-fit, minmax(190px, 1fr))",
-            gap: "14px",
+            gap: "calc(14px * var(--app-density,1))",
             marginBottom: "22px",
           }}
         >
@@ -595,7 +595,7 @@ const totalHalaqat =
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              gap: "10px",
+              gap: "calc(10px * var(--app-density,1))",
               flexWrap: "wrap",
               marginBottom: "18px",
             }}
@@ -604,7 +604,7 @@ const totalHalaqat =
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "10px",
+                gap: "calc(10px * var(--app-density,1))",
               }}
             >
               <div style={formIconStyle}>
@@ -663,7 +663,7 @@ const totalHalaqat =
                 display: "grid",
                 gridTemplateColumns:
                   "repeat(auto-fit, minmax(260px, 1fr))",
-                gap: "14px",
+                gap: "calc(14px * var(--app-density,1))",
               }}
             >
               <FormField
@@ -689,7 +689,7 @@ const totalHalaqat =
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "9px",
+                gap: "calc(9px * var(--app-density,1))",
                 flexWrap: "wrap",
                 marginTop: "17px",
               }}
@@ -699,22 +699,22 @@ const totalHalaqat =
   disabled={loading}
   style={{
     background:
-      "linear-gradient(135deg,#0F766E,#0B5E57)",
+      "linear-gradient(135deg,var(--app-color-0f766e,#0F766E),#0B5E57)",
     color:"#fff",
     border:"none",
     height:"56px",
-    padding:"0 24px",
-    borderRadius:"18px",
+    padding:"0 calc(24px * var(--app-density,1))",
+    borderRadius:"calc(18px * var(--app-radius-scale,1))",
     display:"flex",
     alignItems:"center",
     justifyContent:"center",
-    gap:"12px",
-    fontSize:"15px",
+    gap:"calc(12px * var(--app-density,1))",
+    fontSize:"calc(15px * var(--app-font-scale,1))",
     fontWeight:"800",
     cursor:
       loading ? "wait" : "pointer",
     boxShadow:
-      "0 12px 30px rgba(15,118,110,.25)",
+      "0 12px 30px color-mix(in srgb,var(--app-color-0f766e,#0f766e) 25%,transparent)",
     transition:"all .25s ease",
     opacity: loading ? .8 : 1
   }}
@@ -723,7 +723,7 @@ const totalHalaqat =
     style={{
       width:"34px",
       height:"34px",
-      borderRadius:"12px",
+      borderRadius:"calc(12px * var(--app-radius-scale,1))",
       background:"rgba(255,255,255,.18)",
       display:"flex",
       alignItems:"center",
@@ -772,7 +772,7 @@ const totalHalaqat =
         <section
           style={{
             ...cardStyle,
-            padding: "15px",
+            padding: "calc(15px * var(--app-density,1))",
             marginBottom: "20px",
           }}
         >
@@ -780,7 +780,7 @@ const totalHalaqat =
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "12px",
+              gap: "calc(12px * var(--app-density,1))",
             }}
           >
             <div
@@ -811,10 +811,8 @@ const totalHalaqat =
                 placeholder="ابحث باسم المسجد أو العنوان أو رقم المسجد..."
                 style={{
                   ...inputStyle,
-                  paddingRight: "44px",
-                  paddingLeft: search
-                    ? "45px"
-                    : "12px",
+                  paddingRight: "calc(44px * var(--app-density,1))",
+                  paddingLeft: (search) ? ("calc(45px * var(--app-density,1))") : ("calc(12px * var(--app-density,1))"),
                 }}
               />
 
@@ -841,7 +839,7 @@ const totalHalaqat =
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: "10px",
+            gap: "calc(10px * var(--app-density,1))",
             marginBottom: "14px",
           }}
         >
@@ -849,8 +847,8 @@ const totalHalaqat =
             <h2
               style={{
                 margin: 0,
-                color: "#173d2b",
-                fontSize: "20px",
+                color: "var(--app-color-173d2b,#173d2b)",
+                fontSize: "calc(20px * var(--app-font-scale,1))",
                 fontWeight: "800",
               }}
             >
@@ -861,7 +859,7 @@ const totalHalaqat =
               style={{
                 margin: "4px 0 0",
                 color: "#8a918d",
-                fontSize: "12px",
+                fontSize: "calc(12px * var(--app-font-scale,1))",
               }}
             >
               عرض {filteredMosques.length} من{" "}
@@ -887,7 +885,7 @@ const totalHalaqat =
               display: "grid",
               gridTemplateColumns:
                 "repeat(auto-fit, minmax(290px, 1fr))",
-              gap: "16px",
+              gap: "calc(16px * var(--app-density,1))",
             }}
           >
             {filteredMosques.map((mosque) => (
@@ -952,7 +950,7 @@ function FormField({
           placeholder={placeholder}
           style={{
             ...inputStyle,
-            paddingRight: "42px",
+            paddingRight: "calc(42px * var(--app-density,1))",
             opacity: disabled ? 0.7 : 1,
           }}
         />
@@ -981,8 +979,8 @@ function MosqueCard({
         background: "#fff",
         border:
           "1px solid #e4e8e4",
-        borderRadius: "18px",
-        padding: "18px",
+        borderRadius: "calc(18px * var(--app-radius-scale,1))",
+        padding: "calc(18px * var(--app-density,1))",
         boxShadow:
           "0 5px 18px rgba(0,0,0,0.04)",
         transition:
@@ -992,7 +990,7 @@ function MosqueCard({
 <div
   style={{
     display: "flex",
-    gap: 8,
+    gap: "calc(8px * var(--app-density,1))",
     marginTop: 8,
     flexWrap: "wrap",
   }}
@@ -1000,11 +998,11 @@ function MosqueCard({
   <span
     style={{
       background: "#f4f8f5",
-      padding: "4px 10px",
-      borderRadius: 20,
-      fontSize: 11,
+      padding: "calc(4px * var(--app-density,1)) calc(10px * var(--app-density,1))",
+      borderRadius: "calc(20px * var(--app-radius-scale,1))",
+      fontSize: "calc(11px * var(--app-font-scale,1))",
       fontWeight: 700,
-      color: "#0f5132",
+      color: "var(--app-color-0f5132,#0f5132)",
     }}
   >
     {(mosque.halaqat || []).length} حلقة
@@ -1016,7 +1014,7 @@ function MosqueCard({
         style={{
           display: "flex",
           alignItems: "flex-start",
-          gap: "12px",
+          gap: "calc(12px * var(--app-density,1))",
           marginBottom: "17px",
         }}
       >
@@ -1025,10 +1023,10 @@ function MosqueCard({
             width: "50px",
             height: "50px",
             flexShrink: 0,
-            borderRadius: "14px",
+            borderRadius: "calc(14px * var(--app-radius-scale,1))",
             background:
-              "linear-gradient(145deg,#edf5ef,#e2eee7)",
-            color: "#0f5132",
+              "linear-gradient(145deg,var(--app-color-edf5ef,#edf5ef),#e2eee7)",
+            color: "var(--app-color-0f5132,#0f5132)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -1049,8 +1047,8 @@ function MosqueCard({
           <h3
             style={{
               margin: 0,
-              color: "#173d2b",
-              fontSize: "17px",
+              color: "var(--app-color-173d2b,#173d2b)",
+              fontSize: "calc(17px * var(--app-font-scale,1))",
               fontWeight: "800",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -1064,7 +1062,7 @@ function MosqueCard({
             style={{
               marginTop: "5px",
               color: "#969d98",
-              fontSize: "10px",
+              fontSize: "calc(10px * var(--app-font-scale,1))",
             }}
           >
             معرف المسجد: {mosque.id}
@@ -1074,8 +1072,8 @@ function MosqueCard({
 <div
   style={{
     marginTop: 6,
-    fontSize: 11,
-    color: "#0f5132",
+    fontSize: "calc(11px * var(--app-font-scale,1))",
+    color: "var(--app-color-0f5132,#0f5132)",
     fontWeight: "700",
   }}
 >
@@ -1089,16 +1087,16 @@ function MosqueCard({
             flexShrink: 0,
             display: "inline-flex",
             alignItems: "center",
-            gap: "5px",
-            padding: "5px 8px",
-            borderRadius: "20px",
+            gap: "calc(5px * var(--app-density,1))",
+            padding: "calc(5px * var(--app-density,1)) calc(8px * var(--app-density,1))",
+            borderRadius: "calc(20px * var(--app-radius-scale,1))",
             background: hasAddress
               ? "#eaf6ee"
               : "#f4f4f4",
             color: hasAddress
-              ? "#0f5132"
+              ? "var(--app-color-0f5132,#0f5132)"
               : "#777",
-            fontSize: "10px",
+            fontSize: "calc(10px * var(--app-font-scale,1))",
             fontWeight: "700",
           }}
         >
@@ -1126,12 +1124,12 @@ function MosqueCard({
           background: "#fafbf9",
           border:
             "1px solid #eef0ed",
-          borderRadius: "12px",
-          padding: "12px",
+          borderRadius: "calc(12px * var(--app-radius-scale,1))",
+          padding: "calc(12px * var(--app-density,1))",
           minHeight: "48px",
           display: "flex",
           alignItems: "flex-start",
-          gap: "9px",
+          gap: "calc(9px * var(--app-density,1))",
           marginBottom: "17px",
         }}
       >
@@ -1154,7 +1152,7 @@ function MosqueCard({
             color: hasAddress
               ? "#59635d"
               : "#9da39f",
-            fontSize: "12px",
+            fontSize: "calc(12px * var(--app-font-scale,1))",
             lineHeight: 1.7,
           }}
         >
@@ -1169,7 +1167,7 @@ function MosqueCard({
       marginBottom: 16,
       display: "flex",
       flexWrap: "wrap",
-      gap: 6,
+      gap: "calc(6px * var(--app-density,1))",
     }}
   >
     {mosque.halaqat.map(
@@ -1180,13 +1178,13 @@ function MosqueCard({
             background:
               "#edf8f1",
             color:
-              "#0f5132",
+              "var(--app-color-0f5132,#0f5132)",
             borderRadius:
-              "20px",
+              "calc(20px * var(--app-radius-scale,1))",
             padding:
-              "4px 10px",
+              "calc(4px * var(--app-density,1)) calc(10px * var(--app-density,1))",
             fontSize:
-              "11px",
+              "calc(11px * var(--app-font-scale,1))",
             fontWeight:
               "700",
           }}
@@ -1205,7 +1203,7 @@ function MosqueCard({
           display: "grid",
           gridTemplateColumns:
             "1fr 1fr",
-          gap: "8px",
+          gap: "calc(8px * var(--app-density,1))",
         }}
       >
         <button
@@ -1269,11 +1267,11 @@ function StatCard({
         background: "#fff",
         border:
           "1px solid #e6e9e5",
-        borderRadius: "16px",
-        padding: "18px",
+        borderRadius: "calc(16px * var(--app-radius-scale,1))",
+        padding: "calc(18px * var(--app-density,1))",
         display: "flex",
         alignItems: "center",
-        gap: "13px",
+        gap: "calc(13px * var(--app-density,1))",
         boxShadow:
           "0 3px 12px rgba(0,0,0,0.03)",
       }}
@@ -1283,9 +1281,9 @@ function StatCard({
           width: "46px",
           height: "46px",
           flexShrink: 0,
-          borderRadius: "13px",
-          background: "#edf5ef",
-          color: "#0f5132",
+          borderRadius: "calc(13px * var(--app-radius-scale,1))",
+          background: "var(--app-color-edf5ef,#edf5ef)",
+          color: "var(--app-color-0f5132,#0f5132)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -1301,7 +1299,7 @@ function StatCard({
         <div
           style={{
             color: "#7e8781",
-            fontSize: "11px",
+            fontSize: "calc(11px * var(--app-font-scale,1))",
             marginBottom: "3px",
           }}
         >
@@ -1310,8 +1308,8 @@ function StatCard({
 
         <div
           style={{
-            color: "#173d2b",
-            fontSize: "24px",
+            color: "var(--app-color-173d2b,#173d2b)",
+            fontSize: "calc(24px * var(--app-font-scale,1))",
             fontWeight: "800",
           }}
         >
@@ -1336,8 +1334,8 @@ function EmptyState({
         background: "#fff",
         border:
           "1px solid #e5e8e4",
-        borderRadius: "18px",
-        padding: "55px 20px",
+        borderRadius: "calc(18px * var(--app-radius-scale,1))",
+        padding: "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
         textAlign: "center",
       }}
     >
@@ -1346,9 +1344,9 @@ function EmptyState({
           width: "64px",
           height: "64px",
           margin: "0 auto 14px",
-          borderRadius: "18px",
-          background: "#edf5ef",
-          color: "#0f5132",
+          borderRadius: "calc(18px * var(--app-radius-scale,1))",
+          background: "var(--app-color-edf5ef,#edf5ef)",
+          color: "var(--app-color-0f5132,#0f5132)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -1371,7 +1369,7 @@ function EmptyState({
         style={{
           margin: "0 0 7px",
           color: "#354139",
-          fontSize: "17px",
+          fontSize: "calc(17px * var(--app-font-scale,1))",
         }}
       >
         {search
@@ -1383,7 +1381,7 @@ function EmptyState({
         style={{
           margin: 0,
           color: "#929993",
-          fontSize: "12px",
+          fontSize: "calc(12px * var(--app-font-scale,1))",
         }}
       >
         {search
@@ -1398,12 +1396,12 @@ function EmptyState({
           style={{
             marginTop: "15px",
             border: "none",
-            background: "#0f5132",
+            background: "var(--app-color-0f5132,#0f5132)",
             color: "#fff",
-            padding: "9px 16px",
-            borderRadius: "9px",
+            padding: "calc(9px * var(--app-density,1)) calc(16px * var(--app-density,1))",
+            borderRadius: "calc(9px * var(--app-radius-scale,1))",
             cursor: "pointer",
-            fontSize: "12px",
+            fontSize: "calc(12px * var(--app-font-scale,1))",
             fontWeight: "700",
           }}
         >
@@ -1425,8 +1423,8 @@ function LoadingState() {
         background: "#fff",
         border:
           "1px solid #e5e8e4",
-        borderRadius: "18px",
-        padding: "55px 20px",
+        borderRadius: "calc(18px * var(--app-radius-scale,1))",
+        padding: "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
         textAlign: "center",
         color: "#7f8781",
       }}
@@ -1458,8 +1456,8 @@ const cardStyle = {
   background: "#fff",
   border:
     "1px solid #e5e8e4",
-  borderRadius: "18px",
-  padding: "22px",
+  borderRadius: "calc(18px * var(--app-radius-scale,1))",
+  padding: "calc(22px * var(--app-density,1))",
   marginBottom: "22px",
   boxShadow:
     "0 4px 15px rgba(0,0,0,0.035)",
@@ -1467,23 +1465,23 @@ const cardStyle = {
 
 const pageTitleStyle = {
   margin: 0,
-  color: "#173d2b",
-  fontSize: "28px",
+  color: "var(--app-color-173d2b,#173d2b)",
+  fontSize: "calc(28px * var(--app-font-scale,1))",
   fontWeight: "800",
 };
 
 const pageSubtitleStyle = {
   margin: "5px 0 0",
   color: "#818983",
-  fontSize: "13px",
+  fontSize: "calc(13px * var(--app-font-scale,1))",
 };
 
 const pageIconStyle = {
   width: "48px",
   height: "48px",
-  borderRadius: "14px",
+  borderRadius: "calc(14px * var(--app-radius-scale,1))",
   background: "#eaf3ed",
-  color: "#0f5132",
+  color: "var(--app-color-0f5132,#0f5132)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -1494,8 +1492,8 @@ const backButtonStyle = {
   height: "43px",
   border: "1px solid #e0e4df",
   background: "#fff",
-  color: "#173d2b",
-  borderRadius: "11px",
+  color: "var(--app-color-173d2b,#173d2b)",
+  borderRadius: "calc(11px * var(--app-radius-scale,1))",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
@@ -1505,14 +1503,14 @@ const backButtonStyle = {
 const headerButtonStyle = {
   border: "1px solid #dfe4e0",
   background: "#fff",
-  color: "#173d2b",
-  borderRadius: "10px",
-  padding: "9px 13px",
+  color: "var(--app-color-173d2b,#173d2b)",
+  borderRadius: "calc(10px * var(--app-radius-scale,1))",
+  padding: "calc(9px * var(--app-density,1)) calc(13px * var(--app-density,1))",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: "7px",
-  fontSize: "12px",
+  gap: "calc(7px * var(--app-density,1))",
+  fontSize: "calc(12px * var(--app-font-scale,1))",
   fontWeight: "700",
 };
 
@@ -1532,9 +1530,9 @@ const countBadgeStyle = {
 const formIconStyle = {
   width: "40px",
   height: "40px",
-  borderRadius: "11px",
-  background: "#edf5ef",
-  color: "#0f5132",
+  borderRadius: "calc(11px * var(--app-radius-scale,1))",
+  background: "var(--app-color-edf5ef,#edf5ef)",
+  color: "var(--app-color-0f5132,#0f5132)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -1542,33 +1540,33 @@ const formIconStyle = {
 
 const sectionTitleStyle = {
   margin: 0,
-  color: "#173d2b",
-  fontSize: "18px",
+  color: "var(--app-color-173d2b,#173d2b)",
+  fontSize: "calc(18px * var(--app-font-scale,1))",
   fontWeight: "800",
 };
 
 const sectionSubtitleStyle = {
   margin: "4px 0 0",
   color: "#8a918d",
-  fontSize: "11px",
+  fontSize: "calc(11px * var(--app-font-scale,1))",
 };
 
 const labelStyle = {
   display: "block",
   marginBottom: "7px",
   color: "#465149",
-  fontSize: "12px",
+  fontSize: "calc(12px * var(--app-font-scale,1))",
   fontWeight: "700",
 };
 
 const inputStyle = {
   width: "100%",
   height: "46px",
-  padding: "0 12px",
+  padding: "0 calc(12px * var(--app-density,1))",
   border: "1px solid #d9ded9",
-  borderRadius: "10px",
+  borderRadius: "calc(10px * var(--app-radius-scale,1))",
   outline: "none",
-  fontSize: "13px",
+  fontSize: "calc(13px * var(--app-font-scale,1))",
   boxSizing: "border-box",
   background: "#fff",
   color: "#26332c",
@@ -1577,30 +1575,30 @@ const inputStyle = {
 const primaryButtonStyle = {
   border:"none",
   background:
-    "linear-gradient(135deg,#0F766E,#115E59)",
+    "linear-gradient(135deg,var(--app-color-0f766e,#0F766E),var(--app-color-115e59,#115E59))",
   color:"#fff",
-  borderRadius:"18px",
-  padding:"14px 24px",
+  borderRadius:"calc(18px * var(--app-radius-scale,1))",
+  padding:"calc(14px * var(--app-density,1)) calc(24px * var(--app-density,1))",
   minHeight:"52px",
   display:"inline-flex",
   alignItems:"center",
   justifyContent:"center",
-  gap:"10px",
-  fontSize:"14px",
+  gap:"calc(10px * var(--app-density,1))",
+  fontSize:"calc(14px * var(--app-font-scale,1))",
   fontWeight:"800",
   boxShadow:
-    "0 10px 25px rgba(15,118,110,.22)",
+    "0 10px 25px color-mix(in srgb,var(--app-color-0f766e,#0f766e) 22%,transparent)",
   transition:"all .25s ease"
 };
 const secondaryButtonStyle = {
   border:"1px solid #DCE3E8",
   background:"#FFFFFF",
   color:"#334155",
-  borderRadius:"18px",
-  padding:"14px 22px",
+  borderRadius:"calc(18px * var(--app-radius-scale,1))",
+  padding:"calc(14px * var(--app-density,1)) calc(22px * var(--app-density,1))",
   minHeight:"52px",
   cursor:"pointer",
-  fontSize:"14px",
+  fontSize:"calc(14px * var(--app-font-scale,1))",
   fontWeight:"700",
   boxShadow:
     "0 4px 14px rgba(15,23,42,.04)"
@@ -1610,14 +1608,14 @@ const cancelButtonStyle = {
   border:"1px solid #E2E8F0",
   background:"#FFFFFF",
   color:"#64748B",
-  borderRadius:"16px",
-  padding:"12px 18px",
+  borderRadius:"calc(16px * var(--app-radius-scale,1))",
+  padding:"calc(12px * var(--app-density,1)) calc(18px * var(--app-density,1))",
   minHeight:"48px",
   cursor:"pointer",
   display:"inline-flex",
   alignItems:"center",
-  gap:"8px",
-  fontSize:"13px",
+  gap:"calc(8px * var(--app-density,1))",
+  fontSize:"calc(13px * var(--app-font-scale,1))",
   fontWeight:"700"
 };
 
@@ -1629,7 +1627,7 @@ const clearSearchButtonStyle = {
   width:"34px",
   height:"34px",
   border:"none",
-  borderRadius:"10px",
+  borderRadius:"calc(10px * var(--app-radius-scale,1))",
   background:"#F8FAFC",
   color:"#64748B",
   cursor:"pointer",
@@ -1642,7 +1640,7 @@ const editButtonStyle = {
   border:"1px solid #BFDBFE",
   background:"#EFF6FF",
   color:"#2563EB",
-  borderRadius:"14px",
+  borderRadius:"calc(14px * var(--app-radius-scale,1))",
   width:"42px",
   height:"42px",
   display:"flex",
@@ -1656,7 +1654,7 @@ const deleteButtonStyle = {
   border:"1px solid #FECACA",
   background:"#FEF2F2",
   color:"#DC2626",
-  borderRadius:"14px",
+  borderRadius:"calc(14px * var(--app-radius-scale,1))",
   width:"42px",
   height:"42px",
   display:"flex",

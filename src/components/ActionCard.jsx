@@ -11,13 +11,13 @@ export default function ActionCard({
       style={{
         border: "1px solid #e5e8e4",
         background: "#fff",
-        borderRadius: "15px",
-        padding: "17px",
+        borderRadius: "calc(15px * var(--app-radius-scale,1))",
+        padding: "calc(17px * var(--app-density,1))",
         cursor: "pointer",
         textAlign: "right",
         display: "flex",
         alignItems: "center",
-        gap: "12px",
+        gap: "calc(12px * var(--app-density,1))",
         width: "100%",
         boxShadow:
           "0 3px 12px rgba(0,0,0,0.035)",
@@ -28,9 +28,9 @@ export default function ActionCard({
           width: "43px",
           height: "43px",
           flexShrink: 0,
-          borderRadius: "12px",
-          background: "#edf5ef",
-          color: "#0f5132",
+          borderRadius: "calc(12px * var(--app-radius-scale,1))",
+          background: "var(--app-color-edf5ef,#edf5ef)",
+          color: "var(--app-color-0f5132,#0f5132)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -47,9 +47,9 @@ export default function ActionCard({
       >
         <div
           style={{
-            color: "#173d2b",
+            color: "var(--app-color-173d2b,#173d2b)",
             fontWeight: "800",
-            fontSize: "13px",
+            fontSize: "calc(13px * var(--app-font-scale,1))",
             marginBottom: "4px",
           }}
         >
@@ -59,7 +59,7 @@ export default function ActionCard({
         <div
           style={{
             color: "#8a918d",
-            fontSize: "10px",
+            fontSize: "calc(10px * var(--app-font-scale,1))",
           }}
         >
           {description}

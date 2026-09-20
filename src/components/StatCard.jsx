@@ -11,7 +11,7 @@ export default function StatCard({
     <div
       style={{
         ...theme.card,
-        padding: 24,
+        padding: "calc(24px * var(--app-density,1))",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -21,7 +21,7 @@ export default function StatCard({
         <div
           style={{
             color: theme.colors.textMuted,
-            fontSize: 14,
+            fontSize: "calc(14px * var(--app-font-scale,1))",
             fontWeight: 600,
           }}
         >
@@ -31,7 +31,7 @@ export default function StatCard({
         <div
           style={{
             marginTop: 10,
-            fontSize: 34,
+            fontSize: "calc(34px * var(--app-font-scale,1))",
             fontWeight: 900,
             color: theme.colors.text,
           }}
@@ -43,7 +43,7 @@ export default function StatCard({
           <div
             style={{
               marginTop: 8,
-              fontSize: 13,
+              fontSize: "calc(13px * var(--app-font-scale,1))",
               color: theme.colors.textMuted,
             }}
           >
@@ -57,7 +57,7 @@ export default function StatCard({
           style={{
             width: 64,
             height: 64,
-            borderRadius: 20,
+            borderRadius: "calc(20px * var(--app-radius-scale,1))",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

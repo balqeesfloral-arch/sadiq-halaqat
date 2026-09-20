@@ -130,11 +130,11 @@ function AttendanceBadge({ status }) {
         display: "inline-flex",
         minHeight: 28,
         alignItems: "center",
-        paddingInline: 9,
+        paddingInline: "calc(9px * var(--app-density,1))",
         borderRadius: 999,
         background,
         color,
-        fontSize: 9,
+        fontSize: "calc(9px * var(--app-font-scale,1))",
         fontWeight: 900,
       }}
     >

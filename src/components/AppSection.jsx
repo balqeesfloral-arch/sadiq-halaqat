@@ -24,7 +24,7 @@ export default function AppSection({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "12px",
+              gap: "calc(12px * var(--app-density,1))",
             }}
           >
             {Icon && (
@@ -32,7 +32,7 @@ export default function AppSection({
                 style={{
                   width: "42px",
                   height: "42px",
-                  borderRadius: "12px",
+                  borderRadius: "calc(12px * var(--app-radius-scale,1))",
                   background: "#eef7f1",
 
                   display: "flex",
@@ -53,7 +53,7 @@ export default function AppSection({
                   margin: 0,
                   color:
                     theme.colors.text,
-                  fontSize: "22px",
+                  fontSize: "calc(22px * var(--app-font-scale,1))",
                   fontWeight: "800",
                 }}
               >

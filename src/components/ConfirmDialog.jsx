@@ -32,7 +32,7 @@ export default function ConfirmDialog({
         alignItems: "center",
         justifyContent: "center",
 
-        padding: "20px",
+        padding: "calc(20px * var(--app-density,1))",
 
         background:
           "rgba(17, 35, 27, 0.38)",
@@ -61,9 +61,9 @@ export default function ConfirmDialog({
 
           background: "#fff",
 
-          borderRadius: "22px",
+          borderRadius: "calc(22px * var(--app-radius-scale,1))",
 
-          padding: "24px",
+          padding: "calc(24px * var(--app-density,1))",
 
           boxSizing: "border-box",
 
@@ -80,7 +80,7 @@ export default function ConfirmDialog({
           style={{
             display: "flex",
             alignItems: "flex-start",
-            gap: "13px",
+            gap: "calc(13px * var(--app-density,1))",
           }}
         >
           <div
@@ -89,7 +89,7 @@ export default function ConfirmDialog({
               height: "48px",
               flexShrink: 0,
 
-              borderRadius: "14px",
+              borderRadius: "calc(14px * var(--app-radius-scale,1))",
 
               background:
                 config.background,
@@ -115,9 +115,9 @@ export default function ConfirmDialog({
               style={{
                 margin: "2px 0 5px",
 
-                color: "#173d2b",
+                color: "var(--app-color-173d2b,#173d2b)",
 
-                fontSize: "17px",
+                fontSize: "calc(17px * var(--app-font-scale,1))",
 
                 fontWeight: "800",
               }}
@@ -131,7 +131,7 @@ export default function ConfirmDialog({
 
                 color: "#707872",
 
-                fontSize: "13px",
+                fontSize: "calc(13px * var(--app-font-scale,1))",
 
                 lineHeight: 1.8,
               }}
@@ -153,7 +153,7 @@ export default function ConfirmDialog({
 
               border: "none",
 
-              borderRadius: "9px",
+              borderRadius: "calc(9px * var(--app-radius-scale,1))",
 
               background: "#f5f6f5",
 
@@ -181,7 +181,7 @@ export default function ConfirmDialog({
             gridTemplateColumns:
               "1fr 1fr",
 
-            gap: "9px",
+            gap: "calc(9px * var(--app-density,1))",
 
             marginTop: "24px",
           }}
@@ -196,7 +196,7 @@ export default function ConfirmDialog({
               border:
                 "1px solid #dfe3e0",
 
-              borderRadius: "11px",
+              borderRadius: "calc(11px * var(--app-radius-scale,1))",
 
               background: "#fff",
 
@@ -206,7 +206,7 @@ export default function ConfirmDialog({
                 ? "not-allowed"
                 : "pointer",
 
-              fontSize: "13px",
+              fontSize: "calc(13px * var(--app-font-scale,1))",
 
               fontWeight: "700",
             }}
@@ -223,7 +223,7 @@ export default function ConfirmDialog({
 
               border: "none",
 
-              borderRadius: "11px",
+              borderRadius: "calc(11px * var(--app-radius-scale,1))",
 
               background:
                 config.buttonBackground,
@@ -234,7 +234,7 @@ export default function ConfirmDialog({
                 ? "wait"
                 : "pointer",
 
-              fontSize: "13px",
+              fontSize: "calc(13px * var(--app-font-scale,1))",
 
               fontWeight: "800",
 
@@ -244,7 +244,7 @@ export default function ConfirmDialog({
 
               justifyContent: "center",
 
-              gap: "7px",
+              gap: "calc(7px * var(--app-density,1))",
             }}
           >
             {loading ? (

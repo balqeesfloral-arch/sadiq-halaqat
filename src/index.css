@@ -7,7 +7,7 @@
 }
 
 :root {
-  --primary: #0F5132;
+  --primary: var(--app-color-0f5132,#0F5132);
   --app-primary: #0F5132;
   --app-font-size: 16px;
   --app-density: 1;

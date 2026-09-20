@@ -63,8 +63,8 @@ export default function MonthlyFilters({
     <div
       style={{
         background:"#fff",
-        borderRadius:"22px",
-        padding:"24px",
+        borderRadius:"calc(22px * var(--app-radius-scale,1))",
+        padding:"calc(24px * var(--app-density,1))",
         border:"1px solid #E2E8F0",
         marginBottom:"24px"
       }}
@@ -75,7 +75,7 @@ export default function MonthlyFilters({
           display:"grid",
           gridTemplateColumns:
             "repeat(auto-fit,minmax(260px,1fr))",
-          gap:"16px"
+          gap:"calc(16px * var(--app-density,1))"
         }}
       >
 
@@ -118,9 +118,9 @@ export default function MonthlyFilters({
           onClick={onLoad}
           style={{
             border:"none",
-            borderRadius:"14px",
+            borderRadius:"calc(14px * var(--app-radius-scale,1))",
             background:
-              "linear-gradient(135deg,#0F766E,#115E59)",
+              "linear-gradient(135deg,var(--app-color-0f766e,#0F766E),var(--app-color-115e59,#115E59))",
             color:"#fff",
             fontWeight:"900",
             cursor:"pointer",
@@ -129,7 +129,7 @@ export default function MonthlyFilters({
             display:"flex",
             alignItems:"center",
             justifyContent:"center",
-            gap:"8px"
+            gap:"calc(8px * var(--app-density,1))"
           }}
         >
           <Search size={18}/>

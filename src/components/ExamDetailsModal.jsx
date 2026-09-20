@@ -306,8 +306,8 @@ if (!teacherExam) {
     maxHeight:"92vh",
     overflowY:"auto",
     background:"#fff",
-    borderRadius:28,
-    padding:32,
+    borderRadius:"calc(28px * var(--app-radius-scale,1))",
+    padding:"calc(32px * var(--app-density,1))",
     boxShadow:"0 20px 60px rgba(0,0,0,.15)"
   }}
 >
@@ -327,8 +327,8 @@ if (!teacherExam) {
 <div
   style={{
     background:"#F8FAFC",
-    borderRadius:20,
-    padding:20,
+    borderRadius:"calc(20px * var(--app-radius-scale,1))",
+    padding:"calc(20px * var(--app-density,1))",
     marginTop:15,
     marginBottom:25
   }}
@@ -367,7 +367,7 @@ if (!teacherExam) {
   style={{
     display:"grid",
     gridTemplateColumns:"repeat(4,1fr)",
-    gap:15,
+    gap:"calc(15px * var(--app-density,1))",
     marginTop:20,
     marginBottom:25
   }}
@@ -412,10 +412,10 @@ if (!teacherExam) {
       display:"grid",
       gridTemplateColumns:
         "70px 2fr 140px 140px 140px 3fr",
-      gap:"14px",
-      padding:"14px 18px",
+      gap:"calc(14px * var(--app-density,1))",
+      padding:"calc(14px * var(--app-density,1)) calc(18px * var(--app-density,1))",
       background:"#F8FAFC",
-      borderRadius:"16px",
+      borderRadius:"calc(16px * var(--app-radius-scale,1))",
       fontWeight:"800",
       color:"#0F172A",
       marginBottom:"12px"
@@ -453,11 +453,11 @@ if (!teacherExam) {
           display:"grid",
           gridTemplateColumns:
             "70px 2fr 140px 140px 140px 3fr",
-          gap:"14px",
+          gap:"calc(14px * var(--app-density,1))",
           alignItems:"center",
-          padding:"16px 18px",
+          padding:"calc(16px * var(--app-density,1)) calc(18px * var(--app-density,1))",
           border:"1px solid #E2E8F0",
-          borderRadius:"18px",
+          borderRadius:"calc(18px * var(--app-radius-scale,1))",
           marginBottom:"12px",
           background:"#fff"
         }}
@@ -482,7 +482,7 @@ if (!teacherExam) {
             width:"100%",
             height:"46px",
             border:"1px solid #CBD5E1",
-            borderRadius:"12px",
+            borderRadius:"calc(12px * var(--app-radius-scale,1))",
             textAlign:"center",
             fontWeight:"700"
           }}
@@ -527,7 +527,7 @@ if (!teacherExam) {
                 ? "#166534"
                 : "#991B1B",
 
-              padding:"8px 14px",
+              padding:"calc(8px * var(--app-density,1)) calc(14px * var(--app-density,1))",
               borderRadius:"999px",
               fontWeight:"700"
             }}
@@ -543,8 +543,8 @@ if (!teacherExam) {
           style={{
             width:"100%",
             border:"1px solid #CBD5E1",
-            borderRadius:"12px",
-            padding:"10px",
+            borderRadius:"calc(12px * var(--app-radius-scale,1))",
+            padding:"calc(10px * var(--app-density,1))",
             resize:"vertical"
           }}
           onChange={(e)=>{
@@ -577,11 +577,11 @@ if (!teacherExam) {
         <div
           style={{
             display:"grid",
-            gap:10,
+            gap:"calc(10px * var(--app-density,1))",
            justifyContent:"space-between",
 alignItems:"center",
 marginTop:"30px",
-paddingTop:"20px",
+paddingTop:"calc(20px * var(--app-density,1))",
 borderTop:"1px solid #E2E8F0"
           }}
         >
@@ -594,12 +594,12 @@ borderTop:"1px solid #E2E8F0"
               loading
             }
             style={{
-              background:"#0F766E",
+              background:"var(--app-color-0f766e,#0F766E)",
               color:"#fff",
               border:"none",
               padding:
-              "12px 18px",
-              borderRadius:12,
+              "calc(12px * var(--app-density,1)) calc(18px * var(--app-density,1))",
+              borderRadius:"calc(12px * var(--app-radius-scale,1))",
               cursor:"pointer"
             }}
           >
@@ -621,8 +621,8 @@ borderTop:"1px solid #E2E8F0"
               color:"#fff",
               border:"none",
               padding:
-              "12px 18px",
-              borderRadius:12,
+              "calc(12px * var(--app-density,1)) calc(18px * var(--app-density,1))",
+              borderRadius:"calc(12px * var(--app-radius-scale,1))",
               cursor:"pointer"
             }}
           >
@@ -655,8 +655,8 @@ function StatCard({
     <div
       style={{
         background:"#F8FAFC",
-        borderRadius:18,
-        padding:20
+        borderRadius:"calc(18px * var(--app-radius-scale,1))",
+        padding:"calc(20px * var(--app-density,1))"
       }}
     >
 
@@ -671,7 +671,7 @@ function StatCard({
 
       <div
         style={{
-          fontSize:28,
+          fontSize:"calc(28px * var(--app-font-scale,1))",
           fontWeight:800
         }}
       >

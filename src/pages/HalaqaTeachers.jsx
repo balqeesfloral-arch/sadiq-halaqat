@@ -51,8 +51,8 @@ export default function HalaqaTeachers() {
   <div
     style={{
       minHeight: "100vh",
-      background: "#F4F7F5",
-      padding: "30px",
+      background: "var(--app-color-f4f7f5,#F4F7F5)",
+      padding: "calc(30px * var(--app-density,1))",
       direction: "rtl",
     }}
   >
@@ -61,8 +61,8 @@ export default function HalaqaTeachers() {
       style={{
         background:
           "linear-gradient(135deg,#556B2F,#3E5A22)",
-        borderRadius: "28px",
-        padding: "40px",
+        borderRadius: "calc(28px * var(--app-radius-scale,1))",
+        padding: "calc(40px * var(--app-density,1))",
         color: "#fff",
         marginBottom: "30px",
         position: "relative",
@@ -89,8 +89,8 @@ export default function HalaqaTeachers() {
         style={{
           background: "#D4AF37",
           border: "none",
-          padding: "10px 18px",
-          borderRadius: "12px",
+          padding: "calc(10px * var(--app-density,1)) calc(18px * var(--app-density,1))",
+          borderRadius: "calc(12px * var(--app-radius-scale,1))",
           cursor: "pointer",
           marginBottom: "25px",
           fontWeight: 700,
@@ -103,11 +103,11 @@ export default function HalaqaTeachers() {
       <h1
         style={{
           margin: 0,
-          fontSize: "42px",
+          fontSize: "calc(42px * var(--app-font-scale,1))",
           fontWeight: 900,
           display: "flex",
           alignItems: "center",
-          gap: "12px",
+          gap: "calc(12px * var(--app-density,1))",
         }}
       >
         <GraduationCap size={42} />
@@ -117,7 +117,7 @@ export default function HalaqaTeachers() {
       <div
         style={{
           marginTop: 12,
-          fontSize: "22px",
+          fontSize: "calc(22px * var(--app-font-scale,1))",
           color: "#F7E6A5",
         }}
       >
@@ -140,15 +140,15 @@ export default function HalaqaTeachers() {
         display: "grid",
         gridTemplateColumns:
           "repeat(auto-fit,minmax(250px,1fr))",
-        gap: "20px",
+        gap: "calc(20px * var(--app-density,1))",
         marginBottom: "25px",
       }}
     >
       <div
         style={{
           background: "#fff",
-          borderRadius: "20px",
-          padding: "24px",
+          borderRadius: "calc(20px * var(--app-radius-scale,1))",
+          padding: "calc(24px * var(--app-density,1))",
           border: "1px solid #E5E7EB",
         }}
       >
@@ -163,7 +163,7 @@ export default function HalaqaTeachers() {
 
         <div
           style={{
-            fontSize: "38px",
+            fontSize: "calc(38px * var(--app-font-scale,1))",
             fontWeight: 800,
             color: "#1F2937",
           }}
@@ -175,8 +175,8 @@ export default function HalaqaTeachers() {
       <div
         style={{
           background: "#fff",
-          borderRadius: "20px",
-          padding: "24px",
+          borderRadius: "calc(20px * var(--app-radius-scale,1))",
+          padding: "calc(24px * var(--app-density,1))",
           border: "1px solid #E5E7EB",
         }}
       >
@@ -191,7 +191,7 @@ export default function HalaqaTeachers() {
 
         <div
           style={{
-            fontSize: "20px",
+            fontSize: "calc(20px * var(--app-font-scale,1))",
             fontWeight: 700,
             color: "#16A34A",
           }}
@@ -205,18 +205,18 @@ export default function HalaqaTeachers() {
     <div
       style={{
         background: "#fff",
-        borderRadius: "24px",
+        borderRadius: "calc(24px * var(--app-radius-scale,1))",
         overflow: "hidden",
         border: "1px solid #E5E7EB",
       }}
     >
       <div
         style={{
-          padding: "22px",
+          padding: "calc(22px * var(--app-density,1))",
           borderBottom:
             "1px solid #E5E7EB",
           fontWeight: 800,
-          fontSize: "18px",
+          fontSize: "calc(18px * var(--app-font-scale,1))",
         }}
       >
         قائمة المعلمين
@@ -231,7 +231,7 @@ export default function HalaqaTeachers() {
               justifyContent:
                 "space-between",
               alignItems: "center",
-              padding: "18px 22px",
+              padding: "calc(18px * var(--app-density,1)) calc(22px * var(--app-density,1))",
               borderBottom:
                 "1px solid #F1F5F9",
             }}
@@ -240,7 +240,7 @@ export default function HalaqaTeachers() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "15px",
+                gap: "calc(15px * var(--app-density,1))",
               }}
             >
               <div
@@ -264,7 +264,7 @@ export default function HalaqaTeachers() {
                 <div
                   style={{
                     fontWeight: 700,
-                    fontSize: "16px",
+                    fontSize: "calc(16px * var(--app-font-scale,1))",
                   }}
                 >
                   {teacher.full_name}
@@ -272,7 +272,7 @@ export default function HalaqaTeachers() {
 
                 <div
                   style={{
-                    fontSize: "13px",
+                    fontSize: "calc(13px * var(--app-font-scale,1))",
                     color: "#6B7280",
                   }}
                 >
@@ -287,11 +287,11 @@ export default function HalaqaTeachers() {
                   "#EEF4EE",
                 color: "#556B2F",
                 padding:
-                  "8px 14px",
+                  "calc(8px * var(--app-density,1)) calc(14px * var(--app-density,1))",
                 borderRadius:
                   "999px",
                 fontWeight: 700,
-                fontSize: "13px",
+                fontSize: "calc(13px * var(--app-font-scale,1))",
               }}
             >
               معلم
@@ -303,7 +303,7 @@ export default function HalaqaTeachers() {
       {teachers.length === 0 && (
         <div
           style={{
-            padding: "60px",
+            padding: "calc(60px * var(--app-density,1))",
             textAlign: "center",
             color: "#6B7280",
           }}

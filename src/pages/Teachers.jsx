@@ -797,7 +797,7 @@ function editTeacher(teacher) {
         background:
           "linear-gradient(135deg,#f7f5ef 0%,#f0f5f1 50%,#f8f6f0 100%)",
         padding:
-          "28px",
+          "calc(28px * var(--app-density,1))",
         boxSizing:
           "border-box",
         color:
@@ -825,7 +825,7 @@ function editTeacher(teacher) {
             alignItems:
               "center",
             gap:
-              "15px",
+              "calc(15px * var(--app-density,1))",
             flexWrap:
               "wrap",
             marginBottom:
@@ -839,7 +839,7 @@ function editTeacher(teacher) {
               alignItems:
                 "center",
               gap:
-                "13px",
+                "calc(13px * var(--app-density,1))",
             }}
           >
             <button
@@ -866,9 +866,9 @@ function editTeacher(teacher) {
                 height:
                   "52px",
                 borderRadius:
-                  "15px",
+                  "calc(15px * var(--app-radius-scale,1))",
                 background:
-                  "#0f5132",
+                  "var(--app-color-0f5132,#0f5132)",
                 color:
                   "#fff",
                 display:
@@ -878,7 +878,7 @@ function editTeacher(teacher) {
                 justifyContent:
                   "center",
                 boxShadow:
-                  "0 8px 20px rgba(15,81,50,.16)",
+                  "0 8px 20px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 16%,transparent)",
               }}
             >
               <GraduationCap
@@ -895,9 +895,9 @@ function editTeacher(teacher) {
                   margin:
                     0,
                   color:
-                    "#173d2b",
+                    "var(--app-color-173d2b,#173d2b)",
                   fontSize:
-                    "29px",
+                    "calc(29px * var(--app-font-scale,1))",
                   fontWeight:
                     "850",
                 }}
@@ -912,7 +912,7 @@ function editTeacher(teacher) {
                   color:
                     "#7d8680",
                   fontSize:
-                    "13px",
+                    "calc(13px * var(--app-font-scale,1))",
                 }}
               >
                 إدارة بيانات المعلمين وربطهم بالحلقات
@@ -920,7 +920,7 @@ function editTeacher(teacher) {
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "9px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "calc(9px * var(--app-density,1))", flexWrap: "wrap" }}>
             <button
               type="button"
               onClick={() => loadData(true)}
@@ -956,7 +956,7 @@ function editTeacher(teacher) {
             gridTemplateColumns:
               "repeat(auto-fit,minmax(210px,1fr))",
             gap:
-              "14px",
+              "calc(14px * var(--app-density,1))",
             marginBottom:
               "22px",
           }}
@@ -1019,7 +1019,7 @@ function editTeacher(teacher) {
             ...cardStyle,
             marginBottom: "20px",
             background:
-              "linear-gradient(135deg,#0A3C36 0%,#0F5148 72%,#12685B 100%)",
+              "linear-gradient(135deg,#0A3C36 0%,#0F5148 72%,var(--app-color-12685b,#12685B) 100%)",
             color: "#fff",
             border: "1px solid rgba(200,168,75,.24)",
             overflow: "hidden",
@@ -1030,7 +1030,7 @@ function editTeacher(teacher) {
             style={{
               display: "grid",
               gridTemplateColumns: "minmax(260px,1.2fr) minmax(300px,2fr)",
-              gap: "18px",
+              gap: "calc(18px * var(--app-density,1))",
               alignItems: "center",
             }}
           >
@@ -1039,9 +1039,9 @@ function editTeacher(teacher) {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "7px",
+                  gap: "calc(7px * var(--app-density,1))",
                   color: "#F1D681",
-                  fontSize: "11px",
+                  fontSize: "calc(11px * var(--app-font-scale,1))",
                   fontWeight: "900",
                   marginBottom: "7px",
                 }}
@@ -1050,7 +1050,7 @@ function editTeacher(teacher) {
                 مركز الإدارة والمتابعة
               </div>
 
-              <h2 style={{ margin: 0, fontSize: "21px", fontWeight: "900" }}>
+              <h2 style={{ margin: 0, fontSize: "calc(21px * var(--app-font-scale,1))", fontWeight: "900" }}>
                 نظرة ذكية على هيئة التعليم
               </h2>
 
@@ -1058,7 +1058,7 @@ function editTeacher(teacher) {
                 style={{
                   margin: "7px 0 0",
                   color: "rgba(255,255,255,.68)",
-                  fontSize: "12px",
+                  fontSize: "calc(12px * var(--app-font-scale,1))",
                   lineHeight: "1.8",
                 }}
               >
@@ -1072,7 +1072,7 @@ function editTeacher(teacher) {
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))",
-                gap: "9px",
+                gap: "calc(9px * var(--app-density,1))",
               }}
             >
               <SmartMetric
@@ -1105,7 +1105,7 @@ function editTeacher(teacher) {
           style={{
             ...cardStyle,
             padding:
-              "15px",
+              "calc(15px * var(--app-density,1))",
             marginBottom:
               "20px",
           }}
@@ -1117,7 +1117,7 @@ function editTeacher(teacher) {
               gridTemplateColumns:
                 "minmax(250px,1fr) 210px",
               gap:
-                "10px",
+                "calc(10px * var(--app-density,1))",
             }}
           >
             <div
@@ -1155,7 +1155,7 @@ function editTeacher(teacher) {
                 style={{
                   ...inputStyle,
                   paddingRight:
-                    "43px",
+                    "calc(43px * var(--app-density,1))",
                 }}
               />
             </div>
@@ -1211,9 +1211,9 @@ function editTeacher(teacher) {
                 margin:
                   0,
                 color:
-                  "#173d2b",
+                  "var(--app-color-173d2b,#173d2b)",
                 fontSize:
-                  "20px",
+                  "calc(20px * var(--app-font-scale,1))",
               }}
             >
               قائمة المعلمين
@@ -1226,7 +1226,7 @@ function editTeacher(teacher) {
                 color:
                   "#89918c",
                 fontSize:
-                  "12px",
+                  "calc(12px * var(--app-font-scale,1))",
               }}
             >
               عرض{" "}
@@ -1269,7 +1269,7 @@ function editTeacher(teacher) {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-              gap: "17px",
+              gap: "calc(17px * var(--app-density,1))",
             }}
           >
             {filteredTeachers.map(
@@ -1585,7 +1585,7 @@ function editTeacher(teacher) {
           justify-content: center;
           /* على الشاشات الكبيرة نترك مساحة السايد بار الأيمن،
              وبذلك يتمركز الـ Modal داخل مساحة المحتوى الفعلية لا داخل الشاشة كاملة */
-          padding: 22px 24px 22px 304px;
+          padding: calc(22px * var(--app-density,1)) calc(24px * var(--app-density,1)) calc(22px * var(--app-density,1)) calc(304px * var(--app-density,1));
           box-sizing: border-box;
           background:
             radial-gradient(circle at 50% 20%, rgba(17,91,77,.18), transparent 38%),
@@ -1602,7 +1602,7 @@ function editTeacher(teacher) {
           margin: 0;
           transform-origin: center center;
           border: 1px solid rgba(201,168,73,.45);
-          border-radius: 28px;
+          border-radius: calc(28px * var(--app-radius-scale,1));
           background: #FBFCFA;
           animation: teacherModalIn .24s cubic-bezier(.2,.8,.2,1);
           box-shadow:
@@ -1627,7 +1627,7 @@ function editTeacher(teacher) {
         .teacher-modal-ornament-b { top: 28px; right: -72px; }
         .teacher-modal-hero {
           position: relative;
-          padding: 25px 27px 19px;
+          padding: calc(25px * var(--app-density,1)) calc(27px * var(--app-density,1)) calc(19px * var(--app-density,1));
           overflow: hidden;
           color: #fff;
           background:
@@ -1653,12 +1653,12 @@ function editTeacher(teacher) {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          gap: 18px;
+          gap: calc(18px * var(--app-density,1));
         }
         .teacher-modal-brand {
           display: flex;
           align-items: flex-start;
-          gap: 15px;
+          gap: calc(15px * var(--app-density,1));
         }
         .teacher-modal-brand-icon {
           width: 55px;
@@ -1667,7 +1667,7 @@ function editTeacher(teacher) {
           display: grid;
           place-items: center;
           border: 1px solid rgba(239,211,127,.45);
-          border-radius: 17px;
+          border-radius: calc(17px * var(--app-radius-scale,1));
           color: #F2D57D;
           background: rgba(255,255,255,.08);
           box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
@@ -1675,15 +1675,15 @@ function editTeacher(teacher) {
         .teacher-modal-eyebrow {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
           margin-bottom: 5px;
           color: #E9CC72;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 900;
         }
         .teacher-modal-brand h2 {
           margin: 0;
-          font-size: 25px;
+          font-size: calc(25px * var(--app-font-scale,1));
           font-weight: 950;
           letter-spacing: -.02em;
         }
@@ -1691,7 +1691,7 @@ function editTeacher(teacher) {
           max-width: 620px;
           margin: 6px 0 0;
           color: rgba(255,255,255,.66);
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           line-height: 1.8;
         }
         .teacher-modal-close {
@@ -1701,7 +1701,7 @@ function editTeacher(teacher) {
           display: grid;
           place-items: center;
           border: 1px solid rgba(255,255,255,.16);
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
           color: #fff;
           background: rgba(255,255,255,.08);
           cursor: pointer;
@@ -1715,20 +1715,20 @@ function editTeacher(teacher) {
           position: relative;
           z-index: 3;
           display: flex;
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
           flex-wrap: wrap;
           margin-top: 20px;
         }
         .teacher-modal-steps span {
           display: inline-flex;
           align-items: center;
-          gap: 7px;
-          padding: 7px 10px;
+          gap: calc(7px * var(--app-density,1));
+          padding: calc(7px * var(--app-density,1)) calc(10px * var(--app-density,1));
           border: 1px solid rgba(255,255,255,.11);
           border-radius: 999px;
           color: rgba(255,255,255,.56);
           background: rgba(255,255,255,.045);
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 800;
         }
         .teacher-modal-steps span.active {
@@ -1737,18 +1737,18 @@ function editTeacher(teacher) {
           background: rgba(233,204,114,.09);
         }
         .teacher-modal-steps b {
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           opacity: .75;
         }
-        .teacher-modal-body { padding: 21px 27px 24px; }
+        .teacher-modal-body { padding: calc(21px * var(--app-density,1)) calc(27px * var(--app-density,1)) calc(24px * var(--app-density,1)); }
         .teacher-number-card {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
           margin-bottom: 23px;
-          padding: 13px 15px;
+          padding: calc(13px * var(--app-density,1)) calc(15px * var(--app-density,1));
           border: 1px solid #E6D8AA;
-          border-radius: 16px;
+          border-radius: calc(16px * var(--app-radius-scale,1));
           background:
             linear-gradient(135deg,#FFF9E8 0%,#FFFCF4 65%,#F8FBF7 100%);
           box-shadow: 0 8px 24px rgba(104,82,24,.045);
@@ -1759,7 +1759,7 @@ function editTeacher(teacher) {
           flex: 0 0 42px;
           display: grid;
           place-items: center;
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
           color: #8D6A17;
           background: rgba(211,178,79,.14);
         }
@@ -1768,37 +1768,37 @@ function editTeacher(teacher) {
         .teacher-number-copy small { display: block; }
         .teacher-number-copy span {
           color: #947C40;
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 800;
         }
         .teacher-number-copy strong {
           display: block;
           margin: 2px 0;
           color: #173D34;
-          font-size: 15px;
+          font-size: calc(15px * var(--app-font-scale,1));
           letter-spacing: .06em;
           direction: ltr;
           text-align: right;
         }
         .teacher-number-copy small {
           color: #9A9F99;
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
         .teacher-auto-badge {
           display: inline-flex;
           align-items: center;
-          gap: 5px;
-          padding: 6px 9px;
+          gap: calc(5px * var(--app-density,1));
+          padding: calc(6px * var(--app-density,1)) calc(9px * var(--app-density,1));
           border-radius: 999px;
           color: #0A6653;
           background: #E8F6EF;
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 900;
         }
         .teacher-section-head {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
           margin-bottom: 12px;
         }
         .teacher-section-gap { margin-top: 23px; }
@@ -1808,7 +1808,7 @@ function editTeacher(teacher) {
           flex: 0 0 36px;
           display: grid;
           place-items: center;
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
           color: #0C604F;
           background: #EAF5F0;
         }
@@ -1824,42 +1824,42 @@ function editTeacher(teacher) {
         .teacher-section-head span { display: block; }
         .teacher-section-head strong {
           color: #1D3D34;
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
           font-weight: 900;
         }
         .teacher-section-head span {
           margin-top: 2px;
           color: #8C9791;
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
         .teacher-selected-count {
           margin-right: auto;
-          padding: 5px 8px;
+          padding: calc(5px * var(--app-density,1)) calc(8px * var(--app-density,1));
           border-radius: 999px;
           color: #0B604F;
           background: #EAF6F0;
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 900;
         }
         .teacher-form-grid {
           display: grid;
           grid-template-columns: repeat(2,minmax(0,1fr));
-          gap: 13px;
+          gap: calc(13px * var(--app-density,1));
         }
         .teacher-halaqat-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill,minmax(210px,1fr));
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
         }
         .teacher-halaqa-choice {
           min-height: 54px;
           display: grid;
           grid-template-columns: 23px minmax(0,1fr) auto;
           align-items: center;
-          gap: 8px;
-          padding: 9px 10px;
+          gap: calc(8px * var(--app-density,1));
+          padding: calc(9px * var(--app-density,1)) calc(10px * var(--app-density,1));
           border: 1px solid #DFE7E2;
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
           color: #53615A;
           background: #fff;
           font-family: inherit;
@@ -1884,7 +1884,7 @@ function editTeacher(teacher) {
           display: grid;
           place-items: center;
           border: 1px solid #C9D7D0;
-          border-radius: 7px;
+          border-radius: calc(7px * var(--app-radius-scale,1));
         }
         .teacher-halaqa-choice.selected .teacher-halaqa-check {
           border-color: #0D5D4D;
@@ -1894,14 +1894,14 @@ function editTeacher(teacher) {
         .teacher-halaqa-name {
           overflow: hidden;
           color: inherit;
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 850;
           white-space: nowrap;
           text-overflow: ellipsis;
         }
         .teacher-halaqa-state {
           color: #A0A8A3;
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           font-weight: 800;
         }
         .teacher-halaqa-choice.selected .teacher-halaqa-state {
@@ -1912,27 +1912,27 @@ function editTeacher(teacher) {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          padding: 18px;
+          gap: calc(8px * var(--app-density,1));
+          padding: calc(18px * var(--app-density,1));
           border: 1px dashed #D8E2DC;
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
           color: #87928C;
           background: #FAFBFA;
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
         }
         .teacher-notes-area {
           width: 100%;
           min-height: 84px;
-          padding: 11px 12px;
+          padding: calc(11px * var(--app-density,1)) calc(12px * var(--app-density,1));
           box-sizing: border-box;
           resize: vertical;
           outline: none;
           border: 1px solid #DDE5E0;
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
           color: #263A33;
           background: #fff;
           font-family: inherit;
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           line-height: 1.7;
         }
         .teacher-notes-area:focus {
@@ -1946,8 +1946,8 @@ function editTeacher(teacher) {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 14px;
-          padding: 14px 27px;
+          gap: calc(14px * var(--app-density,1));
+          padding: calc(14px * var(--app-density,1)) calc(27px * var(--app-density,1));
           border-top: 1px solid #E4EAE6;
           background: rgba(255,255,255,.94);
           backdrop-filter: blur(10px);
@@ -1955,24 +1955,24 @@ function editTeacher(teacher) {
         .teacher-modal-footer-note {
           display: flex;
           align-items: center;
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
           color: #7D8983;
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 700;
         }
         .teacher-modal-footer-note svg { color: #A88731; }
         .teacher-modal-actions {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
         .teacher-cancel-btn,
         .teacher-save-btn {
           min-height: 42px;
-          padding: 0 16px;
-          border-radius: 12px;
+          padding: 0 calc(16px * var(--app-density,1));
+          border-radius: calc(12px * var(--app-radius-scale,1));
           font-family: inherit;
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 900;
           cursor: pointer;
         }
@@ -1985,7 +1985,7 @@ function editTeacher(teacher) {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
           min-width: 155px;
           border: 1px solid #0B594B;
           color: #fff;
@@ -1998,7 +1998,7 @@ function editTeacher(teacher) {
         /* عند اختفاء/تصغير السايد بار نعيد التمركز على كامل الشاشة */
         @media (max-width: 1180px) {
           .teacher-modal-backdrop {
-            padding: 18px;
+            padding: calc(18px * var(--app-density,1));
           }
           .teacher-modal-shell {
             width: min(820px, 100%);
@@ -2006,24 +2006,24 @@ function editTeacher(teacher) {
         }
 
         @media (max-width: 700px) {
-          .teacher-modal-backdrop { padding: 10px; align-items: center; justify-content: center; }
+          .teacher-modal-backdrop { padding: calc(10px * var(--app-density,1)); align-items: center; justify-content: center; }
           .teacher-modal-shell {
             max-height: 94vh;
-            border-radius: 24px;
+            border-radius: calc(24px * var(--app-radius-scale,1));
           }
-          .teacher-modal-hero { padding: 20px 17px 16px; }
+          .teacher-modal-hero { padding: calc(20px * var(--app-density,1)) calc(17px * var(--app-density,1)) calc(16px * var(--app-density,1)); }
           .teacher-modal-brand-icon {
             width: 46px; height: 46px; flex-basis: 46px;
           }
-          .teacher-modal-brand h2 { font-size: 20px; }
-          .teacher-modal-brand p { font-size: 9px; }
-          .teacher-modal-steps { gap: 5px; }
-          .teacher-modal-steps span { padding: 6px 8px; font-size: 8px; }
-          .teacher-modal-body { padding: 17px; }
+          .teacher-modal-brand h2 { font-size: calc(20px * var(--app-font-scale,1)); }
+          .teacher-modal-brand p { font-size: calc(9px * var(--app-font-scale,1)); }
+          .teacher-modal-steps { gap: calc(5px * var(--app-density,1)); }
+          .teacher-modal-steps span { padding: calc(6px * var(--app-density,1)) calc(8px * var(--app-density,1)); font-size: calc(8px * var(--app-font-scale,1)); }
+          .teacher-modal-body { padding: calc(17px * var(--app-density,1)); }
           .teacher-form-grid { grid-template-columns: 1fr; }
           .teacher-halaqat-grid { grid-template-columns: 1fr; }
           .teacher-modal-footer {
-            padding: 12px 17px;
+            padding: calc(12px * var(--app-density,1)) calc(17px * var(--app-density,1));
             align-items: stretch;
             flex-direction: column;
           }
@@ -2049,10 +2049,10 @@ function editTeacher(teacher) {
           .teacher-modal-backdrop {
             inset: 0;
             padding:
-              max(14px, env(safe-area-inset-top))
-              max(14px, env(safe-area-inset-right))
-              max(14px, env(safe-area-inset-bottom))
-              max(14px, env(safe-area-inset-left));
+              max(calc(14px * var(--app-density,1)), env(safe-area-inset-top))
+              max(calc(14px * var(--app-density,1)), env(safe-area-inset-right))
+              max(calc(14px * var(--app-density,1)), env(safe-area-inset-bottom))
+              max(calc(14px * var(--app-density,1)), env(safe-area-inset-left));
           }
 
           .teacher-modal-shell {
@@ -2067,40 +2067,40 @@ function editTeacher(teacher) {
             align-items: center;
             justify-content: center;
             padding:
-              max(10px, env(safe-area-inset-top))
-              max(10px, env(safe-area-inset-right))
-              max(10px, env(safe-area-inset-bottom))
-              max(10px, env(safe-area-inset-left));
+              max(calc(10px * var(--app-density,1)), env(safe-area-inset-top))
+              max(calc(10px * var(--app-density,1)), env(safe-area-inset-right))
+              max(calc(10px * var(--app-density,1)), env(safe-area-inset-bottom))
+              max(calc(10px * var(--app-density,1)), env(safe-area-inset-left));
           }
 
           .teacher-modal-shell {
             width: 100%;
             max-width: 560px;
             max-height: calc(100dvh - 20px);
-            border-radius: 20px;
+            border-radius: calc(20px * var(--app-radius-scale,1));
           }
 
           .teacher-modal-hero {
-            padding: 17px 14px 14px;
+            padding: calc(17px * var(--app-density,1)) calc(14px * var(--app-density,1)) calc(14px * var(--app-density,1));
           }
 
           .teacher-modal-brand {
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
           }
 
           .teacher-modal-brand-icon {
             width: 42px;
             height: 42px;
             flex-basis: 42px;
-            border-radius: 13px;
+            border-radius: calc(13px * var(--app-radius-scale,1));
           }
 
           .teacher-modal-brand h2 {
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
           }
 
           .teacher-modal-brand p {
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
             line-height: 1.6;
           }
 
@@ -2117,26 +2117,26 @@ function editTeacher(teacher) {
 
           .teacher-modal-steps span {
             flex: 0 0 auto;
-            padding: 6px 8px;
-            font-size: 8px;
+            padding: calc(6px * var(--app-density,1)) calc(8px * var(--app-density,1));
+            font-size: calc(8px * var(--app-font-scale,1));
           }
 
           .teacher-modal-body {
-            padding: 14px;
+            padding: calc(14px * var(--app-density,1));
           }
 
           .teacher-number-card {
             margin-bottom: 17px;
-            padding: 11px 12px;
+            padding: calc(11px * var(--app-density,1)) calc(12px * var(--app-density,1));
           }
 
           .teacher-number-copy strong {
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
           }
 
           .teacher-form-grid {
             grid-template-columns: 1fr;
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
           }
 
           .teacher-halaqat-grid {
@@ -2149,8 +2149,8 @@ function editTeacher(teacher) {
 
           .teacher-modal-footer {
             padding:
-              10px 14px
-              max(10px, env(safe-area-inset-bottom));
+              calc(10px * var(--app-density,1)) calc(14px * var(--app-density,1))
+              max(calc(10px * var(--app-density,1)), env(safe-area-inset-bottom));
             flex-direction: column;
             align-items: stretch;
           }
@@ -2174,16 +2174,16 @@ function editTeacher(teacher) {
 
         @media (max-width: 390px) {
           .teacher-modal-backdrop {
-            padding: 6px;
+            padding: calc(6px * var(--app-density,1));
           }
 
           .teacher-modal-shell {
             max-height: calc(100dvh - 12px);
-            border-radius: 16px;
+            border-radius: calc(16px * var(--app-radius-scale,1));
           }
 
           .teacher-modal-hero {
-            padding: 14px 11px 12px;
+            padding: calc(14px * var(--app-density,1)) calc(11px * var(--app-density,1)) calc(12px * var(--app-density,1));
           }
 
           .teacher-modal-brand p {
@@ -2191,7 +2191,7 @@ function editTeacher(teacher) {
           }
 
           .teacher-modal-body {
-            padding: 11px;
+            padding: calc(11px * var(--app-density,1));
           }
 
           .teacher-modal-close {
@@ -2210,10 +2210,10 @@ function editTeacher(teacher) {
           width: 100vw !important;
           height: 100dvh !important;
           padding:
-            max(12px, env(safe-area-inset-top))
-            max(12px, env(safe-area-inset-right))
-            max(12px, env(safe-area-inset-bottom))
-            max(12px, env(safe-area-inset-left)) !important;
+            max(calc(12px * var(--app-density,1)), env(safe-area-inset-top))
+            max(calc(12px * var(--app-density,1)), env(safe-area-inset-right))
+            max(calc(12px * var(--app-density,1)), env(safe-area-inset-bottom))
+            max(calc(12px * var(--app-density,1)), env(safe-area-inset-left)) !important;
           display: grid !important;
           place-items: center !important;
         }
@@ -2256,10 +2256,10 @@ function editTeacher(teacher) {
           display: grid !important;
           place-items: center !important;
           padding:
-            max(14px, env(safe-area-inset-top))
-            max(14px, env(safe-area-inset-right))
-            max(14px, env(safe-area-inset-bottom))
-            max(14px, env(safe-area-inset-left)) !important;
+            max(calc(14px * var(--app-density,1)), env(safe-area-inset-top))
+            max(calc(14px * var(--app-density,1)), env(safe-area-inset-right))
+            max(calc(14px * var(--app-density,1)), env(safe-area-inset-bottom))
+            max(calc(14px * var(--app-density,1)), env(safe-area-inset-left)) !important;
         }
 
         .teacher-modal-shell {
@@ -2269,7 +2269,7 @@ function editTeacher(teacher) {
           margin: 0 !important;
           align-self: center !important;
           justify-self: center !important;
-          border-radius: 22px !important;
+          border-radius: calc(22px * var(--app-radius-scale,1)) !important;
         }
 
         /* Laptop / tablet */
@@ -2288,17 +2288,17 @@ function editTeacher(teacher) {
             width: 100vw !important;
             height: 100dvh !important;
             padding:
-              max(10px, env(safe-area-inset-top))
-              max(10px, env(safe-area-inset-right))
-              max(10px, env(safe-area-inset-bottom))
-              max(10px, env(safe-area-inset-left)) !important;
+              max(calc(10px * var(--app-density,1)), env(safe-area-inset-top))
+              max(calc(10px * var(--app-density,1)), env(safe-area-inset-right))
+              max(calc(10px * var(--app-density,1)), env(safe-area-inset-bottom))
+              max(calc(10px * var(--app-density,1)), env(safe-area-inset-left)) !important;
           }
 
           .teacher-modal-shell {
             width: calc(100vw - 28px) !important;
             max-width: 540px !important;
             max-height: calc(100dvh - 28px) !important;
-            border-radius: 18px !important;
+            border-radius: calc(18px * var(--app-radius-scale,1)) !important;
           }
         }
 
@@ -2306,7 +2306,7 @@ function editTeacher(teacher) {
           .teacher-modal-shell {
             width: calc(100vw - 16px) !important;
             max-height: calc(100dvh - 16px) !important;
-            border-radius: 15px !important;
+            border-radius: calc(15px * var(--app-radius-scale,1)) !important;
           }
         }
 
@@ -2322,7 +2322,7 @@ function editTeacher(teacher) {
           max-width: none !important;
           min-width: 0 !important;
           margin: 0 !important;
-          padding: clamp(14px, 1.6vw, 28px) !important;
+          padding: clamp(calc(14px * var(--app-density,1)), 1.6vw, calc(28px * var(--app-density,1))) !important;
           overflow-x: clip !important;
         }
 
@@ -2347,38 +2347,38 @@ function editTeacher(teacher) {
         /* Compact desktop statistics instead of oversized cards */
         .teachers-stats-grid {
           grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-          gap: 10px !important;
+          gap: calc(10px * var(--app-density,1)) !important;
           margin-bottom: 14px !important;
         }
 
         .teachers-stat-card {
           min-width: 0 !important;
           min-height: 76px !important;
-          padding: 12px 14px !important;
-          border-radius: 14px !important;
-          gap: 10px !important;
+          padding: calc(12px * var(--app-density,1)) calc(14px * var(--app-density,1)) !important;
+          border-radius: calc(14px * var(--app-radius-scale,1)) !important;
+          gap: calc(10px * var(--app-density,1)) !important;
         }
 
         .teachers-stat-card > div:first-child {
           width: 38px !important;
           height: 38px !important;
           flex-basis: 38px !important;
-          border-radius: 11px !important;
+          border-radius: calc(11px * var(--app-radius-scale,1)) !important;
         }
 
         .teachers-stat-card > div:last-child > div:first-child {
-          font-size: 10px !important;
+          font-size: calc(10px * var(--app-font-scale,1)) !important;
           margin-bottom: 1px !important;
         }
 
         .teachers-stat-card > div:last-child > div:last-child {
-          font-size: 20px !important;
+          font-size: calc(20px * var(--app-font-scale,1)) !important;
           line-height: 1.05 !important;
         }
 
         /* Hero must never overflow on narrow widths */
         .teachers-smart-hero {
-          padding: 16px !important;
+          padding: calc(16px * var(--app-density,1)) !important;
           margin-bottom: 14px !important;
         }
 
@@ -2386,7 +2386,7 @@ function editTeacher(teacher) {
           width: 100% !important;
           min-width: 0 !important;
           grid-template-columns: minmax(230px, .95fr) minmax(0, 1.45fr) !important;
-          gap: 12px !important;
+          gap: calc(12px * var(--app-density,1)) !important;
         }
 
         .teachers-smart-grid > * {
@@ -2396,22 +2396,22 @@ function editTeacher(teacher) {
         .teachers-smart-metrics {
           min-width: 0 !important;
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-          gap: 8px !important;
+          gap: calc(8px * var(--app-density,1)) !important;
         }
 
         .teachers-smart-metric {
           min-width: 0 !important;
           min-height: 72px !important;
-          padding: 10px !important;
+          padding: calc(10px * var(--app-density,1)) !important;
         }
 
         .teachers-smart-metric strong {
-          font-size: 20px !important;
+          font-size: calc(20px * var(--app-font-scale,1)) !important;
         }
 
         /* Filters always fit their container */
         .teachers-filter-card {
-          padding: 10px !important;
+          padding: calc(10px * var(--app-density,1)) !important;
           margin-bottom: 14px !important;
         }
 
@@ -2419,7 +2419,7 @@ function editTeacher(teacher) {
           width: 100% !important;
           min-width: 0 !important;
           grid-template-columns: minmax(0, 1fr) minmax(150px, 190px) !important;
-          gap: 8px !important;
+          gap: calc(8px * var(--app-density,1)) !important;
         }
 
         .teachers-filter-grid > * {
@@ -2440,10 +2440,10 @@ function editTeacher(teacher) {
           place-items: center !important;
           box-sizing: border-box !important;
           padding:
-            max(12px, env(safe-area-inset-top))
-            max(12px, env(safe-area-inset-right))
-            max(12px, env(safe-area-inset-bottom))
-            max(12px, env(safe-area-inset-left)) !important;
+            max(calc(12px * var(--app-density,1)), env(safe-area-inset-top))
+            max(calc(12px * var(--app-density,1)), env(safe-area-inset-right))
+            max(calc(12px * var(--app-density,1)), env(safe-area-inset-bottom))
+            max(calc(12px * var(--app-density,1)), env(safe-area-inset-left)) !important;
           overflow: hidden !important;
         }
 
@@ -2476,26 +2476,26 @@ function editTeacher(teacher) {
           .teachers-page {
             width: 100% !important;
             max-width: 100% !important;
-            padding: 10px !important;
+            padding: calc(10px * var(--app-density,1)) !important;
             overflow-x: hidden !important;
           }
 
           .teachers-main-header {
-            gap: 10px !important;
+            gap: calc(10px * var(--app-density,1)) !important;
             margin-bottom: 12px !important;
           }
 
           .teachers-stats-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 7px !important;
+            gap: calc(7px * var(--app-density,1)) !important;
             margin-bottom: 10px !important;
           }
 
           .teachers-stat-card {
             min-height: 64px !important;
-            padding: 9px !important;
-            gap: 7px !important;
-            border-radius: 12px !important;
+            padding: calc(9px * var(--app-density,1)) !important;
+            gap: calc(7px * var(--app-density,1)) !important;
+            border-radius: calc(12px * var(--app-radius-scale,1)) !important;
           }
 
           .teachers-stat-card > div:first-child {
@@ -2509,69 +2509,69 @@ function editTeacher(teacher) {
           }
 
           .teachers-stat-card > div:last-child > div:first-child {
-            font-size: 9px !important;
+            font-size: calc(9px * var(--app-font-scale,1)) !important;
             white-space: normal !important;
           }
 
           .teachers-stat-card > div:last-child > div:last-child {
-            font-size: 18px !important;
+            font-size: calc(18px * var(--app-font-scale,1)) !important;
           }
 
           .teachers-smart-hero {
-            padding: 13px !important;
-            border-radius: 16px !important;
+            padding: calc(13px * var(--app-density,1)) !important;
+            border-radius: calc(16px * var(--app-radius-scale,1)) !important;
           }
 
           .teachers-smart-grid {
             display: grid !important;
             grid-template-columns: 1fr !important;
-            gap: 12px !important;
+            gap: calc(12px * var(--app-density,1)) !important;
           }
 
           .teachers-smart-grid h2 {
-            font-size: 18px !important;
+            font-size: calc(18px * var(--app-font-scale,1)) !important;
           }
 
           .teachers-smart-grid p {
-            font-size: 10px !important;
+            font-size: calc(10px * var(--app-font-scale,1)) !important;
             line-height: 1.65 !important;
           }
 
           .teachers-smart-metrics {
             width: 100% !important;
             grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            gap: 6px !important;
+            gap: calc(6px * var(--app-density,1)) !important;
           }
 
           .teachers-smart-metric {
             min-height: 68px !important;
-            padding: 8px !important;
-            border-radius: 11px !important;
+            padding: calc(8px * var(--app-density,1)) !important;
+            border-radius: calc(11px * var(--app-radius-scale,1)) !important;
             overflow: hidden !important;
           }
 
           .teachers-smart-metric > div:first-child {
-            gap: 3px !important;
-            font-size: 8px !important;
+            gap: calc(3px * var(--app-density,1)) !important;
+            font-size: calc(8px * var(--app-font-scale,1)) !important;
           }
 
           .teachers-smart-metric strong {
-            font-size: 17px !important;
+            font-size: calc(17px * var(--app-font-scale,1)) !important;
           }
 
           .teachers-smart-metric > span:last-child {
-            font-size: 7px !important;
+            font-size: calc(7px * var(--app-font-scale,1)) !important;
             line-height: 1.35 !important;
           }
 
           .teachers-filter-card {
-            padding: 8px !important;
+            padding: calc(8px * var(--app-density,1)) !important;
           }
 
           .teachers-filter-grid {
             display: grid !important;
             grid-template-columns: 1fr !important;
-            gap: 7px !important;
+            gap: calc(7px * var(--app-density,1)) !important;
           }
 
           .teachers-filter-grid input,
@@ -2584,7 +2584,7 @@ function editTeacher(teacher) {
 
           .teachers-list-grid {
             grid-template-columns: 1fr !important;
-            gap: 10px !important;
+            gap: calc(10px * var(--app-density,1)) !important;
           }
 
           .teacher-modal-backdrop,
@@ -2593,32 +2593,32 @@ function editTeacher(teacher) {
             width: 100vw !important;
             height: 100dvh !important;
             padding:
-              max(8px, env(safe-area-inset-top))
-              max(8px, env(safe-area-inset-right))
-              max(8px, env(safe-area-inset-bottom))
-              max(8px, env(safe-area-inset-left)) !important;
+              max(calc(8px * var(--app-density,1)), env(safe-area-inset-top))
+              max(calc(8px * var(--app-density,1)), env(safe-area-inset-right))
+              max(calc(8px * var(--app-density,1)), env(safe-area-inset-bottom))
+              max(calc(8px * var(--app-density,1)), env(safe-area-inset-left)) !important;
           }
 
           .teacher-modal-shell {
             width: min(430px, calc(100vw - 24px)) !important;
             max-width: calc(100vw - 24px) !important;
             max-height: calc(100dvh - 20px) !important;
-            border-radius: 18px !important;
+            border-radius: calc(18px * var(--app-radius-scale,1)) !important;
           }
         }
 
         @media (max-width: 420px) {
           .teachers-page {
-            padding: 7px !important;
+            padding: calc(7px * var(--app-density,1)) !important;
           }
 
           .teachers-stats-grid {
-            gap: 6px !important;
+            gap: calc(6px * var(--app-density,1)) !important;
           }
 
           .teachers-stat-card {
             min-height: 60px !important;
-            padding: 8px !important;
+            padding: calc(8px * var(--app-density,1)) !important;
           }
 
           .teachers-smart-metrics {
@@ -2633,37 +2633,37 @@ function editTeacher(teacher) {
             width: calc(100vw - 16px) !important;
             max-width: calc(100vw - 16px) !important;
             max-height: calc(100dvh - 16px) !important;
-            border-radius: 15px !important;
+            border-radius: calc(15px * var(--app-radius-scale,1)) !important;
           }
         }
 
 
         @media (max-width: 430px) {
           .teacher-modal-backdrop {
-            padding-top: 70px;
-            padding-right: 8px;
-            padding-bottom: max(8px, env(safe-area-inset-bottom));
-            padding-left: 8px;
+            padding-top: calc(70px * var(--app-density,1));
+            padding-right: calc(8px * var(--app-density,1));
+            padding-bottom: max(calc(8px * var(--app-density,1)), env(safe-area-inset-bottom));
+            padding-left: calc(8px * var(--app-density,1));
           }
           .teacher-modal-shell {
             width: 100%;
             max-height: calc(100dvh - 80px);
-            border-radius: 18px;
+            border-radius: calc(18px * var(--app-radius-scale,1));
           }
           .teacher-modal-hero {
-            padding: 17px 14px 14px;
+            padding: calc(17px * var(--app-density,1)) calc(14px * var(--app-density,1)) calc(14px * var(--app-density,1));
           }
           .teacher-modal-brand {
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
           }
           .teacher-modal-brand-icon {
             width: 40px;
             height: 40px;
             flex-basis: 40px;
-            border-radius: 13px;
+            border-radius: calc(13px * var(--app-radius-scale,1));
           }
           .teacher-modal-brand h2 {
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
           }
           .teacher-modal-steps {
             overflow-x: auto;
@@ -2677,28 +2677,28 @@ function editTeacher(teacher) {
             white-space: nowrap;
           }
           .teacher-modal-body {
-            padding: 14px;
+            padding: calc(14px * var(--app-density,1));
           }
           .teacher-modal-footer {
-            padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+            padding: calc(10px * var(--app-density,1)) calc(14px * var(--app-density,1)) max(calc(10px * var(--app-density,1)), env(safe-area-inset-bottom));
           }
         }
 
         @media (min-width: 701px) and (max-height: 760px) {
           .teacher-modal-backdrop {
-            padding-top: 82px;
-            padding-bottom: 10px;
+            padding-top: calc(82px * var(--app-density,1));
+            padding-bottom: calc(10px * var(--app-density,1));
           }
           .teacher-modal-shell {
             max-height: calc(100dvh - 92px);
           }
           .teacher-modal-hero {
-            padding-top: 18px;
-            padding-bottom: 14px;
+            padding-top: calc(18px * var(--app-density,1));
+            padding-bottom: calc(14px * var(--app-density,1));
           }
           .teacher-modal-body {
-            padding-top: 15px;
-            padding-bottom: 15px;
+            padding-top: calc(15px * var(--app-density,1));
+            padding-bottom: calc(15px * var(--app-density,1));
           }
         }
 
@@ -2722,10 +2722,10 @@ function editTeacher(teacher) {
           justify-content: center !important;
           overflow: hidden !important;
           padding:
-            104px
-            max(22px, env(safe-area-inset-right))
-            24px
-            max(22px, env(safe-area-inset-left)) !important;
+            calc(104px * var(--app-density,1))
+            max(calc(22px * var(--app-density,1)), env(safe-area-inset-right))
+            calc(24px * var(--app-density,1))
+            max(calc(22px * var(--app-density,1)), env(safe-area-inset-left)) !important;
         }
 
         .teacher-modal-shell {
@@ -2735,7 +2735,7 @@ function editTeacher(teacher) {
           max-height: calc(100dvh - 142px) !important;
           min-width: 0 !important;
           margin: 0 !important;
-          border-radius: 22px !important;
+          border-radius: calc(22px * var(--app-radius-scale,1)) !important;
           overflow-y: auto !important;
           overflow-x: hidden !important;
           overscroll-behavior: contain !important;
@@ -2743,22 +2743,22 @@ function editTeacher(teacher) {
         }
 
         .teacher-modal-hero {
-          padding: 18px 18px 15px !important;
+          padding: calc(18px * var(--app-density,1)) calc(18px * var(--app-density,1)) calc(15px * var(--app-density,1)) !important;
         }
 
         .teacher-modal-body {
-          padding: 16px 18px !important;
+          padding: calc(16px * var(--app-density,1)) calc(18px * var(--app-density,1)) !important;
         }
 
         .teacher-modal-footer {
-          padding: 10px 18px !important;
+          padding: calc(10px * var(--app-density,1)) calc(18px * var(--app-density,1)) !important;
         }
 
         /* Laptop / small desktop */
         @media (min-width: 701px) and (max-width: 1200px) {
           .teacher-modal-backdrop,
           body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
-            padding: 96px 18px 20px !important;
+            padding: calc(96px * var(--app-density,1)) calc(18px * var(--app-density,1)) calc(20px * var(--app-density,1)) !important;
           }
 
           .teacher-modal-shell {
@@ -2773,17 +2773,17 @@ function editTeacher(teacher) {
           .teacher-modal-backdrop,
           body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
             padding:
-              86px
-              max(18px, env(safe-area-inset-right))
-              max(16px, env(safe-area-inset-bottom))
-              max(18px, env(safe-area-inset-left)) !important;
+              calc(86px * var(--app-density,1))
+              max(calc(18px * var(--app-density,1)), env(safe-area-inset-right))
+              max(calc(16px * var(--app-density,1)), env(safe-area-inset-bottom))
+              max(calc(18px * var(--app-density,1)), env(safe-area-inset-left)) !important;
           }
 
           .teacher-modal-shell {
             width: min(480px, calc(100vw - 48px)) !important;
             max-width: 480px !important;
             max-height: calc(100dvh - 112px) !important;
-            border-radius: 20px !important;
+            border-radius: calc(20px * var(--app-radius-scale,1)) !important;
           }
         }
 
@@ -2794,21 +2794,21 @@ function editTeacher(teacher) {
             align-items: center !important;
             justify-content: center !important;
             padding:
-              78px
-              max(14px, env(safe-area-inset-right))
-              max(12px, env(safe-area-inset-bottom))
-              max(14px, env(safe-area-inset-left)) !important;
+              calc(78px * var(--app-density,1))
+              max(calc(14px * var(--app-density,1)), env(safe-area-inset-right))
+              max(calc(12px * var(--app-density,1)), env(safe-area-inset-bottom))
+              max(calc(14px * var(--app-density,1)), env(safe-area-inset-left)) !important;
           }
 
           .teacher-modal-shell {
             width: calc(100vw - 32px) !important;
             max-width: 430px !important;
             max-height: calc(100dvh - 100px) !important;
-            border-radius: 18px !important;
+            border-radius: calc(18px * var(--app-radius-scale,1)) !important;
           }
 
           .teacher-modal-hero {
-            padding: 15px 14px 13px !important;
+            padding: calc(15px * var(--app-density,1)) calc(14px * var(--app-density,1)) calc(13px * var(--app-density,1)) !important;
           }
 
           .teacher-modal-brand-icon {
@@ -2818,12 +2818,12 @@ function editTeacher(teacher) {
           }
 
           .teacher-modal-brand h2 {
-            font-size: 17px !important;
+            font-size: calc(17px * var(--app-font-scale,1)) !important;
             line-height: 1.35 !important;
           }
 
           .teacher-modal-brand p {
-            font-size: 8px !important;
+            font-size: calc(8px * var(--app-font-scale,1)) !important;
           }
 
           .teacher-modal-steps {
@@ -2840,22 +2840,22 @@ function editTeacher(teacher) {
           .teacher-modal-steps span {
             flex: 0 0 auto !important;
             white-space: nowrap !important;
-            padding: 6px 8px !important;
-            font-size: 8px !important;
+            padding: calc(6px * var(--app-density,1)) calc(8px * var(--app-density,1)) !important;
+            font-size: calc(8px * var(--app-font-scale,1)) !important;
           }
 
           .teacher-modal-body {
-            padding: 13px 14px !important;
+            padding: calc(13px * var(--app-density,1)) calc(14px * var(--app-density,1)) !important;
           }
 
           .teacher-number-card {
             margin-bottom: 16px !important;
-            padding: 10px 11px !important;
+            padding: calc(10px * var(--app-density,1)) calc(11px * var(--app-density,1)) !important;
           }
 
           .teacher-form-grid {
             grid-template-columns: 1fr !important;
-            gap: 9px !important;
+            gap: calc(9px * var(--app-density,1)) !important;
           }
 
           .teacher-halaqat-grid {
@@ -2868,8 +2868,8 @@ function editTeacher(teacher) {
 
           .teacher-modal-footer {
             padding:
-              9px 14px
-              max(9px, env(safe-area-inset-bottom)) !important;
+              calc(9px * var(--app-density,1)) calc(14px * var(--app-density,1))
+              max(calc(9px * var(--app-density,1)), env(safe-area-inset-bottom)) !important;
           }
 
           .teacher-modal-footer-note {
@@ -2880,7 +2880,7 @@ function editTeacher(teacher) {
             width: 100% !important;
             display: grid !important;
             grid-template-columns: .72fr 1.45fr !important;
-            gap: 8px !important;
+            gap: calc(8px * var(--app-density,1)) !important;
           }
 
           .teacher-cancel-btn,
@@ -2895,16 +2895,16 @@ function editTeacher(teacher) {
           .teacher-modal-backdrop,
           body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
             padding:
-              72px
-              9px
-              max(9px, env(safe-area-inset-bottom))
-              9px !important;
+              calc(72px * var(--app-density,1))
+              calc(9px * var(--app-density,1))
+              max(calc(9px * var(--app-density,1)), env(safe-area-inset-bottom))
+              calc(9px * var(--app-density,1)) !important;
           }
 
           .teacher-modal-shell {
             width: calc(100vw - 18px) !important;
             max-height: calc(100dvh - 90px) !important;
-            border-radius: 16px !important;
+            border-radius: calc(16px * var(--app-radius-scale,1)) !important;
           }
 
           .teacher-modal-brand p {
@@ -2915,8 +2915,8 @@ function editTeacher(teacher) {
         @media (max-height: 700px) and (min-width: 521px) {
           .teacher-modal-backdrop,
           body:has(.admin-layout-sidebar:not(.collapsed)) .teacher-modal-backdrop {
-            padding-top: 84px !important;
-            padding-bottom: 12px !important;
+            padding-top: calc(84px * var(--app-density,1)) !important;
+            padding-bottom: calc(12px * var(--app-density,1)) !important;
           }
 
           .teacher-modal-shell {
@@ -2971,9 +2971,9 @@ function TeacherCard({
         background:
           "#fff",
         borderRadius:
-          "18px",
+          "calc(18px * var(--app-radius-scale,1))",
         padding:
-          "20px",
+          "calc(20px * var(--app-density,1))",
         border:
           active
             ? "1px solid #e1eae4"
@@ -2993,7 +2993,7 @@ function TeacherCard({
           alignItems:
             "flex-start",
           gap:
-            "10px",
+            "calc(10px * var(--app-density,1))",
           marginBottom:
             "17px",
         }}
@@ -3005,7 +3005,7 @@ function TeacherCard({
             alignItems:
               "center",
             gap:
-              "11px",
+              "calc(11px * var(--app-density,1))",
             minWidth:
               0,
           }}
@@ -3017,11 +3017,11 @@ function TeacherCard({
               height:
                 "52px",
               borderRadius:
-                "15px",
+                "calc(15px * var(--app-radius-scale,1))",
               background:
-                "linear-gradient(145deg,#edf5ef,#dfeae3)",
+                "linear-gradient(145deg,var(--app-color-edf5ef,#edf5ef),#dfeae3)",
               color:
-                "#0f5132",
+                "var(--app-color-0f5132,#0f5132)",
               display:
                 "flex",
               alignItems:
@@ -3051,9 +3051,9 @@ function TeacherCard({
                 margin:
                   0,
                 color:
-                  "#173d2b",
+                  "var(--app-color-173d2b,#173d2b)",
                 fontSize:
-                  "18px",
+                  "calc(18px * var(--app-font-scale,1))",
                 fontWeight:
                   "800",
                 whiteSpace:
@@ -3074,7 +3074,7 @@ function TeacherCard({
                 color:
                   "#89918c",
                 fontSize:
-                  "12px",
+                  "calc(12px * var(--app-font-scale,1))",
                 marginTop:
                   "4px",
               }}
@@ -3091,19 +3091,19 @@ function TeacherCard({
         <span
           style={{
             padding:
-              "5px 10px",
+              "calc(5px * var(--app-density,1)) calc(10px * var(--app-density,1))",
             borderRadius:
-              "20px",
+              "calc(20px * var(--app-radius-scale,1))",
             background:
               active
                 ? "#e7f5ec"
                 : "#f1f1f1",
             color:
               active
-                ? "#0f5132"
+                ? "var(--app-color-0f5132,#0f5132)"
                 : "#777",
             fontSize:
-              "11px",
+              "calc(11px * var(--app-font-scale,1))",
             fontWeight:
               "750",
             flexShrink:
@@ -3125,7 +3125,7 @@ function TeacherCard({
           gridTemplateColumns:
             "1fr 1fr",
           gap:
-            "8px",
+            "calc(8px * var(--app-density,1))",
           marginBottom:
             "15px",
         }}
@@ -3178,9 +3178,9 @@ function TeacherCard({
           border:
             "1px solid #edf0ed",
           borderRadius:
-            "13px",
+            "calc(13px * var(--app-radius-scale,1))",
           padding:
-            "13px",
+            "calc(13px * var(--app-density,1))",
           marginBottom:
             "15px",
         }}
@@ -3194,7 +3194,7 @@ function TeacherCard({
             justifyContent:
               "space-between",
             gap:
-              "8px",
+              "calc(8px * var(--app-density,1))",
             marginBottom:
               "9px",
           }}
@@ -3206,11 +3206,11 @@ function TeacherCard({
               alignItems:
                 "center",
               gap:
-                "6px",
+                "calc(6px * var(--app-density,1))",
               color:
                 "#6e7771",
               fontSize:
-                "12px",
+                "calc(12px * var(--app-font-scale,1))",
             }}
           >
             <BookOpen
@@ -3223,9 +3223,9 @@ function TeacherCard({
           <strong
             style={{
               color:
-                "#0f5132",
+                "var(--app-color-0f5132,#0f5132)",
               fontSize:
-                "13px",
+                "calc(13px * var(--app-font-scale,1))",
             }}
           >
             {
@@ -3241,7 +3241,7 @@ function TeacherCard({
               color:
                 "#999",
               fontSize:
-                "12px",
+                "calc(12px * var(--app-font-scale,1))",
             }}
           >
             لا توجد حلقات مرتبطة
@@ -3254,7 +3254,7 @@ function TeacherCard({
               flexWrap:
                 "wrap",
               gap:
-                "6px",
+                "calc(6px * var(--app-density,1))",
             }}
           >
             {teacher.halaqat.map(
@@ -3265,15 +3265,15 @@ function TeacherCard({
                   }
                   style={{
                     padding:
-                      "5px 8px",
+                      "calc(5px * var(--app-density,1)) calc(8px * var(--app-density,1))",
                     borderRadius:
-                      "8px",
+                      "calc(8px * var(--app-radius-scale,1))",
                     background:
                       "#eaf4ed",
                     color:
-                      "#0f5132",
+                      "var(--app-color-0f5132,#0f5132)",
                     fontSize:
-                      "11px",
+                      "calc(11px * var(--app-font-scale,1))",
                     fontWeight:
                       "700",
                   }}
@@ -3298,7 +3298,7 @@ function TeacherCard({
             color:
               "#747c77",
             fontSize:
-              "12px",
+              "calc(12px * var(--app-font-scale,1))",
             lineHeight:
               "1.7",
           }}
@@ -3326,7 +3326,7 @@ function TeacherCard({
           gridTemplateColumns:
             "1fr 1fr",
           gap:
-            "8px",
+            "calc(8px * var(--app-density,1))",
         }}
       >
         <button
@@ -3467,9 +3467,7 @@ function FormField({
           style={{
             ...inputStyle,
             paddingRight:
-              icon
-                ? "42px"
-                : "12px",
+              (icon) ? ("calc(42px * var(--app-density,1))") : ("calc(12px * var(--app-density,1))"),
           }}
         />
       </div>
@@ -3551,9 +3549,9 @@ function InfoBox({
         background:
           "#fafafa",
         borderRadius:
-          "10px",
+          "calc(10px * var(--app-radius-scale,1))",
         padding:
-          "10px",
+          "calc(10px * var(--app-density,1))",
         minWidth:
           0,
       }}
@@ -3565,11 +3563,11 @@ function InfoBox({
           alignItems:
             "center",
           gap:
-            "5px",
+            "calc(5px * var(--app-density,1))",
           color:
             "#8a928c",
           fontSize:
-            "10px",
+            "calc(10px * var(--app-font-scale,1))",
           marginBottom:
             "4px",
         }}
@@ -3583,7 +3581,7 @@ function InfoBox({
           color:
             "#3f4943",
           fontSize:
-            "12px",
+            "calc(12px * var(--app-font-scale,1))",
           fontWeight:
             "700",
           overflow:
@@ -3615,15 +3613,15 @@ function StatCard({
         background:
           "#fff",
         borderRadius:
-          "16px",
+          "calc(16px * var(--app-radius-scale,1))",
         padding:
-          "18px",
+          "calc(18px * var(--app-density,1))",
         display:
           "flex",
         alignItems:
           "center",
         gap:
-          "13px",
+          "calc(13px * var(--app-density,1))",
         border:
           "1px solid #e4e9e5",
         boxShadow:
@@ -3637,11 +3635,11 @@ function StatCard({
           height:
             "46px",
           borderRadius:
-            "13px",
+            "calc(13px * var(--app-radius-scale,1))",
           background:
-            "#edf5ef",
+            "var(--app-color-edf5ef,#edf5ef)",
           color:
-            "#0f5132",
+            "var(--app-color-0f5132,#0f5132)",
           display:
             "flex",
           alignItems:
@@ -3661,7 +3659,7 @@ function StatCard({
             color:
               "#818a84",
             fontSize:
-              "11px",
+              "calc(11px * var(--app-font-scale,1))",
             marginBottom:
               "3px",
           }}
@@ -3672,9 +3670,9 @@ function StatCard({
         <div
           style={{
             color:
-              "#173d2b",
+              "var(--app-color-173d2b,#173d2b)",
             fontSize:
-              "24px",
+              "calc(24px * var(--app-font-scale,1))",
             fontWeight:
               "850",
           }}
@@ -3692,8 +3690,8 @@ function SmartMetric({ label, value, note, icon }) {
     <div className="teachers-smart-metric"
       style={{
         minHeight: "92px",
-        padding: "13px",
-        borderRadius: "14px",
+        padding: "calc(13px * var(--app-density,1))",
+        borderRadius: "calc(14px * var(--app-radius-scale,1))",
         border: "1px solid rgba(255,255,255,.12)",
         background: "rgba(255,255,255,.08)",
       }}
@@ -3704,7 +3702,7 @@ function SmartMetric({ label, value, note, icon }) {
           alignItems: "center",
           justifyContent: "space-between",
           color: "rgba(255,255,255,.66)",
-          fontSize: "10px",
+          fontSize: "calc(10px * var(--app-font-scale,1))",
           fontWeight: "800",
         }}
       >
@@ -3716,7 +3714,7 @@ function SmartMetric({ label, value, note, icon }) {
           display: "block",
           marginTop: "6px",
           color: "#fff",
-          fontSize: "24px",
+          fontSize: "calc(24px * var(--app-font-scale,1))",
           lineHeight: 1,
         }}
       >
@@ -3727,7 +3725,7 @@ function SmartMetric({ label, value, note, icon }) {
           display: "block",
           marginTop: "6px",
           color: "rgba(255,255,255,.55)",
-          fontSize: "9px",
+          fontSize: "calc(9px * var(--app-font-scale,1))",
         }}
       >
         {note}
@@ -3746,7 +3744,7 @@ function LoadingState() {
       style={{
         ...cardStyle,
         padding:
-          "55px 20px",
+          "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
         textAlign:
           "center",
         color:
@@ -3764,7 +3762,7 @@ function LoadingState() {
           marginTop:
             "12px",
           fontSize:
-            "13px",
+            "calc(13px * var(--app-font-scale,1))",
         }}
       >
         جاري تحميل المعلمين...
@@ -3786,7 +3784,7 @@ function EmptyState({
       style={{
         ...cardStyle,
         padding:
-          "55px 20px",
+          "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
         textAlign:
           "center",
       }}
@@ -3800,11 +3798,11 @@ function EmptyState({
           margin:
             "0 auto 14px",
           borderRadius:
-            "17px",
+            "calc(17px * var(--app-radius-scale,1))",
           background:
-            "#edf5ef",
+            "var(--app-color-edf5ef,#edf5ef)",
           color:
-            "#0f5132",
+            "var(--app-color-0f5132,#0f5132)",
           display:
             "flex",
           alignItems:
@@ -3844,7 +3842,7 @@ function EmptyState({
           color:
             "#929993",
           fontSize:
-            "12px",
+            "calc(12px * var(--app-font-scale,1))",
         }}
       >
         {hasSearch
@@ -3901,7 +3899,7 @@ function DeleteModal({
         justifyContent:
           "center",
         padding:
-          "20px",
+          "calc(20px * var(--app-density,1))",
       }}
       onMouseDown={(e) => {
         if (
@@ -3921,9 +3919,9 @@ function DeleteModal({
           background:
             "#fff",
           borderRadius:
-            "20px",
+            "calc(20px * var(--app-radius-scale,1))",
           padding:
-            "25px",
+            "calc(25px * var(--app-density,1))",
           boxShadow:
             "0 25px 80px rgba(0,0,0,.2)",
         }}
@@ -3935,7 +3933,7 @@ function DeleteModal({
             height:
               "48px",
             borderRadius:
-              "14px",
+              "calc(14px * var(--app-radius-scale,1))",
             background:
               "#fff0ef",
             color:
@@ -3962,7 +3960,7 @@ function DeleteModal({
             color:
               "#28332d",
             fontSize:
-              "19px",
+              "calc(19px * var(--app-font-scale,1))",
           }}
         >
           حذف المعلم
@@ -3975,7 +3973,7 @@ function DeleteModal({
             color:
               "#707872",
             fontSize:
-              "13px",
+              "calc(13px * var(--app-font-scale,1))",
             lineHeight:
               "1.8",
           }}
@@ -3999,7 +3997,7 @@ function DeleteModal({
             display:
               "flex",
             gap:
-              "8px",
+              "calc(8px * var(--app-density,1))",
             marginTop:
               "22px",
           }}
@@ -4059,9 +4057,9 @@ const cardStyle = {
   background:
     "#fff",
   borderRadius:
-    "18px",
+    "calc(18px * var(--app-radius-scale,1))",
   padding:
-    "22px",
+    "calc(22px * var(--app-density,1))",
   border:
     "1px solid #e4e9e5",
   boxShadow:
@@ -4074,11 +4072,11 @@ const inputStyle = {
   height:
     "46px",
   padding:
-    "0 12px",
+    "0 calc(12px * var(--app-density,1))",
   border:
     "1px solid #d8ded9",
   borderRadius:
-    "10px",
+    "calc(10px * var(--app-radius-scale,1))",
   outline:
     "none",
   boxSizing:
@@ -4088,7 +4086,7 @@ const inputStyle = {
   color:
     "#26332c",
   fontSize:
-    "13px",
+    "calc(13px * var(--app-font-scale,1))",
   direction:
     "rtl",
 };
@@ -4099,7 +4097,7 @@ const labelStyle = {
   color:
     "#465149",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
   fontWeight:
     "750",
   marginBottom:
@@ -4110,13 +4108,13 @@ const primaryButton = {
   border:
     "none",
   background:
-    "#0f5132",
+    "var(--app-color-0f5132,#0f5132)",
   color:
     "#fff",
   borderRadius:
-    "10px",
+    "calc(10px * var(--app-radius-scale,1))",
   padding:
-    "11px 20px",
+    "calc(11px * var(--app-density,1)) calc(20px * var(--app-density,1))",
   cursor:
     "pointer",
   display:
@@ -4126,9 +4124,9 @@ const primaryButton = {
   justifyContent:
     "center",
   gap:
-    "7px",
+    "calc(7px * var(--app-density,1))",
   fontSize:
-    "13px",
+    "calc(13px * var(--app-font-scale,1))",
   fontWeight:
     "750",
 };
@@ -4141,9 +4139,9 @@ const secondaryButton = {
   color:
     "#4e5952",
   borderRadius:
-    "10px",
+    "calc(10px * var(--app-radius-scale,1))",
   padding:
-    "10px 15px",
+    "calc(10px * var(--app-density,1)) calc(15px * var(--app-density,1))",
   cursor:
     "pointer",
   display:
@@ -4153,9 +4151,9 @@ const secondaryButton = {
   justifyContent:
     "center",
   gap:
-    "7px",
+    "calc(7px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
   fontWeight:
     "700",
 };
@@ -4170,9 +4168,9 @@ const iconButtonStyle = {
   background:
     "#fff",
   color:
-    "#173d2b",
+    "var(--app-color-173d2b,#173d2b)",
   borderRadius:
-    "11px",
+    "calc(11px * var(--app-radius-scale,1))",
   cursor:
     "pointer",
   display:
@@ -4189,11 +4187,11 @@ const sectionIconStyle = {
   height:
     "41px",
   borderRadius:
-    "12px",
+    "calc(12px * var(--app-radius-scale,1))",
   background:
-    "#edf5ef",
+    "var(--app-color-edf5ef,#edf5ef)",
   color:
-    "#0f5132",
+    "var(--app-color-0f5132,#0f5132)",
   display:
     "flex",
   alignItems:
@@ -4206,13 +4204,13 @@ const actionButtonStyle = {
   border:
     "1px solid #d9e3dc",
   background:
-    "#f8fbf9",
+    "var(--app-color-f8fbf9,#f8fbf9)",
   color:
-    "#0f5132",
+    "var(--app-color-0f5132,#0f5132)",
   borderRadius:
-    "9px",
+    "calc(9px * var(--app-radius-scale,1))",
   padding:
-    "10px",
+    "calc(10px * var(--app-density,1))",
   cursor:
     "pointer",
   fontWeight:
@@ -4224,9 +4222,9 @@ const actionButtonStyle = {
   justifyContent:
     "center",
   gap:
-    "6px",
+    "calc(6px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
 };
 
 const actionSecondaryButtonStyle = {
@@ -4237,9 +4235,9 @@ const actionSecondaryButtonStyle = {
   color:
     "#59615c",
   borderRadius:
-    "9px",
+    "calc(9px * var(--app-radius-scale,1))",
   padding:
-    "10px",
+    "calc(10px * var(--app-density,1))",
   cursor:
     "pointer",
   fontWeight:
@@ -4251,9 +4249,9 @@ const actionSecondaryButtonStyle = {
   justifyContent:
     "center",
   gap:
-    "6px",
+    "calc(6px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
 };
 
 const deleteButtonStyle = {
@@ -4266,9 +4264,9 @@ const deleteButtonStyle = {
   color:
     "#b42318",
   borderRadius:
-    "9px",
+    "calc(9px * var(--app-radius-scale,1))",
   padding:
-    "10px",
+    "calc(10px * var(--app-density,1))",
   cursor:
     "pointer",
   fontWeight:
@@ -4280,7 +4278,7 @@ const deleteButtonStyle = {
   justifyContent:
     "center",
   gap:
-    "6px",
+    "calc(6px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
 };

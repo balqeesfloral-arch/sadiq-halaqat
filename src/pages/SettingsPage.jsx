@@ -1,190 +1,196 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Settings, SlidersHorizontal, Palette, Tv, Quote, ShieldCheck, Info,
-  Check, RotateCcw, Type, LayoutGrid, Sparkles, MonitorCog, Save,
-  ChevronLeft, UserCog
+  Check, RotateCcw, Type, LayoutGrid, MonitorCog, Save, ChevronLeft,
+  MousePointer2, Accessibility, History, AlertCircle,
 } from "lucide-react";
-
-import GeneralSettings from "../components/settings/GeneralSettings";
 import TVSettings from "../components/settings/TVSettings";
 import QuoteManager from "../components/settings/QuoteManager";
 import SecuritySettings from "../components/settings/SecuritySettings";
 import AboutSystem from "../components/settings/AboutSystem";
+import {
+  APPEARANCE_EVENT, DEFAULT_APPEARANCE, THEMES, applyAppAppearance,
+  readAppAppearance, saveAppAppearance,
+} from "../lib/appearance";
 import "./SettingsPage.css";
-import { applyAppAppearance, readAppAppearance, saveAppAppearance } from "../lib/appearance";
 
+const TAB_KEY = "sadiq_settings_section";
 const TABS = [
-  { key: "general", label: "الحساب والإدارة", desc: "بيانات حساب مدير النظام الظاهرة فعليًا داخل الواجهة", icon: UserCog },
-  { key: "appearance", label: "المظهر والتجربة", desc: "لون الواجهة وحجم الخط وكثافة العرض على هذا الجهاز", icon: Palette },
-  { key: "tv", label: "شاشة العرض", desc: "مدة الصفحات وعدد الطلاب ومنصة التتويج والعبارات", icon: Tv },
-  { key: "quotes", label: "العبارات التحفيزية", desc: "إدارة العبارات المستخدمة فعليًا في شاشة العرض", icon: Quote },
-  { key: "security", label: "الحساب والأمان", desc: "بيانات تسجيل الدخول وتغيير كلمة المرور", icon: ShieldCheck },
-  { key: "about", label: "معلومات النظام", desc: "إحصاءات حقيقية وحالة الاتصال بقاعدة البيانات", icon: Info },
+  { key: "general", label: "إعدادات عامة", desc: "تفضيلات الحركة والتمرير والتنقل", icon: SlidersHorizontal },
+  { key: "appearance", label: "المظهر والتجربة", desc: "ألوان الواجهة وحجم النص والمسافات", icon: Palette },
+  { key: "tv", label: "شاشة العرض", desc: "الصفحات ومنصة التتويج والعبارات", icon: Tv },
+  { key: "quotes", label: "العبارات التحفيزية", desc: "العبارات المستخدمة في شاشة العرض", icon: Quote },
+  { key: "security", label: "الحساب والأمان", desc: "تسجيل الدخول وتغيير كلمة المرور", icon: ShieldCheck },
+  { key: "about", label: "معلومات النظام", desc: "الإحصاءات وحالة الاتصال", icon: Info },
 ];
+const THEME_LABELS = { sadiq: "أخضر الصِّديق", olive: "الزيتوني", emerald: "الزمردي", navy: "الكحلي", burgundy: "العنابي", gold: "الذهبي المعتّق" };
+const FONTS = [{ id: "compact", label: "صغير", text: "14" }, { id: "normal", label: "متوسط", text: "16" }, { id: "large", label: "كبير", text: "18" }];
+const DENSITIES = [{ id: "compact", label: "مضغوط", text: "مسافات أقل" }, { id: "comfortable", label: "مريح", text: "متوازن" }, { id: "spacious", label: "واسع", text: "مسافات أوسع" }];
+const GENERAL_KEYS = ["reducedMotion", "smoothScroll", "rememberSettingsTab"];
+const APPEARANCE_KEYS = ["theme", "customColor", "fontSize", "density", "rounded"];
 
-const THEMES = [
-  { id: "sadiq", name: "أخضر الصِّدّيق", color: "#0B5D4B" },
-  { id: "olive", name: "الزيتوني", color: "#596B37" },
-  { id: "emerald", name: "الزمردي", color: "#087F5B" },
-  { id: "navy", name: "الكحلي", color: "#27445D" },
-  { id: "burgundy", name: "العنابي", color: "#713B46" },
-  { id: "gold", name: "الذهبي المعتّق", color: "#9A7425" },
-];
-const FONT_SIZES = [
-  { id: "compact", label: "صغير", value: 14 },
-  { id: "normal", label: "متوسط", value: 16 },
-  { id: "large", label: "كبير", value: 18 },
-];
-const DENSITIES = [
-  { id: "compact", label: "مضغوط", scale: .92 },
-  { id: "comfortable", label: "مريح", scale: 1 },
-  { id: "spacious", label: "واسع", scale: 1.06 },
-];
-const DEFAULT_APPEARANCE = {
-  theme: "sadiq", customColor: "#0B5D4B", fontSize: "normal",
-  density: "comfortable", rounded: true, subtleOrnaments: true,
-};
-
-export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("general");
-  const [appearance, setAppearance] = useState(readAppAppearance);
-  const [savedAppearance, setSavedAppearance] = useState(readAppAppearance);
-  const [savedFlash, setSavedFlash] = useState(false);
-
-  useEffect(() => { applyAppAppearance(appearance); }, [appearance]);
-  useEffect(() => () => { applyAppAppearance(savedAppearance); }, [savedAppearance]);
-  const activeMeta = useMemo(() => TABS.find((x) => x.key === activeTab) || TABS[0], [activeTab]);
-  const dirty = JSON.stringify(appearance) !== JSON.stringify(savedAppearance);
-
-  function saveAppearance() {
-    saveAppAppearance(appearance);
-    setSavedAppearance(appearance);
-    setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 1600);
-  }
-
-  function renderContent() {
-    if (activeTab === "general") return <GeneralSettings />;
-    if (activeTab === "tv") return <TVSettings />;
-    if (activeTab === "quotes") return <QuoteManager />;
-    if (activeTab === "security") return <SecuritySettings />;
-    if (activeTab === "about") return <AboutSystem />;
-    return <AppearanceSettings value={appearance} onChange={setAppearance}
-      onSave={saveAppearance} onReset={() => setAppearance(DEFAULT_APPEARANCE)}
-      dirty={dirty} savedFlash={savedFlash} />;
-  }
-
-  return (
-    <div className="settings-page-pro" dir="rtl">
-      <IslamicBackdrop />
-      <header className="settings-hero-pro">
-        <div className="settings-hero-copy">
-          <span className="settings-eyebrow"><Settings size={14}/> مركز إدارة النظام</span>
-          <div className="settings-hero-title">
-            <span className="settings-hero-icon"><MonitorCog size={24}/></span>
-            <div>
-              <h1>الإعدادات</h1>
-              <p>إعدادات فعلية مرتبطة بالحساب والواجهة وشاشة العرض وبيانات النظام.</p>
-            </div>
-          </div>
-        </div>
-        <div className="settings-hero-seal" aria-hidden="true"><IslamicSeal /></div>
-      </header>
-
-      <div className="settings-layout-pro">
-        <aside className="settings-nav-pro">
-          <div className="settings-nav-head">
-            <div><span>مركز التحكم</span><small>{TABS.length} أقسام</small></div>
-            <Sparkles size={16}/>
-          </div>
-          <nav>
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              return <button key={tab.key} type="button"
-                className={`settings-nav-item ${activeTab === tab.key ? "active" : ""}`}
-                onClick={() => setActiveTab(tab.key)}>
-                <span className="settings-nav-icon"><Icon size={17}/></span>
-                <span className="settings-nav-text"><strong>{tab.label}</strong><small>{tab.desc}</small></span>
-                <ChevronLeft size={15} className="settings-nav-arrow"/>
-              </button>;
-            })}
-          </nav>
-          <div className="settings-nav-foot">
-            <ShieldCheck size={16}/>
-            <div><strong>إعدادات حقيقية</strong><small>لا توجد إعدادات نقاط أو مكافآت في هذه الصفحة.</small></div>
-          </div>
-        </aside>
-
-        <main className="settings-workspace">
-          <div className="settings-workspace-head">
-            <span className="settings-workspace-icon"><activeMeta.icon size={19}/></span>
-            <div><span>إعدادات النظام</span><h2>{activeMeta.label}</h2><p>{activeMeta.desc}</p></div>
-          </div>
-          <div className="settings-component-surface">{renderContent()}</div>
-        </main>
-      </div>
-    </div>
-  );
+function initialTab() {
+  try {
+    const key = readAppAppearance().rememberSettingsTab ? localStorage.getItem(TAB_KEY) : "general";
+    return TABS.some(tab => tab.key === key) ? key : "general";
+  } catch { return "general"; }
 }
 
-function AppearanceSettings({ value, onChange, onSave, onReset, dirty, savedFlash }) {
-  const set = (patch) => onChange({ ...value, ...patch });
-  return <div className="appearance-settings">
-    <section className="settings-panel-intro">
-      <span className="settings-panel-intro__icon"><Palette size={21}/></span>
-      <div><small>الهوية البصرية</small><h3>المظهر وتجربة الاستخدام</h3>
-        <p>هذه الخيارات تغيّر واجهة النظام على هذا الجهاز مباشرة، وليست حقولًا شكلية.</p></div>
-      <span className="real-badge">فعّال</span>
-    </section>
+export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [appearance, setAppearance] = useState(readAppAppearance);
+  const [savedAppearance, setSavedAppearance] = useState(readAppAppearance);
+  const [notice, setNotice] = useState(null);
+  const savedRef = useRef(savedAppearance);
+  const timerRef = useRef(null);
+  const activeMeta = useMemo(() => TABS.find(tab => tab.key === activeTab) || TABS[0], [activeTab]);
+  const dirty = JSON.stringify(appearance) !== JSON.stringify(savedAppearance);
+  const ActiveIcon = activeMeta.icon;
 
-    <section className="setting-pro-section">
-      <div className="setting-pro-heading"><div><Palette size={17}/><span><strong>لون النظام</strong><small>يُطبّق على متغير اللون الرئيسي للواجهة</small></span></div></div>
-      <div className="theme-swatches">
-        {THEMES.map((theme) => <button type="button" key={theme.id}
-          className={`theme-swatch ${value.theme === theme.id ? "selected" : ""}`}
-          onClick={() => set({ theme: theme.id })}>
-          <i style={{background:theme.color}}/><span><strong>{theme.name}</strong><small>{theme.color}</small></span>
-          {value.theme === theme.id && <Check size={15}/>}
-        </button>)}
-        <label className={`theme-swatch ${value.theme === "custom" ? "selected" : ""}`}>
-          <input type="color" value={value.customColor}
-            onChange={(e)=>set({theme:"custom",customColor:e.target.value})}/>
-          <span><strong>لون مخصص</strong><small>{value.customColor}</small></span>
-          {value.theme === "custom" && <Check size={15}/>}
-        </label>
+  useEffect(() => { applyAppAppearance(appearance); }, [appearance]);
+  useEffect(() => {
+    const onSaved = event => {
+      savedRef.current = event.detail;
+      setSavedAppearance(event.detail);
+      setAppearance(event.detail);
+    };
+    window.addEventListener(APPEARANCE_EVENT, onSaved);
+    return () => {
+      window.removeEventListener(APPEARANCE_EVENT, onSaved);
+      window.clearTimeout(timerRef.current);
+      // Restore the LATEST saved value only on unmount, never on a save render.
+      applyAppAppearance(savedRef.current);
+    };
+  }, []);
+  useEffect(() => {
+    try {
+      if (savedAppearance.rememberSettingsTab) localStorage.setItem(TAB_KEY, activeTab);
+      else localStorage.removeItem(TAB_KEY);
+    } catch { /* Section history is optional; appearance saving reports its own error. */ }
+  }, [activeTab, savedAppearance.rememberSettingsTab]);
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const onBeforeUnload = event => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  function update(patch) { setNotice(null); setAppearance(previous => ({ ...previous, ...patch })); }
+  function save() {
+    window.clearTimeout(timerRef.current);
+    try {
+      const next = saveAppAppearance(appearance);
+      savedRef.current = next;
+      setSavedAppearance(next);
+      setAppearance(next);
+      setNotice({ type: "success", text: "تم حفظ الإعدادات على هذا المتصفح." });
+      timerRef.current = window.setTimeout(() => setNotice(null), 4000);
+    } catch {
+      setNotice({ type: "error", text: "تعذر حفظ الإعدادات. تحقق من السماح بتخزين بيانات الموقع ثم حاول مجددًا." });
+    }
+  }
+  function reset(keys) { update(Object.fromEntries(keys.map(key => [key, DEFAULT_APPEARANCE[key]]))); }
+  const common = { value: appearance, update };
+
+  return <div className="settings-page-pro" dir="rtl">
+    <IslamicBackdrop />
+    <header className="settings-hero-pro">
+      <div>
+        <span className="settings-eyebrow"><Settings size={15} /> الصِّديق · مركز الإعدادات</span>
+        <div className="settings-hero-title">
+          <span className="settings-hero-icon"><MonitorCog size={25} /></span>
+          <div><h1>الإعدادات</h1><p>اضبط تجربة الاستخدام بما يناسبك.</p></div>
+        </div>
       </div>
-    </section>
-
-    <div className="appearance-two-col">
-      <section className="setting-pro-section">
-        <div className="setting-pro-heading"><div><Type size={17}/><span><strong>حجم الخط</strong><small>حجم النص الأساسي للنظام</small></span></div></div>
-        <div className="segmented-setting">
-          {FONT_SIZES.map(x=><button type="button" key={x.id} className={value.fontSize===x.id?"active":""} onClick={()=>set({fontSize:x.id})}><span>{x.label}</span><small>{x.value}px</small></button>)}
+      <div className="settings-hero-seal" aria-hidden="true"><IslamicSeal /></div>
+    </header>
+    <div className="settings-layout-pro">
+      <aside className="settings-nav-pro">
+        <div className="settings-nav-head"><span>أقسام الإعدادات</span><small>{TABS.length} أقسام</small></div>
+        <nav aria-label="أقسام الإعدادات">
+          {TABS.map(tab => { const Icon = tab.icon; return <button key={tab.key} type="button"
+            aria-current={activeTab === tab.key ? "page" : undefined}
+            className={`settings-nav-item ${activeTab === tab.key ? "active" : ""}`}
+            onClick={() => setActiveTab(tab.key)}>
+            <span className="settings-nav-icon"><Icon size={19} /></span>
+            <span className="settings-nav-text"><strong>{tab.label}</strong><small>{tab.desc}</small></span>
+            <ChevronLeft size={16} className="settings-nav-arrow" />
+          </button>; })}
+        </nav>
+        <div className="settings-nav-foot"><Info size={18} /><p>الإعدادات العامة والمظهر مخصّصان لهذا المتصفح.</p></div>
+      </aside>
+      <main className="settings-workspace" aria-label={activeMeta.label}>
+        <div className="settings-workspace-head"><span className="settings-workspace-icon"><ActiveIcon size={22} /></span>
+          <div><h2>{activeMeta.label}</h2><p>{activeMeta.desc}</p></div>
         </div>
-      </section>
-      <section className="setting-pro-section">
-        <div className="setting-pro-heading"><div><LayoutGrid size={17}/><span><strong>كثافة الواجهة</strong><small>المسافات بين عناصر الواجهة</small></span></div></div>
-        <div className="segmented-setting">
-          {DENSITIES.map(x=><button type="button" key={x.id} className={value.density===x.id?"active":""} onClick={()=>set({density:x.id})}><span>{x.label}</span><small>{Math.round(x.scale*100)}%</small></button>)}
+        <div className="settings-component-surface">
+          {activeTab === "general" && <GeneralPreferences {...common} />}
+          {activeTab === "appearance" && <AppearancePreferences {...common} />}
+          {activeTab === "tv" && <TVSettings />}
+          {activeTab === "quotes" && <QuoteManager />}
+          {activeTab === "security" && <SecuritySettings />}
+          {activeTab === "about" && <AboutSystem />}
+          {["general", "appearance"].includes(activeTab) && <>
+            {notice && <div className={`settings-notice ${notice.type}`} role={notice.type === "error" ? "alert" : "status"}>
+              {notice.type === "error" ? <AlertCircle size={18} /> : <Check size={18} />}{notice.text}
+            </div>}
+            <div className="settings-actions-pro">
+              <span className={`settings-save-state ${dirty ? "dirty" : ""}`}>{dirty ? "معاينة · لديك تغييرات غير محفوظة" : "الإعدادات محفوظة"}</span>
+              <div className="settings-action-buttons">
+                <button type="button" className="btn-secondary" onClick={() => reset(activeTab === "general" ? GENERAL_KEYS : APPEARANCE_KEYS)}><RotateCcw size={16} /> الافتراضي</button>
+                {dirty && <button type="button" className="btn-secondary" onClick={() => { setAppearance(savedRef.current); setNotice(null); }}>تراجع</button>}
+                <button type="button" className="btn-primary" disabled={!dirty} onClick={save}><Save size={17} /> حفظ الإعدادات</button>
+              </div>
+            </div>
+          </>}
         </div>
-      </section>
-    </div>
-
-    <div className="settings-actions-pro">
-      <button type="button" className="btn-secondary" onClick={onReset}><RotateCcw size={15}/> استعادة الافتراضي</button>
-      <button type="button" className="btn-primary" disabled={!dirty} onClick={onSave}><Save size={15}/>{savedFlash?"تم الحفظ":"حفظ المظهر"}</button>
+      </main>
     </div>
   </div>;
 }
 
-function IslamicBackdrop(){
-  return <svg className="settings-islamic-bg" viewBox="0 0 600 600" aria-hidden="true">
-    <defs><pattern id="sadiqGeo" width="72" height="72" patternUnits="userSpaceOnUse">
-      <path d="M36 3 46 26 69 36 46 46 36 69 26 46 3 36 26 26Z" fill="none" stroke="currentColor" strokeWidth="1"/>
-      <circle cx="36" cy="36" r="13" fill="none" stroke="currentColor" strokeWidth=".7"/>
-    </pattern></defs><rect width="600" height="600" fill="url(#sadiqGeo)"/>
-  </svg>;
+function GeneralPreferences({ value, update }) {
+  return <section className="setting-pro-section">
+    <div className="setting-pro-heading"><SlidersHorizontal size={20} /><div><h3>تفضيلات الاستخدام</h3><p>اختر ما يجعل التنقل والقراءة أكثر راحة لك.</p></div></div>
+    <Toggle label="تقليل الحركة" description="تخفيف الحركات والانتقالات في واجهة البرنامج." icon={Accessibility} checked={value.reducedMotion} onChange={checked => update({ reducedMotion: checked })} />
+    <Toggle label="التمرير السلس" description="انتقال سلس عند استخدام روابط وأزرار الانتقال داخل الصفحة." icon={MousePointer2} checked={value.smoothScroll} onChange={checked => update({ smoothScroll: checked })} />
+    <Toggle label="تذكّر آخر قسم في الإعدادات" description="عند العودة إلى الإعدادات، افتح القسم الذي استخدمته آخر مرة." icon={History} checked={value.rememberSettingsTab} onChange={checked => update({ rememberSettingsTab: checked })} />
+  </section>;
 }
-function IslamicSeal(){
-  return <svg viewBox="0 0 100 100"><path d="M50 4 61 27 86 14 73 39 96 50 73 61 86 86 61 73 50 96 39 73 14 86 27 61 4 50 27 39 14 14 39 27Z" fill="none" stroke="currentColor" strokeWidth="2"/><circle cx="50" cy="50" r="25" fill="none" stroke="currentColor"/><circle cx="50" cy="50" r="4" fill="currentColor"/></svg>;
+
+function AppearancePreferences({ value, update }) {
+  return <div className="appearance-settings">
+    <section className="setting-pro-section">
+      <div className="setting-pro-heading"><Palette size={20} /><div><h3>لون الواجهة</h3><p>تُعرض التغييرات مباشرة؛ احفظها للاحتفاظ بها.</p></div></div>
+      <div className="theme-swatches">
+        {Object.entries(THEMES).map(([id, color]) => <button key={id} type="button" aria-pressed={value.theme === id}
+          className={`theme-swatch ${value.theme === id ? "selected" : ""}`} onClick={() => update({ theme: id })}>
+          <i style={{ background: color }} aria-hidden="true" /><strong>{THEME_LABELS[id]}</strong>{value.theme === id && <Check size={17} />}
+        </button>)}
+        <label className={`theme-swatch ${value.theme === "custom" ? "selected" : ""}`}>
+          <input type="color" aria-label="لون مخصص" value={value.customColor} onChange={event => update({ theme: "custom", customColor: event.target.value })} />
+          <strong>لون مخصص</strong>{value.theme === "custom" && <Check size={17} />}
+        </label>
+      </div>
+    </section>
+    <div className="appearance-two-col">
+      <section className="setting-pro-section"><div className="setting-pro-heading"><Type size={20} /><h3>حجم النص</h3></div><Segments label="حجم النص" options={FONTS} value={value.fontSize} onChange={fontSize => update({ fontSize })} /></section>
+      <section className="setting-pro-section"><div className="setting-pro-heading"><LayoutGrid size={20} /><h3>كثافة الواجهة</h3></div><Segments label="كثافة الواجهة" options={DENSITIES} value={value.density} onChange={density => update({ density })} /></section>
+    </div>
+    <section className="setting-pro-section"><Toggle label="حواف مستديرة" description="استخدم حواف مستديرة للبطاقات والأزرار، أو خفّف استدارتها." icon={LayoutGrid} checked={value.rounded} onChange={rounded => update({ rounded })} /></section>
+    <div className="settings-appearance-preview"><span>معاينة المظهر</span><strong>مع كل طالب، خطوة بخطوة</strong><p>واجهة واضحة تساند المتابعة والعناية بالطالب.</p><span className="settings-preview-pill">الصِّديق</span></div>
+  </div>;
+}
+
+function Segments({ label, options, value, onChange }) {
+  return <div className="segmented-setting" role="group" aria-label={label}>{options.map(option => <button type="button" key={option.id} className={value === option.id ? "active" : ""} aria-pressed={value === option.id} onClick={() => onChange(option.id)}><span>{option.label}</span><small>{option.text}</small></button>)}</div>;
+}
+function Toggle({ label, description, checked, onChange, icon: Icon }) {
+  return <div className="settings-switch-row"><span className="settings-toggle-icon"><Icon size={20} /></span><div><strong>{label}</strong><small>{description}</small></div><button type="button" role="switch" aria-label={label} aria-checked={checked} className={`settings-switch ${checked ? "on" : ""}`} onClick={() => onChange(!checked)}><i /></button></div>;
+}
+function IslamicBackdrop() {
+  return <svg className="settings-islamic-bg" viewBox="0 0 600 600" aria-hidden="true"><defs><pattern id="sadiqSettingsGeo" width="72" height="72" patternUnits="userSpaceOnUse"><path d="M36 3 46 26 69 36 46 46 36 69 26 46 3 36 26 26Z" fill="none" stroke="currentColor" /><circle cx="36" cy="36" r="13" fill="none" stroke="currentColor" strokeWidth=".7" /></pattern></defs><rect width="600" height="600" fill="url(#sadiqSettingsGeo)" /></svg>;
+}
+function IslamicSeal() {
+  return <svg viewBox="0 0 100 100"><path d="M50 4 61 27 86 14 73 39 96 50 73 61 86 86 61 73 50 96 39 73 14 86 27 61 4 50 27 39 14 14 39 27Z" fill="none" stroke="currentColor" strokeWidth="2" /><circle cx="50" cy="50" r="25" fill="none" stroke="currentColor" /></svg>;
 }

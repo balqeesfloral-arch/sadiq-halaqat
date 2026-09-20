@@ -526,7 +526,7 @@ export default function StudentAssignments() {
           justifyContent:
             "space-between",
           alignItems: "center",
-          gap: "15px",
+          gap: "calc(15px * var(--app-density,1))",
           flexWrap: "wrap",
           marginBottom: "28px",
         }}
@@ -535,7 +535,7 @@ export default function StudentAssignments() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "13px",
+            gap: "calc(13px * var(--app-density,1))",
           }}
         >
           <button
@@ -556,16 +556,16 @@ export default function StudentAssignments() {
               width: "52px",
               height: "52px",
               borderRadius:
-                "15px",
+                "calc(15px * var(--app-radius-scale,1))",
               background:
-                "linear-gradient(145deg,#0f5132,#174f37)",
+                "linear-gradient(145deg,var(--app-color-0f5132,#0f5132),#174f37)",
               color: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent:
                 "center",
               boxShadow:
-                "0 8px 20px rgba(15,81,50,.16)",
+                "0 8px 20px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 16%,transparent)",
             }}
           >
             <Link2
@@ -578,8 +578,8 @@ export default function StudentAssignments() {
             <h1
               style={{
                 margin: 0,
-                color: "#173d2b",
-                fontSize: "29px",
+                color: "var(--app-color-173d2b,#173d2b)",
+                fontSize: "calc(29px * var(--app-font-scale,1))",
                 fontWeight: "800",
               }}
             >
@@ -591,7 +591,7 @@ export default function StudentAssignments() {
                 margin:
                   "5px 0 0",
                 color: "#7c857f",
-                fontSize: "13px",
+                fontSize: "calc(13px * var(--app-font-scale,1))",
               }}
             >
               إدارة الحلقة الحالية لكل طالب
@@ -629,17 +629,17 @@ export default function StudentAssignments() {
             border:
               "1px solid #f0cbc8",
             borderRadius:
-              "14px",
+              "calc(14px * var(--app-radius-scale,1))",
             padding:
-              "13px 15px",
+              "calc(13px * var(--app-density,1)) calc(15px * var(--app-density,1))",
             marginBottom:
               "20px",
             display: "flex",
             alignItems:
               "center",
-            gap: "9px",
+            gap: "calc(9px * var(--app-density,1))",
             color: "#a1261c",
-            fontSize: "13px",
+            fontSize: "calc(13px * var(--app-font-scale,1))",
           }}
         >
           <AlertCircle
@@ -681,7 +681,7 @@ export default function StudentAssignments() {
           display: "grid",
           gridTemplateColumns:
             "repeat(auto-fit,minmax(190px,1fr))",
-          gap: "15px",
+          gap: "calc(15px * var(--app-density,1))",
           marginBottom:
             "24px",
         }}
@@ -739,7 +739,7 @@ export default function StudentAssignments() {
             display: "flex",
             alignItems:
               "center",
-            gap: "11px",
+            gap: "calc(11px * var(--app-density,1))",
             marginBottom:
               "18px",
           }}
@@ -749,10 +749,10 @@ export default function StudentAssignments() {
               width: "42px",
               height: "42px",
               borderRadius:
-                "12px",
+                "calc(12px * var(--app-radius-scale,1))",
               background:
-                "#edf5ef",
-              color: "#0f5132",
+                "var(--app-color-edf5ef,#edf5ef)",
+              color: "var(--app-color-0f5132,#0f5132)",
               display: "flex",
               alignItems:
                 "center",
@@ -769,8 +769,8 @@ export default function StudentAssignments() {
             <h2
               style={{
                 margin: 0,
-                color: "#173d2b",
-                fontSize: "19px",
+                color: "var(--app-color-173d2b,#173d2b)",
+                fontSize: "calc(19px * var(--app-font-scale,1))",
               }}
             >
               ربط طالب بحلقة
@@ -781,7 +781,7 @@ export default function StudentAssignments() {
                 margin:
                   "4px 0 0",
                 color: "#858d88",
-                fontSize: "12px",
+                fontSize: "calc(12px * var(--app-font-scale,1))",
               }}
             >
               اختر الطالب والحلقة لإضافة
@@ -795,7 +795,7 @@ export default function StudentAssignments() {
             display: "grid",
             gridTemplateColumns:
               "1fr 1fr auto",
-            gap: "12px",
+            gap: "calc(12px * var(--app-density,1))",
             alignItems:
               "end",
           }}
@@ -884,16 +884,16 @@ export default function StudentAssignments() {
             style={{
               height: "46px",
               padding:
-                "0 20px",
+                "0 calc(20px * var(--app-density,1))",
               border: "none",
               borderRadius:
-                "10px",
+                "calc(10px * var(--app-radius-scale,1))",
               background:
                 saving ||
                 !studentId ||
                 !halaqaId
                   ? "#9aada2"
-                  : "#0f5132",
+                  : "var(--app-color-0f5132,#0f5132)",
               color: "#fff",
               cursor:
                 saving ||
@@ -906,9 +906,9 @@ export default function StudentAssignments() {
                 "center",
               justifyContent:
                 "center",
-              gap: "7px",
+              gap: "calc(7px * var(--app-density,1))",
               fontWeight: "800",
-              fontSize: "13px",
+              fontSize: "calc(13px * var(--app-font-scale,1))",
               whiteSpace:
                 "nowrap",
             }}
@@ -936,17 +936,17 @@ export default function StudentAssignments() {
             marginTop:
               "13px",
             padding:
-              "10px 12px",
+              "calc(10px * var(--app-density,1)) calc(12px * var(--app-density,1))",
             borderRadius:
-              "10px",
+              "calc(10px * var(--app-radius-scale,1))",
             background:
               "#fafbf9",
             color: "#77817b",
-            fontSize: "11px",
+            fontSize: "calc(11px * var(--app-font-scale,1))",
             display: "flex",
             alignItems:
               "center",
-            gap: "7px",
+            gap: "calc(7px * var(--app-density,1))",
           }}
         >
           <CheckCircle2
@@ -968,7 +968,7 @@ export default function StudentAssignments() {
       <section
         style={{
           ...cardStyle,
-          padding: "15px",
+          padding: "calc(15px * var(--app-density,1))",
         }}
       >
         <div
@@ -976,7 +976,7 @@ export default function StudentAssignments() {
             display: "grid",
             gridTemplateColumns:
               "minmax(250px,1fr) 240px auto",
-            gap: "10px",
+            gap: "calc(10px * var(--app-density,1))",
           }}
         >
           <div
@@ -1010,7 +1010,7 @@ export default function StudentAssignments() {
               style={{
                 ...inputStyle,
                 paddingRight:
-                  "42px",
+                  "calc(42px * var(--app-density,1))",
               }}
             />
 
@@ -1034,7 +1034,7 @@ export default function StudentAssignments() {
                   border:
                     "none",
                   borderRadius:
-                    "8px",
+                    "calc(8px * var(--app-radius-scale,1))",
                   background:
                     "#f0f2f0",
                   color:
@@ -1122,15 +1122,15 @@ export default function StudentAssignments() {
             "center",
           marginBottom:
             "14px",
-          gap: "10px",
+          gap: "calc(10px * var(--app-density,1))",
         }}
       >
         <div>
           <h2
             style={{
               margin: 0,
-              color: "#173d2b",
-              fontSize: "20px",
+              color: "var(--app-color-173d2b,#173d2b)",
+              fontSize: "calc(20px * var(--app-font-scale,1))",
             }}
           >
             الطلاب المرتبطون
@@ -1141,7 +1141,7 @@ export default function StudentAssignments() {
               margin:
                 "4px 0 0",
               color: "#8a918d",
-              fontSize: "11px",
+              fontSize: "calc(11px * var(--app-font-scale,1))",
             }}
           >
             عرض{" "}
@@ -1159,13 +1159,13 @@ export default function StudentAssignments() {
         <div
           style={{
             padding:
-              "7px 11px",
+              "calc(7px * var(--app-density,1)) calc(11px * var(--app-density,1))",
             background:
-              "#edf5ef",
-            color: "#0f5132",
+              "var(--app-color-edf5ef,#edf5ef)",
+            color: "var(--app-color-0f5132,#0f5132)",
             borderRadius:
-              "9px",
-            fontSize: "12px",
+              "calc(9px * var(--app-radius-scale,1))",
+            fontSize: "calc(12px * var(--app-font-scale,1))",
             fontWeight: "800",
           }}
         >
@@ -1195,7 +1195,7 @@ export default function StudentAssignments() {
             display: "grid",
             gridTemplateColumns:
               "repeat(auto-fit,minmax(300px,1fr))",
-            gap: "16px",
+            gap: "calc(16px * var(--app-density,1))",
           }}
         >
           {filteredAssignments.map(
@@ -1238,7 +1238,7 @@ function PageShell({
         background:
           "#f7f5ef",
         padding:
-          "28px 30px",
+          "calc(28px * var(--app-density,1)) calc(30px * var(--app-density,1))",
         boxSizing:
           "border-box",
         color:
@@ -1262,15 +1262,15 @@ function PageShell({
             linear-gradient(
               45deg,
               transparent 46%,
-              #0f5132 47%,
-              #0f5132 53%,
+              var(--app-color-0f5132,#0f5132) 47%,
+              var(--app-color-0f5132,#0f5132) 53%,
               transparent 54%
             ),
             linear-gradient(
               -45deg,
               transparent 46%,
-              #0f5132 47%,
-              #0f5132 53%,
+              var(--app-color-0f5132,#0f5132) 47%,
+              var(--app-color-0f5132,#0f5132) 53%,
               transparent 54%
             )
           `,
@@ -1319,9 +1319,9 @@ function AssignmentCard({
         border:
           "1px solid #e4e8e4",
         borderRadius:
-          "18px",
+          "calc(18px * var(--app-radius-scale,1))",
         padding:
-          "18px",
+          "calc(18px * var(--app-density,1))",
         boxShadow:
           "0 5px 18px rgba(0,0,0,.045)",
       }}
@@ -1334,7 +1334,7 @@ function AssignmentCard({
             "flex",
           alignItems:
             "center",
-          gap: "11px",
+          gap: "calc(11px * var(--app-density,1))",
           marginBottom:
             "17px",
         }}
@@ -1347,11 +1347,11 @@ function AssignmentCard({
               "49px",
             flexShrink: 0,
             borderRadius:
-              "14px",
+              "calc(14px * var(--app-radius-scale,1))",
             background:
-              "#edf5ef",
+              "var(--app-color-edf5ef,#edf5ef)",
             color:
-              "#0f5132",
+              "var(--app-color-0f5132,#0f5132)",
             display:
               "flex",
             alignItems:
@@ -1378,9 +1378,9 @@ function AssignmentCard({
             style={{
               margin: 0,
               color:
-                "#173d2b",
+                "var(--app-color-173d2b,#173d2b)",
               fontSize:
-                "17px",
+                "calc(17px * var(--app-font-scale,1))",
               fontWeight:
                 "800",
               overflow:
@@ -1402,7 +1402,7 @@ function AssignmentCard({
               color:
                 "#89918c",
               fontSize:
-                "11px",
+                "calc(11px * var(--app-font-scale,1))",
             }}
           >
             رقم الطالب:{" "}
@@ -1414,15 +1414,15 @@ function AssignmentCard({
         <span
           style={{
             padding:
-              "5px 9px",
+              "calc(5px * var(--app-density,1)) calc(9px * var(--app-density,1))",
             borderRadius:
-              "20px",
+              "calc(20px * var(--app-radius-scale,1))",
             background:
               "#e8f6ed",
             color:
-              "#0f5132",
+              "var(--app-color-0f5132,#0f5132)",
             fontSize:
-              "10px",
+              "calc(10px * var(--app-font-scale,1))",
             fontWeight:
               "800",
             whiteSpace:
@@ -1442,9 +1442,9 @@ function AssignmentCard({
           border:
             "1px solid #edf0ed",
           borderRadius:
-            "13px",
+            "calc(13px * var(--app-radius-scale,1))",
           padding:
-            "13px",
+            "calc(13px * var(--app-density,1))",
           marginBottom:
             "15px",
         }}
@@ -1454,7 +1454,7 @@ function AssignmentCard({
             color:
               "#8a928d",
             fontSize:
-              "11px",
+              "calc(11px * var(--app-font-scale,1))",
             marginBottom:
               "7px",
           }}
@@ -1469,11 +1469,11 @@ function AssignmentCard({
             alignItems:
               "center",
             gap:
-              "8px",
+              "calc(8px * var(--app-density,1))",
             color:
-              "#173d2b",
+              "var(--app-color-173d2b,#173d2b)",
             fontSize:
-              "15px",
+              "calc(15px * var(--app-font-scale,1))",
             fontWeight:
               "800",
           }}
@@ -1497,7 +1497,7 @@ function AssignmentCard({
           gridTemplateColumns:
             "1fr 1fr",
           gap:
-            "8px",
+            "calc(8px * var(--app-density,1))",
           marginBottom:
             "16px",
         }}
@@ -1545,9 +1545,9 @@ function AssignmentCard({
           color:
             "#b42318",
           borderRadius:
-            "10px",
+            "calc(10px * var(--app-radius-scale,1))",
           padding:
-            "10px",
+            "calc(10px * var(--app-density,1))",
           cursor:
             deleting
               ? "wait"
@@ -1559,9 +1559,9 @@ function AssignmentCard({
           justifyContent:
             "center",
           gap:
-            "7px",
+            "calc(7px * var(--app-density,1))",
           fontSize:
-            "12px",
+            "calc(12px * var(--app-font-scale,1))",
           fontWeight:
             "800",
         }}
@@ -1603,15 +1603,15 @@ function StatCard({
         border:
           "1px solid #e5e9e5",
         borderRadius:
-          "16px",
+          "calc(16px * var(--app-radius-scale,1))",
         padding:
-          "18px",
+          "calc(18px * var(--app-density,1))",
         display:
           "flex",
         alignItems:
           "center",
         gap:
-          "12px",
+          "calc(12px * var(--app-density,1))",
         boxShadow:
           "0 4px 14px rgba(0,0,0,.035)",
       }}
@@ -1623,11 +1623,11 @@ function StatCard({
           height:
             "45px",
           borderRadius:
-            "13px",
+            "calc(13px * var(--app-radius-scale,1))",
           background:
-            "#edf5ef",
+            "var(--app-color-edf5ef,#edf5ef)",
           color:
-            "#0f5132",
+            "var(--app-color-0f5132,#0f5132)",
           display:
             "flex",
           alignItems:
@@ -1647,7 +1647,7 @@ function StatCard({
             color:
               "#818a84",
             fontSize:
-              "11px",
+              "calc(11px * var(--app-font-scale,1))",
             marginBottom:
               "3px",
           }}
@@ -1658,9 +1658,9 @@ function StatCard({
         <strong
           style={{
             color:
-              "#173d2b",
+              "var(--app-color-173d2b,#173d2b)",
             fontSize:
-              "24px",
+              "calc(24px * var(--app-font-scale,1))",
           }}
         >
           {value}
@@ -1684,9 +1684,9 @@ function InfoBox({
         background:
           "#fafafa",
         borderRadius:
-          "10px",
+          "calc(10px * var(--app-radius-scale,1))",
         padding:
-          "10px",
+          "calc(10px * var(--app-density,1))",
       }}
     >
       <div
@@ -1694,7 +1694,7 @@ function InfoBox({
           color:
             "#969d98",
           fontSize:
-            "10px",
+            "calc(10px * var(--app-font-scale,1))",
           marginBottom:
             "3px",
         }}
@@ -1707,7 +1707,7 @@ function InfoBox({
           color:
             "#4c5750",
           fontSize:
-            "11px",
+            "calc(11px * var(--app-font-scale,1))",
           fontWeight:
             "700",
           overflow:
@@ -1746,7 +1746,7 @@ function SelectField({
           color:
             "#465149",
           fontSize:
-            "12px",
+            "calc(12px * var(--app-font-scale,1))",
           fontWeight:
             "800",
         }}
@@ -1791,7 +1791,7 @@ function SelectField({
           style={{
             ...inputStyle,
             paddingRight:
-              "40px",
+              "calc(40px * var(--app-density,1))",
             appearance:
               "none",
           }}
@@ -1837,9 +1837,9 @@ function EmptyState({
         border:
           "1px solid #e5e8e4",
         borderRadius:
-          "18px",
+          "calc(18px * var(--app-radius-scale,1))",
         padding:
-          "55px 20px",
+          "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
         textAlign:
           "center",
       }}
@@ -1853,11 +1853,11 @@ function EmptyState({
           margin:
             "0 auto 14px",
           borderRadius:
-            "18px",
+            "calc(18px * var(--app-radius-scale,1))",
           background:
-            "#edf5ef",
+            "var(--app-color-edf5ef,#edf5ef)",
           color:
-            "#0f5132",
+            "var(--app-color-0f5132,#0f5132)",
           display:
             "flex",
           alignItems:
@@ -1884,7 +1884,7 @@ function EmptyState({
           color:
             "#354139",
           fontSize:
-            "17px",
+            "calc(17px * var(--app-font-scale,1))",
         }}
       >
         {hasFilters
@@ -1898,7 +1898,7 @@ function EmptyState({
           color:
             "#929993",
           fontSize:
-            "12px",
+            "calc(12px * var(--app-font-scale,1))",
         }}
       >
         {hasFilters
@@ -1916,17 +1916,17 @@ function EmptyState({
             border:
               "none",
             background:
-              "#0f5132",
+              "var(--app-color-0f5132,#0f5132)",
             color:
               "#fff",
             borderRadius:
-              "9px",
+              "calc(9px * var(--app-radius-scale,1))",
             padding:
-              "9px 16px",
+              "calc(9px * var(--app-density,1)) calc(16px * var(--app-density,1))",
             cursor:
               "pointer",
             fontSize:
-              "12px",
+              "calc(12px * var(--app-font-scale,1))",
             fontWeight:
               "700",
           }}
@@ -1963,9 +1963,9 @@ function LoadingScreen() {
           border:
             "1px solid #e5e8e4",
           borderRadius:
-            "18px",
+            "calc(18px * var(--app-radius-scale,1))",
           padding:
-            "35px 45px",
+            "calc(35px * var(--app-density,1)) calc(45px * var(--app-density,1))",
           textAlign:
             "center",
           boxShadow:
@@ -1981,7 +1981,7 @@ function LoadingScreen() {
             color:
               "#69736d",
             fontSize:
-              "13px",
+              "calc(13px * var(--app-font-scale,1))",
             fontWeight:
               "700",
           }}
@@ -2081,9 +2081,9 @@ const cardStyle = {
   border:
     "1px solid #e5e8e4",
   borderRadius:
-    "18px",
+    "calc(18px * var(--app-radius-scale,1))",
   padding:
-    "21px",
+    "calc(21px * var(--app-density,1))",
   marginBottom:
     "20px",
   boxShadow:
@@ -2096,17 +2096,17 @@ const inputStyle = {
   height:
     "46px",
   padding:
-    "0 12px",
+    "0 calc(12px * var(--app-density,1))",
   boxSizing:
     "border-box",
   border:
     "1px solid #d9dfdb",
   borderRadius:
-    "10px",
+    "calc(10px * var(--app-radius-scale,1))",
   outline:
     "none",
   fontSize:
-    "13px",
+    "calc(13px * var(--app-font-scale,1))",
   color:
     "#26332c",
   background:
@@ -2125,9 +2125,9 @@ const backButton = {
   background:
     "#fff",
   color:
-    "#173d2b",
+    "var(--app-color-173d2b,#173d2b)",
   borderRadius:
-    "11px",
+    "calc(11px * var(--app-radius-scale,1))",
   cursor:
     "pointer",
   display:
@@ -2144,11 +2144,11 @@ const refreshButton = {
   background:
     "#fff",
   color:
-    "#0f5132",
+    "var(--app-color-0f5132,#0f5132)",
   borderRadius:
-    "10px",
+    "calc(10px * var(--app-radius-scale,1))",
   padding:
-    "10px 14px",
+    "calc(10px * var(--app-density,1)) calc(14px * var(--app-density,1))",
   cursor:
     "pointer",
   display:
@@ -2156,9 +2156,9 @@ const refreshButton = {
   alignItems:
     "center",
   gap:
-    "7px",
+    "calc(7px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
   fontWeight:
     "700",
 };
@@ -2173,9 +2173,9 @@ const clearFilterButton = {
   color:
     "#66706a",
   borderRadius:
-    "10px",
+    "calc(10px * var(--app-radius-scale,1))",
   padding:
-    "0 13px",
+    "0 calc(13px * var(--app-density,1))",
   cursor:
     "pointer",
   display:
@@ -2185,9 +2185,9 @@ const clearFilterButton = {
   justifyContent:
     "center",
   gap:
-    "6px",
+    "calc(6px * var(--app-density,1))",
   fontSize:
-    "12px",
+    "calc(12px * var(--app-font-scale,1))",
   fontWeight:
     "700",
 };

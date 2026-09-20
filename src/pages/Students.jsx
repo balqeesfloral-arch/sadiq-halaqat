@@ -1540,7 +1540,7 @@ export default function Students() {
       <style>{`
         .students-supervisor-page {
           display: grid;
-          gap: 14px;
+          gap: calc(14px * var(--app-density,1));
           color: #34463B;
         }
 
@@ -1554,12 +1554,12 @@ export default function Students() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 14px;
+          gap: calc(14px * var(--app-density,1));
 
-          padding: 15px 17px;
+          padding: calc(15px * var(--app-density,1)) calc(17px * var(--app-density,1));
 
           border: 1px solid #E4EAE6;
-          border-radius: 18px;
+          border-radius: calc(18px * var(--app-radius-scale,1));
 
           background:
             linear-gradient(
@@ -1588,7 +1588,7 @@ export default function Students() {
 
           box-shadow:
             0 0 0 18px rgba(185,144,55,.025),
-            0 0 0 36px rgba(15,118,110,.018);
+            0 0 0 36px color-mix(in srgb,var(--app-color-0f766e,#0f766e) 1.7999999999999998%,transparent);
 
           pointer-events: none;
         }
@@ -1600,7 +1600,7 @@ export default function Students() {
           display: flex;
           align-items: center;
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
 
           min-width: 0;
         }
@@ -1611,7 +1611,7 @@ export default function Students() {
 
           flex: 0 0 43px;
 
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -1622,23 +1622,23 @@ export default function Students() {
           background:
             linear-gradient(
               145deg,
-              #0F5132,
-              #0F766E
+              var(--app-color-0f5132,#0F5132),
+              var(--app-color-0f766e,#0F766E)
             );
 
           box-shadow:
-            0 8px 18px rgba(15,81,50,.12);
+            0 8px 18px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 12%,transparent);
         }
 
         .students-page-eyebrow {
           display: flex;
           align-items: center;
 
-          gap: 3px;
+          gap: calc(3px * var(--app-density,1));
 
           color: #98772C;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -1647,7 +1647,7 @@ export default function Students() {
 
           color: #35463C;
 
-          font-size: 15px;
+          font-size: calc(15px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -1656,7 +1656,7 @@ export default function Students() {
 
           color: #8D9791;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           line-height: 1.55;
         }
 
@@ -1666,33 +1666,33 @@ export default function Students() {
 
           min-height: 36px;
 
-          padding: 0 12px;
+          padding: 0 calc(12px * var(--app-density,1));
 
           border: none;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           color: #FFFFFF;
 
           background:
             linear-gradient(
               135deg,
-              #0F5132,
-              #0F766E
+              var(--app-color-0f5132,#0F5132),
+              var(--app-color-0f766e,#0F766E)
             );
 
-          font-size: 6.5px;
+          font-size: calc(6.5px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
 
           box-shadow:
-            0 8px 17px rgba(15,81,50,.12);
+            0 8px 17px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 12%,transparent);
         }
 
         .students-add-button:disabled {
@@ -1708,7 +1708,7 @@ export default function Students() {
           grid-template-columns:
             repeat(6, minmax(0,1fr));
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
 
         .students-stat-card {
@@ -1718,10 +1718,10 @@ export default function Students() {
 
           min-width: 0;
 
-          padding: 11px;
+          padding: calc(11px * var(--app-density,1));
 
           border: 1px solid #E5EBE7;
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
 
           background: #FFFFFF;
 
@@ -1747,13 +1747,13 @@ export default function Students() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
         }
 
         .students-stat-card-label {
           color: #8E9892;
 
-          font-size: 5.4px;
+          font-size: calc(5.4px * var(--app-font-scale,1));
           font-weight: 800;
         }
 
@@ -1763,7 +1763,7 @@ export default function Students() {
 
           flex: 0 0 29px;
 
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -1780,7 +1780,7 @@ export default function Students() {
 
           color: var(--stat-color);
 
-          font-size: 18px;
+          font-size: calc(18px * var(--app-font-scale,1));
           font-weight: 950;
           line-height: 1;
         }
@@ -1794,7 +1794,7 @@ export default function Students() {
 
           color: #9AA29D;
 
-          font-size: 5px;
+          font-size: calc(5px * var(--app-font-scale,1));
 
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -1812,12 +1812,12 @@ export default function Students() {
             minmax(150px,.8fr)
             auto;
 
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
 
-          padding: 9px;
+          padding: calc(9px * var(--app-density,1));
 
           border: 1px solid #E5EBE7;
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
 
           background: #FFFFFF;
 
@@ -1847,7 +1847,7 @@ export default function Students() {
           height: 38px;
 
           border: 1px solid #DDE5E0;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           outline: none;
 
@@ -1855,11 +1855,11 @@ export default function Students() {
           background: #FBFDFC;
 
           font-family: inherit;
-          font-size: 6.3px;
+          font-size: calc(6.3px * var(--app-font-scale,1));
         }
 
         .students-filter-search input {
-          padding: 0 32px 0 31px;
+          padding: 0 calc(32px * var(--app-density,1)) 0 calc(31px * var(--app-density,1));
         }
 
         .students-filter-search input:focus,
@@ -1867,7 +1867,7 @@ export default function Students() {
           border-color: #A3C6B0;
 
           box-shadow:
-            0 0 0 3px rgba(15,81,50,.05);
+            0 0 0 3px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
 
           background: #FFFFFF;
         }
@@ -1883,7 +1883,7 @@ export default function Students() {
           transform: translateY(-50%);
 
           border: none;
-          border-radius: 6px;
+          border-radius: calc(6px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -1902,7 +1902,7 @@ export default function Students() {
         .students-filter-select select {
           appearance: none;
 
-          padding: 0 10px 0 29px;
+          padding: 0 calc(10px * var(--app-density,1)) 0 calc(29px * var(--app-density,1));
         }
 
         .students-filter-select svg {
@@ -1920,21 +1920,21 @@ export default function Students() {
         .students-reset-filter {
           min-height: 38px;
 
-          padding: 0 9px;
+          padding: 0 calc(9px * var(--app-density,1));
 
           border: 1px solid #DDE5E0;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
           color: #536159;
-          background: #F8FBF9;
+          background: var(--app-color-f8fbf9,#F8FBF9);
 
-          font-size: 5.8px;
+          font-size: calc(5.8px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -1952,9 +1952,9 @@ export default function Students() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
 
-          padding: 2px 2px 0;
+          padding: calc(2px * var(--app-density,1)) calc(2px * var(--app-density,1)) 0;
         }
 
         .students-result-header h2 {
@@ -1962,7 +1962,7 @@ export default function Students() {
 
           color: #35463C;
 
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -1971,13 +1971,13 @@ export default function Students() {
 
           color: #929B95;
 
-          font-size: 5.5px;
+          font-size: calc(5.5px * var(--app-font-scale,1));
         }
 
         .students-scope-badge {
           min-height: 28px;
 
-          padding: 0 8px;
+          padding: 0 calc(8px * var(--app-density,1));
 
           border: 1px solid #DCE8E0;
           border-radius: 999px;
@@ -1985,12 +1985,12 @@ export default function Students() {
           display: inline-flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
           color: #0F6848;
           background: #F3F9F5;
 
-          font-size: 5.5px;
+          font-size: calc(5.5px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -2005,7 +2005,7 @@ export default function Students() {
               minmax(310px,1fr)
             );
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
         }
 
         .student-profile-card {
@@ -2014,10 +2014,10 @@ export default function Students() {
           min-width: 0;
           overflow: hidden;
 
-          padding: 12px;
+          padding: calc(12px * var(--app-density,1));
 
           border: 1px solid #E5EBE7;
-          border-radius: 15px;
+          border-radius: calc(15px * var(--app-radius-scale,1));
 
           background: #FFFFFF;
 
@@ -2057,7 +2057,7 @@ export default function Students() {
             linear-gradient(
               90deg,
               transparent,
-              #0F766E,
+              var(--app-color-0f766e,#0F766E),
               #B99037,
               transparent
             );
@@ -2068,14 +2068,14 @@ export default function Students() {
           align-items: flex-start;
           justify-content: space-between;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
 
         .student-card-identity {
           display: flex;
           align-items: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           min-width: 0;
         }
@@ -2086,7 +2086,7 @@ export default function Students() {
 
           flex: 0 0 38px;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -2097,11 +2097,11 @@ export default function Students() {
           background:
             linear-gradient(
               145deg,
-              #0F5132,
-              #0F766E
+              var(--app-color-0f5132,#0F5132),
+              var(--app-color-0f766e,#0F766E)
             );
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -2117,7 +2117,7 @@ export default function Students() {
 
         .student-card-name span {
           color: #9AA29D;
-          font-size: 5px;
+          font-size: calc(5px * var(--app-font-scale,1));
         }
 
         .student-card-name strong {
@@ -2127,7 +2127,7 @@ export default function Students() {
 
           color: #3A4A40;
 
-          font-size: 8.5px;
+          font-size: calc(8.5px * var(--app-font-scale,1));
           font-weight: 950;
 
           text-overflow: ellipsis;
@@ -2138,22 +2138,22 @@ export default function Students() {
           margin-top: 2px;
 
           color: #929B95;
-          font-size: 5px;
+          font-size: calc(5px * var(--app-font-scale,1));
         }
 
         .student-status-badge {
           min-height: 23px;
 
-          padding: 0 6px;
+          padding: 0 calc(6px * var(--app-density,1));
 
           border-radius: 999px;
 
           display: inline-flex;
           align-items: center;
 
-          gap: 3px;
+          gap: calc(3px * var(--app-density,1));
 
-          font-size: 5.2px;
+          font-size: calc(5.2px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -2179,7 +2179,7 @@ export default function Students() {
           grid-template-columns:
             repeat(2,minmax(0,1fr));
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
           margin-top: 10px;
         }
@@ -2187,10 +2187,10 @@ export default function Students() {
         .student-info-box {
           min-width: 0;
 
-          padding: 8px;
+          padding: calc(8px * var(--app-density,1));
 
           border: 1px solid #E8ECEA;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           background: #FBFDFC;
         }
@@ -2199,11 +2199,11 @@ export default function Students() {
           display: flex;
           align-items: center;
 
-          gap: 3px;
+          gap: calc(3px * var(--app-density,1));
 
           color: #949D97;
 
-          font-size: 5px;
+          font-size: calc(5px * var(--app-font-scale,1));
         }
 
         .student-info-box strong {
@@ -2215,7 +2215,7 @@ export default function Students() {
 
           color: #536159;
 
-          font-size: 6.2px;
+          font-size: calc(6.2px * var(--app-font-scale,1));
           font-weight: 900;
 
           text-overflow: ellipsis;
@@ -2224,10 +2224,10 @@ export default function Students() {
 
         .student-guardian-box {
           margin-top: 7px;
-          padding: 9px;
+          padding: calc(9px * var(--app-density,1));
 
           border: 1px solid #E9E5D8;
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           background:
             linear-gradient(
@@ -2242,30 +2242,30 @@ export default function Students() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
 
         .student-guardian-head span {
           display: flex;
           align-items: center;
 
-          gap: 3px;
+          gap: calc(3px * var(--app-density,1));
 
           color: #947124;
 
-          font-size: 5.4px;
+          font-size: calc(5.4px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
         .student-guardian-complete {
-          color: #0F704A;
-          font-size: 5px;
+          color: var(--app-color-0f704a,#0F704A);
+          font-size: calc(5px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
         .student-guardian-incomplete {
           color: #A44337;
-          font-size: 5px;
+          font-size: calc(5px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -2275,7 +2275,7 @@ export default function Students() {
           grid-template-columns:
             repeat(3,minmax(0,1fr));
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-top: 7px;
         }
@@ -2287,7 +2287,7 @@ export default function Students() {
 
         .student-guardian-grid div span {
           color: #9A9F9B;
-          font-size: 4.7px;
+          font-size: calc(4.7px * var(--app-font-scale,1));
         }
 
         .student-guardian-grid div strong {
@@ -2297,7 +2297,7 @@ export default function Students() {
 
           color: #5B5C58;
 
-          font-size: 5.7px;
+          font-size: calc(5.7px * var(--app-font-scale,1));
           font-weight: 850;
 
           text-overflow: ellipsis;
@@ -2310,16 +2310,16 @@ export default function Students() {
           grid-template-columns:
             1fr 1fr 1fr;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
           margin-top: 7px;
         }
 
         .student-performance-box {
-          padding: 8px;
+          padding: calc(8px * var(--app-density,1));
 
           border: 1px solid #E7ECE9;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           background: #FFFFFF;
 
@@ -2334,7 +2334,7 @@ export default function Students() {
         .student-performance-box span {
           color: #929B95;
 
-          font-size: 4.8px;
+          font-size: calc(4.8px * var(--app-font-scale,1));
         }
 
         .student-performance-box strong {
@@ -2342,7 +2342,7 @@ export default function Students() {
 
           color: #3D4D43;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -2366,7 +2366,7 @@ export default function Students() {
           background:
             linear-gradient(
               90deg,
-              #0F766E,
+              var(--app-color-0f766e,#0F766E),
               #65A578
             );
         }
@@ -2376,41 +2376,41 @@ export default function Students() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           margin-top: 7px;
-          padding: 7px 8px;
+          padding: calc(7px * var(--app-density,1)) calc(8px * var(--app-density,1));
 
           border-top: 1px solid #EEF2EF;
 
           color: #8B958F;
 
-          font-size: 5px;
+          font-size: calc(5px * var(--app-font-scale,1));
         }
 
         .student-recitation-line span {
           display: inline-flex;
           align-items: center;
 
-          gap: 3px;
+          gap: calc(3px * var(--app-density,1));
         }
 
         .student-recitation-line strong {
           color: #536159;
-          font-size: 5.4px;
+          font-size: calc(5.4px * var(--app-font-scale,1));
         }
 
         .student-smart-alert {
           display: flex;
           align-items: flex-start;
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
           margin-top: 7px;
-          padding: 7px 8px;
+          padding: calc(7px * var(--app-density,1)) calc(8px * var(--app-density,1));
           border: 1px solid #F0DFC0;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
           color: #85651F;
           background: #FFF9ED;
-          font-size: 5px;
+          font-size: calc(5px * var(--app-font-scale,1));
           font-weight: 800;
           line-height: 1.55;
         }
@@ -2426,7 +2426,7 @@ export default function Students() {
           grid-template-columns:
             1fr 1fr 1fr;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-top: 9px;
         }
@@ -2435,15 +2435,15 @@ export default function Students() {
           min-height: 32px;
 
           border: none;
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 3px;
+          gap: calc(3px * var(--app-density,1));
 
-          font-size: 5.5px;
+          font-size: calc(5.5px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -2474,12 +2474,12 @@ export default function Students() {
           justify-content: center;
           flex-direction: column;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
-          padding: 20px;
+          padding: calc(20px * var(--app-density,1));
 
           border: 1px dashed #DDE5E0;
-          border-radius: 14px;
+          border-radius: calc(14px * var(--app-radius-scale,1));
 
           color: #929C96;
           background: #FBFDFC;
@@ -2491,19 +2491,19 @@ export default function Students() {
           width: 42px;
           height: 42px;
 
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
           color: #0F6B49;
-          background: #EDF7F1;
+          background: var(--app-color-edf7f1,#EDF7F1);
         }
 
         .students-state-card strong {
           color: #57645C;
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .students-state-card p {
@@ -2513,7 +2513,7 @@ export default function Students() {
 
           color: #929B95;
 
-          font-size: 5.7px;
+          font-size: calc(5.7px * var(--app-font-scale,1));
           line-height: 1.5;
         }
 
@@ -2521,7 +2521,7 @@ export default function Students() {
           display: flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-top: 5px;
         }
@@ -2529,20 +2529,20 @@ export default function Students() {
         .students-state-actions button {
           min-height: 30px;
 
-          padding: 0 9px;
+          padding: 0 calc(9px * var(--app-density,1));
 
           border: none;
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
           color: #FFFFFF;
-          background: #0F6848;
+          background: var(--app-color-0f6848,#0F6848);
 
-          font-size: 5.7px;
+          font-size: calc(5.7px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -2560,7 +2560,7 @@ export default function Students() {
           justify-content: center;
 
           /* نفس منطق نافذة المعلم: فراغ واضح عن التوب بار والحواف */
-          padding: clamp(76px, 9vh, 104px) clamp(18px, 3vw, 42px) clamp(20px, 3vh, 34px);
+          padding: clamp(calc(76px * var(--app-density,1)), 9vh, calc(104px * var(--app-density,1))) clamp(calc(18px * var(--app-density,1)), 3vw, calc(42px * var(--app-density,1))) clamp(calc(20px * var(--app-density,1)), 3vh, calc(34px * var(--app-density,1)));
 
           background:
             rgba(10,29,24,.58);
@@ -2575,7 +2575,7 @@ export default function Students() {
           overflow: auto;
 
           border: 1px solid rgba(255,255,255,.5);
-          border-radius: 22px;
+          border-radius: calc(22px * var(--app-radius-scale,1));
 
           background: #FFFFFF;
 
@@ -2592,9 +2592,9 @@ export default function Students() {
           align-items: flex-start;
           justify-content: space-between;
 
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
 
-          padding: 14px 17px;
+          padding: calc(14px * var(--app-density,1)) calc(17px * var(--app-density,1));
 
           border-bottom: 1px solid #E8EEE9;
 
@@ -2608,7 +2608,7 @@ export default function Students() {
           display: flex;
           align-items: center;
 
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
         }
 
         .student-form-heading-icon {
@@ -2617,7 +2617,7 @@ export default function Students() {
 
           flex: 0 0 39px;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -2628,8 +2628,8 @@ export default function Students() {
           background:
             linear-gradient(
               145deg,
-              #0F5132,
-              #0F766E
+              var(--app-color-0f5132,#0F5132),
+              var(--app-color-0f766e,#0F766E)
             );
         }
 
@@ -2638,7 +2638,7 @@ export default function Students() {
 
           color: #98772C;
 
-          font-size: 5.4px;
+          font-size: calc(5.4px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -2647,7 +2647,7 @@ export default function Students() {
 
           color: #35463C;
 
-          font-size: 12px;
+          font-size: calc(12px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -2656,7 +2656,7 @@ export default function Students() {
 
           color: #8D9791;
 
-          font-size: 5.5px;
+          font-size: calc(5.5px * var(--app-font-scale,1));
         }
 
         .student-form-close {
@@ -2664,7 +2664,7 @@ export default function Students() {
           height: 32px;
 
           border: 1px solid #E0E7E2;
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -2678,16 +2678,16 @@ export default function Students() {
 
         .student-form-body {
           display: grid;
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
 
-          padding: 12px 16px 16px;
+          padding: calc(12px * var(--app-density,1)) calc(16px * var(--app-density,1)) calc(16px * var(--app-density,1));
         }
 
         .student-form-section {
-          padding: 11px;
+          padding: calc(11px * var(--app-density,1));
 
           border: 1px solid #E7ECE9;
-          border-radius: 13px;
+          border-radius: calc(13px * var(--app-radius-scale,1));
 
           background: #FFFFFF;
         }
@@ -2696,13 +2696,13 @@ export default function Students() {
           display: flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-bottom: 9px;
 
           color: #405046;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -2712,7 +2712,7 @@ export default function Students() {
           grid-template-columns:
             repeat(3,minmax(0,1fr));
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
 
         .student-form-field.full {
@@ -2730,7 +2730,7 @@ export default function Students() {
 
           color: #58665D;
 
-          font-size: 5.7px;
+          font-size: calc(5.7px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -2744,7 +2744,7 @@ export default function Students() {
           width: 100%;
 
           border: 1px solid #DDE5E0;
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
           outline: none;
 
@@ -2754,20 +2754,20 @@ export default function Students() {
           background: #FBFDFC;
 
           font-family: inherit;
-          font-size: 6.3px;
+          font-size: calc(6.3px * var(--app-font-scale,1));
         }
 
         .student-form-field input,
         .student-form-field select {
           height: 38px;
 
-          padding: 0 9px;
+          padding: 0 calc(9px * var(--app-density,1));
         }
 
         .student-form-field textarea {
           min-height: 75px;
 
-          padding: 8px 9px;
+          padding: calc(8px * var(--app-density,1)) calc(9px * var(--app-density,1));
 
           resize: vertical;
 
@@ -2775,7 +2775,7 @@ export default function Students() {
         }
 
         .student-auto-number-input {
-          color: #0F6848 !important;
+          color: var(--app-color-0f6848,#0F6848) !important;
           background: #F0F8F3 !important;
           font-weight: 950;
           letter-spacing: .4px;
@@ -2785,10 +2785,10 @@ export default function Students() {
         .student-field-hint {
           display: flex;
           align-items: center;
-          gap: 3px;
+          gap: calc(3px * var(--app-density,1));
           margin-top: 4px;
           color: #8B958F;
-          font-size: 4.8px;
+          font-size: calc(4.8px * var(--app-font-scale,1));
           font-weight: 750;
         }
 
@@ -2798,7 +2798,7 @@ export default function Students() {
           border-color: #A3C6B0;
 
           box-shadow:
-            0 0 0 3px rgba(15,81,50,.05);
+            0 0 0 3px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
 
           background: #FFFFFF;
         }
@@ -2809,7 +2809,7 @@ export default function Students() {
           grid-template-columns:
             repeat(7,minmax(0,1fr));
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-top: 7px;
         }
@@ -2818,12 +2818,12 @@ export default function Students() {
           min-height: 31px;
 
           border: 1px solid #DDE5E0;
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
           color: #66736B;
           background: #FFFFFF;
 
-          font-size: 5.5px;
+          font-size: calc(5.5px * var(--app-font-scale,1));
           font-weight: 850;
 
           cursor: pointer;
@@ -2832,8 +2832,8 @@ export default function Students() {
         .student-form-day.active {
           border-color: #BFD5C7;
 
-          color: #0F6848;
-          background: #EDF7F1;
+          color: var(--app-color-0f6848,#0F6848);
+          background: var(--app-color-edf7f1,#EDF7F1);
         }
 
         .student-form-footer {
@@ -2845,9 +2845,9 @@ export default function Students() {
           align-items: center;
           justify-content: flex-end;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
-          padding: 10px 16px;
+          padding: calc(10px * var(--app-density,1)) calc(16px * var(--app-density,1));
 
           border-top: 1px solid #E9EEEB;
 
@@ -2860,17 +2860,17 @@ export default function Students() {
         .student-form-footer button {
           min-height: 36px;
 
-          padding: 0 11px;
+          padding: 0 calc(11px * var(--app-density,1));
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -2891,8 +2891,8 @@ export default function Students() {
           background:
             linear-gradient(
               135deg,
-              #0F5132,
-              #0F766E
+              var(--app-color-0f5132,#0F5132),
+              var(--app-color-0f766e,#0F766E)
             );
         }
 
@@ -2932,7 +2932,7 @@ export default function Students() {
 
         @media (min-width: 761px) and (max-width: 1180px) {
           .student-form-overlay {
-            padding: 86px 24px 24px;
+            padding: calc(86px * var(--app-density,1)) calc(24px * var(--app-density,1)) calc(24px * var(--app-density,1));
           }
 
           .student-form-modal {
@@ -2976,13 +2976,13 @@ export default function Students() {
           .student-form-overlay {
             align-items: center;
             justify-content: center;
-            padding: 82px 12px 14px;
+            padding: calc(82px * var(--app-density,1)) calc(12px * var(--app-density,1)) calc(14px * var(--app-density,1));
           }
 
           .student-form-modal {
             width: min(100%, 620px);
             max-height: calc(100dvh - 96px);
-            border-radius: 18px;
+            border-radius: calc(18px * var(--app-radius-scale,1));
           }
 
           .student-form-grid {
@@ -3001,24 +3001,24 @@ export default function Students() {
 
   .students-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 7px;
+    gap: calc(7px * var(--app-density,1));
   }
 
   .students-stat-card {
     min-height: 78px;
-    padding: 9px 10px;
-    border-radius: 12px;
+    padding: calc(9px * var(--app-density,1)) calc(10px * var(--app-density,1));
+    border-radius: calc(12px * var(--app-radius-scale,1));
   }
 
   .students-stat-card-head {
-    gap: 5px;
+    gap: calc(5px * var(--app-density,1));
   }
 
   .students-stat-card-icon {
     width: 30px;
     height: 30px;
     flex: 0 0 30px;
-    border-radius: 9px;
+    border-radius: calc(9px * var(--app-radius-scale,1));
   }
 
   .students-stat-card-icon svg {
@@ -3027,19 +3027,19 @@ export default function Students() {
   }
 
   .students-stat-card-label {
-    font-size: 10px;
+    font-size: calc(10px * var(--app-font-scale,1));
     line-height: 1.3;
   }
 
   .students-stat-card strong {
     margin-top: 5px;
-    font-size: 20px;
+    font-size: calc(20px * var(--app-font-scale,1));
     line-height: 1;
   }
 
   .students-stat-card small {
     margin-top: 4px;
-    font-size: 8px;
+    font-size: calc(8px * var(--app-font-scale,1));
     line-height: 1.25;
   }
 
@@ -3751,7 +3751,7 @@ function StudentStat({
 }) {
   const tones = {
     green: {
-      color: "#0F704A",
+      color: "var(--app-color-0f704a,#0F704A)",
       soft: "#EAF7EE",
     },
     blue: {

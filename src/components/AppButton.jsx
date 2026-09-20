@@ -13,7 +13,7 @@ export default function AppButton({
   const variants = {
     primary: {
       background:
-        "linear-gradient(135deg,#0F5132,#1B6E46)",
+        "linear-gradient(135deg,var(--app-color-0f5132,#0F5132),var(--app-color-1b6e46,#1B6E46))",
       color: "#fff",
       border: "none",
     },
@@ -34,20 +34,20 @@ export default function AppButton({
   const sizes = {
     sm: {
       height: "40px",
-      padding: "0 14px",
-      fontSize: "13px",
+      padding: "0 calc(14px * var(--app-density,1))",
+      fontSize: "calc(13px * var(--app-font-scale,1))",
     },
 
     md: {
       height: "46px",
-      padding: "0 18px",
-      fontSize: "14px",
+      padding: "0 calc(18px * var(--app-density,1))",
+      fontSize: "calc(14px * var(--app-font-scale,1))",
     },
 
     lg: {
       height: "52px",
-      padding: "0 24px",
-      fontSize: "15px",
+      padding: "0 calc(24px * var(--app-density,1))",
+      fontSize: "calc(15px * var(--app-font-scale,1))",
     },
   };
 
@@ -65,7 +65,7 @@ export default function AppButton({
           : "auto",
 
         borderRadius:
-          theme.radius.md,
+          `calc(${theme.radius.md}px * var(--app-radius-scale,1))`,
 
         display: "inline-flex",
 
@@ -73,7 +73,7 @@ export default function AppButton({
 
         justifyContent: "center",
 
-        gap: "8px",
+        gap: "calc(8px * var(--app-density,1))",
 
         fontWeight: "700",
 
@@ -90,7 +90,7 @@ export default function AppButton({
 
         boxShadow:
           variant === "primary"
-            ? "0 8px 20px rgba(15,81,50,.20)"
+            ? "0 8px 20px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 20%,transparent)"
             : "none",
       }}
     >

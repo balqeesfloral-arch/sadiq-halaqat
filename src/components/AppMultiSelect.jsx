@@ -66,8 +66,8 @@ export default function AppMultiSelect({
         style={{
           minHeight: 48,
           border: "1px solid #E2E8F0",
-          borderRadius: 12,
-          padding: 12,
+          borderRadius: "calc(12px * var(--app-radius-scale,1))",
+          padding: "calc(12px * var(--app-density,1))",
           cursor: "pointer",
           background: "#fff",
           display: "flex",
@@ -79,7 +79,7 @@ export default function AppMultiSelect({
           style={{
             display: "flex",
             flexWrap: "wrap",
-            gap: 6
+            gap: "calc(6px * var(--app-density,1))"
           }}
         >
           {selectedLabels.length === 0 && (
@@ -97,8 +97,8 @@ export default function AppMultiSelect({
               key={label}
               style={{
                 background: "#E6FFFA",
-                color: "#0F766E",
-                padding: "4px 8px",
+                color: "var(--app-color-0f766e,#0F766E)",
+                padding: "calc(4px * var(--app-density,1)) calc(8px * var(--app-density,1))",
                 borderRadius: 999
               }}
             >
@@ -120,7 +120,7 @@ export default function AppMultiSelect({
             zIndex: 999,
             background: "#fff",
             border: "1px solid #E2E8F0",
-            borderRadius: 12,
+            borderRadius: "calc(12px * var(--app-radius-scale,1))",
             marginTop: 6,
             maxHeight: 260,
             overflowY: "auto",
@@ -144,7 +144,7 @@ export default function AppMultiSelect({
                   )
                 }
                 style={{
-                  padding: 12,
+                  padding: "calc(12px * var(--app-density,1))",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",

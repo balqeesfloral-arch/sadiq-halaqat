@@ -1,6 +1,6 @@
 .register-pro-page {
-  --register-green: #0f4c45;
-  --register-green-dark: #082f2a;
+  --register-green: var(--app-color-0f4c45,#0f4c45);
+  --register-green-dark: var(--app-color-082f2a,#082f2a);
   --register-green-deep: #051e1b;
   --register-gold: #d4af37;
   --register-gold-soft: #ead47f;
@@ -11,12 +11,12 @@
   direction: rtl;
   display: grid;
   place-items: center;
-  padding: 28px;
+  padding: calc(28px * var(--app-density,1));
   box-sizing: border-box;
   color: #173430;
   background:
     radial-gradient(circle at 11% 11%, rgba(212,175,55,.11), transparent 28%),
-    radial-gradient(circle at 88% 84%, rgba(15,76,69,.12), transparent 32%),
+    radial-gradient(circle at 88% 84%, color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 12%,transparent), transparent 32%),
     linear-gradient(135deg,#fbfaf6 0%,#eef5f1 52%,#f9f7ef 100%);
 }
 
@@ -27,15 +27,15 @@
   pointer-events: none;
   opacity: .045;
   background-image:
-    linear-gradient(45deg,transparent 47%,#0f4c45 48%,#0f4c45 52%,transparent 53%),
-    linear-gradient(-45deg,transparent 47%,#0f4c45 48%,#0f4c45 52%,transparent 53%);
+    linear-gradient(45deg,transparent 47%,var(--app-color-0f4c45,#0f4c45) 48%,var(--app-color-0f4c45,#0f4c45) 52%,transparent 53%),
+    linear-gradient(-45deg,transparent 47%,var(--app-color-0f4c45,#0f4c45) 48%,var(--app-color-0f4c45,#0f4c45) 52%,transparent 53%);
   background-size: 96px 96px;
 }
 
 .register-pro-orb {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(15,76,69,.09);
+  border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 9%,transparent);
   pointer-events: none;
 }
 
@@ -59,7 +59,7 @@
   z-index: 2;
   width: min(1180px, 100%);
   border: 1px solid rgba(15,76,69,.10);
-  border-radius: 34px;
+  border-radius: calc(34px * var(--app-radius-scale,1));
   background: rgba(255,255,255,.94);
   box-shadow: 0 34px 100px rgba(8,47,42,.14);
   backdrop-filter: blur(20px);
@@ -68,19 +68,19 @@
 
 .register-pro-header {
   min-height: 78px;
-  padding: 0 28px;
+  padding: 0 calc(28px * var(--app-density,1));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  border-bottom: 1px solid rgba(15,76,69,.08);
+  gap: calc(20px * var(--app-density,1));
+  border-bottom: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 8%,transparent);
   background: rgba(255,255,255,.82);
 }
 
 .register-pro-brand {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: calc(11px * var(--app-density,1));
 }
 
 .register-pro-brand img {
@@ -92,7 +92,7 @@
 .register-pro-brand strong {
   display: block;
   color: var(--register-green-dark);
-  font-size: 18px;
+  font-size: calc(18px * var(--app-font-scale,1));
   font-weight: 950;
 }
 
@@ -100,22 +100,22 @@
   display: block;
   margin-top: 2px;
   color: var(--register-muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   font-weight: 750;
 }
 
 .register-pro-back-login {
   min-height: 42px;
-  padding: 0 13px;
+  padding: 0 calc(13px * var(--app-density,1));
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  border: 1px solid rgba(15,76,69,.11);
-  border-radius: 12px;
+  gap: calc(7px * var(--app-density,1));
+  border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 11%,transparent);
+  border-radius: calc(12px * var(--app-radius-scale,1));
   background: #fff;
   color: var(--register-green);
   cursor: pointer;
-  font-size: 12px;
+  font-size: calc(12px * var(--app-font-scale,1));
   font-weight: 900;
 }
 
@@ -133,7 +133,7 @@
 .register-pro-side {
   position: relative;
   overflow: hidden;
-  padding: 48px 40px;
+  padding: calc(48px * var(--app-density,1)) calc(40px * var(--app-density,1));
   color: #fff;
   background: linear-gradient(155deg,#061f1c,#0a3a34 52%,#0f5a50);
 }
@@ -157,9 +157,9 @@
 .register-pro-side-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: calc(8px * var(--app-density,1));
   color: var(--register-gold-soft);
-  font-size: 12px;
+  font-size: calc(12px * var(--app-font-scale,1));
   font-weight: 900;
 }
 
@@ -170,7 +170,7 @@
 
 .register-pro-side h1 {
   margin: 18px 0 0;
-  font-size: 36px;
+  font-size: calc(36px * var(--app-font-scale,1));
   line-height: 1.25;
   letter-spacing: -1px;
   font-weight: 950;
@@ -180,31 +180,31 @@
   display: block;
   margin-top: 8px;
   color: rgba(255,255,255,.76);
-  font-size: 23px;
+  font-size: calc(23px * var(--app-font-scale,1));
   line-height: 1.5;
 }
 
 .register-pro-side > p {
   margin: 18px 0 0;
   color: rgba(255,255,255,.67);
-  font-size: 13px;
+  font-size: calc(13px * var(--app-font-scale,1));
   line-height: 1.95;
   font-weight: 650;
 }
 
 .register-pro-steps {
   display: grid;
-  gap: 12px;
+  gap: calc(12px * var(--app-density,1));
   margin-top: 32px;
 }
 
 .register-pro-step {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 13px;
+  gap: calc(12px * var(--app-density,1));
+  padding: calc(13px * var(--app-density,1));
   border: 1px solid rgba(255,255,255,.08);
-  border-radius: 16px;
+  border-radius: calc(16px * var(--app-radius-scale,1));
   background: rgba(255,255,255,.035);
   opacity: .68;
   transition: .2s ease;
@@ -222,10 +222,10 @@
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: calc(12px * var(--app-radius-scale,1));
   background: rgba(255,255,255,.08);
   color: var(--register-gold-soft);
-  font-size: 12px;
+  font-size: calc(12px * var(--app-font-scale,1));
   font-weight: 950;
 }
 
@@ -236,7 +236,7 @@
 
 .register-pro-step strong {
   display: block;
-  font-size: 13px;
+  font-size: calc(13px * var(--app-font-scale,1));
   font-weight: 900;
 }
 
@@ -244,19 +244,19 @@
   display: block;
   margin-top: 3px;
   color: rgba(255,255,255,.58);
-  font-size: 10px;
+  font-size: calc(10px * var(--app-font-scale,1));
   line-height: 1.5;
   font-weight: 700;
 }
 
 .register-pro-security {
   margin-top: 28px;
-  padding: 16px;
+  padding: calc(16px * var(--app-density,1));
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: calc(10px * var(--app-density,1));
   border: 1px solid rgba(212,175,55,.18);
-  border-radius: 17px;
+  border-radius: calc(17px * var(--app-radius-scale,1));
   background: rgba(212,175,55,.055);
 }
 
@@ -269,7 +269,7 @@
 
 .register-pro-security strong {
   display: block;
-  font-size: 12px;
+  font-size: calc(12px * var(--app-font-scale,1));
   font-weight: 900;
 }
 
@@ -277,13 +277,13 @@
   display: block;
   margin-top: 4px;
   color: rgba(255,255,255,.62);
-  font-size: 10px;
+  font-size: calc(10px * var(--app-font-scale,1));
   line-height: 1.7;
   font-weight: 650;
 }
 
 .register-pro-card {
-  padding: 44px;
+  padding: calc(44px * var(--app-density,1));
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -301,14 +301,14 @@
 .register-pro-stage-heading > span {
   display: block;
   color: var(--register-green);
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   font-weight: 900;
 }
 
 .register-pro-stage-heading h2 {
   margin: 8px 0 0;
   color: var(--register-green-dark);
-  font-size: 29px;
+  font-size: calc(29px * var(--app-font-scale,1));
   font-weight: 950;
   letter-spacing: -.6px;
 }
@@ -316,7 +316,7 @@
 .register-pro-stage-heading p {
   margin: 8px 0 0;
   color: var(--register-muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--app-font-scale,1));
   line-height: 1.8;
   font-weight: 650;
 }
@@ -324,18 +324,18 @@
 .register-pro-role-grid {
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
-  gap: 12px;
+  gap: calc(12px * var(--app-density,1));
   margin-top: 26px;
 }
 
 .register-pro-role {
   min-height: 220px;
-  padding: 18px;
+  padding: calc(18px * var(--app-density,1));
   display: flex;
   flex-direction: column;
   align-items: stretch;
   border: 1px solid #dfe6e2;
-  border-radius: 21px;
+  border-radius: calc(21px * var(--app-radius-scale,1));
   background: #fff;
   color: #536761;
   cursor: pointer;
@@ -346,20 +346,20 @@
 .register-pro-role:hover {
   transform: translateY(-3px);
   border-color: rgba(212,175,55,.34);
-  box-shadow: 0 16px 36px rgba(8,47,42,.07);
+  box-shadow: 0 16px 36px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 7.000000000000001%,transparent);
 }
 
 .register-pro-role.active {
-  border-color: rgba(15,76,69,.38);
+  border-color: color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 38%,transparent);
   background: linear-gradient(145deg,#f0f7f4,#fff);
-  box-shadow: 0 16px 36px rgba(8,47,42,.09);
+  box-shadow: 0 16px 36px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 9%,transparent);
 }
 
 .register-pro-role-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: calc(8px * var(--app-density,1));
 }
 
 .register-pro-role-icon {
@@ -367,8 +367,8 @@
   height: 44px;
   display: grid;
   place-items: center;
-  border-radius: 14px;
-  background: rgba(15,76,69,.08);
+  border-radius: calc(14px * var(--app-radius-scale,1));
+  background: color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 8%,transparent);
   color: var(--register-green);
 }
 
@@ -379,11 +379,11 @@
 
 .register-pro-role-badge {
   max-width: 95px;
-  padding: 5px 7px;
+  padding: calc(5px * var(--app-density,1)) calc(7px * var(--app-density,1));
   border-radius: 999px;
   background: #f7f5ed;
   color: #7b681f;
-  font-size: 9px;
+  font-size: calc(9px * var(--app-font-scale,1));
   line-height: 1.4;
   font-weight: 850;
   text-align: center;
@@ -393,7 +393,7 @@
   display: block;
   margin-top: 19px;
   color: var(--register-green-dark);
-  font-size: 17px;
+  font-size: calc(17px * var(--app-font-scale,1));
   font-weight: 950;
 }
 
@@ -401,7 +401,7 @@
   flex: 1;
   margin: 8px 0 0;
   color: var(--register-muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   line-height: 1.7;
   font-weight: 650;
 }
@@ -410,9 +410,9 @@
   margin-top: 16px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(6px * var(--app-density,1));
   color: var(--register-green);
-  font-size: 10px;
+  font-size: calc(10px * var(--app-font-scale,1));
   font-weight: 850;
 }
 
@@ -423,7 +423,7 @@
 
 .register-pro-fields {
   display: grid;
-  gap: 15px;
+  gap: calc(15px * var(--app-density,1));
   margin-top: 25px;
 }
 
@@ -431,7 +431,7 @@
   display: block;
   margin-bottom: 8px;
   color: #3b504a;
-  font-size: 13px;
+  font-size: calc(13px * var(--app-font-scale,1));
   font-weight: 850;
 }
 
@@ -442,21 +442,21 @@
 .register-pro-input-wrap input {
   width: 100%;
   height: 52px;
-  padding: 0 45px;
+  padding: 0 calc(45px * var(--app-density,1));
   box-sizing: border-box;
   border: 1px solid #d9e1dd;
-  border-radius: 14px;
+  border-radius: calc(14px * var(--app-radius-scale,1));
   outline: none;
   background: #fff;
   color: #233731;
-  font-size: 14px;
+  font-size: calc(14px * var(--app-font-scale,1));
   font-weight: 650;
   transition: border-color .18s ease, box-shadow .18s ease;
 }
 
 .register-pro-input-wrap input:focus {
-  border-color: rgba(15,76,69,.42);
-  box-shadow: 0 0 0 4px rgba(15,76,69,.07);
+  border-color: color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 42%,transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 7.000000000000001%,transparent);
 }
 
 .register-pro-input-icon {
@@ -481,7 +481,7 @@
   place-items: center;
   transform: translateY(-50%);
   border: 0;
-  border-radius: 10px;
+  border-radius: calc(10px * var(--app-radius-scale,1));
   background: transparent;
   color: #74827d;
   cursor: pointer;
@@ -499,25 +499,25 @@
 .register-pro-password-grid {
   display: grid;
   grid-template-columns: repeat(2,minmax(0,1fr));
-  gap: 14px;
+  gap: calc(14px * var(--app-density,1));
 }
 
 .register-pro-helper {
   margin-top: -4px;
   color: #788781;
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   line-height: 1.7;
   font-weight: 700;
 }
 
 .register-pro-info {
-  padding: 14px;
+  padding: calc(14px * var(--app-density,1));
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  border: 1px solid rgba(15,76,69,.11);
-  border-radius: 15px;
-  background: #f5faf7;
+  gap: calc(10px * var(--app-density,1));
+  border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 11%,transparent);
+  border-radius: calc(15px * var(--app-radius-scale,1));
+  background: var(--app-color-f5faf7,#f5faf7);
   color: #426259;
 }
 
@@ -540,48 +540,48 @@
 
 .register-pro-info strong {
   display: block;
-  font-size: 12px;
+  font-size: calc(12px * var(--app-font-scale,1));
   font-weight: 900;
 }
 
 .register-pro-info span {
   display: block;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   line-height: 1.7;
   font-weight: 650;
 }
 
 .register-pro-review {
   display: grid;
-  gap: 10px;
+  gap: calc(10px * var(--app-density,1));
   margin-top: 24px;
-  padding: 8px;
-  border: 1px solid rgba(15,76,69,.09);
-  border-radius: 19px;
+  padding: calc(8px * var(--app-density,1));
+  border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 9%,transparent);
+  border-radius: calc(19px * var(--app-radius-scale,1));
   background: #f8faf8;
 }
 
 .register-pro-review-row {
   min-height: 48px;
-  padding: 0 12px;
+  padding: 0 calc(12px * var(--app-density,1));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  border-radius: 13px;
+  gap: calc(18px * var(--app-density,1));
+  border-radius: calc(13px * var(--app-radius-scale,1));
   background: #fff;
 }
 
 .register-pro-review-row span {
   color: var(--register-muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   font-weight: 750;
 }
 
 .register-pro-review-row strong {
   color: var(--register-green-dark);
-  font-size: 12px;
+  font-size: calc(12px * var(--app-font-scale,1));
   font-weight: 900;
   word-break: break-word;
 }
@@ -590,9 +590,9 @@
   margin-top: 17px;
   display: flex;
   align-items: flex-start;
-  gap: 9px;
+  gap: calc(9px * var(--app-density,1));
   color: #536761;
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   line-height: 1.7;
   font-weight: 700;
   cursor: pointer;
@@ -605,12 +605,12 @@
 
 .register-pro-error {
   margin-top: 16px;
-  padding: 12px 14px;
+  padding: calc(12px * var(--app-density,1)) calc(14px * var(--app-density,1));
   border: 1px solid rgba(180,35,24,.15);
-  border-radius: 13px;
+  border-radius: calc(13px * var(--app-radius-scale,1));
   background: #fff5f4;
   color: #b42318;
-  font-size: 12px;
+  font-size: calc(12px * var(--app-font-scale,1));
   line-height: 1.7;
   font-weight: 750;
 }
@@ -620,20 +620,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: calc(10px * var(--app-density,1));
 }
 
 .register-pro-primary,
 .register-pro-secondary {
   min-height: 50px;
-  padding: 0 18px;
+  padding: 0 calc(18px * var(--app-density,1));
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border-radius: 13px;
+  gap: calc(8px * var(--app-density,1));
+  border-radius: calc(13px * var(--app-radius-scale,1));
   cursor: pointer;
-  font-size: 12px;
+  font-size: calc(12px * var(--app-font-scale,1));
   font-weight: 900;
 }
 
@@ -641,11 +641,11 @@
   border: 0;
   background: linear-gradient(135deg,var(--register-green-dark),var(--register-green));
   color: #fff;
-  box-shadow: 0 13px 30px rgba(15,76,69,.19);
+  box-shadow: 0 13px 30px color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 19%,transparent);
 }
 
 .register-pro-secondary {
-  border: 1px solid rgba(15,76,69,.12);
+  border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 12%,transparent);
   background: #fff;
   color: var(--register-green);
 }
@@ -672,7 +672,7 @@
 
 .register-pro-success-shell {
   width: min(650px,100%);
-  padding: 52px;
+  padding: calc(52px * var(--app-density,1));
   box-sizing: border-box;
   text-align: center;
 }
@@ -683,7 +683,7 @@
   margin: 0 auto 16px;
   display: grid;
   place-items: center;
-  border-radius: 23px;
+  border-radius: calc(23px * var(--app-radius-scale,1));
   background: rgba(15,76,69,.08);
   color: var(--register-green);
 }
@@ -696,9 +696,9 @@
 .register-pro-success-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: calc(7px * var(--app-density,1));
   color: var(--register-green);
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   font-weight: 900;
 }
 
@@ -711,7 +711,7 @@
 .register-pro-success-shell h1 {
   margin: 11px 0 0;
   color: var(--register-green-dark);
-  font-size: 31px;
+  font-size: calc(31px * var(--app-font-scale,1));
   font-weight: 950;
 }
 
@@ -719,7 +719,7 @@
   max-width: 500px;
   margin: 10px auto 0;
   color: var(--register-muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--app-font-scale,1));
   line-height: 1.8;
   font-weight: 650;
 }
@@ -727,16 +727,16 @@
 .register-pro-number-card {
   max-width: 450px;
   margin: 24px auto 0;
-  padding: 18px;
-  border: 1px solid rgba(15,76,69,.11);
-  border-radius: 19px;
-  background: linear-gradient(145deg,#f5faf7,#fffdf7);
+  padding: calc(18px * var(--app-density,1));
+  border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 11%,transparent);
+  border-radius: calc(19px * var(--app-radius-scale,1));
+  background: linear-gradient(145deg,var(--app-color-f5faf7,#f5faf7),#fffdf7);
 }
 
 .register-pro-number-card > span {
   display: block;
   color: var(--register-muted);
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   font-weight: 750;
 }
 
@@ -745,7 +745,7 @@
   margin-top: 7px;
   direction: ltr;
   color: var(--register-green-dark);
-  font-size: 27px;
+  font-size: calc(27px * var(--app-font-scale,1));
   letter-spacing: 1px;
   font-weight: 950;
 }
@@ -753,16 +753,16 @@
 .register-pro-number-card button {
   margin-top: 13px;
   min-height: 39px;
-  padding: 0 12px;
+  padding: 0 calc(12px * var(--app-density,1));
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(15,76,69,.11);
-  border-radius: 11px;
+  gap: calc(6px * var(--app-density,1));
+  border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 11%,transparent);
+  border-radius: calc(11px * var(--app-radius-scale,1));
   background: #fff;
   color: var(--register-green);
   cursor: pointer;
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   font-weight: 850;
 }
 
@@ -774,11 +774,11 @@
 .register-pro-success-note {
   max-width: 500px;
   margin: 14px auto 0;
-  padding: 13px;
-  border-radius: 14px;
+  padding: calc(13px * var(--app-density,1));
+  border-radius: calc(14px * var(--app-radius-scale,1));
   background: #f7faf7;
   color: #60736d;
-  font-size: 11px;
+  font-size: calc(11px * var(--app-font-scale,1));
   line-height: 1.75;
   font-weight: 700;
 }
@@ -786,7 +786,7 @@
 .register-pro-success-actions {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: calc(10px * var(--app-density,1));
   margin-top: 24px;
 }
 
@@ -806,22 +806,22 @@
 
 @media (max-width: 700px) {
   .register-pro-page {
-    padding: 12px;
+    padding: calc(12px * var(--app-density,1));
     align-items: start;
   }
 
   .register-pro-shell,
   .register-pro-success-shell {
-    border-radius: 24px;
+    border-radius: calc(24px * var(--app-radius-scale,1));
   }
 
   .register-pro-header {
     min-height: 70px;
-    padding: 0 18px;
+    padding: 0 calc(18px * var(--app-density,1));
   }
 
   .register-pro-card {
-    padding: 28px 20px;
+    padding: calc(28px * var(--app-density,1)) calc(20px * var(--app-density,1));
   }
 
   .register-pro-role-grid,
@@ -834,11 +834,11 @@
   }
 
   .register-pro-stage-heading h2 {
-    font-size: 25px;
+    font-size: calc(25px * var(--app-font-scale,1));
   }
 
   .register-pro-success-shell {
-    padding: 38px 20px;
+    padding: calc(38px * var(--app-density,1)) calc(20px * var(--app-density,1));
   }
 
   .register-pro-success-actions {

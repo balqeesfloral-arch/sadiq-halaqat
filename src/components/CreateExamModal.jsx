@@ -726,9 +726,9 @@ overflowY:"auto",
 
 background:"#fff",
 
-borderRadius:28,
+borderRadius:"calc(28px * var(--app-radius-scale,1))",
 
-padding:30
+padding:"calc(30px * var(--app-density,1))"
 
 }}
 
@@ -1036,13 +1036,13 @@ marginTop:25,
 
 width:"100%",
 
-padding:15,
+padding:"calc(15px * var(--app-density,1))",
 
-borderRadius:16,
+borderRadius:"calc(16px * var(--app-radius-scale,1))",
 
 border:"none",
 
-background:"#0F766E",
+background:"var(--app-color-0f766e,#0F766E)",
 
 color:"#fff",
 
@@ -1100,9 +1100,9 @@ style={{
 
 width:"100%",
 
-padding:12,
+padding:"calc(12px * var(--app-density,1))",
 
-borderRadius:12,
+borderRadius:"calc(12px * var(--app-radius-scale,1))",
 
 border:"1px solid #E2E8F0",
 
@@ -1148,9 +1148,9 @@ style={{
 
 width:"100%",
 
-padding:12,
+padding:"calc(12px * var(--app-density,1))",
 
-borderRadius:12,
+borderRadius:"calc(12px * var(--app-radius-scale,1))",
 
 border:"1px solid #E2E8F0",
 

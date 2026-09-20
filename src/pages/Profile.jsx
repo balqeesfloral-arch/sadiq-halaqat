@@ -372,10 +372,10 @@ export default function Profile() {
 
       <section
         style={{
-          background: "linear-gradient(118deg,#063d33 0%,#075544 62%,#08483c 100%)",
+          background: "linear-gradient(118deg,#063d33 0%,var(--app-color-075544,#075544) 62%,#08483c 100%)",
           border: "1px solid rgba(190,151,54,.38)",
-          borderRadius: "24px",
-          padding: "28px",
+          borderRadius: "calc(24px * var(--app-radius-scale,1))",
+          padding: "calc(28px * var(--app-density,1))",
           marginBottom: "18px",
           boxShadow: "0 18px 44px rgba(10,65,52,.12)",
           color: "#fff",
@@ -387,7 +387,7 @@ export default function Profile() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "18px",
+            gap: "calc(18px * var(--app-density,1))",
             flexWrap: "wrap",
           }}
         >
@@ -403,7 +403,7 @@ export default function Profile() {
               style={{
                 width: "92px",
                 height: "92px",
-                borderRadius: "26px",
+                borderRadius: "calc(26px * var(--app-radius-scale,1))",
                 overflow: "hidden",
                 background: "rgba(255,255,255,.10)",
                 border: "1px solid rgba(232,205,126,.38)",
@@ -439,7 +439,7 @@ export default function Profile() {
                 bottom: "-5px",
                 width: "30px",
                 height: "30px",
-                borderRadius: "9px",
+                borderRadius: "calc(9px * var(--app-radius-scale,1))",
                 background: "#b38a2e",
                 color: "#fff",
                 display: "flex",
@@ -465,7 +465,7 @@ export default function Profile() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "calc(8px * var(--app-density,1))",
                 flexWrap: "wrap",
               }}
             >
@@ -473,7 +473,7 @@ export default function Profile() {
                 style={{
                   margin: 0,
                   color: "#fff",
-                  fontSize: "25px",
+                  fontSize: "calc(25px * var(--app-font-scale,1))",
                   fontWeight: "800",
                 }}
               >
@@ -485,13 +485,13 @@ export default function Profile() {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "5px",
+                  gap: "calc(5px * var(--app-density,1))",
                   padding:
-                    "5px 9px",
-                  borderRadius: "20px",
+                    "calc(5px * var(--app-density,1)) calc(9px * var(--app-density,1))",
+                  borderRadius: "calc(20px * var(--app-radius-scale,1))",
                   background: "rgba(235,210,129,.13)",
                   color: "#ecd27d",
-                  fontSize: "10px",
+                  fontSize: "calc(10px * var(--app-font-scale,1))",
                   fontWeight: "800",
                 }}
               >
@@ -510,7 +510,7 @@ export default function Profile() {
               style={{
                 marginTop: "6px",
                 color: "rgba(255,255,255,.68)",
-                fontSize: "13px",
+                fontSize: "calc(13px * var(--app-font-scale,1))",
               }}
             >
               مشرف نظام الصديق
@@ -520,10 +520,10 @@ export default function Profile() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
+                gap: "calc(6px * var(--app-density,1))",
                 marginTop: "9px",
                 color: "rgba(255,255,255,.58)",
-                fontSize: "11px",
+                fontSize: "calc(11px * var(--app-font-scale,1))",
               }}
             >
               <ShieldCheck
@@ -549,7 +549,7 @@ export default function Profile() {
           display: "grid",
           gridTemplateColumns:
             "repeat(auto-fit,minmax(190px,1fr))",
-          gap: "14px",
+          gap: "calc(14px * var(--app-density,1))",
           marginBottom: "20px",
         }}
       >
@@ -587,8 +587,8 @@ export default function Profile() {
           background: "#fff",
           border:
             "1px solid #e4e9e5",
-          borderRadius: "20px",
-          padding: "24px",
+          borderRadius: "calc(20px * var(--app-radius-scale,1))",
+          padding: "calc(24px * var(--app-density,1))",
           marginBottom: "20px",
           boxShadow:
             "0 4px 18px rgba(0,0,0,0.035)",
@@ -602,8 +602,8 @@ export default function Profile() {
           <h2
             style={{
               margin: 0,
-              color: "#173d2b",
-              fontSize: "19px",
+              color: "var(--app-color-173d2b,#173d2b)",
+              fontSize: "calc(19px * var(--app-font-scale,1))",
               fontWeight: "800",
             }}
           >
@@ -615,7 +615,7 @@ export default function Profile() {
               margin:
                 "5px 0 0",
               color: "#8a928d",
-              fontSize: "11px",
+              fontSize: "calc(11px * var(--app-font-scale,1))",
             }}
           >
             يمكنك تحديث بياناتك الشخصية من هنا.
@@ -627,7 +627,7 @@ export default function Profile() {
             display: "grid",
             gridTemplateColumns:
               "repeat(auto-fit,minmax(230px,1fr))",
-            gap: "16px",
+            gap: "calc(16px * var(--app-density,1))",
           }}
         >
           <FormField
@@ -686,13 +686,13 @@ export default function Profile() {
             marginTop: "18px",
             minHeight: "46px",
             padding:
-              "0 20px",
+              "0 calc(20px * var(--app-density,1))",
             border: "none",
-            borderRadius: "11px",
+            borderRadius: "calc(11px * var(--app-radius-scale,1))",
             background:
               saving
                 ? "#6f8d7e"
-                : "#0f5132",
+                : "var(--app-color-0f5132,#0f5132)",
             color: "#fff",
             cursor:
               saving
@@ -701,8 +701,8 @@ export default function Profile() {
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "8px",
-            fontSize: "13px",
+            gap: "calc(8px * var(--app-density,1))",
+            fontSize: "calc(13px * var(--app-font-scale,1))",
             fontWeight: "800",
           }}
         >
@@ -737,7 +737,7 @@ export default function Profile() {
           display: "grid",
           gridTemplateColumns:
             "repeat(auto-fit,minmax(230px,1fr))",
-          gap: "14px",
+          gap: "calc(14px * var(--app-density,1))",
           marginBottom: "20px",
         }}
       >
@@ -773,8 +773,8 @@ export default function Profile() {
           background: "#fff",
           border:
             "1px solid #e4e9e5",
-          borderRadius: "20px",
-          padding: "24px",
+          borderRadius: "calc(20px * var(--app-radius-scale,1))",
+          padding: "calc(24px * var(--app-density,1))",
           marginBottom: "20px",
           boxShadow:
             "0 4px 18px rgba(0,0,0,0.035)",
@@ -788,8 +788,8 @@ export default function Profile() {
           <h2
             style={{
               margin: 0,
-              color: "#173d2b",
-              fontSize: "19px",
+              color: "var(--app-color-173d2b,#173d2b)",
+              fontSize: "calc(19px * var(--app-font-scale,1))",
               fontWeight: "800",
             }}
           >
@@ -801,7 +801,7 @@ export default function Profile() {
               margin:
                 "5px 0 0",
               color: "#8a928d",
-              fontSize: "11px",
+              fontSize: "calc(11px * var(--app-font-scale,1))",
             }}
           >
             تحديث كلمة المرور مباشرة وبشكل آمن عبر حسابك.
@@ -815,24 +815,24 @@ export default function Profile() {
             width: "100%",
             minHeight: "76px",
             border: "1px solid #dce6e1",
-            borderRadius: "16px",
+            borderRadius: "calc(16px * var(--app-radius-scale,1))",
             background: "linear-gradient(110deg,#f7fbf9,#fff)",
-            color: "#0b5d4b",
+            color: "var(--app-color-0b5d4b,#0b5d4b)",
             cursor: "pointer",
-            padding: "14px 16px",
+            padding: "calc(14px * var(--app-density,1)) calc(16px * var(--app-density,1))",
             display: "flex",
             alignItems: "center",
-            gap: "13px",
+            gap: "calc(13px * var(--app-density,1))",
             textAlign: "right",
           }}
         >
           <span style={{
             width:"44px",height:"44px",display:"grid",placeItems:"center",
-            borderRadius:"13px",background:"#eaf4ef",flexShrink:0
+            borderRadius:"calc(13px * var(--app-radius-scale,1))",background:"#eaf4ef",flexShrink:0
           }}><LockKeyhole size={20}/></span>
           <span style={{flex:1}}>
-            <strong style={{display:"block",fontSize:"13px"}}>تغيير كلمة المرور</strong>
-            <small style={{display:"block",marginTop:"4px",color:"#84918a",fontSize:"10px"}}>
+            <strong style={{display:"block",fontSize:"calc(13px * var(--app-font-scale,1))"}}>تغيير كلمة المرور</strong>
+            <small style={{display:"block",marginTop:"4px",color:"#84918a",fontSize:"calc(10px * var(--app-font-scale,1))"}}>
               تعيين كلمة مرور جديدة مباشرة لحسابك
             </small>
           </span>
@@ -892,28 +892,28 @@ export default function Profile() {
 
           .profile-password-backdrop{
             position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
-            padding:20px;background:rgba(6,34,28,.46);backdrop-filter:blur(6px)
+            padding:calc(20px * var(--app-density,1));background:rgba(6,34,28,.46);backdrop-filter:blur(6px)
           }
           .profile-password-modal{
             position:relative;width:min(460px,100%);overflow:hidden;
-            border:1px solid rgba(184,143,46,.34);border-radius:22px;background:#fff;
+            border:1px solid rgba(184,143,46,.34);border-radius:calc(22px * var(--app-radius-scale,1));background:#fff;
             box-shadow:0 30px 80px rgba(6,39,31,.24)
           }
           .profile-modal-ornament{
-            position:absolute;left:-22px;top:-35px;font-size:120px;color:#b48b31;opacity:.055;pointer-events:none
+            position:absolute;left:-22px;top:-35px;font-size:calc(120px * var(--app-font-scale,1));color:#b48b31;opacity:.055;pointer-events:none
           }
-          .profile-password-head{display:flex;align-items:flex-start;gap:11px;padding:20px;border-bottom:1px solid #e8eeea;background:linear-gradient(120deg,#f8fbf9,#fff)}
-          .profile-password-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#eaf4ef;color:#0b5d4b;flex:none}
-          .profile-password-head>div{flex:1}.profile-password-head span{font-size:8px;color:#a17b29;font-weight:800}.profile-password-head h3{margin:2px 0;color:#173f33;font-size:16px}.profile-password-head p{margin:0;color:#8b9690;font-size:9px}
-          .profile-modal-close{width:34px;height:34px;display:grid;place-items:center;border:1px solid #e0e7e3;border-radius:9px;background:#fff;color:#66766e;cursor:pointer}
-          .profile-password-body{padding:18px 20px}.profile-password-field{display:block;margin-bottom:13px}.profile-password-field>span{display:block;margin-bottom:6px;color:#425d53;font-size:9px;font-weight:800}
-          .profile-password-field>div{display:flex;align-items:center;border:1px solid #d9e3de;border-radius:11px;background:#fff;overflow:hidden}
-          .profile-password-field input{flex:1;min-width:0;height:43px;border:0;outline:0;padding:0 12px;background:transparent;font:inherit;color:#24483c}
+          .profile-password-head{display:flex;align-items:flex-start;gap:calc(11px * var(--app-density,1));padding:calc(20px * var(--app-density,1));border-bottom:1px solid #e8eeea;background:linear-gradient(120deg,var(--app-color-f8fbf9,#f8fbf9),#fff)}
+          .profile-password-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:calc(12px * var(--app-radius-scale,1));background:#eaf4ef;color:var(--app-color-0b5d4b,#0b5d4b);flex:none}
+          .profile-password-head>div{flex:1}.profile-password-head span{font-size:calc(8px * var(--app-font-scale,1));color:#a17b29;font-weight:800}.profile-password-head h3{margin:2px 0;color:#173f33;font-size:calc(16px * var(--app-font-scale,1))}.profile-password-head p{margin:0;color:#8b9690;font-size:calc(9px * var(--app-font-scale,1))}
+          .profile-modal-close{width:34px;height:34px;display:grid;place-items:center;border:1px solid #e0e7e3;border-radius:calc(9px * var(--app-radius-scale,1));background:#fff;color:#66766e;cursor:pointer}
+          .profile-password-body{padding:calc(18px * var(--app-density,1)) calc(20px * var(--app-density,1))}.profile-password-field{display:block;margin-bottom:13px}.profile-password-field>span{display:block;margin-bottom:6px;color:#425d53;font-size:calc(9px * var(--app-font-scale,1));font-weight:800}
+          .profile-password-field>div{display:flex;align-items:center;border:1px solid #d9e3de;border-radius:calc(11px * var(--app-radius-scale,1));background:#fff;overflow:hidden}
+          .profile-password-field input{flex:1;min-width:0;height:43px;border:0;outline:0;padding:0 calc(12px * var(--app-density,1));background:transparent;font:inherit;color:#24483c}
           .profile-password-field button{width:42px;height:43px;border:0;background:transparent;color:#718179;cursor:pointer}
-          .profile-password-hint{display:flex;align-items:flex-start;gap:7px;padding:10px;border-radius:10px;background:#f5f8f6;color:#6d7f76;font-size:8px;line-height:1.6}.profile-password-hint svg{color:#a47d29;flex:none}
-          .profile-password-actions{display:flex;justify-content:flex-end;gap:8px;padding:13px 20px;border-top:1px solid #e9eeeb;background:#fbfcfb}
-          .profile-cancel-btn,.profile-password-save{height:39px;padding:0 14px;border-radius:10px;font:800 10px inherit;cursor:pointer}
-          .profile-cancel-btn{border:1px solid #dce4df;background:#fff;color:#63736b}.profile-password-save{display:flex;align-items:center;gap:6px;border:1px solid #0b5d4b;background:#0b5d4b;color:#fff}
+          .profile-password-hint{display:flex;align-items:flex-start;gap:calc(7px * var(--app-density,1));padding:calc(10px * var(--app-density,1));border-radius:calc(10px * var(--app-radius-scale,1));background:#f5f8f6;color:#6d7f76;font-size:calc(8px * var(--app-font-scale,1));line-height:1.6}.profile-password-hint svg{color:#a47d29;flex:none}
+          .profile-password-actions{display:flex;justify-content:flex-end;gap:calc(8px * var(--app-density,1));padding:calc(13px * var(--app-density,1)) calc(20px * var(--app-density,1));border-top:1px solid #e9eeeb;background:#fbfcfb}
+          .profile-cancel-btn,.profile-password-save{height:39px;padding:0 calc(14px * var(--app-density,1));border-radius:calc(10px * var(--app-radius-scale,1));font:800 10px inherit;cursor:pointer}
+          .profile-cancel-btn{border:1px solid #dce4df;background:#fff;color:#63736b}.profile-password-save{display:flex;align-items:center;gap:calc(6px * var(--app-density,1));border:1px solid var(--app-color-0b5d4b,#0b5d4b);background:var(--app-color-0b5d4b,#0b5d4b);color:#fff}
           .profile-password-save:disabled,.profile-cancel-btn:disabled{opacity:.5;cursor:not-allowed}
           .profile-spin{animation:profileSpin .8s linear infinite}
 
@@ -939,11 +939,11 @@ function InfoCard({
         background: "#fff",
         border:
           "1px solid #e4e9e5",
-        borderRadius: "16px",
-        padding: "16px",
+        borderRadius: "calc(16px * var(--app-radius-scale,1))",
+        padding: "calc(16px * var(--app-density,1))",
         display: "flex",
         alignItems: "center",
-        gap: "12px",
+        gap: "calc(12px * var(--app-density,1))",
       }}
     >
       <div
@@ -951,9 +951,9 @@ function InfoCard({
           width: "42px",
           height: "42px",
           flexShrink: 0,
-          borderRadius: "12px",
-          background: "#edf5ef",
-          color: "#0f5132",
+          borderRadius: "calc(12px * var(--app-radius-scale,1))",
+          background: "var(--app-color-edf5ef,#edf5ef)",
+          color: "var(--app-color-0f5132,#0f5132)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -973,7 +973,7 @@ function InfoCard({
         <div
           style={{
             color: "#8a928d",
-            fontSize: "10px",
+            fontSize: "calc(10px * var(--app-font-scale,1))",
             marginBottom: "3px",
           }}
         >
@@ -983,7 +983,7 @@ function InfoCard({
         <div
           style={{
             color: "#354139",
-            fontSize: "12px",
+            fontSize: "calc(12px * var(--app-font-scale,1))",
             fontWeight: "700",
             overflowWrap: "anywhere",
           }}

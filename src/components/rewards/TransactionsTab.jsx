@@ -868,7 +868,7 @@ export default function TransactionsTab({
               border:
                 1px solid #E5EBE7;
 
-              border-radius: 18px;
+              border-radius: calc(18px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
 
@@ -887,10 +887,10 @@ export default function TransactionsTab({
               justify-content:
                 space-between;
 
-              gap: 14px;
+              gap: calc(14px * var(--app-density,1));
 
               padding:
-                14px 16px;
+                calc(14px * var(--app-density,1)) calc(16px * var(--app-density,1));
 
               border-bottom:
                 1px solid #EDF1EE;
@@ -908,7 +908,7 @@ export default function TransactionsTab({
               display: flex;
               align-items: center;
 
-              gap: 9px;
+              gap: calc(9px * var(--app-density,1));
 
               min-width: 0;
             }
@@ -919,7 +919,7 @@ export default function TransactionsTab({
 
               flex: 0 0 40px;
 
-              border-radius: 12px;
+              border-radius: calc(12px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -930,26 +930,26 @@ export default function TransactionsTab({
               background:
                 linear-gradient(
                   145deg,
-                  #0F5132,
-                  #0F766E
+                  var(--app-color-0f5132,#0F5132),
+                  var(--app-color-0f766e,#0F766E)
                 );
 
               box-shadow:
                 0 7px 17px
-                rgba(15,81,50,.12);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 12%,transparent);
             }
 
             .transactions-eyebrow {
               display: flex;
               align-items: center;
 
-              gap: 3px;
+              gap: calc(3px * var(--app-density,1));
 
               margin-bottom: 1px;
 
               color: #98772C;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
@@ -958,7 +958,7 @@ export default function TransactionsTab({
 
               color: #35463C;
 
-              font-size: 13px;
+              font-size: calc(13px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -967,7 +967,7 @@ export default function TransactionsTab({
 
               color: #8D9791;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               line-height: 1.5;
             }
 
@@ -979,7 +979,7 @@ export default function TransactionsTab({
                   minmax(72px,1fr)
                 );
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
 
               flex: 0 0 auto;
             }
@@ -987,12 +987,12 @@ export default function TransactionsTab({
             .transactions-overview > div {
               min-width: 74px;
 
-              padding: 7px 8px;
+              padding: calc(7px * var(--app-density,1)) calc(8px * var(--app-density,1));
 
               border:
                 1px solid #E4EAE6;
 
-              border-radius: 9px;
+              border-radius: calc(9px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
             }
@@ -1005,7 +1005,7 @@ export default function TransactionsTab({
             .transactions-overview span {
               color: #929B95;
 
-              font-size: 5px;
+              font-size: calc(5px * var(--app-font-scale,1));
             }
 
             .transactions-overview strong {
@@ -1013,7 +1013,7 @@ export default function TransactionsTab({
 
               color: #3E4E44;
 
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -1039,9 +1039,9 @@ export default function TransactionsTab({
               justify-content:
                 space-between;
 
-              gap: 9px;
+              gap: calc(9px * var(--app-density,1));
 
-              padding: 10px 12px;
+              padding: calc(10px * var(--app-density,1)) calc(12px * var(--app-density,1));
 
               border-bottom:
                 1px solid #EDF1EE;
@@ -1076,19 +1076,19 @@ export default function TransactionsTab({
               height: 38px;
 
               padding:
-                0 32px 0 31px;
+                0 calc(32px * var(--app-density,1)) 0 calc(31px * var(--app-density,1));
 
               border:
                 1px solid #DDE5E0;
 
-              border-radius: 9px;
+              border-radius: calc(9px * var(--app-radius-scale,1));
 
               outline: none;
 
               color: #3D4D43;
               background: #FFFFFF;
 
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
             }
 
             .transactions-search input:focus {
@@ -1096,7 +1096,7 @@ export default function TransactionsTab({
 
               box-shadow:
                 0 0 0 3px
-                rgba(15,81,50,.05);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
             }
 
             .transactions-search button {
@@ -1111,7 +1111,7 @@ export default function TransactionsTab({
                 translateY(-50%);
 
               border: none;
-              border-radius: 6px;
+              border-radius: calc(6px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1127,28 +1127,28 @@ export default function TransactionsTab({
               display: flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
             }
 
             .transactions-category-filter button {
               min-height: 31px;
 
-              padding: 0 8px;
+              padding: 0 calc(8px * var(--app-density,1));
 
               border:
                 1px solid #E0E7E2;
 
-              border-radius: 8px;
+              border-radius: calc(8px * var(--app-radius-scale,1));
 
               display: inline-flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               color: #6F7B73;
               background: #FFFFFF;
 
-              font-size: 5.7px;
+              font-size: calc(5.7px * var(--app-font-scale,1));
               font-weight: 850;
 
               cursor: pointer;
@@ -1158,7 +1158,7 @@ export default function TransactionsTab({
               min-width: 17px;
               min-height: 17px;
 
-              padding: 0 4px;
+              padding: 0 calc(4px * var(--app-density,1));
 
               border-radius: 999px;
 
@@ -1169,14 +1169,14 @@ export default function TransactionsTab({
               color: #77837B;
               background: #F0F4F1;
 
-              font-size: 5px;
+              font-size: calc(5px * var(--app-font-scale,1));
             }
 
             .transactions-category-filter button.active {
               border-color: #BFD5C7;
 
-              color: #0F6848;
-              background: #EDF7F1;
+              color: var(--app-color-0f6848,#0F6848);
+              background: var(--app-color-edf7f1,#EDF7F1);
             }
 
             .transactions-category-filter button.active.grant {
@@ -1203,10 +1203,10 @@ export default function TransactionsTab({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               padding:
-                7px 12px;
+                calc(7px * var(--app-density,1)) calc(12px * var(--app-density,1));
 
               border-bottom:
                 1px solid #EDF1EE;
@@ -1214,7 +1214,7 @@ export default function TransactionsTab({
               color: #7A867E;
               background: #FFFFFF;
 
-              font-size: 5.6px;
+              font-size: calc(5.6px * var(--app-font-scale,1));
             }
 
             .transactions-result-bar b {
@@ -1224,10 +1224,10 @@ export default function TransactionsTab({
             .transactions-result-bar button {
               border: none;
 
-              color: #0F6848;
+              color: var(--app-color-0f6848,#0F6848);
               background: transparent;
 
-              font-size: 5.6px;
+              font-size: calc(5.6px * var(--app-font-scale,1));
               font-weight: 900;
 
               cursor: pointer;
@@ -1249,9 +1249,9 @@ export default function TransactionsTab({
                   )
                 );
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
 
-              padding: 12px;
+              padding: calc(12px * var(--app-density,1));
             }
 
             /* =========================
@@ -1264,12 +1264,12 @@ export default function TransactionsTab({
               min-width: 0;
               overflow: hidden;
 
-              padding: 12px;
+              padding: calc(12px * var(--app-density,1));
 
               border:
                 1px solid #E5EBE7;
 
-              border-radius: 14px;
+              border-radius: calc(14px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
 
@@ -1311,7 +1311,7 @@ export default function TransactionsTab({
                 linear-gradient(
                   90deg,
                   transparent,
-                  #0F766E,
+                  var(--app-color-0f766e,#0F766E),
                   transparent
                 );
             }
@@ -1344,22 +1344,22 @@ export default function TransactionsTab({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
             }
 
             .transaction-category-badge {
               min-height: 24px;
 
-              padding: 0 7px;
+              padding: 0 calc(7px * var(--app-density,1));
 
               border-radius: 999px;
 
               display: inline-flex;
               align-items: center;
 
-              gap: 3px;
+              gap: calc(3px * var(--app-density,1));
 
-              font-size: 5.4px;
+              font-size: calc(5.4px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
@@ -1394,7 +1394,7 @@ export default function TransactionsTab({
               display: flex;
               align-items: flex-start;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               color: #8D9791;
             }
@@ -1411,7 +1411,7 @@ export default function TransactionsTab({
             .transaction-date strong {
               color: #657169;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
               font-weight: 850;
             }
 
@@ -1420,7 +1420,7 @@ export default function TransactionsTab({
 
               color: #9AA29D;
 
-              font-size: 5px;
+              font-size: calc(5px * var(--app-font-scale,1));
             }
 
             /* =========================
@@ -1431,7 +1431,7 @@ export default function TransactionsTab({
               display: flex;
               align-items: center;
 
-              gap: 7px;
+              gap: calc(7px * var(--app-density,1));
 
               margin-top: 11px;
             }
@@ -1442,14 +1442,14 @@ export default function TransactionsTab({
 
               flex: 0 0 30px;
 
-              border-radius: 9px;
+              border-radius: calc(9px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
               justify-content: center;
 
-              color: #0F6848;
-              background: #EDF7F1;
+              color: var(--app-color-0f6848,#0F6848);
+              background: var(--app-color-edf7f1,#EDF7F1);
             }
 
             .transaction-student small,
@@ -1460,7 +1460,7 @@ export default function TransactionsTab({
             .transaction-student small {
               color: #98A09B;
 
-              font-size: 5px;
+              font-size: calc(5px * var(--app-font-scale,1));
             }
 
             .transaction-student strong {
@@ -1468,7 +1468,7 @@ export default function TransactionsTab({
 
               color: #3D4C42;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -1478,12 +1478,12 @@ export default function TransactionsTab({
 
             .transaction-reason {
               margin-top: 9px;
-              padding: 8px;
+              padding: calc(8px * var(--app-density,1));
 
               border:
                 1px solid #E8ECEA;
 
-              border-radius: 9px;
+              border-radius: calc(9px * var(--app-radius-scale,1));
 
               background: #FBFDFC;
             }
@@ -1492,11 +1492,11 @@ export default function TransactionsTab({
               display: flex;
               align-items: center;
 
-              gap: 3px;
+              gap: calc(3px * var(--app-density,1));
 
               color: #929B95;
 
-              font-size: 5px;
+              font-size: calc(5px * var(--app-font-scale,1));
             }
 
             .transaction-reason > strong {
@@ -1508,7 +1508,7 @@ export default function TransactionsTab({
 
               color: #536159;
 
-              font-size: 6.5px;
+              font-size: calc(6.5px * var(--app-font-scale,1));
               font-weight: 900;
 
               text-overflow: ellipsis;
@@ -1525,7 +1525,7 @@ export default function TransactionsTab({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               margin-top: 11px;
             }
@@ -1538,13 +1538,13 @@ export default function TransactionsTab({
             .transaction-value-row > div > span {
               color: #98A09B;
 
-              font-size: 5px;
+              font-size: calc(5px * var(--app-font-scale,1));
             }
 
             .transaction-value-row > div > strong {
               margin-top: 1px;
 
-              font-size: 20px;
+              font-size: calc(20px * var(--app-font-scale,1));
               font-weight: 950;
 
               direction: ltr;
@@ -1570,14 +1570,14 @@ export default function TransactionsTab({
 
               color: #8F9992;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
               font-weight: 800;
             }
 
             .transaction-id {
               color: #9AA29D;
 
-              font-size: 5.3px;
+              font-size: calc(5.3px * var(--app-font-scale,1));
             }
 
             /* =========================
@@ -1586,14 +1586,14 @@ export default function TransactionsTab({
 
             .transaction-note {
               margin-top: 8px;
-              padding-top: 7px;
+              padding-top: calc(7px * var(--app-density,1));
 
               border-top:
                 1px solid #EEF2EF;
 
               color: #8B958F;
 
-              font-size: 5.4px;
+              font-size: calc(5.4px * var(--app-font-scale,1));
               line-height: 1.55;
 
               display: -webkit-box;
@@ -1616,7 +1616,7 @@ export default function TransactionsTab({
                   minmax(0,1fr)
                 );
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
 
               margin-top: 10px;
             }
@@ -1624,18 +1624,18 @@ export default function TransactionsTab({
             .transaction-action {
               min-height: 33px;
 
-              padding: 0 8px;
+              padding: 0 calc(8px * var(--app-density,1));
 
               border: none;
-              border-radius: 8px;
+              border-radius: calc(8px * var(--app-radius-scale,1));
 
               display: inline-flex;
               align-items: center;
               justify-content: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
-              font-size: 5.7px;
+              font-size: calc(5.7px * var(--app-font-scale,1));
               font-weight: 900;
 
               cursor: pointer;
@@ -1672,14 +1672,14 @@ export default function TransactionsTab({
               justify-content: center;
               flex-direction: column;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               margin: 12px;
 
               border:
                 1px dashed #DDE5E0;
 
-              border-radius: 13px;
+              border-radius: calc(13px * var(--app-radius-scale,1));
 
               color: #929C96;
               background: #FBFDFC;
@@ -1693,20 +1693,20 @@ export default function TransactionsTab({
 
               margin-bottom: 3px;
 
-              border-radius: 12px;
+              border-radius: calc(12px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
               justify-content: center;
 
               color: #0F6B49;
-              background: #EDF7F1;
+              background: var(--app-color-edf7f1,#EDF7F1);
             }
 
             .transactions-empty strong {
               color: #57645C;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
             }
 
             .transactions-empty p {
@@ -1716,7 +1716,7 @@ export default function TransactionsTab({
 
               color: #929B95;
 
-              font-size: 5.7px;
+              font-size: calc(5.7px * var(--app-font-scale,1));
               line-height: 1.5;
             }
 
@@ -1771,7 +1771,7 @@ export default function TransactionsTab({
             @media
             (max-width: 600px) {
               .transactions-header {
-                padding: 12px 13px;
+                padding: calc(12px * var(--app-density,1)) calc(13px * var(--app-density,1));
               }
 
               .transactions-heading p {
@@ -1790,7 +1790,7 @@ export default function TransactionsTab({
                 grid-template-columns:
                   1fr;
 
-                padding: 10px;
+                padding: calc(10px * var(--app-density,1));
               }
             }
 

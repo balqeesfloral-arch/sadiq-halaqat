@@ -220,7 +220,7 @@ export default function RewardsStats({
                 4,
                 minmax(0, 1fr)
               );
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
           }
 
           .rewards-stat-card {
@@ -233,12 +233,12 @@ export default function RewardsStats({
             min-width: 0;
             overflow: hidden;
 
-            padding: 14px;
+            padding: calc(14px * var(--app-density,1));
 
             border:
               1px solid #E7ECE9;
 
-            border-radius: 16px;
+            border-radius: calc(16px * var(--app-radius-scale,1));
 
             background:
               linear-gradient(
@@ -329,7 +329,7 @@ export default function RewardsStats({
             justify-content:
               space-between;
 
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
           }
 
           .rewards-stat-copy {
@@ -343,7 +343,7 @@ export default function RewardsStats({
 
             color: #96A09A;
 
-            font-size: 6px;
+            font-size: calc(6px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
@@ -352,7 +352,7 @@ export default function RewardsStats({
 
             color: #3A4A40;
 
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
             font-weight: 950;
 
             white-space: nowrap;
@@ -370,7 +370,7 @@ export default function RewardsStats({
               1px solid
               var(--accent-border);
 
-            border-radius: 10px;
+            border-radius: calc(10px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -389,7 +389,7 @@ export default function RewardsStats({
             justify-content:
               space-between;
 
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
 
             margin-top: 12px;
           }
@@ -400,7 +400,7 @@ export default function RewardsStats({
             color:
               var(--accent-text);
 
-            font-size: 23px;
+            font-size: calc(23px * var(--app-font-scale,1));
             font-weight: 950;
 
             letter-spacing: -.4px;
@@ -412,7 +412,7 @@ export default function RewardsStats({
             min-height: 24px;
 
             padding:
-              0 7px;
+              0 calc(7px * var(--app-density,1));
 
             border:
               1px solid
@@ -424,7 +424,7 @@ export default function RewardsStats({
             align-items: center;
             justify-content: center;
 
-            gap: 3px;
+            gap: calc(3px * var(--app-density,1));
 
             color:
               var(--accent-text);
@@ -432,7 +432,7 @@ export default function RewardsStats({
             background:
               var(--accent-soft);
 
-            font-size: 5.5px;
+            font-size: calc(5.5px * var(--app-font-scale,1));
             font-weight: 900;
 
             white-space: nowrap;
@@ -441,7 +441,7 @@ export default function RewardsStats({
           .rewards-stat-net-badge {
             display: inline-flex;
             align-items: center;
-            gap: 3px;
+            gap: calc(3px * var(--app-density,1));
           }
 
           .rewards-stat-footer {
@@ -450,17 +450,17 @@ export default function RewardsStats({
             justify-content:
               space-between;
 
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
 
             margin-top: 11px;
-            padding-top: 8px;
+            padding-top: calc(8px * var(--app-density,1));
 
             border-top:
               1px solid #EEF2EF;
 
             color: #A0A8A3;
 
-            font-size: 5.5px;
+            font-size: calc(5.5px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
@@ -489,15 +489,15 @@ export default function RewardsStats({
             .rewards-stats-grid {
               grid-template-columns:
                 1fr;
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
             }
 
             .rewards-stat-card {
-              padding: 13px;
+              padding: calc(13px * var(--app-density,1));
             }
 
             .rewards-stat-value {
-              font-size: 21px;
+              font-size: calc(21px * var(--app-font-scale,1));
             }
           }
         `}

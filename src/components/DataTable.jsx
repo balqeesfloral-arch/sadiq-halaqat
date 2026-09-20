@@ -10,7 +10,7 @@ export default function PageHero({
     <div
       style={{
         ...theme.hero,
-        padding: 40,
+        padding: "calc(40px * var(--app-density,1))",
         position: "relative",
         overflow: "hidden",
       }}
@@ -45,7 +45,7 @@ export default function PageHero({
           <div
             style={{
               display: "inline-block",
-              padding: "8px 16px",
+              padding: "calc(8px * var(--app-density,1)) calc(16px * var(--app-density,1))",
               borderRadius: 999,
               background: "rgba(255,255,255,.12)",
               marginBottom: 16,
@@ -59,7 +59,7 @@ export default function PageHero({
         <h1
           style={{
             margin: 0,
-            fontSize: 42,
+            fontSize: "calc(42px * var(--app-font-scale,1))",
             fontWeight: 900,
           }}
         >
@@ -71,7 +71,7 @@ export default function PageHero({
             style={{
               marginTop: 12,
               marginBottom: 0,
-              fontSize: 18,
+              fontSize: "calc(18px * var(--app-font-scale,1))",
               opacity: 0.9,
               maxWidth: 700,
             }}
@@ -85,7 +85,7 @@ export default function PageHero({
             style={{
               marginTop: 24,
               display: "flex",
-              gap: 12,
+              gap: "calc(12px * var(--app-density,1))",
               flexWrap: "wrap",
             }}
           >

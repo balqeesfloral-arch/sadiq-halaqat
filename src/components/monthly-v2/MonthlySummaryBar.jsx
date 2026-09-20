@@ -13,8 +13,8 @@ export default function MonthlySummaryBar({
         marginTop:"24px",
         background:"#fff",
         border:"1px solid #E2E8F0",
-        borderRadius:"18px",
-        padding:"18px 24px",
+        borderRadius:"calc(18px * var(--app-radius-scale,1))",
+        padding:"calc(18px * var(--app-density,1)) calc(24px * var(--app-density,1))",
         display:"flex",
         justifyContent:"space-between",
         flexWrap:"wrap"

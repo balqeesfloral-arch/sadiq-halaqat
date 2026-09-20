@@ -873,7 +873,7 @@ export default function EditTypeModal({
               align-items: center;
               justify-content: center;
 
-              padding: 18px;
+              padding: calc(18px * var(--app-density,1));
 
               background:
                 rgba(10, 29, 24, .60);
@@ -892,7 +892,7 @@ export default function EditTypeModal({
                 1px solid
                 rgba(255,255,255,.5);
 
-              border-radius: 24px;
+              border-radius: calc(24px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
 
@@ -936,9 +936,9 @@ export default function EditTypeModal({
               align-items: flex-start;
               justify-content: space-between;
 
-              gap: 14px;
+              gap: calc(14px * var(--app-density,1));
 
-              padding: 17px 20px;
+              padding: calc(17px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
               border-bottom:
                 1px solid #E8EEE9;
@@ -958,7 +958,7 @@ export default function EditTypeModal({
               display: flex;
               align-items: center;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
             }
 
             .edit-type-main-icon {
@@ -967,7 +967,7 @@ export default function EditTypeModal({
 
               flex: 0 0 46px;
 
-              border-radius: 14px;
+              border-radius: calc(14px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -978,13 +978,13 @@ export default function EditTypeModal({
               background:
                 linear-gradient(
                   145deg,
-                  #0F5132,
-                  #0F766E
+                  var(--app-color-0f5132,#0F5132),
+                  var(--app-color-0f766e,#0F766E)
                 );
 
               box-shadow:
                 0 8px 20px
-                rgba(15,81,50,.13);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 13%,transparent);
             }
 
             .edit-type-modal.penalty
@@ -1001,13 +1001,13 @@ export default function EditTypeModal({
               display: flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               margin-bottom: 2px;
 
               color: #94742D;
 
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
@@ -1016,7 +1016,7 @@ export default function EditTypeModal({
 
               color: #2F4036;
 
-              font-size: 19px;
+              font-size: calc(19px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -1025,7 +1025,7 @@ export default function EditTypeModal({
 
               color: #8B958F;
 
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
               line-height: 1.5;
             }
 
@@ -1038,7 +1038,7 @@ export default function EditTypeModal({
               border:
                 1px solid #E0E7E2;
 
-              border-radius: 10px;
+              border-radius: calc(10px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1069,18 +1069,18 @@ export default function EditTypeModal({
               grid-template-columns:
                 repeat(3, minmax(0, 1fr));
 
-              gap: 7px;
+              gap: calc(7px * var(--app-density,1));
 
               margin: 14px 20px 10px;
             }
 
             .edit-type-status-strip > div {
-              padding: 9px 10px;
+              padding: calc(9px * var(--app-density,1)) calc(10px * var(--app-density,1));
 
               border:
                 1px solid #E5EBE7;
 
-              border-radius: 11px;
+              border-radius: calc(11px * var(--app-radius-scale,1));
 
               background:
                 #FBFDFC;
@@ -1093,7 +1093,7 @@ export default function EditTypeModal({
 
             .edit-type-status-strip span {
               color: #8C9690;
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             .edit-type-status-strip strong {
@@ -1101,7 +1101,7 @@ export default function EditTypeModal({
 
               color: #3E4D43;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
             }
 
             .edit-type-status-strip strong.active {
@@ -1117,18 +1117,18 @@ export default function EditTypeModal({
             ========================= */
 
             .edit-type-body {
-              padding: 0 20px 16px;
+              padding: 0 calc(20px * var(--app-density,1)) calc(16px * var(--app-density,1));
             }
 
             .edit-type-section {
               margin-bottom: 10px;
 
-              padding: 12px;
+              padding: calc(12px * var(--app-density,1));
 
               border:
                 1px solid #E7ECE9;
 
-              border-radius: 14px;
+              border-radius: calc(14px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
             }
@@ -1139,7 +1139,7 @@ export default function EditTypeModal({
               justify-content:
                 space-between;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
 
               margin-bottom: 10px;
 
@@ -1151,7 +1151,7 @@ export default function EditTypeModal({
 
               color: #405046;
 
-              font-size: 10px;
+              font-size: calc(10px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -1160,7 +1160,7 @@ export default function EditTypeModal({
 
               color: #929B95;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             /* =========================
@@ -1172,7 +1172,7 @@ export default function EditTypeModal({
               grid-template-columns:
                 repeat(2, minmax(0, 1fr));
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
             }
 
             .edit-type-field {
@@ -1180,12 +1180,12 @@ export default function EditTypeModal({
 
               display: block;
 
-              padding: 9px;
+              padding: calc(9px * var(--app-density,1));
 
               border:
                 1px solid #E7ECE9;
 
-              border-radius: 11px;
+              border-radius: calc(11px * var(--app-radius-scale,1));
 
               background: #FBFDFC;
             }
@@ -1201,7 +1201,7 @@ export default function EditTypeModal({
 
               color: #56635B;
 
-              font-size: 6.5px;
+              font-size: calc(6.5px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
@@ -1217,20 +1217,20 @@ export default function EditTypeModal({
               border:
                 1px solid #DCE5DF;
 
-              border-radius: 9px;
+              border-radius: calc(9px * var(--app-radius-scale,1));
 
               outline: none;
 
               color: #3D4C42;
               background: #FFFFFF;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
             }
 
             .edit-type-field > input {
               height: 40px;
 
-              padding: 0 10px;
+              padding: 0 calc(10px * var(--app-density,1));
             }
 
             .edit-type-field > input:focus,
@@ -1239,7 +1239,7 @@ export default function EditTypeModal({
 
               box-shadow:
                 0 0 0 3px
-                rgba(15,81,50,.05);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
             }
 
             .edit-type-field > small {
@@ -1248,13 +1248,13 @@ export default function EditTypeModal({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               margin-top: 5px;
 
               color: #969F99;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
               line-height: 1.45;
             }
 
@@ -1271,7 +1271,7 @@ export default function EditTypeModal({
               min-width: 0;
               height: 40px;
 
-              padding: 0 10px;
+              padding: 0 calc(10px * var(--app-density,1));
 
               border: none;
               outline: none;
@@ -1279,16 +1279,16 @@ export default function EditTypeModal({
               color: #3D4C42;
               background: transparent;
 
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
             .edit-type-points-shell strong {
-              padding: 0 10px;
+              padding: 0 calc(10px * var(--app-density,1));
 
               color: #7E8A82;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             /* =========================
@@ -1301,7 +1301,7 @@ export default function EditTypeModal({
               justify-content:
                 space-between;
 
-              gap: 12px;
+              gap: calc(12px * var(--app-density,1));
             }
 
             .edit-type-toggle-row strong,
@@ -1312,7 +1312,7 @@ export default function EditTypeModal({
             .edit-type-toggle-row strong {
               color: #425147;
 
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
             }
 
             .edit-type-toggle-row span {
@@ -1320,7 +1320,7 @@ export default function EditTypeModal({
 
               color: #929B95;
 
-              font-size: 5.7px;
+              font-size: calc(5.7px * var(--app-font-scale,1));
               line-height: 1.5;
             }
 
@@ -1369,8 +1369,8 @@ export default function EditTypeModal({
               background:
                 linear-gradient(
                   135deg,
-                  #0F5132,
-                  #0F766E
+                  var(--app-color-0f5132,#0F5132),
+                  var(--app-color-0f766e,#0F766E)
                 );
             }
 
@@ -1386,12 +1386,12 @@ export default function EditTypeModal({
             .edit-type-preview-section {
               margin-bottom: 10px;
 
-              padding: 12px;
+              padding: calc(12px * var(--app-density,1));
 
               border:
                 1px solid #E7ECE9;
 
-              border-radius: 14px;
+              border-radius: calc(14px * var(--app-radius-scale,1));
 
               background:
                 linear-gradient(
@@ -1407,7 +1407,7 @@ export default function EditTypeModal({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               margin-bottom: 8px;
             }
@@ -1415,14 +1415,14 @@ export default function EditTypeModal({
             .edit-type-preview-title span {
               color: #405046;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
             .edit-type-preview-title small {
               color: #929B95;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
             }
 
             .edit-type-preview-card {
@@ -1432,11 +1432,11 @@ export default function EditTypeModal({
 
               align-items: center;
 
-              gap: 9px;
+              gap: calc(9px * var(--app-density,1));
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
 
-              border-radius: 11px;
+              border-radius: calc(11px * var(--app-radius-scale,1));
             }
 
             .edit-type-preview-card.reward {
@@ -1457,7 +1457,7 @@ export default function EditTypeModal({
               width: 34px;
               height: 34px;
 
-              border-radius: 10px;
+              border-radius: calc(10px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1489,7 +1489,7 @@ export default function EditTypeModal({
             .edit-type-preview-copy span {
               color: #87928B;
 
-              font-size: 5.5px;
+              font-size: calc(5.5px * var(--app-font-scale,1));
             }
 
             .edit-type-preview-copy strong {
@@ -1497,7 +1497,7 @@ export default function EditTypeModal({
 
               color: #3C4B41;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
             }
 
             .edit-type-preview-copy small {
@@ -1505,14 +1505,14 @@ export default function EditTypeModal({
 
               color: #8C9690;
 
-              font-size: 5.4px;
+              font-size: calc(5.4px * var(--app-font-scale,1));
               line-height: 1.45;
             }
 
             .edit-type-preview-points {
               color: #0F714A;
 
-              font-size: 17px;
+              font-size: calc(17px * var(--app-font-scale,1));
               font-weight: 950;
 
               direction: ltr;
@@ -1526,7 +1526,7 @@ export default function EditTypeModal({
             .edit-type-preview-points small {
               margin-left: 2px;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               font-weight: 800;
             }
 
@@ -1538,14 +1538,14 @@ export default function EditTypeModal({
               display: flex;
               align-items: flex-start;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
 
               border:
                 1px solid #EADDBA;
 
-              border-radius: 12px;
+              border-radius: calc(12px * var(--app-radius-scale,1));
 
               color: #86651E;
 
@@ -1558,13 +1558,13 @@ export default function EditTypeModal({
             }
 
             .edit-type-warning strong {
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
             }
 
             .edit-type-warning span {
               margin-top: 2px;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               line-height: 1.55;
             }
 
@@ -1582,9 +1582,9 @@ export default function EditTypeModal({
               justify-content:
                 space-between;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
 
-              padding: 12px 20px;
+              padding: calc(12px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
               border-top:
                 1px solid #E9EEEB;
@@ -1605,11 +1605,11 @@ export default function EditTypeModal({
               display: flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               color: #7B877F;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             .edit-type-change-state.changed {
@@ -1622,18 +1622,18 @@ export default function EditTypeModal({
               display: flex;
               align-items: center;
 
-              gap: 6px;
+              gap: calc(6px * var(--app-density,1));
             }
 
             .edit-type-cancel,
             .edit-type-save {
               min-height: 40px;
 
-              padding: 0 13px;
+              padding: 0 calc(13px * var(--app-density,1));
 
-              border-radius: 9px;
+              border-radius: calc(9px * var(--app-radius-scale,1));
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
               font-weight: 900;
 
               cursor: pointer;
@@ -1654,15 +1654,15 @@ export default function EditTypeModal({
               align-items: center;
               justify-content: center;
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
 
               color: #FFFFFF;
 
               background:
                 linear-gradient(
                   135deg,
-                  #0F5132,
-                  #0F766E
+                  var(--app-color-0f5132,#0F5132),
+                  var(--app-color-0f766e,#0F766E)
                 );
             }
 
@@ -1707,7 +1707,7 @@ export default function EditTypeModal({
               .edit-type-overlay {
                 align-items: flex-end;
 
-                padding: 7px;
+                padding: calc(7px * var(--app-density,1));
               }
 
               .edit-type-modal {
@@ -1717,12 +1717,12 @@ export default function EditTypeModal({
                   calc(100vh - 14px);
 
                 border-radius:
-                  22px 22px
-                  10px 10px;
+                  calc(22px * var(--app-radius-scale,1)) calc(22px * var(--app-radius-scale,1))
+                  calc(10px * var(--app-radius-scale,1)) calc(10px * var(--app-radius-scale,1));
               }
 
               .edit-type-header {
-                padding: 14px 15px;
+                padding: calc(14px * var(--app-density,1)) calc(15px * var(--app-density,1));
               }
 
               .edit-type-heading p {
@@ -1736,7 +1736,7 @@ export default function EditTypeModal({
 
               .edit-type-body {
                 padding:
-                  0 15px 13px;
+                  0 calc(15px * var(--app-density,1)) calc(13px * var(--app-density,1));
               }
 
               .edit-type-grid {
@@ -1753,7 +1753,7 @@ export default function EditTypeModal({
                 flex-direction: column;
 
                 padding:
-                  10px 15px;
+                  calc(10px * var(--app-density,1)) calc(15px * var(--app-density,1));
               }
 
               .edit-type-actions {
@@ -1768,7 +1768,7 @@ export default function EditTypeModal({
             @media
             (max-width: 430px) {
               .edit-type-heading h2 {
-                font-size: 17px;
+                font-size: calc(17px * var(--app-font-scale,1));
               }
 
               .edit-type-status-strip {

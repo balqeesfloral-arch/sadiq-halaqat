@@ -9,7 +9,7 @@ export default function LoadingState({
         minHeight,
         background: "#fff",
         border: "1px solid #e5e9e6",
-        borderRadius: "18px",
+        borderRadius: "calc(18px * var(--app-radius-scale,1))",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -33,7 +33,7 @@ export default function LoadingState({
       <div
         style={{
           marginTop: "12px",
-          fontSize: "12px",
+          fontSize: "calc(12px * var(--app-font-scale,1))",
         }}
       >
         {message}

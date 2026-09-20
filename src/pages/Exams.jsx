@@ -425,7 +425,7 @@ function CreateExamWizard({mosques,onClose,onCreated}){
     {step===2&&<>
       <section className="exv2-section"><Title icon={Users}>المعلمون المختبرون</Title>{!teachers.length?<SmallEmpty text="لا يوجد معلمون ضمن الحلقات المحددة"/>:<div className="exv2-choice-grid">{teachers.map(t=><Choice key={t.id} active={selectedTeachers.includes(Number(t.id))} title={t.full_name} subtitle={t.user_number||"معلم"} onClick={()=>toggle(t.id,setSelectedTeachers)}/>)}</div>}</section>
       <section className="exv2-section"><Title icon={Users}>الطلاب</Title>
-        {!!students.length&&<div style={{display:"flex",gap:6,marginBottom:8}}><button className="exv2-secondary" onClick={()=>setSelectedStudents(students.map(s=>Number(s.id)))}>تحديد الجميع</button><button className="exv2-secondary" onClick={()=>setSelectedStudents([])}>إلغاء الجميع</button></div>}
+        {!!students.length&&<div style={{display:"flex",gap:"calc(6px * var(--app-density,1))",marginBottom:8}}><button className="exv2-secondary" onClick={()=>setSelectedStudents(students.map(s=>Number(s.id)))}>تحديد الجميع</button><button className="exv2-secondary" onClick={()=>setSelectedStudents([])}>إلغاء الجميع</button></div>}
         {!students.length?<SmallEmpty text="لا يوجد طلاب نشطون"/>:<div className="exv2-choice-grid">{students.map(s=><Choice key={s.id} active={selectedStudents.includes(Number(s.id))} title={s.full_name} subtitle={s.user_number||"طالب"} onClick={()=>toggle(s.id,setSelectedStudents)}/>)}</div>}
       </section>
     </>}
@@ -588,9 +588,9 @@ function ExamDetailsModal({exam,onClose,onUpdated}){
       </>}
 
       {tab==="students"&&<section className="exv2-section">
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"calc(8px * var(--app-density,1))",flexWrap:"wrap"}}>
           <Title icon={ListChecks}>إعداد الطلاب</Title>
-          {status==="draft"&&<div style={{display:"flex",gap:6,flexWrap:"wrap"}}><button className="exv2-secondary" onClick={autoDistribute}><Users size={14}/>توزيع المختبرين</button><button className="exv2-secondary" onClick={()=>setAddStudents(true)}><UserPlus size={14}/>إضافة طلاب</button><button className="exv2-primary" disabled={!readiness.ready||busy} onClick={approve}><Send size={15}/>اعتماد ورفع للمعلمين</button></div>}
+          {status==="draft"&&<div style={{display:"flex",gap:"calc(6px * var(--app-density,1))",flexWrap:"wrap"}}><button className="exv2-secondary" onClick={autoDistribute}><Users size={14}/>توزيع المختبرين</button><button className="exv2-secondary" onClick={()=>setAddStudents(true)}><UserPlus size={14}/>إضافة طلاب</button><button className="exv2-primary" disabled={!readiness.ready||busy} onClick={approve}><Send size={15}/>اعتماد ورفع للمعلمين</button></div>}
         </div>
         <Info good={readiness.ready} icon={readiness.ready?CheckCircle2:AlertTriangle}>{readiness.ready?"الاختبار جاهز للاعتماد والرفع للمعلمين.":`ناقص: ${readiness.missingParts} بدون أجزاء، ${readiness.unassigned} بدون مختبر.`}</Info>
         <div className="exv2-table-wrap" style={{marginTop:10}}><table className="exv2-table"><thead><tr><th>الطالب</th><th>المختبر</th><th>الأجزاء</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody>
@@ -800,7 +800,7 @@ function Title({icon:Icon,children}){return <div className="exv2-section-title">
 function Choice({active,title,subtitle,onClick}){return <button type="button" className={`exv2-choice ${active?"active":""}`} onClick={onClick}><div className="exv2-choice-check"><Check size={13}/></div><div><strong>{title}</strong><span>{subtitle}</span></div></button>}
 function Info({good=false,icon:Icon,children}){return <div className={`exv2-readiness ${good?"ok":"bad"}`}><Icon size={16}/><div>{children}</div></div>}
 function Review({label,value}){return <div className="exv2-review-card"><span>{label}</span><strong>{value}</strong></div>}
-function SmallEmpty({text}){return <div style={{padding:18,border:"1px dashed #cbd9d3",borderRadius:12,color:"#7c8b85",textAlign:"center",fontSize:10}}>{text}</div>}
+function SmallEmpty({text}){return <div style={{padding:"calc(18px * var(--app-density,1))",border:"1px dashed #cbd9d3",borderRadius:"calc(12px * var(--app-radius-scale,1))",color:"#7c8b85",textAlign:"center",fontSize:"calc(10px * var(--app-font-scale,1))"}}>{text}</div>}
 function HijriDate({label,value,onChange,disabled=false}){
   const days=getHijriMonthDays(value.year,value.month),current=getHijriParts(new Date()),years=Array.from({length:5},(_,i)=>current.year-1+i);
   return <Field label={label}><div className="exv2-hijri-row">

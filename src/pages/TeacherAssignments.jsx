@@ -405,7 +405,7 @@ export default function TeacherAssignments() {
         minHeight: "100vh",
         background:
           "linear-gradient(135deg,#f7f5ef 0%,#eef5f0 50%,#f8f6f0 100%)",
-        padding: "28px",
+        padding: "calc(28px * var(--app-density,1))",
         boxSizing: "border-box",
         color: "#26332c",
       }}
@@ -422,7 +422,7 @@ export default function TeacherAssignments() {
           justifyContent:
             "space-between",
           alignItems: "center",
-          gap: "15px",
+          gap: "calc(15px * var(--app-density,1))",
           flexWrap: "wrap",
         }}
       >
@@ -430,7 +430,7 @@ export default function TeacherAssignments() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "13px",
+            gap: "calc(13px * var(--app-density,1))",
           }}
         >
           <button
@@ -450,15 +450,15 @@ export default function TeacherAssignments() {
             style={{
               width: "50px",
               height: "50px",
-              borderRadius: "15px",
-              background: "#0f5132",
+              borderRadius: "calc(15px * var(--app-radius-scale,1))",
+              background: "var(--app-color-0f5132,#0f5132)",
               color: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent:
                 "center",
               boxShadow:
-                "0 8px 20px rgba(15,81,50,.15)",
+                "0 8px 20px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 15%,transparent)",
             }}
           >
             <Link2
@@ -471,8 +471,8 @@ export default function TeacherAssignments() {
             <h1
               style={{
                 margin: 0,
-                color: "#173d2b",
-                fontSize: "29px",
+                color: "var(--app-color-173d2b,#173d2b)",
+                fontSize: "calc(29px * var(--app-font-scale,1))",
                 fontWeight: "850",
               }}
             >
@@ -484,7 +484,7 @@ export default function TeacherAssignments() {
                 margin:
                   "5px 0 0",
                 color: "#7b847e",
-                fontSize: "13px",
+                fontSize: "calc(13px * var(--app-font-scale,1))",
               }}
             >
               إدارة توزيع المعلمين على الحلقات
@@ -530,7 +530,7 @@ export default function TeacherAssignments() {
             display: "grid",
             gridTemplateColumns:
               "repeat(auto-fit,minmax(210px,1fr))",
-            gap: "14px",
+            gap: "calc(14px * var(--app-density,1))",
             marginBottom: "22px",
           }}
         >
@@ -583,7 +583,7 @@ export default function TeacherAssignments() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "10px",
+              gap: "calc(10px * var(--app-density,1))",
               marginBottom: "18px",
             }}
           >
@@ -597,8 +597,8 @@ export default function TeacherAssignments() {
               <h2
                 style={{
                   margin: 0,
-                  color: "#173d2b",
-                  fontSize: "19px",
+                  color: "var(--app-color-173d2b,#173d2b)",
+                  fontSize: "calc(19px * var(--app-font-scale,1))",
                 }}
               >
                 إضافة ربط جديد
@@ -609,7 +609,7 @@ export default function TeacherAssignments() {
                   margin:
                     "4px 0 0",
                   color: "#89918b",
-                  fontSize: "12px",
+                  fontSize: "calc(12px * var(--app-font-scale,1))",
                 }}
               >
                 اختر المعلم والحلقة وحدد نوع التكليف
@@ -622,7 +622,7 @@ export default function TeacherAssignments() {
               display: "grid",
               gridTemplateColumns:
                 "repeat(auto-fit,minmax(230px,1fr))",
-              gap: "13px",
+              gap: "calc(13px * var(--app-density,1))",
             }}
           >
             {/* المعلم */}
@@ -733,26 +733,26 @@ export default function TeacherAssignments() {
               width: "100%",
               minHeight: "48px",
               border: "none",
-              borderRadius: "11px",
+              borderRadius: "calc(11px * var(--app-radius-scale,1))",
               background:
                 saving
                   ? "#6d8d7c"
-                  : "#0f5132",
+                  : "var(--app-color-0f5132,#0f5132)",
               color: "#fff",
               cursor:
                 saving
                   ? "wait"
                   : "pointer",
-              fontSize: "14px",
+              fontSize: "calc(14px * var(--app-font-scale,1))",
               fontWeight: "800",
               display: "flex",
               alignItems:
                 "center",
               justifyContent:
                 "center",
-              gap: "8px",
+              gap: "calc(8px * var(--app-density,1))",
               boxShadow:
-                "0 8px 20px rgba(15,81,50,.13)",
+                "0 8px 20px color-mix(in srgb,var(--app-color-0f5132,#0f5132) 13%,transparent)",
             }}
           >
             <Plus size={18} />
@@ -802,11 +802,9 @@ export default function TeacherAssignments() {
               style={{
                 ...inputStyle,
                 paddingRight:
-                  "43px",
+                  "calc(43px * var(--app-density,1))",
                 paddingLeft:
-                  search
-                    ? "45px"
-                    : "12px",
+                  (search) ? ("calc(45px * var(--app-density,1))") : ("calc(12px * var(--app-density,1))"),
               }}
             />
 
@@ -827,7 +825,7 @@ export default function TeacherAssignments() {
                   height: "30px",
                   border: "none",
                   borderRadius:
-                    "8px",
+                    "calc(8px * var(--app-radius-scale,1))",
                   background:
                     "#f1f3f1",
                   color: "#707872",
@@ -863,8 +861,8 @@ export default function TeacherAssignments() {
             <h2
               style={{
                 margin: 0,
-                color: "#173d2b",
-                fontSize: "20px",
+                color: "var(--app-color-173d2b,#173d2b)",
+                fontSize: "calc(20px * var(--app-font-scale,1))",
               }}
             >
               الروابط الحالية
@@ -875,7 +873,7 @@ export default function TeacherAssignments() {
                 margin:
                   "4px 0 0",
                 color: "#8a918c",
-                fontSize: "11px",
+                fontSize: "calc(11px * var(--app-font-scale,1))",
               }}
             >
               عرض{" "}
@@ -911,7 +909,7 @@ export default function TeacherAssignments() {
               display: "grid",
               gridTemplateColumns:
                 "repeat(auto-fit,minmax(300px,1fr))",
-              gap: "16px",
+              gap: "calc(16px * var(--app-density,1))",
             }}
           >
             {filteredAssignments.map(
@@ -973,17 +971,17 @@ function StatCard({
         marginBottom: 0,
         display: "flex",
         alignItems: "center",
-        gap: "13px",
-        padding: "18px",
+        gap: "calc(13px * var(--app-density,1))",
+        padding: "calc(18px * var(--app-density,1))",
       }}
     >
       <div
         style={{
           width: "46px",
           height: "46px",
-          borderRadius: "13px",
-          background: "#edf5ef",
-          color: "#0f5132",
+          borderRadius: "calc(13px * var(--app-radius-scale,1))",
+          background: "var(--app-color-edf5ef,#edf5ef)",
+          color: "var(--app-color-0f5132,#0f5132)",
           display: "flex",
           alignItems:
             "center",
@@ -999,7 +997,7 @@ function StatCard({
         <div
           style={{
             color: "#7e8781",
-            fontSize: "11px",
+            fontSize: "calc(11px * var(--app-font-scale,1))",
             marginBottom: "3px",
           }}
         >
@@ -1008,8 +1006,8 @@ function StatCard({
 
         <div
           style={{
-            color: "#173d2b",
-            fontSize: "24px",
+            color: "var(--app-color-173d2b,#173d2b)",
+            fontSize: "calc(24px * var(--app-font-scale,1))",
             fontWeight: "850",
           }}
         >
@@ -1039,10 +1037,10 @@ function AssignmentCard({
     <div
       style={{
         background: "#fff",
-        borderRadius: "18px",
+        borderRadius: "calc(18px * var(--app-radius-scale,1))",
         border:
           "1px solid #e3e8e4",
-        padding: "18px",
+        padding: "calc(18px * var(--app-density,1))",
         boxShadow:
           "0 5px 18px rgba(0,0,0,.045)",
       }}
@@ -1053,7 +1051,7 @@ function AssignmentCard({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "12px",
+          gap: "calc(12px * var(--app-density,1))",
           marginBottom: "17px",
         }}
       >
@@ -1061,10 +1059,10 @@ function AssignmentCard({
           style={{
             width: "50px",
             height: "50px",
-            borderRadius: "15px",
+            borderRadius: "calc(15px * var(--app-radius-scale,1))",
             background:
-              "linear-gradient(145deg,#edf5ef,#e2eee6)",
-            color: "#0f5132",
+              "linear-gradient(145deg,var(--app-color-edf5ef,#edf5ef),#e2eee6)",
+            color: "var(--app-color-0f5132,#0f5132)",
             display: "flex",
             alignItems:
               "center",
@@ -1087,8 +1085,8 @@ function AssignmentCard({
           <h3
             style={{
               margin: 0,
-              color: "#173d2b",
-              fontSize: "16px",
+              color: "var(--app-color-173d2b,#173d2b)",
+              fontSize: "calc(16px * var(--app-font-scale,1))",
               fontWeight: "800",
               whiteSpace:
                 "nowrap",
@@ -1106,7 +1104,7 @@ function AssignmentCard({
               style={{
                 marginTop: "4px",
                 color: "#8b938d",
-                fontSize: "11px",
+                fontSize: "calc(11px * var(--app-font-scale,1))",
               }}
             >
               رقم المعلم:{" "}
@@ -1119,18 +1117,18 @@ function AssignmentCard({
           style={{
             flexShrink: 0,
             padding:
-              "5px 9px",
+              "calc(5px * var(--app-density,1)) calc(9px * var(--app-density,1))",
             borderRadius:
-              "20px",
+              "calc(20px * var(--app-radius-scale,1))",
             background:
               isMain
                 ? "#e8f6ed"
                 : "#f2f3f3",
             color:
               isMain
-                ? "#0f5132"
+                ? "var(--app-color-0f5132,#0f5132)"
                 : "#666",
-            fontSize: "10px",
+            fontSize: "calc(10px * var(--app-font-scale,1))",
             fontWeight: "800",
           }}
         >
@@ -1157,22 +1155,22 @@ function AssignmentCard({
           background: "#fafbf9",
           border:
             "1px solid #edf0ed",
-          borderRadius: "13px",
-          padding: "13px",
+          borderRadius: "calc(13px * var(--app-radius-scale,1))",
+          padding: "calc(13px * var(--app-density,1))",
           marginBottom: "15px",
           display: "flex",
           alignItems:
             "center",
-          gap: "10px",
+          gap: "calc(10px * var(--app-density,1))",
         }}
       >
         <div
           style={{
             width: "38px",
             height: "38px",
-            borderRadius: "11px",
+            borderRadius: "calc(11px * var(--app-radius-scale,1))",
             background: "#eef5f0",
-            color: "#0f5132",
+            color: "var(--app-color-0f5132,#0f5132)",
             display: "flex",
             alignItems:
               "center",
@@ -1194,7 +1192,7 @@ function AssignmentCard({
           <div
             style={{
               color: "#929a94",
-              fontSize: "10px",
+              fontSize: "calc(10px * var(--app-font-scale,1))",
               marginBottom:
                 "3px",
             }}
@@ -1205,7 +1203,7 @@ function AssignmentCard({
           <div
             style={{
               color: "#26332c",
-              fontSize: "14px",
+              fontSize: "calc(14px * var(--app-font-scale,1))",
               fontWeight: "800",
             }}
           >
@@ -1220,7 +1218,7 @@ function AssignmentCard({
         <div
           style={{
             color: "#929993",
-            fontSize: "10px",
+            fontSize: "calc(10px * var(--app-font-scale,1))",
             marginBottom: "14px",
           }}
         >
@@ -1246,7 +1244,7 @@ function AssignmentCard({
               ? "#faf0ef"
               : "#fff8f7",
           color: "#b42318",
-          borderRadius: "10px",
+          borderRadius: "calc(10px * var(--app-radius-scale,1))",
           minHeight: "42px",
           cursor:
             deleting
@@ -1257,9 +1255,9 @@ function AssignmentCard({
             "center",
           justifyContent:
             "center",
-          gap: "7px",
+          gap: "calc(7px * var(--app-density,1))",
           fontWeight: "800",
-          fontSize: "12px",
+          fontSize: "calc(12px * var(--app-font-scale,1))",
         }}
       >
         <Trash2 size={16} />
@@ -1290,7 +1288,7 @@ function SelectField({
           display: "block",
           marginBottom: "7px",
           color: "#465149",
-          fontSize: "12px",
+          fontSize: "calc(12px * var(--app-font-scale,1))",
           fontWeight: "800",
         }}
       >
@@ -1327,7 +1325,7 @@ function SelectField({
           style={{
             ...inputStyle,
             paddingRight:
-              "40px",
+              "calc(40px * var(--app-density,1))",
             cursor:
               "pointer",
           }}
@@ -1351,7 +1349,7 @@ function EmptyState({
     <div
       style={{
         ...cardStyle,
-        padding: "55px 20px",
+        padding: "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
         textAlign: "center",
       }}
     >
@@ -1361,9 +1359,9 @@ function EmptyState({
           height: "65px",
           margin:
             "0 auto 15px",
-          borderRadius: "18px",
-          background: "#edf5ef",
-          color: "#0f5132",
+          borderRadius: "calc(18px * var(--app-radius-scale,1))",
+          background: "var(--app-color-edf5ef,#edf5ef)",
+          color: "var(--app-color-0f5132,#0f5132)",
           display: "flex",
           alignItems:
             "center",
@@ -1383,7 +1381,7 @@ function EmptyState({
           margin:
             "0 0 7px",
           color: "#354139",
-          fontSize: "17px",
+          fontSize: "calc(17px * var(--app-font-scale,1))",
         }}
       >
         {search
@@ -1395,7 +1393,7 @@ function EmptyState({
         style={{
           margin: 0,
           color: "#929993",
-          fontSize: "12px",
+          fontSize: "calc(12px * var(--app-font-scale,1))",
         }}
       >
         {search
@@ -1410,13 +1408,13 @@ function EmptyState({
           style={{
             marginTop: "15px",
             border: "none",
-            background: "#0f5132",
+            background: "var(--app-color-0f5132,#0f5132)",
             color: "#fff",
-            borderRadius: "9px",
+            borderRadius: "calc(9px * var(--app-radius-scale,1))",
             padding:
-              "9px 17px",
+              "calc(9px * var(--app-density,1)) calc(17px * var(--app-density,1))",
             cursor: "pointer",
-            fontSize: "12px",
+            fontSize: "calc(12px * var(--app-font-scale,1))",
             fontWeight: "700",
           }}
         >
@@ -1436,7 +1434,7 @@ function LoadingState() {
     <div
       style={{
         ...cardStyle,
-        padding: "55px 20px",
+        padding: "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
         textAlign: "center",
         color: "#7f8781",
       }}
@@ -1489,8 +1487,8 @@ const cardStyle = {
   background: "#fff",
   border:
     "1px solid #e4e8e4",
-  borderRadius: "18px",
-  padding: "20px",
+  borderRadius: "calc(18px * var(--app-radius-scale,1))",
+  padding: "calc(20px * var(--app-density,1))",
   boxShadow:
     "0 5px 18px rgba(0,0,0,.04)",
 };
@@ -1498,14 +1496,14 @@ const cardStyle = {
 const inputStyle = {
   width: "100%",
   minHeight: "48px",
-  padding: "0 12px",
+  padding: "0 calc(12px * var(--app-density,1))",
   border:
     "1px solid #d8ded9",
-  borderRadius: "11px",
+  borderRadius: "calc(11px * var(--app-radius-scale,1))",
   outline: "none",
   background: "#fff",
   color: "#26332c",
-  fontSize: "13px",
+  fontSize: "calc(13px * var(--app-font-scale,1))",
   boxSizing: "border-box",
   direction: "rtl",
 };
@@ -1516,8 +1514,8 @@ const iconButton = {
   border:
     "1px solid #dce1dd",
   background: "#fff",
-  color: "#173d2b",
-  borderRadius: "11px",
+  color: "var(--app-color-173d2b,#173d2b)",
+  borderRadius: "calc(11px * var(--app-radius-scale,1))",
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
@@ -1528,24 +1526,24 @@ const secondaryButton = {
   border:
     "1px solid #d9dfdb",
   background: "#fff",
-  color: "#173d2b",
-  borderRadius: "10px",
+  color: "var(--app-color-173d2b,#173d2b)",
+  borderRadius: "calc(10px * var(--app-radius-scale,1))",
   padding:
-    "10px 14px",
+    "calc(10px * var(--app-density,1)) calc(14px * var(--app-density,1))",
   cursor: "pointer",
   display: "inline-flex",
   alignItems: "center",
-  gap: "7px",
-  fontSize: "12px",
+  gap: "calc(7px * var(--app-density,1))",
+  fontSize: "calc(12px * var(--app-font-scale,1))",
   fontWeight: "700",
 };
 
 const sectionIcon = {
   width: "40px",
   height: "40px",
-  borderRadius: "11px",
-  background: "#edf5ef",
-  color: "#0f5132",
+  borderRadius: "calc(11px * var(--app-radius-scale,1))",
+  background: "var(--app-color-edf5ef,#edf5ef)",
+  color: "var(--app-color-0f5132,#0f5132)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

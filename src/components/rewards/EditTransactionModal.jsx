@@ -1585,7 +1585,7 @@ export default function EditTransactionModal({
               align-items: center;
               justify-content: center;
 
-              padding: 18px;
+              padding: calc(18px * var(--app-density,1));
 
               background:
                 rgba(10, 29, 24, .60);
@@ -1609,7 +1609,7 @@ export default function EditTransactionModal({
                 rgba(255,255,255,.5);
 
               border-radius:
-                24px;
+                calc(24px * var(--app-radius-scale,1));
 
               background:
                 #FFFFFF;
@@ -1656,10 +1656,10 @@ export default function EditTransactionModal({
               justify-content:
                 space-between;
 
-              gap: 14px;
+              gap: calc(14px * var(--app-density,1));
 
               padding:
-                17px 20px;
+                calc(17px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
               border-bottom:
                 1px solid #E8EEE9;
@@ -1679,7 +1679,7 @@ export default function EditTransactionModal({
               display: flex;
               align-items: center;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
             }
 
             .edit-tx-main-icon {
@@ -1689,7 +1689,7 @@ export default function EditTransactionModal({
               flex: 0 0 46px;
 
               border-radius:
-                14px;
+                calc(14px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1697,7 +1697,7 @@ export default function EditTransactionModal({
 
               box-shadow:
                 0 8px 20px
-                rgba(15,81,50,.10);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 10%,transparent);
             }
 
             .edit-tx-modal.grant
@@ -1707,8 +1707,8 @@ export default function EditTransactionModal({
               background:
                 linear-gradient(
                   145deg,
-                  #0F5132,
-                  #0F766E
+                  var(--app-color-0f5132,#0F5132),
+                  var(--app-color-0f766e,#0F766E)
                 );
             }
 
@@ -1727,13 +1727,13 @@ export default function EditTransactionModal({
               display: flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               margin-bottom: 2px;
 
               color: #94742D;
 
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
@@ -1742,7 +1742,7 @@ export default function EditTransactionModal({
 
               color: #2F4036;
 
-              font-size: 19px;
+              font-size: calc(19px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -1752,7 +1752,7 @@ export default function EditTransactionModal({
 
               color: #8B958F;
 
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
               line-height: 1.5;
             }
 
@@ -1766,7 +1766,7 @@ export default function EditTransactionModal({
                 1px solid #E0E7E2;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
@@ -1800,13 +1800,13 @@ export default function EditTransactionModal({
               justify-content: center;
               flex-direction: column;
 
-              gap: 7px;
+              gap: calc(7px * var(--app-density,1));
 
               color: #718078;
             }
 
             .edit-tx-loading strong {
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
             }
 
             /* =========================
@@ -1819,23 +1819,23 @@ export default function EditTransactionModal({
               justify-content:
                 space-between;
 
-              gap: 12px;
+              gap: calc(12px * var(--app-density,1));
 
               margin:
                 14px 20px 10px;
 
-              padding: 11px 12px;
+              padding: calc(11px * var(--app-density,1)) calc(12px * var(--app-density,1));
 
               border:
                 1px solid #E3EAE5;
 
               border-radius:
-                14px;
+                calc(14px * var(--app-radius-scale,1));
 
               background:
                 linear-gradient(
                   135deg,
-                  #F8FBF9,
+                  var(--app-color-f8fbf9,#F8FBF9),
                   #FFFCF7
                 );
             }
@@ -1844,7 +1844,7 @@ export default function EditTransactionModal({
               display: flex;
               align-items: center;
 
-              gap: 9px;
+              gap: calc(9px * var(--app-density,1));
 
               min-width: 0;
             }
@@ -1856,13 +1856,13 @@ export default function EditTransactionModal({
               flex: 0 0 40px;
 
               border-radius:
-                12px;
+                calc(12px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
               justify-content: center;
 
-              color: #0F5132;
+              color: var(--app-color-0f5132,#0F5132);
               background: #E9F5ED;
             }
 
@@ -1875,7 +1875,7 @@ export default function EditTransactionModal({
             .edit-tx-student span {
               color: #8A948E;
 
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
             }
 
             .edit-tx-student strong {
@@ -1883,7 +1883,7 @@ export default function EditTransactionModal({
 
               color: #35463C;
 
-              font-size: 11px;
+              font-size: calc(11px * var(--app-font-scale,1));
             }
 
             .edit-tx-student small {
@@ -1891,7 +1891,7 @@ export default function EditTransactionModal({
 
               color: #9AA29D;
 
-              font-size: 6.5px;
+              font-size: calc(6.5px * var(--app-font-scale,1));
             }
 
             .edit-tx-context-pills {
@@ -1901,30 +1901,30 @@ export default function EditTransactionModal({
                 flex-end;
               flex-wrap: wrap;
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
             }
 
             .edit-tx-context-pills span {
               min-height: 28px;
 
               padding:
-                0 8px;
+                0 calc(8px * var(--app-density,1));
 
               border:
                 1px solid #E3E9E5;
 
               border-radius:
-                8px;
+                calc(8px * var(--app-radius-scale,1));
 
               display: inline-flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               color: #6D7971;
               background: #FFFFFF;
 
-              font-size: 6.5px;
+              font-size: calc(6.5px * var(--app-font-scale,1));
               font-weight: 800;
             }
 
@@ -1941,25 +1941,25 @@ export default function EditTransactionModal({
                   minmax(0,1fr)
                 );
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               padding:
-                0 20px 10px;
+                0 calc(20px * var(--app-density,1)) calc(10px * var(--app-density,1));
             }
 
             .edit-tx-summary-card {
               display: flex;
               align-items: center;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
 
               border:
                 1px solid #E6ECE8;
 
               border-radius:
-                12px;
+                calc(12px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
             }
@@ -1987,14 +1987,14 @@ export default function EditTransactionModal({
               flex: 0 0 34px;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
               justify-content: center;
 
-              color: #0F5132;
-              background: #EDF7F1;
+              color: var(--app-color-0f5132,#0F5132);
+              background: var(--app-color-edf7f1,#EDF7F1);
             }
 
             .edit-tx-summary-card.positive
@@ -2017,7 +2017,7 @@ export default function EditTransactionModal({
             .edit-tx-summary-card span {
               color: #8A948E;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             .edit-tx-summary-card strong {
@@ -2025,7 +2025,7 @@ export default function EditTransactionModal({
 
               color: #3B4B41;
 
-              font-size: 13px;
+              font-size: calc(13px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -2034,7 +2034,7 @@ export default function EditTransactionModal({
 
               color: #8A948E;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               font-weight: 800;
             }
 
@@ -2054,19 +2054,19 @@ export default function EditTransactionModal({
 
             .edit-tx-body {
               padding:
-                0 20px 16px;
+                0 calc(20px * var(--app-density,1)) calc(16px * var(--app-density,1));
             }
 
             .edit-tx-section {
               margin-bottom: 10px;
 
-              padding: 12px;
+              padding: calc(12px * var(--app-density,1));
 
               border:
                 1px solid #E7ECE9;
 
               border-radius:
-                14px;
+                calc(14px * var(--app-radius-scale,1));
 
               background: #FFFFFF;
             }
@@ -2077,7 +2077,7 @@ export default function EditTransactionModal({
               justify-content:
                 space-between;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
 
               margin-bottom: 9px;
 
@@ -2089,7 +2089,7 @@ export default function EditTransactionModal({
 
               color: #405046;
 
-              font-size: 10px;
+              font-size: calc(10px * var(--app-font-scale,1));
               font-weight: 950;
             }
 
@@ -2099,7 +2099,7 @@ export default function EditTransactionModal({
 
               color: #929B95;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             /* =========================
@@ -2115,22 +2115,22 @@ export default function EditTransactionModal({
                   minmax(0,1fr)
                 );
 
-              gap: 7px;
+              gap: calc(7px * var(--app-density,1));
             }
 
             .edit-tx-readonly {
               display: flex;
               align-items: center;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
-              padding: 9px;
+              padding: calc(9px * var(--app-density,1));
 
               border:
                 1px solid #E5EBE7;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               background: #FAFCFB;
             }
@@ -2142,14 +2142,14 @@ export default function EditTransactionModal({
               flex: 0 0 31px;
 
               border-radius:
-                9px;
+                calc(9px * var(--app-radius-scale,1));
 
               display: flex;
               align-items: center;
               justify-content: center;
 
-              color: #0F5132;
-              background: #EDF7F1;
+              color: var(--app-color-0f5132,#0F5132);
+              background: var(--app-color-edf7f1,#EDF7F1);
             }
 
             .edit-tx-modal.deduction
@@ -2166,7 +2166,7 @@ export default function EditTransactionModal({
             .edit-tx-readonly span {
               color: #8D9791;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             .edit-tx-readonly strong {
@@ -2174,7 +2174,7 @@ export default function EditTransactionModal({
 
               color: #405046;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
             }
 
             /* =========================
@@ -2188,7 +2188,7 @@ export default function EditTransactionModal({
                 minmax(0,1fr)
                 minmax(180px,.75fr);
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
             }
 
             .edit-tx-points-input {
@@ -2201,7 +2201,7 @@ export default function EditTransactionModal({
                 1px solid #DCE5DF;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               background: #FBFDFC;
             }
@@ -2212,7 +2212,7 @@ export default function EditTransactionModal({
 
               box-shadow:
                 0 0 0 3px
-                rgba(15,81,50,.05);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
             }
 
             .edit-tx-points-input input {
@@ -2222,7 +2222,7 @@ export default function EditTransactionModal({
               height: 44px;
 
               padding:
-                0 11px;
+                0 calc(11px * var(--app-density,1));
 
               border: none;
               outline: none;
@@ -2231,17 +2231,17 @@ export default function EditTransactionModal({
               background:
                 transparent;
 
-              font-size: 12px;
+              font-size: calc(12px * var(--app-font-scale,1));
               font-weight: 900;
             }
 
             .edit-tx-points-input span {
               padding:
-                0 11px;
+                0 calc(11px * var(--app-density,1));
 
               color: #7E8A82;
 
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
               font-weight: 800;
             }
 
@@ -2251,15 +2251,15 @@ export default function EditTransactionModal({
               justify-content: center;
               flex-direction: column;
 
-              gap: 2px;
+              gap: calc(2px * var(--app-density,1));
 
-              padding: 8px;
+              padding: calc(8px * var(--app-density,1));
 
               border:
                 1px solid #E6ECE8;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               background: #FAFCFB;
 
@@ -2269,13 +2269,13 @@ export default function EditTransactionModal({
             .edit-tx-change-preview span {
               color: #8A958E;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             .edit-tx-change-preview strong {
               color: #56635B;
 
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
             }
 
             .edit-tx-change-preview strong.positive {
@@ -2294,20 +2294,20 @@ export default function EditTransactionModal({
               width: 100%;
               min-height: 90px;
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
 
               border:
                 1px solid #DDE5E0;
 
               border-radius:
-                10px;
+                calc(10px * var(--app-radius-scale,1));
 
               outline: none;
 
               color: #3F4E44;
               background: #FBFDFC;
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
               line-height: 1.7;
 
               resize: vertical;
@@ -2319,7 +2319,7 @@ export default function EditTransactionModal({
 
               box-shadow:
                 0 0 0 3px
-                rgba(15,81,50,.05);
+                color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
 
               background: #FFFFFF;
             }
@@ -2330,13 +2330,13 @@ export default function EditTransactionModal({
               justify-content:
                 space-between;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
               margin-top: 5px;
 
               color: #99A19C;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             /* =========================
@@ -2347,15 +2347,15 @@ export default function EditTransactionModal({
               display: flex;
               align-items: flex-start;
 
-              gap: 8px;
+              gap: calc(8px * var(--app-density,1));
 
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
 
               border:
                 1px solid #D9E7DE;
 
               border-radius:
-                12px;
+                calc(12px * var(--app-radius-scale,1));
 
               color: #0F6848;
 
@@ -2379,13 +2379,13 @@ export default function EditTransactionModal({
             }
 
             .edit-tx-warning strong {
-              font-size: 7px;
+              font-size: calc(7px * var(--app-font-scale,1));
             }
 
             .edit-tx-warning span {
               margin-top: 2px;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
               line-height: 1.55;
             }
 
@@ -2403,10 +2403,10 @@ export default function EditTransactionModal({
               justify-content:
                 space-between;
 
-              gap: 10px;
+              gap: calc(10px * var(--app-density,1));
 
               padding:
-                12px 20px;
+                calc(12px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
               border-top:
                 1px solid #E9EEEB;
@@ -2427,18 +2427,18 @@ export default function EditTransactionModal({
               display: flex;
               align-items: center;
 
-              gap: 4px;
+              gap: calc(4px * var(--app-density,1));
 
               color: #7B877F;
 
-              font-size: 6px;
+              font-size: calc(6px * var(--app-font-scale,1));
             }
 
             .edit-tx-actions {
               display: flex;
               align-items: center;
 
-              gap: 6px;
+              gap: calc(6px * var(--app-density,1));
             }
 
             .edit-tx-cancel,
@@ -2446,12 +2446,12 @@ export default function EditTransactionModal({
               min-height: 40px;
 
               padding:
-                0 13px;
+                0 calc(13px * var(--app-density,1));
 
               border-radius:
-                9px;
+                calc(9px * var(--app-radius-scale,1));
 
-              font-size: 8px;
+              font-size: calc(8px * var(--app-font-scale,1));
               font-weight: 900;
 
               cursor: pointer;
@@ -2472,15 +2472,15 @@ export default function EditTransactionModal({
               align-items: center;
               justify-content: center;
 
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
 
               color: #FFFFFF;
 
               background:
                 linear-gradient(
                   135deg,
-                  #0F5132,
-                  #0F766E
+                  var(--app-color-0f5132,#0F5132),
+                  var(--app-color-0f766e,#0F766E)
                 );
             }
 
@@ -2525,7 +2525,7 @@ export default function EditTransactionModal({
                 align-items:
                   flex-end;
 
-                padding: 7px;
+                padding: calc(7px * var(--app-density,1));
               }
 
               .edit-tx-modal {
@@ -2534,13 +2534,13 @@ export default function EditTransactionModal({
                   calc(100vh - 14px);
 
                 border-radius:
-                  22px 22px
-                  10px 10px;
+                  calc(22px * var(--app-radius-scale,1)) calc(22px * var(--app-radius-scale,1))
+                  calc(10px * var(--app-radius-scale,1)) calc(10px * var(--app-radius-scale,1));
               }
 
               .edit-tx-header {
                 padding:
-                  14px 15px;
+                  calc(14px * var(--app-density,1)) calc(15px * var(--app-density,1));
               }
 
               .edit-tx-heading p {
@@ -2569,7 +2569,7 @@ export default function EditTransactionModal({
                   1fr 1fr;
 
                 padding:
-                  0 15px 8px;
+                  0 calc(15px * var(--app-density,1)) calc(8px * var(--app-density,1));
               }
 
               .edit-tx-summary-grid
@@ -2580,7 +2580,7 @@ export default function EditTransactionModal({
 
               .edit-tx-body {
                 padding:
-                  0 15px 13px;
+                  0 calc(15px * var(--app-density,1)) calc(13px * var(--app-density,1));
               }
 
               .edit-tx-points-box {
@@ -2595,7 +2595,7 @@ export default function EditTransactionModal({
                   column;
 
                 padding:
-                  10px 15px;
+                  calc(10px * var(--app-density,1)) calc(15px * var(--app-density,1));
               }
 
               .edit-tx-actions {
@@ -2627,7 +2627,7 @@ export default function EditTransactionModal({
 
               .edit-tx-heading h2 {
                 font-size:
-                  17px;
+                  calc(17px * var(--app-font-scale,1));
               }
             }
           `}

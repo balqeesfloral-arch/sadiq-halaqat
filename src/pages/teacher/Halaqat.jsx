@@ -1418,9 +1418,9 @@ export default function Halaqat() {
           .halaqat-hero {
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(15, 118, 110, .12);
-            border-radius: 26px;
-            padding: 28px 30px;
+            border: 1px solid color-mix(in srgb,var(--app-color-0f766e,#0f766e) 12%,transparent);
+            border-radius: calc(26px * var(--app-radius-scale,1));
+            padding: calc(28px * var(--app-density,1)) calc(30px * var(--app-density,1));
             margin-bottom: 22px;
             background:
               linear-gradient(
@@ -1430,7 +1430,7 @@ export default function Halaqat() {
               );
             box-shadow:
               0 14px 40px
-              rgba(15, 76, 69, .06);
+              color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 6%,transparent);
           }
 
           .halaqat-hero::before {
@@ -1457,7 +1457,7 @@ export default function Halaqat() {
             align-items: center;
             justify-content:
               space-between;
-            gap: 20px;
+            gap: calc(20px * var(--app-density,1));
           }
 
           .halaqat-title-wrap {
@@ -1467,17 +1467,17 @@ export default function Halaqat() {
           .halaqat-eyebrow {
             display: inline-flex;
             align-items: center;
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
             margin-bottom: 7px;
-            color: #0f766e;
-            font-size: 13px;
+            color: var(--app-color-0f766e,#0f766e);
+            font-size: calc(13px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
           .halaqat-title {
             margin: 0;
             color: #0f172a;
-            font-size: 30px;
+            font-size: calc(30px * var(--app-font-scale,1));
             line-height: 1.3;
             font-weight: 950;
           }
@@ -1485,28 +1485,28 @@ export default function Halaqat() {
           .halaqat-subtitle {
             margin: 7px 0 0;
             color: #64748b;
-            font-size: 14px;
+            font-size: calc(14px * var(--app-font-scale,1));
             line-height: 1.8;
           }
 
           .refresh-button {
             height: 46px;
-            padding: 0 17px;
+            padding: 0 calc(17px * var(--app-density,1));
             border: 1px solid
-              rgba(15,118,110,.15);
-            border-radius: 14px;
+              color-mix(in srgb,var(--app-color-0f766e,#0f766e) 15%,transparent);
+            border-radius: calc(14px * var(--app-radius-scale,1));
             background: #ffffff;
-            color: #0f766e;
+            color: var(--app-color-0f766e,#0f766e);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
             font-family: inherit;
             font-weight: 900;
             cursor: pointer;
             box-shadow:
               0 7px 18px
-              rgba(15,76,69,.06);
+              color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 6%,transparent);
           }
 
           .refresh-button:hover {
@@ -1533,7 +1533,7 @@ export default function Halaqat() {
                 4,
                 minmax(0, 1fr)
               );
-            gap: 14px;
+            gap: calc(14px * var(--app-density,1));
             margin-bottom: 20px;
           }
 
@@ -1541,9 +1541,9 @@ export default function Halaqat() {
             min-width: 0;
             position: relative;
             overflow: hidden;
-            padding: 18px;
+            padding: calc(18px * var(--app-density,1));
             border: 1px solid #e5eeeb;
-            border-radius: 20px;
+            border-radius: calc(20px * var(--app-radius-scale,1));
             background: #ffffff;
             box-shadow:
               0 8px 25px
@@ -1555,31 +1555,31 @@ export default function Halaqat() {
             align-items: center;
             justify-content:
               space-between;
-            gap: 12px;
+            gap: calc(12px * var(--app-density,1));
           }
 
           .halaqat-stat-icon {
             width: 42px;
             height: 42px;
             flex: 0 0 42px;
-            border-radius: 13px;
+            border-radius: calc(13px * var(--app-radius-scale,1));
             display: flex;
             align-items: center;
             justify-content: center;
             background: #ecfdf5;
-            color: #0f766e;
+            color: var(--app-color-0f766e,#0f766e);
           }
 
           .halaqat-stat-label {
             color: #64748b;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
           .halaqat-stat-value {
             margin-top: 8px;
             color: #0f172a;
-            font-size: 26px;
+            font-size: calc(26px * var(--app-font-scale,1));
             line-height: 1;
             font-weight: 950;
           }
@@ -1590,11 +1590,11 @@ export default function Halaqat() {
               minmax(260px, 1fr)
               190px
               190px;
-            gap: 12px;
-            padding: 14px;
+            gap: calc(12px * var(--app-density,1));
+            padding: calc(14px * var(--app-density,1));
             margin-bottom: 20px;
             border: 1px solid #e5eeeb;
-            border-radius: 20px;
+            border-radius: calc(20px * var(--app-radius-scale,1));
             background: #ffffff;
             box-shadow:
               0 7px 24px
@@ -1622,32 +1622,32 @@ export default function Halaqat() {
             box-sizing:
               border-box;
             border: 1px solid #dce5e1;
-            border-radius: 14px;
+            border-radius: calc(14px * var(--app-radius-scale,1));
             background: #fbfdfc;
             color: #0f172a;
             outline: none;
             font-family: inherit;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             font-weight: 700;
           }
 
           .halaqat-search input {
             padding:
-              0 43px 0 14px;
+              0 calc(43px * var(--app-density,1)) 0 calc(14px * var(--app-density,1));
           }
 
           .halaqat-filter-panel select {
-            padding: 0 13px;
+            padding: 0 calc(13px * var(--app-density,1));
             cursor: pointer;
           }
 
           .halaqat-search input:focus,
           .halaqat-filter-panel select:focus {
             border-color:
-              rgba(15,118,110,.45);
+              color-mix(in srgb,var(--app-color-0f766e,#0f766e) 45%,transparent);
             box-shadow:
               0 0 0 3px
-              rgba(15,118,110,.06);
+              color-mix(in srgb,var(--app-color-0f766e,#0f766e) 6%,transparent);
           }
 
           .halaqat-grid {
@@ -1657,7 +1657,7 @@ export default function Halaqat() {
                 2,
                 minmax(0, 1fr)
               );
-            gap: 18px;
+            gap: calc(18px * var(--app-density,1));
           }
 
           .halaqa-card {
@@ -1666,7 +1666,7 @@ export default function Halaqat() {
             min-width: 0;
             border:
               1px solid #e4ece9;
-            border-radius: 24px;
+            border-radius: calc(24px * var(--app-radius-scale,1));
             background: #ffffff;
             box-shadow:
               0 12px 34px
@@ -1681,10 +1681,10 @@ export default function Halaqat() {
             transform:
               translateY(-2px);
             border-color:
-              rgba(15,118,110,.22);
+              color-mix(in srgb,var(--app-color-0f766e,#0f766e) 22%,transparent);
             box-shadow:
               0 18px 42px
-              rgba(15,76,69,.075);
+              color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 7.5%,transparent);
           }
 
           .halaqa-card-accent {
@@ -1692,13 +1692,13 @@ export default function Halaqat() {
             background:
               linear-gradient(
                 90deg,
-                #0f766e,
+                var(--app-color-0f766e,#0f766e),
                 #d4af37
               );
           }
 
           .halaqa-card-body {
-            padding: 20px;
+            padding: calc(20px * var(--app-density,1));
           }
 
           .halaqa-card-head {
@@ -1707,24 +1707,24 @@ export default function Halaqat() {
               flex-start;
             justify-content:
               space-between;
-            gap: 14px;
+            gap: calc(14px * var(--app-density,1));
             margin-bottom: 17px;
           }
 
           .halaqa-card-name {
             margin: 0;
             color: #0f172a;
-            font-size: 20px;
+            font-size: calc(20px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
           .halaqa-mosque {
             display: flex;
             align-items: center;
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
             margin-top: 6px;
             color: #64748b;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             font-weight: 700;
           }
 
@@ -1733,7 +1733,7 @@ export default function Halaqat() {
             flex-wrap: wrap;
             justify-content:
               flex-end;
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
           }
 
           .halaqa-badge {
@@ -1741,9 +1741,9 @@ export default function Halaqat() {
             align-items: center;
             justify-content: center;
             min-height: 28px;
-            padding: 4px 10px;
+            padding: calc(4px * var(--app-density,1)) calc(10px * var(--app-density,1));
             border-radius: 999px;
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
             font-weight: 900;
             white-space: nowrap;
           }
@@ -1755,15 +1755,15 @@ export default function Halaqat() {
                 2,
                 minmax(0,1fr)
               );
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
             margin-bottom: 16px;
           }
 
           .halaqa-info-item {
             min-width: 0;
             min-height: 62px;
-            padding: 11px 12px;
-            border-radius: 15px;
+            padding: calc(11px * var(--app-density,1)) calc(12px * var(--app-density,1));
+            border-radius: calc(15px * var(--app-radius-scale,1));
             background: #f8faf9;
             border: 1px solid #edf2f0;
           }
@@ -1771,17 +1771,17 @@ export default function Halaqat() {
           .halaqa-info-label {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: calc(6px * var(--app-density,1));
             margin-bottom: 6px;
             color: #64748b;
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
           .halaqa-info-value {
             overflow: hidden;
             color: #0f172a;
-            font-size: 14px;
+            font-size: calc(14px * var(--app-font-scale,1));
             font-weight: 900;
             text-overflow:
               ellipsis;
@@ -1790,10 +1790,10 @@ export default function Halaqat() {
           }
 
           .occupancy-wrap {
-            padding: 14px;
+            padding: calc(14px * var(--app-density,1));
             margin-bottom: 14px;
             border: 1px solid #edf2f0;
-            border-radius: 16px;
+            border-radius: calc(16px * var(--app-radius-scale,1));
             background: #fbfdfc;
           }
 
@@ -1802,9 +1802,9 @@ export default function Halaqat() {
             align-items: center;
             justify-content:
               space-between;
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
             margin-bottom: 9px;
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
           }
 
           .occupancy-title {
@@ -1813,7 +1813,7 @@ export default function Halaqat() {
           }
 
           .occupancy-value {
-            color: #0f766e;
+            color: var(--app-color-0f766e,#0f766e);
             font-weight: 950;
           }
 
@@ -1831,7 +1831,7 @@ export default function Halaqat() {
             background:
               linear-gradient(
                 90deg,
-                #0f766e,
+                var(--app-color-0f766e,#0f766e),
                 #16a085
               );
             transition:
@@ -1845,14 +1845,14 @@ export default function Halaqat() {
                 3,
                 minmax(0,1fr)
               );
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
             margin-bottom: 14px;
           }
 
           .performance-box {
             min-width: 0;
-            padding: 12px 8px;
-            border-radius: 15px;
+            padding: calc(12px * var(--app-density,1)) calc(8px * var(--app-density,1));
+            border-radius: calc(15px * var(--app-radius-scale,1));
             text-align: center;
             background:
               linear-gradient(
@@ -1865,7 +1865,7 @@ export default function Halaqat() {
 
           .performance-label {
             color: #94a3b8;
-            font-size: 10px;
+            font-size: calc(10px * var(--app-font-scale,1));
             font-weight: 800;
             white-space: nowrap;
           }
@@ -1873,7 +1873,7 @@ export default function Halaqat() {
           .performance-value {
             margin-top: 5px;
             color: #0f172a;
-            font-size: 16px;
+            font-size: calc(16px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
@@ -1882,11 +1882,11 @@ export default function Halaqat() {
             box-sizing: border-box;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
             margin-bottom: 16px;
-            padding: 9px 11px;
-            border-radius: 13px;
-            font-size: 12px;
+            padding: calc(9px * var(--app-density,1)) calc(11px * var(--app-density,1));
+            border-radius: calc(13px * var(--app-radius-scale,1));
+            font-size: calc(12px * var(--app-font-scale,1));
             font-weight: 850;
           }
 
@@ -1907,8 +1907,8 @@ export default function Halaqat() {
             align-items: center;
             justify-content:
               space-between;
-            gap: 10px;
-            padding-top: 15px;
+            gap: calc(10px * var(--app-density,1));
+            padding-top: calc(15px * var(--app-density,1));
             border-top:
               1px solid #edf2f0;
           }
@@ -1916,14 +1916,14 @@ export default function Halaqat() {
           .halaqa-edit-btn,
           .halaqa-open-btn {
             height: 42px;
-            padding: 0 15px;
-            border-radius: 13px;
+            padding: 0 calc(15px * var(--app-density,1));
+            border-radius: calc(13px * var(--app-radius-scale,1));
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
             font-family: inherit;
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
             font-weight: 900;
             cursor: pointer;
           }
@@ -1931,9 +1931,9 @@ export default function Halaqat() {
           .halaqa-edit-btn {
             border:
               1px solid
-              rgba(15,118,110,.16);
+              color-mix(in srgb,var(--app-color-0f766e,#0f766e) 16%,transparent);
             background: #f0fdfa;
-            color: #0f766e;
+            color: var(--app-color-0f766e,#0f766e);
           }
 
           .halaqa-open-btn {
@@ -1942,20 +1942,20 @@ export default function Halaqat() {
             background:
               linear-gradient(
                 135deg,
-                #0f766e,
-                #115e59
+                var(--app-color-0f766e,#0f766e),
+                var(--app-color-115e59,#115e59)
               );
             color: #ffffff;
             box-shadow:
               0 8px 18px
-              rgba(15,118,110,.16);
+              color-mix(in srgb,var(--app-color-0f766e,#0f766e) 16%,transparent);
           }
 
           .empty-state {
             grid-column: 1 / -1;
-            padding: 58px 20px;
+            padding: calc(58px * var(--app-density,1)) calc(20px * var(--app-density,1));
             border: 1px dashed #cbd5e1;
-            border-radius: 24px;
+            border-radius: calc(24px * var(--app-radius-scale,1));
             background: #ffffff;
             text-align: center;
           }
@@ -1965,18 +1965,18 @@ export default function Halaqat() {
             height: 62px;
             margin:
               0 auto 14px;
-            border-radius: 18px;
+            border-radius: calc(18px * var(--app-radius-scale,1));
             display: flex;
             align-items: center;
             justify-content: center;
             background: #ecfdf5;
-            color: #0f766e;
+            color: var(--app-color-0f766e,#0f766e);
           }
 
           .empty-title {
             margin: 0;
             color: #0f172a;
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
@@ -1984,7 +1984,7 @@ export default function Halaqat() {
             margin: 7px auto 0;
             max-width: 480px;
             color: #64748b;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             line-height: 1.8;
           }
 
@@ -1992,7 +1992,7 @@ export default function Halaqat() {
             position: fixed;
             inset: 0;
             z-index: 3000;
-            padding: 20px;
+            padding: calc(20px * var(--app-density,1));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2013,7 +2013,7 @@ export default function Halaqat() {
             border:
               1px solid
               rgba(255,255,255,.5);
-            border-radius: 25px;
+            border-radius: calc(25px * var(--app-radius-scale,1));
             background: #ffffff;
             box-shadow:
               0 30px 80px
@@ -2028,8 +2028,8 @@ export default function Halaqat() {
             align-items: center;
             justify-content:
               space-between;
-            gap: 15px;
-            padding: 19px 20px;
+            gap: calc(15px * var(--app-density,1));
+            padding: calc(19px * var(--app-density,1)) calc(20px * var(--app-density,1));
             border-bottom:
               1px solid #edf2f0;
             background:
@@ -2041,14 +2041,14 @@ export default function Halaqat() {
           .edit-modal-title {
             margin: 0;
             color: #0f172a;
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
           .edit-modal-subtitle {
             margin-top: 4px;
             color: #64748b;
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
           }
 
           .modal-close {
@@ -2056,7 +2056,7 @@ export default function Halaqat() {
             height: 40px;
             flex: 0 0 40px;
             border: none;
-            border-radius: 12px;
+            border-radius: calc(12px * var(--app-radius-scale,1));
             background: #f1f5f9;
             color: #475569;
             display: flex;
@@ -2066,7 +2066,7 @@ export default function Halaqat() {
           }
 
           .edit-modal-body {
-            padding: 20px;
+            padding: calc(20px * var(--app-density,1));
           }
 
           .edit-form-grid {
@@ -2076,7 +2076,7 @@ export default function Halaqat() {
                 2,
                 minmax(0,1fr)
               );
-            gap: 14px;
+            gap: calc(14px * var(--app-density,1));
           }
 
           .form-field {
@@ -2092,7 +2092,7 @@ export default function Halaqat() {
             display: block;
             margin-bottom: 7px;
             color: #334155;
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
@@ -2104,25 +2104,25 @@ export default function Halaqat() {
               border-box;
             border:
               1px solid #dce5e1;
-            border-radius: 14px;
+            border-radius: calc(14px * var(--app-radius-scale,1));
             background: #fbfdfc;
             color: #0f172a;
             outline: none;
             font-family: inherit;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             font-weight: 700;
           }
 
           .form-input,
           .form-select {
             height: 46px;
-            padding: 0 13px;
+            padding: 0 calc(13px * var(--app-density,1));
           }
 
           .form-textarea {
             min-height: 110px;
             resize: vertical;
-            padding: 13px;
+            padding: calc(13px * var(--app-density,1));
             line-height: 1.7;
           }
 
@@ -2130,10 +2130,10 @@ export default function Halaqat() {
           .form-select:focus,
           .form-textarea:focus {
             border-color:
-              rgba(15,118,110,.45);
+              color-mix(in srgb,var(--app-color-0f766e,#0f766e) 45%,transparent);
             box-shadow:
               0 0 0 3px
-              rgba(15,118,110,.06);
+              color-mix(in srgb,var(--app-color-0f766e,#0f766e) 6%,transparent);
           }
 
           .edit-modal-footer {
@@ -2141,21 +2141,21 @@ export default function Halaqat() {
             align-items: center;
             justify-content:
               flex-end;
-            gap: 10px;
-            padding: 16px 20px 20px;
+            gap: calc(10px * var(--app-density,1));
+            padding: calc(16px * var(--app-density,1)) calc(20px * var(--app-density,1)) calc(20px * var(--app-density,1));
           }
 
           .modal-cancel,
           .modal-save {
             height: 44px;
-            padding: 0 18px;
-            border-radius: 13px;
+            padding: 0 calc(18px * var(--app-density,1));
+            border-radius: calc(13px * var(--app-radius-scale,1));
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
             font-family: inherit;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             font-weight: 900;
             cursor: pointer;
           }
@@ -2172,13 +2172,13 @@ export default function Halaqat() {
             background:
               linear-gradient(
                 135deg,
-                #0f766e,
-                #115e59
+                var(--app-color-0f766e,#0f766e),
+                var(--app-color-115e59,#115e59)
               );
             color: #ffffff;
             box-shadow:
               0 9px 20px
-              rgba(15,118,110,.18);
+              color-mix(in srgb,var(--app-color-0f766e,#0f766e) 18%,transparent);
           }
 
           .modal-save:disabled,
@@ -2194,12 +2194,12 @@ export default function Halaqat() {
                 2,
                 minmax(0,1fr)
               );
-            gap: 18px;
+            gap: calc(18px * var(--app-density,1));
           }
 
           .skeleton-card {
             height: 360px;
-            border-radius: 24px;
+            border-radius: calc(24px * var(--app-radius-scale,1));
             background:
               linear-gradient(
                 90deg,
@@ -2249,8 +2249,8 @@ export default function Halaqat() {
           ) {
             .halaqat-hero {
               padding:
-                22px 18px;
-              border-radius: 21px;
+                calc(22px * var(--app-density,1)) calc(18px * var(--app-density,1));
+              border-radius: calc(21px * var(--app-radius-scale,1));
             }
 
             .halaqat-hero-inner {
@@ -2259,7 +2259,7 @@ export default function Halaqat() {
             }
 
             .halaqat-title {
-              font-size: 25px;
+              font-size: calc(25px * var(--app-font-scale,1));
             }
 
             .halaqat-filter-panel {
@@ -2290,31 +2290,31 @@ export default function Halaqat() {
                   2,
                   minmax(0,1fr)
                 );
-              gap: 9px;
+              gap: calc(9px * var(--app-density,1));
             }
 
             .halaqat-stat {
-              padding: 14px;
-              border-radius: 17px;
+              padding: calc(14px * var(--app-density,1));
+              border-radius: calc(17px * var(--app-radius-scale,1));
             }
 
             .halaqat-stat-icon {
               width: 36px;
               height: 36px;
               flex-basis: 36px;
-              border-radius: 11px;
+              border-radius: calc(11px * var(--app-radius-scale,1));
             }
 
             .halaqat-stat-value {
-              font-size: 22px;
+              font-size: calc(22px * var(--app-font-scale,1));
             }
 
             .halaqa-card {
-              border-radius: 20px;
+              border-radius: calc(20px * var(--app-radius-scale,1));
             }
 
             .halaqa-card-body {
-              padding: 16px;
+              padding: calc(16px * var(--app-density,1));
             }
 
             .halaqa-card-head {
@@ -2338,19 +2338,19 @@ export default function Halaqat() {
                   3,
                   minmax(0,1fr)
                 );
-              gap: 5px;
+              gap: calc(5px * var(--app-density,1));
             }
 
             .performance-box {
-              padding: 10px 4px;
+              padding: calc(10px * var(--app-density,1)) calc(4px * var(--app-density,1));
             }
 
             .performance-label {
-              font-size: 9px;
+              font-size: calc(9px * var(--app-font-scale,1));
             }
 
             .performance-value {
-              font-size: 14px;
+              font-size: calc(14px * var(--app-font-scale,1));
             }
 
             .halaqa-actions {
@@ -2374,7 +2374,7 @@ export default function Halaqat() {
             }
 
             .modal-overlay {
-              padding: 10px;
+              padding: calc(10px * var(--app-density,1));
               align-items:
                 flex-end;
             }
@@ -2382,7 +2382,7 @@ export default function Halaqat() {
             .edit-modal {
               max-height: 92vh;
               border-radius:
-                24px 24px 16px 16px;
+                calc(24px * var(--app-radius-scale,1)) calc(24px * var(--app-radius-scale,1)) calc(16px * var(--app-radius-scale,1)) calc(16px * var(--app-radius-scale,1));
             }
           }
         `}

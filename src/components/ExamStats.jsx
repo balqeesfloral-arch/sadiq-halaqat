@@ -7,11 +7,11 @@ import {
 
 const cardStyle = {
   background: "#fff",
-  borderRadius: 24,
-  padding: 24,
+  borderRadius: "calc(24px * var(--app-radius-scale,1))",
+  padding: "calc(24px * var(--app-density,1))",
   border: "1px solid #E2E8F0",
   boxShadow:
-    "0 4px 18px rgba(15,118,110,.06)",
+    "0 4px 18px color-mix(in srgb,var(--app-color-0f766e,#0f766e) 6%,transparent)",
 };
 
 function StatCard({
@@ -34,7 +34,7 @@ function StatCard({
           <div
             style={{
               color: "#64748B",
-              fontSize: 13,
+              fontSize: "calc(13px * var(--app-font-scale,1))",
             }}
           >
             {title}
@@ -42,7 +42,7 @@ function StatCard({
 
           <div
             style={{
-              fontSize: 32,
+              fontSize: "calc(32px * var(--app-font-scale,1))",
               fontWeight: 800,
               marginTop: 8,
             }}
@@ -55,7 +55,7 @@ function StatCard({
           style={{
             width: 56,
             height: 56,
-            borderRadius: 18,
+            borderRadius: "calc(18px * var(--app-radius-scale,1))",
             background: color,
             display: "flex",
             alignItems: "center",
@@ -82,7 +82,7 @@ export default function ExamStats({
         display: "grid",
         gridTemplateColumns:
           "repeat(auto-fit,minmax(240px,1fr))",
-        gap: 18,
+        gap: "calc(18px * var(--app-density,1))",
         marginBottom: 24,
       }}
     >

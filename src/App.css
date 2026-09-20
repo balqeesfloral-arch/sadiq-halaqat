@@ -1,7 +1,7 @@
 .counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
+  font-size: calc(16px * var(--app-font-scale,1));
+  padding: calc(5px * var(--app-density,1)) calc(10px * var(--app-density,1));
+  border-radius: calc(5px * var(--app-radius-scale,1));
   color: var(--accent);
   background: var(--accent-bg);
   border: 2px solid transparent;
@@ -59,14 +59,14 @@
 #center {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: calc(25px * var(--app-density,1));
   place-content: center;
   place-items: center;
   flex-grow: 1;
 
   @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
+    padding: calc(32px * var(--app-density,1)) calc(20px * var(--app-density,1)) calc(24px * var(--app-density,1));
+    gap: calc(18px * var(--app-density,1));
   }
 }
 
@@ -77,9 +77,9 @@
 
   & > div {
     flex: 1 1 0;
-    padding: 32px;
+    padding: calc(32px * var(--app-density,1));
     @media (max-width: 1024px) {
-      padding: 24px 20px;
+      padding: calc(24px * var(--app-density,1)) calc(20px * var(--app-density,1));
     }
   }
 
@@ -108,7 +108,7 @@
   list-style: none;
   padding: 0;
   display: flex;
-  gap: 8px;
+  gap: calc(8px * var(--app-density,1));
   margin: 32px 0 0;
 
   .logo {
@@ -117,13 +117,13 @@
 
   a {
     color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
+    font-size: calc(16px * var(--app-font-scale,1));
+    border-radius: calc(6px * var(--app-radius-scale,1));
     background: var(--social-bg);
     display: flex;
-    padding: 6px 12px;
+    padding: calc(6px * var(--app-density,1)) calc(12px * var(--app-density,1));
     align-items: center;
-    gap: 8px;
+    gap: calc(8px * var(--app-density,1));
     text-decoration: none;
     transition: box-shadow 0.3s;
 
@@ -203,11 +203,11 @@
   overflow:auto;
 
   background:#fff;
-  border-radius:32px;
+  border-radius:calc(32px * var(--app-radius-scale,1));
 
   box-shadow:
   0 25px 80px rgba(0,0,0,.18);
 
-  padding:32px;
+  padding:calc(32px * var(--app-density,1));
   position:relative;
 }

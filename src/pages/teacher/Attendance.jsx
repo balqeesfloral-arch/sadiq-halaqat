@@ -3014,7 +3014,7 @@ function AttendanceCircle({
       style={{
         background:
           `conic-gradient(
-            #0f5132 ${percentage}%,
+            var(--app-color-0f5132,#0f5132) ${percentage}%,
             #edf1ee ${percentage}% 100%
           )`,
       }}
@@ -3453,27 +3453,27 @@ function PageStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 18px;
+          gap: calc(18px * var(--app-density,1));
 
           margin-bottom: 18px;
-          padding: 22px 24px;
+          padding: calc(22px * var(--app-density,1)) calc(24px * var(--app-density,1));
 
           border:
             1px solid
-            rgba(15,81,50,.1);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 10%,transparent);
 
-          border-radius: 23px;
+          border-radius: calc(23px * var(--app-radius-scale,1));
 
           background:
             linear-gradient(
               135deg,
               #ffffff 0%,
-              #f5faf7 100%
+              var(--app-color-f5faf7,#f5faf7) 100%
             );
 
           box-shadow:
             0 12px 35px
-            rgba(15,81,50,.05);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
         }
 
         .attendance-hero::after {
@@ -3506,7 +3506,7 @@ function PageStyles() {
           display: flex;
           align-items: center;
 
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
 
           min-width: 0;
         }
@@ -3517,7 +3517,7 @@ function PageStyles() {
 
           flex: 0 0 48px;
 
-          border-radius: 15px;
+          border-radius: calc(15px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -3528,35 +3528,35 @@ function PageStyles() {
           background:
             linear-gradient(
               135deg,
-              #0f5132,
-              #0f766e
+              var(--app-color-0f5132,#0f5132),
+              var(--app-color-0f766e,#0f766e)
             );
 
           box-shadow:
             0 9px 22px
-            rgba(15,81,50,.17);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 17%,transparent);
         }
 
         .attendance-eyebrow {
           display: flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-bottom: 3px;
 
-          color: #0f766e;
+          color: var(--app-color-0f766e,#0f766e);
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
         .attendance-title {
           margin: 0;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 25px;
+          font-size: calc(25px * var(--app-font-scale,1));
           font-weight: 950;
 
           line-height: 1.25;
@@ -3567,7 +3567,7 @@ function PageStyles() {
 
           color: #7a867f;
 
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           line-height: 1.7;
         }
 
@@ -3577,23 +3577,23 @@ function PageStyles() {
 
           height: 43px;
 
-          padding: 0 14px;
+          padding: 0 calc(14px * var(--app-density,1));
 
           border:
             1px solid #e0e7e3;
 
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
           background: #ffffff;
 
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 850;
 
           cursor: pointer;
@@ -3609,39 +3609,39 @@ function PageStyles() {
         }
 
 
-        .attendance-hero-actions { display:flex; align-items:center; gap:8px; position:relative; z-index:2; }
+        .attendance-hero-actions { display:flex; align-items:center; gap:calc(8px * var(--app-density,1)); position:relative; z-index:2; }
         .holiday-button { color:#8a6a10; border-color:rgba(201,162,39,.35); background:#fffdf6; }
-        .holiday-lock-banner { margin:-6px 0 18px; padding:12px 16px; border:1px solid rgba(201,162,39,.28); border-radius:14px; background:#fffaf0; color:#72580d; display:flex; align-items:center; gap:10px; }
-        .holiday-lock-banner div { display:flex; flex-direction:column; gap:2px; }
-        .holiday-lock-banner strong { font-size:11px; }
-        .holiday-lock-banner span { font-size:9px; color:#8b7a49; }
-        .recitation-days-meta { margin-top:4px; font-size:8px; font-weight:800; color:#0f766e; }
+        .holiday-lock-banner { margin:-6px 0 18px; padding:calc(12px * var(--app-density,1)) calc(16px * var(--app-density,1)); border:1px solid rgba(201,162,39,.28); border-radius:calc(14px * var(--app-radius-scale,1)); background:#fffaf0; color:#72580d; display:flex; align-items:center; gap:calc(10px * var(--app-density,1)); }
+        .holiday-lock-banner div { display:flex; flex-direction:column; gap:calc(2px * var(--app-density,1)); }
+        .holiday-lock-banner strong { font-size:calc(11px * var(--app-font-scale,1)); }
+        .holiday-lock-banner span { font-size:calc(9px * var(--app-font-scale,1)); color:#8b7a49; }
+        .recitation-days-meta { margin-top:4px; font-size:calc(8px * var(--app-font-scale,1)); font-weight:800; color:var(--app-color-0f766e,#0f766e); }
         .recitation-days-meta span { color:#9a7514; }
 
-        .holiday-modal-backdrop { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(5,35,25,.38); backdrop-filter:blur(4px); }
-        .holiday-modal { width:min(620px,96vw); max-height:82vh; overflow:auto; border:1px solid #dfe8e3; border-radius:22px; background:#fff; box-shadow:0 28px 80px rgba(8,45,31,.22); }
-        .holiday-modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid #edf1ef; background:linear-gradient(135deg,#f7fbf8,#fffdf7); }
-        .holiday-modal-head div { display:flex; flex-direction:column; gap:3px; }
-        .holiday-modal-head span { font-size:9px; color:#8b7a49; font-weight:900; }
-        .holiday-modal-head strong { font-size:16px; color:#173d2b; }
-        .holiday-modal-head button, .holiday-item button { width:34px; height:34px; border:1px solid #e2e9e5; border-radius:10px; background:#fff; color:#5f6c64; display:grid; place-items:center; cursor:pointer; }
-        .holiday-form { padding:16px 20px; border-bottom:1px solid #edf1ef; }
-        .holiday-form label { display:flex; flex-direction:column; gap:6px; }
-        .holiday-form label span, .hijri-picker-label { font-size:9px; font-weight:900; color:#53645a; }
-        .holiday-form input, .holiday-form select { width:100%; height:40px; border:1px solid #dfe7e2; border-radius:10px; padding:0 11px; background:#fff; color:#173d2b; font-family:inherit; outline:none; }
+        .holiday-modal-backdrop { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:calc(20px * var(--app-density,1)); background:rgba(5,35,25,.38); backdrop-filter:blur(4px); }
+        .holiday-modal { width:min(620px,96vw); max-height:82vh; overflow:auto; border:1px solid #dfe8e3; border-radius:calc(22px * var(--app-radius-scale,1)); background:#fff; box-shadow:0 28px 80px rgba(8,45,31,.22); }
+        .holiday-modal-head { display:flex; align-items:center; justify-content:space-between; gap:calc(12px * var(--app-density,1)); padding:calc(18px * var(--app-density,1)) calc(20px * var(--app-density,1)); border-bottom:1px solid #edf1ef; background:linear-gradient(135deg,#f7fbf8,#fffdf7); }
+        .holiday-modal-head div { display:flex; flex-direction:column; gap:calc(3px * var(--app-density,1)); }
+        .holiday-modal-head span { font-size:calc(9px * var(--app-font-scale,1)); color:#8b7a49; font-weight:900; }
+        .holiday-modal-head strong { font-size:calc(16px * var(--app-font-scale,1)); color:var(--app-color-173d2b,#173d2b); }
+        .holiday-modal-head button, .holiday-item button { width:34px; height:34px; border:1px solid #e2e9e5; border-radius:calc(10px * var(--app-radius-scale,1)); background:#fff; color:#5f6c64; display:grid; place-items:center; cursor:pointer; }
+        .holiday-form { padding:calc(16px * var(--app-density,1)) calc(20px * var(--app-density,1)); border-bottom:1px solid #edf1ef; }
+        .holiday-form label { display:flex; flex-direction:column; gap:calc(6px * var(--app-density,1)); }
+        .holiday-form label span, .hijri-picker-label { font-size:calc(9px * var(--app-font-scale,1)); font-weight:900; color:#53645a; }
+        .holiday-form input, .holiday-form select { width:100%; height:40px; border:1px solid #dfe7e2; border-radius:calc(10px * var(--app-radius-scale,1)); padding:0 calc(11px * var(--app-density,1)); background:#fff; color:var(--app-color-173d2b,#173d2b); font-family:inherit; outline:none; }
         .hijri-picker-label { margin-top:14px; margin-bottom:6px; }
-        .hijri-picker-grid { display:grid; grid-template-columns:.7fr 1.3fr 1fr; gap:8px; }
-        .holiday-gregorian-preview { margin-top:9px; padding:9px 11px; border-radius:9px; background:#f5f8f6; color:#6b7770; font-size:9px; }
-        .holiday-save-btn { margin-top:12px; min-height:40px; padding:0 15px; border:0; border-radius:11px; background:#0f5132; color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:7px; font-family:inherit; font-size:10px; font-weight:900; cursor:pointer; }
+        .hijri-picker-grid { display:grid; grid-template-columns:.7fr 1.3fr 1fr; gap:calc(8px * var(--app-density,1)); }
+        .holiday-gregorian-preview { margin-top:9px; padding:calc(9px * var(--app-density,1)) calc(11px * var(--app-density,1)); border-radius:calc(9px * var(--app-radius-scale,1)); background:#f5f8f6; color:#6b7770; font-size:calc(9px * var(--app-font-scale,1)); }
+        .holiday-save-btn { margin-top:12px; min-height:40px; padding:0 calc(15px * var(--app-density,1)); border:0; border-radius:calc(11px * var(--app-radius-scale,1)); background:var(--app-color-0f5132,#0f5132); color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:calc(7px * var(--app-density,1)); font-family:inherit; font-size:calc(10px * var(--app-font-scale,1)); font-weight:900; cursor:pointer; }
         .holiday-save-btn:disabled { opacity:.55; cursor:wait; }
-        .holiday-list { padding:10px 20px 18px; display:grid; gap:7px; }
-        .holiday-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 12px; border:1px solid #e7ece9; border-radius:12px; background:#fff; }
-        .holiday-item > div { display:flex; flex-direction:column; gap:2px; }
-        .holiday-item strong { font-size:10px; color:#173d2b; }
-        .holiday-item span { font-size:9px; color:#0f766e; }
-        .holiday-item small { font-size:8px; color:#8b958f; }
+        .holiday-list { padding:calc(10px * var(--app-density,1)) calc(20px * var(--app-density,1)) calc(18px * var(--app-density,1)); display:grid; gap:calc(7px * var(--app-density,1)); }
+        .holiday-item { display:flex; align-items:center; justify-content:space-between; gap:calc(12px * var(--app-density,1)); padding:calc(11px * var(--app-density,1)) calc(12px * var(--app-density,1)); border:1px solid #e7ece9; border-radius:calc(12px * var(--app-radius-scale,1)); background:#fff; }
+        .holiday-item > div { display:flex; flex-direction:column; gap:calc(2px * var(--app-density,1)); }
+        .holiday-item strong { font-size:calc(10px * var(--app-font-scale,1)); color:var(--app-color-173d2b,#173d2b); }
+        .holiday-item span { font-size:calc(9px * var(--app-font-scale,1)); color:var(--app-color-0f766e,#0f766e); }
+        .holiday-item small { font-size:calc(8px * var(--app-font-scale,1)); color:#8b958f; }
         .holiday-item button { color:#b42318; }
-        .holiday-empty { padding:20px; text-align:center; color:#8b958f; font-size:10px; }
+        .holiday-empty { padding:calc(20px * var(--app-density,1)); text-align:center; color:#8b958f; font-size:calc(10px * var(--app-font-scale,1)); }
 
         /* =============================================
            DATE
@@ -3655,7 +3655,7 @@ function PageStyles() {
           border:
             1px solid #e2e9e5;
 
-          border-radius: 21px;
+          border-radius: calc(21px * var(--app-radius-scale,1));
 
           background: #ffffff;
 
@@ -3676,9 +3676,9 @@ function PageStyles() {
 
           align-items: center;
 
-          gap: 14px;
+          gap: calc(14px * var(--app-density,1));
 
-          padding: 16px 18px;
+          padding: calc(16px * var(--app-density,1)) calc(18px * var(--app-density,1));
         }
 
         .date-nav-btn {
@@ -3687,18 +3687,18 @@ function PageStyles() {
           border:
             1px solid #dfe6e2;
 
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 6px;
+          gap: calc(6px * var(--app-density,1));
 
           color: #59645d;
           background: #ffffff;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 850;
 
           cursor: pointer;
@@ -3709,7 +3709,7 @@ function PageStyles() {
         }
 
         .date-nav-btn:hover:not(:disabled) {
-          background: #f5faf7;
+          background: var(--app-color-f5faf7,#f5faf7);
 
           transform:
             translateY(-1px);
@@ -3725,7 +3725,7 @@ function PageStyles() {
           align-items: center;
           justify-content: center;
 
-          gap: 11px;
+          gap: calc(11px * var(--app-density,1));
 
           min-width: 0;
         }
@@ -3736,14 +3736,14 @@ function PageStyles() {
 
           flex: 0 0 46px;
 
-          border-radius: 14px;
+          border-radius: calc(14px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .date-label {
@@ -3751,14 +3751,14 @@ function PageStyles() {
 
           color: #8c9690;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           font-weight: 750;
         }
 
         .gregorian-date {
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 15px;
+          font-size: calc(15px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -3766,13 +3766,13 @@ function PageStyles() {
           display: flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-top: 5px;
 
           color: #9a741f;
 
-          font-size: 10px;
+          font-size: calc(10px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -3781,9 +3781,9 @@ function PageStyles() {
           align-items: center;
           justify-content: center;
 
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
 
-          padding: 11px 16px;
+          padding: calc(11px * var(--app-density,1)) calc(16px * var(--app-density,1));
 
           border-top:
             1px solid #edf1ef;
@@ -3794,35 +3794,35 @@ function PageStyles() {
         .date-input {
           height: 36px;
 
-          padding: 0 9px;
+          padding: 0 calc(9px * var(--app-density,1));
 
           border:
             1px solid #dce4df;
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           outline: none;
 
           color: #33443a;
           background: #ffffff;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .today-btn {
           height: 36px;
 
-          padding: 0 14px;
+          padding: 0 calc(14px * var(--app-density,1));
 
           border:
-            1px solid #0f5132;
+            1px solid var(--app-color-0f5132,#0f5132);
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
           background: #ffffff;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 900;
 
           cursor: pointer;
@@ -3830,7 +3830,7 @@ function PageStyles() {
 
         .today-btn.active {
           color: #ffffff;
-          background: #0f5132;
+          background: var(--app-color-0f5132,#0f5132);
         }
 
         .date-status {
@@ -3839,16 +3839,16 @@ function PageStyles() {
           display: inline-flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
-          padding: 0 9px;
+          padding: 0 calc(9px * var(--app-density,1));
 
           border-radius: 999px;
 
           color: #647168;
           background: #f1f5f3;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           font-weight: 800;
         }
 
@@ -3880,7 +3880,7 @@ function PageStyles() {
               minmax(0,1fr)
             );
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
 
           margin-bottom: 23px;
         }
@@ -3891,14 +3891,14 @@ function PageStyles() {
           display: flex;
           align-items: center;
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
 
-          padding: 14px;
+          padding: calc(14px * var(--app-density,1));
 
           border:
             1px solid #e6ebe8;
 
-          border-radius: 17px;
+          border-radius: calc(17px * var(--app-radius-scale,1));
 
           background: #ffffff;
 
@@ -3913,7 +3913,7 @@ function PageStyles() {
 
           flex: 0 0 38px;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -3922,8 +3922,8 @@ function PageStyles() {
 
         .summary-card.primary
         .summary-icon {
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .summary-card.success
@@ -3959,7 +3959,7 @@ function PageStyles() {
         .summary-label {
           color: #808a83;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           font-weight: 750;
         }
 
@@ -3968,9 +3968,9 @@ function PageStyles() {
 
           margin-top: 2px;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 20px;
+          font-size: calc(20px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -3979,7 +3979,7 @@ function PageStyles() {
 
           color: #a0a7a2;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         /* =============================================
@@ -3991,7 +3991,7 @@ function PageStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
 
           margin-bottom: 11px;
         }
@@ -3999,9 +3999,9 @@ function PageStyles() {
         .section-head h2 {
           margin: 0;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 17px;
+          font-size: calc(17px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -4010,24 +4010,24 @@ function PageStyles() {
 
           color: #8a948e;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .global-rate {
           display: flex;
           align-items: center;
 
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
 
           color: #89948d;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .global-rate strong {
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
 
-          font-size: 15px;
+          font-size: calc(15px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -4047,7 +4047,7 @@ function PageStyles() {
               )
             );
 
-          gap: 12px;
+          gap: calc(12px * var(--app-density,1));
 
           margin-bottom: 23px;
         }
@@ -4059,12 +4059,12 @@ function PageStyles() {
 
           position: relative;
 
-          padding: 15px;
+          padding: calc(15px * var(--app-density,1));
 
           border:
             1px solid #e2e8e4;
 
-          border-radius: 18px;
+          border-radius: calc(18px * var(--app-radius-scale,1));
 
           text-align: right;
 
@@ -4087,20 +4087,20 @@ function PageStyles() {
             translateY(-2px);
 
           border-color:
-            rgba(15,81,50,.2);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 20%,transparent);
 
           box-shadow:
             0 12px 28px
-            rgba(15,81,50,.075);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 7.5%,transparent);
         }
 
         .halaqa-card.selected {
           border:
-            1.5px solid #0f5132;
+            1.5px solid var(--app-color-0f5132,#0f5132);
 
           box-shadow:
             0 12px 30px
-            rgba(15,81,50,.1);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 10%,transparent);
         }
 
         .halaqa-card.selected::before {
@@ -4117,7 +4117,7 @@ function PageStyles() {
           background:
             linear-gradient(
               90deg,
-              #0f5132,
+              var(--app-color-0f5132,#0f5132),
               #c9a227
             );
         }
@@ -4127,7 +4127,7 @@ function PageStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
         }
 
         .halaqa-card-identity {
@@ -4136,7 +4136,7 @@ function PageStyles() {
           display: flex;
           align-items: center;
 
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
         }
 
         .halaqa-icon {
@@ -4145,14 +4145,14 @@ function PageStyles() {
 
           flex: 0 0 37px;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .halaqa-card h3 {
@@ -4162,9 +4162,9 @@ function PageStyles() {
 
           overflow: hidden;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
           font-weight: 950;
 
           white-space: nowrap;
@@ -4175,13 +4175,13 @@ function PageStyles() {
           display: flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
           margin-top: 3px;
 
           color: #909993;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .attendance-circle {
@@ -4212,9 +4212,9 @@ function PageStyles() {
         }
 
         .attendance-circle strong {
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
 
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -4223,27 +4223,27 @@ function PageStyles() {
 
           color: #8c958f;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         .halaqa-card-meta {
           display: flex;
           flex-wrap: wrap;
 
-          gap: 5px 10px;
+          gap: calc(5px * var(--app-density,1)) calc(10px * var(--app-density,1));
 
           margin-top: 11px;
 
           color: #7d8881;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .halaqa-card-meta span {
           display: inline-flex;
           align-items: center;
 
-          gap: 3px;
+          gap: calc(3px * var(--app-density,1));
         }
 
         .halaqa-mini-stats {
@@ -4255,15 +4255,15 @@ function PageStyles() {
               minmax(0,1fr)
             );
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-top: 11px;
         }
 
         .halaqa-mini-stat {
-          padding: 6px 3px;
+          padding: calc(6px * var(--app-density,1)) calc(3px * var(--app-density,1));
 
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
           text-align: center;
         }
@@ -4289,7 +4289,7 @@ function PageStyles() {
 
           color: #36443b;
 
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -4300,7 +4300,7 @@ function PageStyles() {
 
           color: #8d958f;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         /* =============================================
@@ -4313,7 +4313,7 @@ function PageStyles() {
           border:
             1px solid #e2e8e4;
 
-          border-radius: 20px;
+          border-radius: calc(20px * var(--app-radius-scale,1));
 
           background: #ffffff;
 
@@ -4331,9 +4331,9 @@ function PageStyles() {
           align-items: center;
           justify-content: space-between;
 
-          gap: 14px;
+          gap: calc(14px * var(--app-density,1));
 
-          padding: 18px;
+          padding: calc(18px * var(--app-density,1));
 
           border-bottom:
             1px solid #edf1ef;
@@ -4343,22 +4343,22 @@ function PageStyles() {
           display: flex;
           align-items: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
           margin-bottom: 4px;
 
-          color: #0f766e;
+          color: var(--app-color-0f766e,#0f766e);
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
         .register-header h2 {
           margin: 0;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 19px;
+          font-size: calc(19px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -4366,20 +4366,20 @@ function PageStyles() {
           display: flex;
           flex-wrap: wrap;
 
-          gap: 5px 12px;
+          gap: calc(5px * var(--app-density,1)) calc(12px * var(--app-density,1));
 
           margin-top: 6px;
 
           color: #838e87;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .halaqa-meta span {
           display: inline-flex;
           align-items: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
         }
 
         .register-rate {
@@ -4395,12 +4395,12 @@ function PageStyles() {
           justify-content: center;
           flex-direction: column;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .register-rate strong {
-          font-size: 17px;
+          font-size: calc(17px * var(--app-font-scale,1));
           font-weight: 950;
         }
 
@@ -4409,7 +4409,7 @@ function PageStyles() {
 
           color: #7e8a82;
 
-          font-size: 6px;
+          font-size: calc(6px * var(--app-font-scale,1));
         }
 
         /* =============================================
@@ -4417,7 +4417,7 @@ function PageStyles() {
         ============================================= */
 
         .completion-block {
-          padding: 12px 18px;
+          padding: calc(12px * var(--app-density,1)) calc(18px * var(--app-density,1));
 
           border-bottom:
             1px solid #edf1ef;
@@ -4429,17 +4429,17 @@ function PageStyles() {
           display: flex;
           justify-content: space-between;
 
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
 
           margin-bottom: 7px;
 
           color: #77837b;
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
         }
 
         .completion-head strong {
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
         }
 
         .completion-track {
@@ -4461,7 +4461,7 @@ function PageStyles() {
           background:
             linear-gradient(
               90deg,
-              #0f5132,
+              var(--app-color-0f5132,#0f5132),
               #18a06b
             );
 
@@ -4477,9 +4477,9 @@ function PageStyles() {
           display: flex;
           flex-wrap: wrap;
 
-          gap: 7px;
+          gap: calc(7px * var(--app-density,1));
 
-          padding: 12px 18px;
+          padding: calc(12px * var(--app-density,1)) calc(18px * var(--app-density,1));
 
           border-bottom:
             1px solid #edf1ef;
@@ -4488,17 +4488,17 @@ function PageStyles() {
         .bulk-btn {
           min-height: 36px;
 
-          padding: 0 11px;
+          padding: 0 calc(11px * var(--app-density,1));
 
-          border-radius: 9px;
+          border-radius: calc(9px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
 
-          font-size: 8px;
+          font-size: calc(8px * var(--app-font-scale,1));
           font-weight: 850;
 
           cursor: pointer;
@@ -4508,7 +4508,7 @@ function PageStyles() {
           border:
             1px solid #b9dcc7;
 
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
           background: #eaf7ef;
         }
 
@@ -4540,8 +4540,8 @@ function PageStyles() {
           border-color:
             #a9cfba;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .bulk-btn:disabled {
@@ -4557,9 +4557,9 @@ function PageStyles() {
           display: flex;
           align-items: center;
 
-          gap: 11px;
+          gap: calc(11px * var(--app-density,1));
 
-          padding: 13px 18px;
+          padding: calc(13px * var(--app-density,1)) calc(18px * var(--app-density,1));
 
           border-bottom:
             1px solid #edf1ef;
@@ -4592,28 +4592,28 @@ function PageStyles() {
           height: 40px;
 
           padding:
-            0 38px 0 35px;
+            0 calc(38px * var(--app-density,1)) 0 calc(35px * var(--app-density,1));
 
           border:
             1px solid #dce4df;
 
-          border-radius: 10px;
+          border-radius: calc(10px * var(--app-radius-scale,1));
 
           outline: none;
 
           color: #33443a;
           background: #fbfdfc;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .attendance-search input:focus {
           border-color:
-            rgba(15,81,50,.42);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 42%,transparent);
 
           box-shadow:
             0 0 0 3px
-            rgba(15,81,50,.05);
+            color-mix(in srgb,var(--app-color-0f5132,#0f5132) 5%,transparent);
         }
 
         .attendance-search button {
@@ -4629,7 +4629,7 @@ function PageStyles() {
             translateY(-50%);
 
           border: none;
-          border-radius: 7px;
+          border-radius: calc(7px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
@@ -4648,15 +4648,15 @@ function PageStyles() {
 
           color: #8a958e;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
         }
 
         .results-count strong {
           display: block;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 15px;
+          font-size: calc(15px * var(--app-font-scale,1));
         }
 
         /* =============================================
@@ -4670,9 +4670,9 @@ function PageStyles() {
             minmax(220px,1fr)
             minmax(470px,auto);
 
-          gap: 15px;
+          gap: calc(15px * var(--app-density,1));
 
-          padding: 8px 14px;
+          padding: calc(8px * var(--app-density,1)) calc(14px * var(--app-density,1));
 
           color: #9aa39d;
           background: #f8faf9;
@@ -4680,7 +4680,7 @@ function PageStyles() {
           border-bottom:
             1px solid #edf1ef;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 850;
         }
 
@@ -4699,11 +4699,11 @@ function PageStyles() {
             minmax(220px,1fr)
             minmax(470px,auto);
 
-          gap: 15px;
+          gap: calc(15px * var(--app-density,1));
 
           align-items: center;
 
-          padding: 11px 14px;
+          padding: calc(11px * var(--app-density,1)) calc(14px * var(--app-density,1));
 
           border-bottom:
             1px solid #eef1ef;
@@ -4730,7 +4730,7 @@ function PageStyles() {
           display: flex;
           align-items: center;
 
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
 
           min-width: 0;
         }
@@ -4741,14 +4741,14 @@ function PageStyles() {
 
           flex: 0 0 38px;
 
-          border-radius: 11px;
+          border-radius: calc(11px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .student-name-wrap {
@@ -4760,7 +4760,7 @@ function PageStyles() {
 
           color: #26382e;
 
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 900;
 
           white-space: nowrap;
@@ -4774,7 +4774,7 @@ function PageStyles() {
 
           color: #969e99;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
 
           white-space: nowrap;
           text-overflow: ellipsis;
@@ -4785,19 +4785,19 @@ function PageStyles() {
           align-items: center;
           justify-content: flex-end;
 
-          gap: 5px;
+          gap: calc(5px * var(--app-density,1));
         }
 
         .status-badge {
           min-width: 61px;
 
-          padding: 5px 7px;
+          padding: calc(5px * var(--app-density,1)) calc(7px * var(--app-density,1));
 
           border-radius: 999px;
 
           text-align: center;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 900;
         }
 
@@ -4830,23 +4830,23 @@ function PageStyles() {
           min-width: 65px;
           min-height: 32px;
 
-          padding: 0 7px;
+          padding: 0 calc(7px * var(--app-density,1));
 
           border:
             1px solid #dfe5e1;
 
-          border-radius: 8px;
+          border-radius: calc(8px * var(--app-radius-scale,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
 
-          gap: 4px;
+          gap: calc(4px * var(--app-density,1));
 
           color: #6d7871;
           background: #ffffff;
 
-          font-size: 7px;
+          font-size: calc(7px * var(--app-font-scale,1));
           font-weight: 800;
 
           cursor: pointer;
@@ -4895,7 +4895,7 @@ function PageStyles() {
         }
 
         .saving-indicator {
-          color: #0f5132;
+          color: var(--app-color-0f5132,#0f5132);
         }
 
         /* =============================================
@@ -4919,22 +4919,22 @@ function PageStyles() {
 
           margin-bottom: 12px;
 
-          border-radius: 17px;
+          border-radius: calc(17px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .attendance-loading-screen h3 {
           margin: 0;
 
-          color: #173d2b;
+          color: var(--app-color-173d2b,#173d2b);
 
-          font-size: 14px;
+          font-size: calc(14px * var(--app-font-scale,1));
         }
 
         .attendance-loading-screen p {
@@ -4942,7 +4942,7 @@ function PageStyles() {
 
           color: #8d9690;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         .inline-loading {
@@ -4952,21 +4952,21 @@ function PageStyles() {
           align-items: center;
           justify-content: center;
 
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
 
           color: #738078;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
           font-weight: 800;
         }
 
         .empty-attendance {
-          padding: 45px 20px;
+          padding: calc(45px * var(--app-density,1)) calc(20px * var(--app-density,1));
 
           border:
             1px dashed #cad7cf;
 
-          border-radius: 18px;
+          border-radius: calc(18px * var(--app-radius-scale,1));
 
           text-align: center;
 
@@ -4985,14 +4985,14 @@ function PageStyles() {
           margin:
             0 auto 11px;
 
-          border-radius: 16px;
+          border-radius: calc(16px * var(--app-radius-scale,1));
 
           display: flex;
           align-items: center;
           justify-content: center;
 
-          color: #0f5132;
-          background: #edf7f1;
+          color: var(--app-color-0f5132,#0f5132);
+          background: var(--app-color-edf7f1,#edf7f1);
         }
 
         .empty-attendance h3 {
@@ -5000,7 +5000,7 @@ function PageStyles() {
 
           color: #37463d;
 
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
         }
 
         .empty-attendance p {
@@ -5008,7 +5008,7 @@ function PageStyles() {
 
           color: #8b958f;
 
-          font-size: 9px;
+          font-size: calc(9px * var(--app-font-scale,1));
         }
 
         /* =============================================
@@ -5067,7 +5067,7 @@ function PageStyles() {
             grid-template-columns:
               1fr;
 
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
           }
 
           .attendance-status-actions {
@@ -5086,9 +5086,9 @@ function PageStyles() {
           max-width: 720px
         ) {
           .attendance-hero {
-            padding: 17px;
+            padding: calc(17px * var(--app-density,1));
 
-            border-radius: 19px;
+            border-radius: calc(19px * var(--app-radius-scale,1));
           }
 
           .attendance-hero-icon {
@@ -5099,7 +5099,7 @@ function PageStyles() {
           }
 
           .attendance-title {
-            font-size: 20px;
+            font-size: calc(20px * var(--app-font-scale,1));
           }
 
           .attendance-subtitle {
@@ -5124,9 +5124,9 @@ function PageStyles() {
               minmax(0,1fr)
               42px;
 
-            gap: 6px;
+            gap: calc(6px * var(--app-density,1));
 
-            padding: 13px 10px;
+            padding: calc(13px * var(--app-density,1)) calc(10px * var(--app-density,1));
           }
 
           .date-nav-btn {
@@ -5141,7 +5141,7 @@ function PageStyles() {
           }
 
           .date-display {
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
 
             justify-content:
               flex-start;
@@ -5155,11 +5155,11 @@ function PageStyles() {
           }
 
           .gregorian-date {
-            font-size: 11px;
+            font-size: calc(11px * var(--app-font-scale,1));
           }
 
           .hijri-date {
-            font-size: 8px;
+            font-size: calc(8px * var(--app-font-scale,1));
           }
 
           .date-panel-bottom {
@@ -5175,13 +5175,13 @@ function PageStyles() {
                 minmax(0,1fr)
               );
 
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
           }
 
           .summary-card {
-            padding: 11px;
+            padding: calc(11px * var(--app-density,1));
 
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
           }
 
           .summary-icon {
@@ -5192,7 +5192,7 @@ function PageStyles() {
           }
 
           .summary-value {
-            font-size: 17px;
+            font-size: calc(17px * var(--app-font-scale,1));
           }
 
           /* SECTION */
@@ -5208,7 +5208,7 @@ function PageStyles() {
             align-items:
               flex-start;
 
-            padding: 15px;
+            padding: calc(15px * var(--app-density,1));
           }
 
           .register-rate {
@@ -5219,13 +5219,13 @@ function PageStyles() {
           }
 
           .register-rate strong {
-            font-size: 14px;
+            font-size: calc(14px * var(--app-font-scale,1));
           }
 
           .halaqa-meta {
             flex-direction: column;
 
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
           }
 
           .quick-actions {
@@ -5235,7 +5235,7 @@ function PageStyles() {
               1fr 1fr;
 
             padding:
-              11px 14px;
+              calc(11px * var(--app-density,1)) calc(14px * var(--app-density,1));
           }
 
           .bulk-btn {
@@ -5244,12 +5244,12 @@ function PageStyles() {
 
           .students-search-row {
             padding:
-              11px 14px;
+              calc(11px * var(--app-density,1)) calc(14px * var(--app-density,1));
           }
 
           .attendance-student-row {
             padding:
-              13px 12px;
+              calc(13px * var(--app-density,1)) calc(12px * var(--app-density,1));
           }
 
           .attendance-status-actions {
@@ -5261,7 +5261,7 @@ function PageStyles() {
                 minmax(0,1fr)
               );
 
-            gap: 6px;
+            gap: calc(6px * var(--app-density,1));
           }
 
           .status-badge {
@@ -5293,11 +5293,11 @@ function PageStyles() {
           max-width: 430px
         ) {
           .attendance-title {
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
           }
 
           .attendance-eyebrow {
-            font-size: 8px;
+            font-size: calc(8px * var(--app-font-scale,1));
           }
 
           .date-display {
@@ -5309,13 +5309,13 @@ function PageStyles() {
           }
 
           .date-label {
-            font-size: 7px;
+            font-size: calc(7px * var(--app-font-scale,1));
           }
 
           .gregorian-date {
             overflow: hidden;
 
-            font-size: 9px;
+            font-size: calc(9px * var(--app-font-scale,1));
 
             white-space: nowrap;
             text-overflow: ellipsis;
@@ -5324,7 +5324,7 @@ function PageStyles() {
           .hijri-date {
             overflow: hidden;
 
-            font-size: 7px;
+            font-size: calc(7px * var(--app-font-scale,1));
 
             white-space: nowrap;
             text-overflow: ellipsis;
@@ -5343,11 +5343,11 @@ function PageStyles() {
           }
 
           .halaqa-card {
-            padding: 13px;
+            padding: calc(13px * var(--app-density,1));
           }
 
           .halaqa-mini-stats {
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
           }
         }
         @media (max-width: 640px) {

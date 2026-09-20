@@ -53,8 +53,8 @@ export default function PublicLayout() {
     <div className="public-layout" dir="rtl">
       <style>{`
         :root {
-          --public-green: #0F4C45;
-          --public-green-dark: #082F2A;
+          --public-green: var(--app-color-0f4c45,#0F4C45);
+          --public-green-dark: var(--app-color-082f2a,#082F2A);
           --public-green-deep: #061F1C;
 
           --public-gold: #D4AF37;
@@ -66,10 +66,10 @@ export default function PublicLayout() {
           --public-text: #16332F;
           --public-muted: #72817E;
 
-          --public-border: rgba(15, 76, 69, 0.12);
+          --public-border: color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 12%,transparent);
 
           --public-shadow:
-            0 20px 60px rgba(8, 47, 42, 0.10);
+            0 20px 60px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 10%,transparent);
         }
 
         * {
@@ -97,7 +97,7 @@ export default function PublicLayout() {
             ),
             radial-gradient(
               circle at 80% 30%,
-              rgba(15, 76, 69, 0.08),
+              color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 8%,transparent),
               transparent 34%
             ),
             linear-gradient(
@@ -128,11 +128,11 @@ export default function PublicLayout() {
           background:
             linear-gradient(
               90deg,
-              rgba(15, 76, 69, 0.018) 1px,
+              color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 1.7999999999999998%,transparent) 1px,
               transparent 1px
             ),
             linear-gradient(
-              rgba(15, 76, 69, 0.018) 1px,
+              color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 1.7999999999999998%,transparent) 1px,
               transparent 1px
             );
           background-size: 42px 42px;
@@ -264,10 +264,10 @@ export default function PublicLayout() {
           -webkit-backdrop-filter: blur(18px);
 
           border-bottom-color:
-            rgba(15, 76, 69, 0.08);
+            color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 8%,transparent);
 
           box-shadow:
-            0 10px 30px rgba(8, 47, 42, 0.06);
+            0 10px 30px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 6%,transparent);
         }
 
         .public-header-inner {
@@ -282,7 +282,7 @@ export default function PublicLayout() {
             auto;
 
           align-items: center;
-          gap: 24px;
+          gap: calc(24px * var(--app-density,1));
         }
 
         /* =========================
@@ -292,7 +292,7 @@ export default function PublicLayout() {
         .public-brand {
           display: flex;
           align-items: center;
-          gap: 11px;
+          gap: calc(11px * var(--app-density,1));
 
           text-decoration: none;
           color: inherit;
@@ -304,7 +304,7 @@ export default function PublicLayout() {
           width: 49px;
           height: 49px;
 
-          padding: 5px;
+          padding: calc(5px * var(--app-density,1));
 
           display: grid;
           place-items: center;
@@ -313,12 +313,12 @@ export default function PublicLayout() {
             rgba(255,255,255,0.92);
 
           border:
-            1px solid rgba(15, 76, 69, 0.10);
+            1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 10%,transparent);
 
-          border-radius: 16px;
+          border-radius: calc(16px * var(--app-radius-scale,1));
 
           box-shadow:
-            0 8px 28px rgba(8,47,42,0.08);
+            0 8px 28px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 8%,transparent);
         }
 
         .public-brand-logo img {
@@ -331,11 +331,11 @@ export default function PublicLayout() {
         .public-brand-copy {
           display: flex;
           flex-direction: column;
-          gap: 1px;
+          gap: calc(1px * var(--app-density,1));
         }
 
         .public-brand-name {
-          font-size: 20px;
+          font-size: calc(20px * var(--app-font-scale,1));
           line-height: 1.2;
           font-weight: 900;
           color: var(--public-green-dark);
@@ -343,7 +343,7 @@ export default function PublicLayout() {
         }
 
         .public-brand-subtitle {
-          font-size: 11px;
+          font-size: calc(11px * var(--app-font-scale,1));
           font-weight: 700;
           color: var(--public-muted);
         }
@@ -356,7 +356,7 @@ export default function PublicLayout() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
+          gap: calc(8px * var(--app-density,1));
         }
 
         .public-nav-button {
@@ -364,12 +364,12 @@ export default function PublicLayout() {
           background: transparent;
           cursor: pointer;
 
-          padding: 10px 13px;
+          padding: calc(10px * var(--app-density,1)) calc(13px * var(--app-density,1));
 
-          border-radius: 12px;
+          border-radius: calc(12px * var(--app-radius-scale,1));
 
           font-family: inherit;
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
           font-weight: 800;
 
           color: #536966;
@@ -383,7 +383,7 @@ export default function PublicLayout() {
         .public-nav-button:hover {
           color: var(--public-green);
           background:
-            rgba(15,76,69,0.06);
+            color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 6%,transparent);
           transform: translateY(-1px);
         }
 
@@ -395,7 +395,7 @@ export default function PublicLayout() {
           justify-self: end;
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: calc(10px * var(--app-density,1));
         }
 
         .public-login-button {
@@ -403,14 +403,14 @@ export default function PublicLayout() {
           cursor: pointer;
 
           min-height: 46px;
-          padding: 0 19px;
+          padding: 0 calc(19px * var(--app-density,1));
 
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 9px;
+          gap: calc(9px * var(--app-density,1));
 
-          border-radius: 15px;
+          border-radius: calc(15px * var(--app-radius-scale,1));
 
           background:
             linear-gradient(
@@ -422,11 +422,11 @@ export default function PublicLayout() {
           color: #FFFFFF;
 
           font-family: inherit;
-          font-size: 13px;
+          font-size: calc(13px * var(--app-font-scale,1));
           font-weight: 900;
 
           box-shadow:
-            0 12px 30px rgba(15, 76, 69, 0.20);
+            0 12px 30px color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 20%,transparent);
 
           transition:
             transform 0.2s ease,
@@ -437,7 +437,7 @@ export default function PublicLayout() {
           transform: translateY(-2px);
 
           box-shadow:
-            0 16px 34px rgba(15, 76, 69, 0.28);
+            0 16px 34px color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 28.000000000000004%,transparent);
         }
 
         .public-login-button svg {
@@ -452,9 +452,9 @@ export default function PublicLayout() {
           height: 46px;
 
           border:
-            1px solid rgba(15,76,69,0.10);
+            1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 10%,transparent);
 
-          border-radius: 14px;
+          border-radius: calc(14px * var(--app-radius-scale,1));
 
           background:
             rgba(255,255,255,0.82);
@@ -531,12 +531,12 @@ export default function PublicLayout() {
 
             display: block;
 
-            padding: 14px;
+            padding: calc(14px * var(--app-density,1));
 
             border:
-              1px solid rgba(15,76,69,0.10);
+              1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 10%,transparent);
 
-            border-radius: 22px;
+            border-radius: calc(22px * var(--app-radius-scale,1));
 
             background:
               rgba(255,255,255,0.96);
@@ -545,7 +545,7 @@ export default function PublicLayout() {
             -webkit-backdrop-filter: blur(20px);
 
             box-shadow:
-              0 26px 70px rgba(8,47,42,0.18);
+              0 26px 70px color-mix(in srgb,var(--app-color-082f2a,#082f2a) 18%,transparent);
 
             animation:
               publicMenuIn 0.22s ease;
@@ -560,15 +560,15 @@ export default function PublicLayout() {
             justify-content: space-between;
 
             border: 0;
-            border-radius: 14px;
+            border-radius: calc(14px * var(--app-radius-scale,1));
 
             background: transparent;
             color: var(--public-green-dark);
 
-            padding: 0 14px;
+            padding: 0 calc(14px * var(--app-density,1));
 
             font-family: inherit;
-            font-size: 13px;
+            font-size: calc(13px * var(--app-font-scale,1));
             font-weight: 800;
 
             cursor: pointer;
@@ -576,7 +576,7 @@ export default function PublicLayout() {
 
           .public-mobile-menu button:hover {
             background:
-              rgba(15,76,69,0.06);
+              color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 6%,transparent);
           }
 
           @keyframes publicMenuIn {
@@ -597,17 +597,17 @@ export default function PublicLayout() {
         @media (max-width: 620px) {
           .public-header-inner {
             width: calc(100% - 18px);
-            gap: 8px;
+            gap: calc(8px * var(--app-density,1));
           }
 
           .public-brand-logo {
             width: 44px;
             height: 44px;
-            border-radius: 14px;
+            border-radius: calc(14px * var(--app-radius-scale,1));
           }
 
           .public-brand-name {
-            font-size: 18px;
+            font-size: calc(18px * var(--app-font-scale,1));
           }
 
           .public-brand-subtitle {

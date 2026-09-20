@@ -859,7 +859,7 @@ return (
       <h1
         style={{
           margin:0,
-          fontSize:"32px",
+          fontSize:"calc(32px * var(--app-font-scale,1))",
           fontWeight:"900"
         }}
       >
@@ -887,7 +887,7 @@ return (
           display: "block",
           marginBottom: "6px",
           color: "#64748B",
-          fontSize: "13px",
+          fontSize: "calc(13px * var(--app-font-scale,1))",
           fontWeight: "800",
         }}
       >
@@ -903,9 +903,9 @@ return (
           width: "100%",
           minHeight: "44px",
           border: "1px solid #E2E8F0",
-          borderRadius: "12px",
+          borderRadius: "calc(12px * var(--app-radius-scale,1))",
           background: "#FFFFFF",
-          padding: "0 12px",
+          padding: "0 calc(12px * var(--app-density,1))",
           font: "inherit",
           fontWeight: "800",
           color: "#0F172A",
@@ -1017,14 +1017,14 @@ return (
   <div
   style={{
     display: "flex",
-    gap: "12px",
+    gap: "calc(12px * var(--app-density,1))",
     marginBottom: "24px",
 
     background: "#fff",
 
-    padding: "12px",
+    padding: "calc(12px * var(--app-density,1))",
 
-    borderRadius: "18px",
+    borderRadius: "calc(18px * var(--app-radius-scale,1))",
 
     border: "1px solid #E2E8F0",
 
@@ -1050,20 +1050,20 @@ return (
   style={{
     display: "flex",
     alignItems: "center",
-    gap: "10px",
+    gap: "calc(10px * var(--app-density,1))",
 
-    padding: "12px 20px",
+    padding: "calc(12px * var(--app-density,1)) calc(20px * var(--app-density,1))",
 
-    borderRadius: "14px",
+    borderRadius: "calc(14px * var(--app-radius-scale,1))",
 
     border:
       activeTab === tab.key
-        ? "1px solid #0F766E"
+        ? "1px solid var(--app-color-0f766e,#0F766E)"
         : "1px solid #E2E8F0",
 
     background:
       activeTab === tab.key
-        ? "linear-gradient(135deg,#0F766E,#115E59)"
+        ? "linear-gradient(135deg,var(--app-color-0f766e,#0F766E),var(--app-color-115e59,#115E59))"
         : "#FFFFFF",
 
     color:
@@ -1079,7 +1079,7 @@ return (
 
     boxShadow:
       activeTab === tab.key
-        ? "0 8px 20px rgba(15,118,110,.20)"
+        ? "0 8px 20px color-mix(in srgb,var(--app-color-0f766e,#0f766e) 20%,transparent)"
         : "none",
   }}
 >

@@ -181,7 +181,7 @@ export default function Dashboard() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: "calc(8px * var(--app-density,1))",
             flexWrap: "wrap",
           }}
         >

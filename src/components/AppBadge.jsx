@@ -40,12 +40,12 @@ export default function AppBadge({
 
         minHeight: "30px",
 
-        padding: "0 12px",
+        padding: "0 calc(12px * var(--app-density,1))",
 
         borderRadius:
-          theme.radius.round,
+          `calc(${theme.radius.round}px * var(--app-radius-scale,1))`,
 
-        fontSize: "12px",
+        fontSize: "calc(12px * var(--app-font-scale,1))",
 
         fontWeight: "700",
 

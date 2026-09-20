@@ -119,7 +119,7 @@ export default function StudentPoints() {
                     <strong>{row.reason||row.category||"نقاط"}</strong>
                     <span>{row.notes||"بدون ملاحظات"} • {formatDateTime(row.transaction_date)}</span>
                   </div>
-                  <strong style={{color:Number(row.points||0)>=0?"#147a5e":"#b6483d"}}>
+                  <strong style={{color:Number(row.points||0)>=0?"var(--app-color-147a5e,#147a5e)":"#b6483d"}}>
                     {Number(row.points||0)>=0?"+":""}{row.points}
                   </strong>
                 </div>

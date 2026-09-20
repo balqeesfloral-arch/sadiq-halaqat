@@ -11,8 +11,8 @@ export default function EmptyState({
       style={{
         background: theme.colors.card,
         border: `1px dashed ${theme.colors.border}`,
-        borderRadius: theme.radius.lg,
-        padding: 50,
+        borderRadius: `calc(${theme.radius.lg}px * var(--app-radius-scale,1))`,
+        padding: "calc(50px * var(--app-density,1))",
         textAlign: "center",
       }}
     >
@@ -22,8 +22,8 @@ export default function EmptyState({
             width: 80,
             height: 80,
             margin: "0 auto 20px",
-            borderRadius: 20,
-            background: "rgba(15,118,110,.08)",
+            borderRadius: "calc(20px * var(--app-radius-scale,1))",
+            background: "color-mix(in srgb,var(--app-color-0f766e,#0f766e) 8%,transparent)",
             color: theme.colors.primary,
 
             display: "flex",
@@ -39,7 +39,7 @@ export default function EmptyState({
         style={{
           margin: 0,
           color: theme.colors.text,
-          fontSize: 22,
+          fontSize: "calc(22px * var(--app-font-scale,1))",
           fontWeight: 800,
         }}
       >
@@ -50,7 +50,7 @@ export default function EmptyState({
         style={{
           marginTop: 10,
           color: theme.colors.textMuted,
-          fontSize: 14,
+          fontSize: "calc(14px * var(--app-font-scale,1))",
         }}
       >
         {description}

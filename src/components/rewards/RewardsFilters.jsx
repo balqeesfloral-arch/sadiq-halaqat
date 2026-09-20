@@ -627,7 +627,7 @@ export default function RewardsFilters({
             border:
               1px solid #E4EAE6;
 
-            border-radius: 18px;
+            border-radius: calc(18px * var(--app-radius-scale,1));
 
             background:
               linear-gradient(
@@ -652,10 +652,10 @@ export default function RewardsFilters({
             justify-content:
               space-between;
 
-            gap: 14px;
+            gap: calc(14px * var(--app-density,1));
 
             padding:
-              14px 16px 11px;
+              calc(14px * var(--app-density,1)) calc(16px * var(--app-density,1)) calc(11px * var(--app-density,1));
 
             border-bottom:
               1px solid #EDF1EE;
@@ -665,7 +665,7 @@ export default function RewardsFilters({
             display: flex;
             align-items: center;
 
-            gap: 9px;
+            gap: calc(9px * var(--app-density,1));
 
             min-width: 0;
           }
@@ -676,7 +676,7 @@ export default function RewardsFilters({
 
             flex: 0 0 36px;
 
-            border-radius: 11px;
+            border-radius: calc(11px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -700,13 +700,13 @@ export default function RewardsFilters({
             display: flex;
             align-items: center;
 
-            gap: 3px;
+            gap: calc(3px * var(--app-density,1));
 
             margin-bottom: 1px;
 
             color: #9A792D;
 
-            font-size: 7px;
+            font-size: calc(7px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
@@ -715,7 +715,7 @@ export default function RewardsFilters({
 
             color: #34463B;
 
-            font-size: 12px;
+            font-size: calc(12px * var(--app-font-scale,1));
             font-weight: 950;
           }
 
@@ -724,7 +724,7 @@ export default function RewardsFilters({
 
             color: #8E9892;
 
-            font-size: 6.5px;
+            font-size: calc(6.5px * var(--app-font-scale,1));
             line-height: 1.5;
           }
 
@@ -732,7 +732,7 @@ export default function RewardsFilters({
             display: flex;
             align-items: center;
 
-            gap: 6px;
+            gap: calc(6px * var(--app-density,1));
 
             flex: 0 0 auto;
           }
@@ -740,12 +740,12 @@ export default function RewardsFilters({
           .rewards-filters-active-count {
             min-height: 29px;
 
-            padding: 0 9px;
+            padding: 0 calc(9px * var(--app-density,1));
 
             border:
               1px solid #E4EAE6;
 
-            border-radius: 8px;
+            border-radius: calc(8px * var(--app-radius-scale,1));
 
             display: inline-flex;
             align-items: center;
@@ -753,29 +753,29 @@ export default function RewardsFilters({
             color: #748078;
             background: #FFFFFF;
 
-            font-size: 6.5px;
+            font-size: calc(6.5px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
           .rewards-filters-reset {
             min-height: 29px;
 
-            padding: 0 9px;
+            padding: 0 calc(9px * var(--app-density,1));
 
             border:
               1px solid #DDE6E0;
 
-            border-radius: 8px;
+            border-radius: calc(8px * var(--app-radius-scale,1));
 
             display: inline-flex;
             align-items: center;
 
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
 
             color: #466055;
             background: #F8FBF9;
 
-            font-size: 6.5px;
+            font-size: calc(6.5px * var(--app-font-scale,1));
             font-weight: 900;
 
             cursor: pointer;
@@ -806,9 +806,9 @@ export default function RewardsFilters({
               minmax(170px, 1fr)
               minmax(210px, 1.15fr);
 
-            gap: 10px;
+            gap: calc(10px * var(--app-density,1));
 
-            padding: 13px 16px;
+            padding: calc(13px * var(--app-density,1)) calc(16px * var(--app-density,1));
           }
 
           .rewards-filter-block {
@@ -821,13 +821,13 @@ export default function RewardsFilters({
             display: flex;
             align-items: center;
 
-            gap: 4px;
+            gap: calc(4px * var(--app-density,1));
 
             margin-bottom: 5px;
 
             color: #536159;
 
-            font-size: 7px;
+            font-size: calc(7px * var(--app-font-scale,1));
             font-weight: 900;
           }
 
@@ -842,7 +842,7 @@ export default function RewardsFilters({
 
             color: #99A19C;
 
-            font-size: 5.5px;
+            font-size: calc(5.5px * var(--app-font-scale,1));
             line-height: 1.4;
 
             text-overflow: ellipsis;
@@ -857,7 +857,7 @@ export default function RewardsFilters({
             display: flex;
             align-items: stretch;
 
-            gap: 5px;
+            gap: calc(5px * var(--app-density,1));
           }
 
           .rewards-filter-date-shell
@@ -875,12 +875,12 @@ export default function RewardsFilters({
             width: 100%;
             min-height: 48px;
 
-            padding: 6px 8px;
+            padding: calc(6px * var(--app-density,1)) calc(8px * var(--app-density,1));
 
             border:
               1px solid #DDE5E0;
 
-            border-radius: 11px;
+            border-radius: calc(11px * var(--app-radius-scale,1));
 
             display: grid;
 
@@ -889,7 +889,7 @@ export default function RewardsFilters({
 
             align-items: center;
 
-            gap: 7px;
+            gap: calc(7px * var(--app-density,1));
 
             color: inherit;
             background: #FFFFFF;
@@ -916,7 +916,7 @@ export default function RewardsFilters({
             width: 34px;
             height: 34px;
 
-            border-radius: 9px;
+            border-radius: calc(9px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -945,7 +945,7 @@ export default function RewardsFilters({
           .rewards-filter-date-copy small {
             color: #9AA29D;
 
-            font-size: 5px;
+            font-size: calc(5px * var(--app-font-scale,1));
             font-style: normal;
           }
 
@@ -956,7 +956,7 @@ export default function RewardsFilters({
 
             color: #3C4C42;
 
-            font-size: 8px;
+            font-size: calc(8px * var(--app-font-scale,1));
             font-weight: 950;
 
             text-overflow: ellipsis;
@@ -970,7 +970,7 @@ export default function RewardsFilters({
 
             color: #87928B;
 
-            font-size: 5.5px;
+            font-size: calc(5.5px * var(--app-font-scale,1));
             font-style: normal;
 
             text-overflow: ellipsis;
@@ -987,12 +987,12 @@ export default function RewardsFilters({
             border:
               1px solid #DDE6E0;
 
-            border-radius: 10px;
+            border-radius: calc(10px * var(--app-radius-scale,1));
 
             color: #0F6848;
             background: #F5FAF7;
 
-            font-size: 6px;
+            font-size: calc(6px * var(--app-font-scale,1));
             font-weight: 900;
 
             cursor: pointer;
@@ -1015,19 +1015,19 @@ export default function RewardsFilters({
             height: 48px;
 
             padding:
-              0 31px 0 31px;
+              0 calc(31px * var(--app-density,1)) 0 calc(31px * var(--app-density,1));
 
             border:
               1px solid #DDE5E0;
 
-            border-radius: 11px;
+            border-radius: calc(11px * var(--app-radius-scale,1));
 
             outline: none;
 
             color: #3C4C42;
             background: #FFFFFF;
 
-            font-size: 7px;
+            font-size: calc(7px * var(--app-font-scale,1));
 
             transition:
               border-color .16s ease,
@@ -1071,7 +1071,7 @@ export default function RewardsFilters({
               translateY(-50%);
 
             border: none;
-            border-radius: 7px;
+            border-radius: calc(7px * var(--app-radius-scale,1));
 
             display: flex;
             align-items: center;
@@ -1097,10 +1097,10 @@ export default function RewardsFilters({
             align-items: center;
             flex-wrap: wrap;
 
-            gap: 5px;
+            gap: calc(5px * var(--app-density,1));
 
             padding:
-              9px 16px 11px;
+              calc(9px * var(--app-density,1)) calc(16px * var(--app-density,1)) calc(11px * var(--app-density,1));
 
             border-top:
               1px solid #EDF1EE;
@@ -1114,14 +1114,14 @@ export default function RewardsFilters({
 
             color: #88938D;
 
-            font-size: 6px;
+            font-size: calc(6px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
           .rewards-filter-chip {
             min-height: 24px;
 
-            padding: 0 7px;
+            padding: 0 calc(7px * var(--app-density,1));
 
             border:
               1px solid #DCE7DF;
@@ -1131,12 +1131,12 @@ export default function RewardsFilters({
             display: inline-flex;
             align-items: center;
 
-            gap: 3px;
+            gap: calc(3px * var(--app-density,1));
 
             color: #466055;
             background: #FFFFFF;
 
-            font-size: 5.8px;
+            font-size: calc(5.8px * var(--app-font-scale,1));
             font-weight: 800;
           }
 
@@ -1155,7 +1155,7 @@ export default function RewardsFilters({
             border:
               1px solid #DDE6E0;
 
-            border-radius: 14px;
+            border-radius: calc(14px * var(--app-radius-scale,1));
 
             font-family: inherit;
 
@@ -1215,7 +1215,7 @@ export default function RewardsFilters({
           @media
           (max-width: 680px) {
             .rewards-filters {
-              border-radius: 15px;
+              border-radius: calc(15px * var(--app-radius-scale,1));
             }
 
             .rewards-filters-header {
@@ -1223,7 +1223,7 @@ export default function RewardsFilters({
               flex-direction: column;
 
               padding:
-                12px 13px 10px;
+                calc(12px * var(--app-density,1)) calc(13px * var(--app-density,1)) calc(10px * var(--app-density,1));
             }
 
             .rewards-filters-heading p {
@@ -1242,12 +1242,12 @@ export default function RewardsFilters({
                 1fr;
 
               padding:
-                11px 13px;
+                calc(11px * var(--app-density,1)) calc(13px * var(--app-density,1));
             }
 
             .rewards-filters-summary {
               padding:
-                8px 13px 10px;
+                calc(8px * var(--app-density,1)) calc(13px * var(--app-density,1)) calc(10px * var(--app-density,1));
             }
           }
 
@@ -1258,7 +1258,7 @@ export default function RewardsFilters({
             }
 
             .rewards-filter-date-copy strong {
-              font-size: 7.5px;
+              font-size: calc(7.5px * var(--app-font-scale,1));
             }
 
             .rewards-filters-active-count {

@@ -28,7 +28,7 @@ export default function AppModal({
 
         zIndex: 9999,
 
-        padding: "20px",
+        padding: "calc(20px * var(--app-density,1))",
       }}
     >
       <div
@@ -43,7 +43,7 @@ export default function AppModal({
             theme.colors.surface,
 
           borderRadius:
-            theme.radius.xl,
+            `calc(${theme.radius.xl}px * var(--app-radius-scale,1))`,
 
           boxShadow:
             theme.shadow.modal,
@@ -53,7 +53,7 @@ export default function AppModal({
       >
         <div
           style={{
-            padding: "20px 24px",
+            padding: "calc(20px * var(--app-density,1)) calc(24px * var(--app-density,1))",
 
             borderBottom:
               `1px solid ${theme.colors.border}`,
@@ -70,7 +70,7 @@ export default function AppModal({
             style={{
               margin: 0,
 
-              fontSize: "22px",
+              fontSize: "calc(22px * var(--app-font-scale,1))",
 
               fontWeight: "800",
 
@@ -108,7 +108,7 @@ export default function AppModal({
 
         <div
           style={{
-            padding: "24px",
+            padding: "calc(24px * var(--app-density,1))",
           }}
         >
           {children}

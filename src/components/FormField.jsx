@@ -15,7 +15,7 @@ export default function FormField({
           display: "block",
           marginBottom: "7px",
           color: "#465149",
-          fontSize: "12px",
+          fontSize: "calc(12px * var(--app-font-scale,1))",
           fontWeight: "700",
         }}
       >
@@ -66,20 +66,18 @@ export default function FormField({
           style={{
             width: "100%",
             height: "48px",
-            padding: Icon
-              ? "0 42px 0 13px"
-              : "0 13px",
+            padding: (Icon) ? ("0 calc(42px * var(--app-density,1)) 0 calc(13px * var(--app-density,1))") : ("0 calc(13px * var(--app-density,1))"),
             boxSizing: "border-box",
             border:
               "1px solid #d9dfdb",
-            borderRadius: "11px",
+            borderRadius: "calc(11px * var(--app-radius-scale,1))",
             outline: "none",
             background:
               disabled
                 ? "#f5f6f5"
                 : "#fff",
             color: "#26332c",
-            fontSize: "13px",
+            fontSize: "calc(13px * var(--app-font-scale,1))",
             direction: "rtl",
           }}
         />

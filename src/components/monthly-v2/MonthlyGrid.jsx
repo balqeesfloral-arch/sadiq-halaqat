@@ -14,7 +14,7 @@ console.log(rows);
     <div
       style={{
         background:"#FFFFFF",
-        borderRadius:"24px",
+        borderRadius:"calc(24px * var(--app-radius-scale,1))",
         border:"1px solid #E2E8F0",
         overflow:"hidden",
         boxShadow:
@@ -108,7 +108,7 @@ console.log(rows);
 
 const thStyle = {
 
-  padding:"18px",
+  padding:"calc(18px * var(--app-density,1))",
 
   textAlign:"center",
 
@@ -116,7 +116,7 @@ const thStyle = {
 
   fontWeight:"900",
 
-  fontSize:"14px",
+  fontSize:"calc(14px * var(--app-font-scale,1))",
 
   borderBottom:
     "1px solid #E2E8F0",

@@ -17,16 +17,16 @@ useEffect(() => {
     width: "100%",
     height: "54px",
     border: "1px solid #E2E8F0",
-    borderRadius: "14px",
-    padding: "0 16px",
-    fontSize: "14px",
+    borderRadius: "calc(14px * var(--app-radius-scale,1))",
+    padding: "0 calc(16px * var(--app-density,1))",
+    fontSize: "calc(14px * var(--app-font-scale,1))",
     background: "#FFFFFF",
     outline: "none",
     boxSizing: "border-box",
   };
 
   const labelStyle = {
-    fontSize: "13px",
+    fontSize: "calc(13px * var(--app-font-scale,1))",
     fontWeight: "700",
     color: "#374151",
     marginBottom: "8px",
@@ -63,7 +63,7 @@ useEffect(() => {
       <div
         style={{
           display: "flex",
-          gap: "10px",
+          gap: "calc(10px * var(--app-density,1))",
           alignItems: "center",
         }}
       >
@@ -85,8 +85,8 @@ useEffect(() => {
           <div
             style={{
               marginTop: "8px",
-              fontSize: "12px",
-              color: "#0F5132",
+              fontSize: "calc(12px * var(--app-font-scale,1))",
+              color: "var(--app-color-0f5132,#0F5132)",
               fontWeight: "600",
             }}
           >
