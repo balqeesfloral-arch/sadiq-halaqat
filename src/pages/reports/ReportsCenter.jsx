@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -44,6 +44,7 @@ import {
   getFilterOptions,
   getQuickRange,
   loadReportScope,
+  updateReportFilters,
 } from "./reportEngine";
 import "./ReportsCenter.css";
 
@@ -110,10 +111,10 @@ const SUPERVISOR_REPORTS = [
 ];
 
 const EMPTY_FILTERS = {
-  mosqueId: "",
-  halaqaId: "",
-  teacherId: "",
-  studentId: "",
+  mosqueIds: [],
+  halaqaIds: [],
+  teacherIds: [],
+  studentIds: [],
   preset: "30",
   ...getQuickRange("30"),
 };
@@ -138,7 +139,7 @@ export default function ReportsCenter({ mode: requestedMode }) {
 
   const options = useMemo(
     () => (scope ? getFilterOptions(scope, filters) : { halaqat: [], teachers: [], students: [] }),
-    [scope, filters.mosqueId]
+    [scope, filters.mosqueIds, filters.halaqaIds, filters.teacherIds]
   );
 
   useEffect(() => {
@@ -185,21 +186,7 @@ export default function ReportsCenter({ mode: requestedMode }) {
   }
 
   function setFilter(key, value) {
-    setFilters((current) => {
-      const next = { ...current, [key]: value };
-
-      if (key === "mosqueId") {
-        next.halaqaId = "";
-        next.teacherId = "";
-        next.studentId = "";
-      }
-
-      if (key === "halaqaId") {
-        next.studentId = "";
-      }
-
-      return next;
-    });
+    setFilters((current) => updateReportFilters(scope, current, key, value));
   }
 
   function applyPreset(preset) {
@@ -506,50 +493,43 @@ export default function ReportsCenter({ mode: requestedMode }) {
         {filtersOpen && (
           <div className="reports-filter-body">
             <QuickPeriods active={filters.preset} onSelect={applyPreset} />
+            <p className="reports-filter-hint">اختر قيمة أو أكثر من كل قائمة. ترك القائمة دون تحديد يشمل الكل.</p>
 
             <div className="reports-filter-grid">
               {mode !== "teacher" && (
-                <FilterSelect
-                  label="المسجد"
-                  value={filters.mosqueId}
-                  onChange={(value) => setFilter("mosqueId", value)}
-                  options={[
-                    { value: "", label: mode === "supervisor" ? "كل مساجدي" : "كل المساجد" },
-                    ...scope.mosques.map((item) => ({ value: String(item.id), label: item.name })),
-                  ]}
+                <FilterMultiSelect
+                  label="المساجد"
+                  placeholder={mode === "supervisor" ? "كل مساجدي" : "كل المساجد"}
+                  value={filters.mosqueIds}
+                  onChange={(value) => setFilter("mosqueIds", value)}
+                  options={scope.mosques.map((item) => ({ value: Number(item.id), label: item.name }))}
                 />
               )}
 
-              <FilterSelect
-                label="الحلقة"
-                value={filters.halaqaId}
-                onChange={(value) => setFilter("halaqaId", value)}
-                options={[
-                  { value: "", label: "كل الحلقات" },
-                  ...options.halaqat.map((item) => ({ value: String(item.id), label: item.name })),
-                ]}
+              <FilterMultiSelect
+                label="الحلقات"
+                placeholder="كل الحلقات"
+                value={filters.halaqaIds}
+                onChange={(value) => setFilter("halaqaIds", value)}
+                options={options.halaqat.map((item) => ({ value: Number(item.id), label: item.name }))}
               />
 
               {mode !== "teacher" && (
-                <FilterSelect
-                  label="المعلم"
-                  value={filters.teacherId}
-                  onChange={(value) => setFilter("teacherId", value)}
-                  options={[
-                    { value: "", label: "كل المعلمين" },
-                    ...options.teachers.map((item) => ({ value: String(item.id), label: item.full_name })),
-                  ]}
+                <FilterMultiSelect
+                  label="المعلمون"
+                  placeholder="كل المعلمين"
+                  value={filters.teacherIds}
+                  onChange={(value) => setFilter("teacherIds", value)}
+                  options={options.teachers.map((item) => ({ value: Number(item.id), label: item.full_name }))}
                 />
               )}
 
-              <FilterSelect
-                label="الطالب"
-                value={filters.studentId}
-                onChange={(value) => setFilter("studentId", value)}
-                options={[
-                  { value: "", label: "كل الطلاب" },
-                  ...options.students.map((item) => ({ value: String(item.id), label: item.full_name })),
-                ]}
+              <FilterMultiSelect
+                label="الطلاب"
+                placeholder="كل الطلاب"
+                value={filters.studentIds}
+                onChange={(value) => setFilter("studentIds", value)}
+                options={options.students.map((item) => ({ value: Number(item.id), label: item.full_name }))}
               />
 
               <FilterDate label="من" value={filters.fromDate} onChange={(value) => setFilter("fromDate", value)} />
@@ -702,19 +682,113 @@ function QuickPeriods({ active, onSelect }) {
   );
 }
 
-function FilterSelect({ label, value, onChange, options }) {
+function FilterMultiSelect({ label, placeholder, value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+  const searchRef = useRef(null);
+  const id = useId();
+  const selected = options.filter((option) => value.includes(option.value));
+  const query = search.trim().toLocaleLowerCase("ar");
+  const visible = options.filter((option) => String(option.label || "").toLocaleLowerCase("ar").includes(query));
+  const allVisibleSelected = visible.length > 0 && visible.every((option) => value.includes(option.value));
+  const selectedText = selected.map((option) => option.label).join("، ");
+
+  useEffect(() => {
+    if (!open) return;
+    searchRef.current?.focus();
+    function closeOutside(event) {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [open]);
+
+  function toggle(valueToToggle) {
+    onChange(value.includes(valueToToggle)
+      ? value.filter((item) => item !== valueToToggle)
+      : [...value, valueToToggle]);
+  }
+
+  function openMenu() {
+    setSearch("");
+    setOpen(true);
+  }
+
   return (
-    <label className="reports-field">
-      <span>{label}</span>
-      <div>
-        <select value={value} onChange={(event) => onChange(event.target.value)}>
-          {options.map((option) => (
-            <option value={option.value} key={`${label}-${option.value}`}>{option.label}</option>
-          ))}
-        </select>
-        <ChevronDown size={15} />
-      </div>
-    </label>
+    <div
+      ref={rootRef}
+      className={`reports-multi-field ${open ? "is-open" : ""}`}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen(false);
+          triggerRef.current?.focus();
+        }
+      }}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+    >
+      <label id={`${id}-label`} htmlFor={`${id}-trigger`}>{label}</label>
+      <button
+        id={`${id}-trigger`}
+        ref={triggerRef}
+        type="button"
+        className={`reports-multi-trigger ${selected.length ? "has-selection" : ""}`}
+        aria-expanded={open}
+        aria-controls={open ? `${id}-panel` : undefined}
+        aria-labelledby={`${id}-label ${id}-value`}
+        title={selectedText || placeholder}
+        onClick={() => open ? setOpen(false) : openMenu()}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            openMenu();
+          }
+        }}
+      >
+        <span id={`${id}-value`}>{selected.length === 1 ? selectedText : selected.length ? `تم تحديد ${formatNumber(selected.length)}` : placeholder}</span>
+        <ChevronDown size={15} aria-hidden="true" />
+      </button>
+      {open && (
+        <div id={`${id}-panel`} className="reports-multi-panel" role="group" aria-labelledby={`${id}-label`}>
+          <div className="reports-multi-search">
+            <Search size={15} aria-hidden="true" />
+            <input
+              ref={searchRef}
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="بحث…"
+              aria-label={`بحث في ${label}`}
+              autoComplete="off"
+            />
+          </div>
+          <div className="reports-multi-actions">
+            <button type="button" disabled={!visible.length || allVisibleSelected} onClick={() => onChange([...new Set([...value, ...visible.map((option) => option.value)])])}>
+              {query ? "تحديد النتائج" : "تحديد الكل"}
+            </button>
+            <button type="button" disabled={!value.length} onClick={() => onChange([])}>مسح</button>
+          </div>
+          <div className="reports-multi-options">
+            {visible.map((option) => (
+              <label className={`reports-multi-option ${value.includes(option.value) ? "is-selected" : ""}`} key={option.value}>
+                <input type="checkbox" checked={value.includes(option.value)} onChange={() => toggle(option.value)} />
+                <span>{option.label}</span>
+              </label>
+            ))}
+            {!visible.length && <p className="reports-multi-empty">{options.length ? "لا توجد نتائج للبحث" : "لا توجد خيارات ضمن النطاق المحدد"}</p>}
+          </div>
+          <div className="reports-multi-footer">
+            <span role="status">{value.length ? `${formatNumber(value.length)} محدد` : "يشمل الكل"}</span>
+            <button type="button" onClick={() => { setOpen(false); triggerRef.current?.focus(); }}>تم</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1122,7 +1196,7 @@ const PRINT_CSS = `
   .report-document-header { position: relative; overflow: hidden; padding: 16px 18px 13px; border: 1px solid #dce6e2; border-top: 4px solid #0f4c45; border-radius: 12px; background: linear-gradient(135deg,#fff,#f7faf8); page-break-inside: avoid; }
   .report-corner { position: absolute; width: 70px; opacity: .07; pointer-events: none; } .report-corner.c1{top:0;right:0}.report-corner.c2{top:0;left:0;transform:scaleX(-1)}
   .report-brand { display:flex; align-items:center; gap:12px; position:relative; z-index:2; } .report-brand>img{width:44px;height:44px;object-fit:contain}.report-brand span{font-size:9px;color:#8a7a45;font-weight:700}.report-brand h1{margin:2px 0 0;font-size:20px;color:#082f2a}.report-brand p{margin:3px 0 0;font-size:9px;color:#71837c}
-  .report-meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}.report-meta-item{padding:7px;border-radius:7px;background:#f4f8f6}.report-meta-item span{display:block;font-size:7px;color:#82928c}.report-meta-item strong{display:block;margin-top:2px;font-size:8.5px;color:#304d45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.report-date-line{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:8px;font-size:7.5px;color:#7b8d86}.report-date-line i{width:3px;height:3px;border-radius:50%;background:#d1b34c}
+  .report-meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}.report-meta-item{padding:7px;border-radius:7px;background:#f4f8f6}.report-meta-item span{display:block;font-size:7px;color:#82928c}.report-meta-item strong{display:block;margin-top:2px;font-size:8.5px;color:#304d45;white-space:normal;overflow-wrap:anywhere;line-height:1.6}.report-date-line{display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:8px;font-size:7.5px;color:#7b8d86}.report-date-line i{width:3px;height:3px;border-radius:50%;background:#d1b34c}
   .report-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;page-break-inside:avoid}.report-summary-card{padding:9px;border:1px solid #e1e8e5;border-radius:8px;background:#fff}.report-summary-card span{display:block;font-size:7.5px;color:#7b8c86}.report-summary-card strong{display:block;margin-top:2px;font-size:15px;color:#0c3e37}.report-summary-card.tone-gold{border-color:#ecdfb2}.report-summary-card.tone-blue{border-color:#dbe7f6}.report-summary-card.tone-teal{border-color:#d7ebe7}
   .report-insights{display:flex;align-items:flex-start;gap:9px;margin-top:8px;padding:9px 10px;border:1px solid #e7ddb4;border-radius:8px;background:#fffaf0;page-break-inside:avoid}.report-insights-title{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:8px;color:#846619;font-weight:800}.report-insight-list{display:grid;gap:3px;font-size:7.5px;color:#705f33}.report-insight-list>div{display:flex;align-items:center;gap:4px}
   .report-content-section{margin-top:8px}

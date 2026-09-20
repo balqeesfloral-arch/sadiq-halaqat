@@ -302,13 +302,27 @@ export async function loadReportScope() {
   };
 }
 
-export function getFilterOptions(scope, filters) {
-  const visibleHalaqat = scope.halaqat.filter((halaqa) => {
-    if (filters.mosqueId && Number(halaqa.mosque_id) !== Number(filters.mosqueId)) return false;
-    return true;
-  });
+export function normalizeReportFilters(filters = {}) {
+  const next = { ...filters };
+  for (const key of ["mosque", "halaqa", "teacher", "student"]) {
+    // Accept the previous single-value shape as well as multiple selections.
+    const value = filters[`${key}Ids`] ?? filters[`${key}Id`] ?? [];
+    next[`${key}Ids`] = [...new Set((Array.isArray(value) ? value : [value])
+      .map(Number).filter((id) => Number.isSafeInteger(id) && id > 0))];
+    delete next[`${key}Id`];
+  }
+  return next;
+}
 
-  const visibleHalaqaIds = new Set(visibleHalaqat.map((row) => Number(row.id)));
+export function getFilterOptions(scope, inputFilters) {
+  const filters = normalizeReportFilters(inputFilters);
+  const visibleHalaqat = scope.halaqat.filter((halaqa) =>
+    !filters.mosqueIds.length || filters.mosqueIds.includes(Number(halaqa.mosque_id))
+  );
+  const visibleHalaqaIds = new Set(visibleHalaqat
+    .filter((row) => !filters.halaqaIds.length || filters.halaqaIds.includes(Number(row.id)))
+    .map((row) => Number(row.id)));
+  const studentHalaqaIds = new Set(getAllowedHalaqaIds(scope, filters));
 
   const teacherIds = uniqueNumbers(
     scope.teacherLinks
@@ -318,7 +332,7 @@ export function getFilterOptions(scope, filters) {
 
   const studentIds = uniqueNumbers(
     scope.studentLinks
-      .filter((row) => visibleHalaqaIds.has(Number(row.halaqa_id)))
+      .filter((row) => studentHalaqaIds.has(Number(row.halaqa_id)))
       .map((row) => row.student_id)
   );
 
@@ -335,21 +349,40 @@ export function getFilterOptions(scope, filters) {
   };
 }
 
+export function updateReportFilters(scope, current, key, value) {
+  const next = normalizeReportFilters({ ...current, [key]: value });
+  // Keep valid choices when a parent selection grows; remove only stale ones.
+  if (key === "mosqueIds" || key === "halaqaIds" || key === "teacherIds") {
+    if (key === "mosqueIds") {
+      const ids = new Set(getFilterOptions(scope, next).halaqat.map((row) => Number(row.id)));
+      next.halaqaIds = next.halaqaIds.filter((id) => ids.has(id));
+    }
+    if (key !== "teacherIds") {
+      const ids = new Set(getFilterOptions(scope, next).teachers.map((row) => Number(row.id)));
+      next.teacherIds = next.teacherIds.filter((id) => ids.has(id));
+    }
+    const ids = new Set(getFilterOptions(scope, next).students.map((row) => Number(row.id)));
+    next.studentIds = next.studentIds.filter((id) => ids.has(id));
+  }
+  if (key === "fromDate" || key === "toDate") next.preset = "custom";
+  return next;
+}
+
 function getAllowedHalaqaIds(scope, filters) {
   let rows = scope.halaqat.slice();
 
-  if (filters.mosqueId) {
-    rows = rows.filter((row) => Number(row.mosque_id) === Number(filters.mosqueId));
+  if (filters.mosqueIds.length) {
+    rows = rows.filter((row) => filters.mosqueIds.includes(Number(row.mosque_id)));
   }
 
-  if (filters.halaqaId) {
-    rows = rows.filter((row) => Number(row.id) === Number(filters.halaqaId));
+  if (filters.halaqaIds.length) {
+    rows = rows.filter((row) => filters.halaqaIds.includes(Number(row.id)));
   }
 
-  if (filters.teacherId) {
+  if (filters.teacherIds.length) {
     const teacherHalaqaIds = new Set(
       scope.teacherLinks
-        .filter((row) => Number(row.teacher_id) === Number(filters.teacherId))
+        .filter((row) => filters.teacherIds.includes(Number(row.teacher_id)))
         .map((row) => Number(row.halaqa_id))
     );
     rows = rows.filter((row) => teacherHalaqaIds.has(Number(row.id)));
@@ -362,8 +395,8 @@ function getCurrentStudentLinks(scope, allowedHalaqaIds, filters) {
   const allowed = new Set(allowedHalaqaIds.map(Number));
   let rows = scope.studentLinks.filter((row) => allowed.has(Number(row.halaqa_id)));
 
-  if (filters.studentId) {
-    rows = rows.filter((row) => Number(row.student_id) === Number(filters.studentId));
+  if (filters.studentIds.length) {
+    rows = rows.filter((row) => filters.studentIds.includes(Number(row.student_id)));
   }
 
   return rows;
@@ -377,18 +410,17 @@ function applyDateFilters(query, field, filters) {
 }
 
 function reportMeta(scope, filters) {
-  const mosque = filters.mosqueId ? scope.mosqueMap.get(Number(filters.mosqueId)) : null;
-  const halaqa = filters.halaqaId ? scope.halaqaMap.get(Number(filters.halaqaId)) : null;
-  const teacher = filters.teacherId ? scope.profileMap.get(Number(filters.teacherId)) : null;
-  const student = filters.studentId ? scope.profileMap.get(Number(filters.studentId)) : null;
+  const names = (ids, map, field, fallback) => ids.length
+    ? ids.map((id) => map.get(id)?.[field] || `#${id}`).join("، ")
+    : fallback;
 
   return {
     generatedAt: new Date().toISOString(),
     generatedBy: scope.profile.full_name || "—",
-    mosqueName: mosque?.name || (scope.mode === "teacher" && scope.mosques.length === 1 ? scope.mosques[0]?.name : "كل النطاق المتاح"),
-    halaqaName: halaqa?.name || "جميع الحلقات",
-    teacherName: teacher?.full_name || (scope.mode === "teacher" ? scope.profile.full_name : "جميع المعلمين"),
-    studentName: student?.full_name || "جميع الطلاب",
+    mosqueName: names(filters.mosqueIds, scope.mosqueMap, "name", scope.mode === "teacher" && scope.mosques.length === 1 ? scope.mosques[0]?.name : "كل النطاق المتاح"),
+    halaqaName: names(filters.halaqaIds, scope.halaqaMap, "name", "جميع الحلقات"),
+    teacherName: names(filters.teacherIds, scope.profileMap, "full_name", scope.mode === "teacher" ? scope.profile.full_name : "جميع المعلمين"),
+    studentName: names(filters.studentIds, scope.profileMap, "full_name", "جميع الطلاب"),
     periodLabel: getPeriodLabel(filters),
   };
 }
@@ -453,7 +485,7 @@ async function buildAttendance(scope, filters, allowedHalaqaIds) {
     .select("student_id,halaqa_id,attendance_date,status,notes")
     .in("halaqa_id", allowedHalaqaIds);
 
-  if (filters.studentId) query = query.eq("student_id", filters.studentId);
+  if (filters.studentIds.length) query = query.in("student_id", filters.studentIds);
   query = applyDateFilters(query, "attendance_date", filters);
 
   const { data, error } = await query.order("attendance_date", { ascending: false });
@@ -532,11 +564,11 @@ async function buildRecitations(scope, filters, allowedHalaqaIds) {
   if (!allowedHalaqaIds.length) return emptyReport("تقرير التسميع", "لا توجد حلقات ضمن النطاق الحالي");
 
   let quranQuery = supabase.from("recitations").select("*").in("halaqa_id", allowedHalaqaIds);
-  if (filters.studentId) quranQuery = quranQuery.eq("student_id", filters.studentId);
+  if (filters.studentIds.length) quranQuery = quranQuery.in("student_id", filters.studentIds);
   quranQuery = applyDateFilters(quranQuery, "recitation_date", filters);
 
   let nooraniaQuery = supabase.from("noorania_recitations").select("*").in("halaqa_id", allowedHalaqaIds);
-  if (filters.studentId) nooraniaQuery = nooraniaQuery.eq("student_id", filters.studentId);
+  if (filters.studentIds.length) nooraniaQuery = nooraniaQuery.in("student_id", filters.studentIds);
   nooraniaQuery = applyDateFilters(nooraniaQuery, "recitation_date", filters);
 
   const [quranResult, nooraniaResult] = await Promise.all([quranQuery, nooraniaQuery]);
@@ -698,7 +730,7 @@ async function buildTeachers(scope, filters, allowedHalaqaIds) {
     };
   });
 
-  if (filters.teacherId) rows = rows.filter((row) => Number(row.id) === Number(filters.teacherId));
+  if (filters.teacherIds.length) rows = rows.filter((row) => filters.teacherIds.includes(Number(row.id)));
   rows.sort((a, b) => a.name.localeCompare(b.name, "ar"));
 
   return {
@@ -709,7 +741,7 @@ async function buildTeachers(scope, filters, allowedHalaqaIds) {
     summary: makeSummary([
       { label: "المعلمون", value: rows.length, tone: "green" },
       { label: "الطلاب", value: rows.reduce((s, r) => s + r.studentsCount, 0), tone: "blue" },
-      { label: "الحلقات المرتبطة", value: new Set(scope.teacherLinks.filter((r) => teacherIds.includes(Number(r.teacher_id))).map((r) => Number(r.halaqa_id))).size, tone: "teal" },
+      { label: "الحلقات المرتبطة", value: new Set(scope.teacherLinks.filter((r) => allowed.has(Number(r.halaqa_id)) && rows.some((teacher) => teacher.id === Number(r.teacher_id))).map((r) => Number(r.halaqa_id))).size, tone: "teal" },
     ]),
     insights: rows.length ? ["يعرض التقرير المعلمين ضمن مساجد وحلقات نطاق المشرف فقط."] : [],
   };
@@ -717,7 +749,7 @@ async function buildTeachers(scope, filters, allowedHalaqaIds) {
 
 async function buildMyMosques(scope, filters) {
   let mosques = scope.mosques.slice();
-  if (filters.mosqueId) mosques = mosques.filter((row) => Number(row.id) === Number(filters.mosqueId));
+  if (filters.mosqueIds.length) mosques = mosques.filter((row) => filters.mosqueIds.includes(Number(row.id)));
 
   const rows = mosques.map((mosque) => {
     const halaqat = scope.halaqat.filter((row) => Number(row.mosque_id) === Number(mosque.id));
@@ -756,7 +788,7 @@ async function buildMonthlyProgress(scope, filters, allowedHalaqaIds) {
   if (!allowedHalaqaIds.length) return emptyReport("تقرير الإنجاز الشهري", "لا توجد حلقات ضمن النطاق الحالي");
 
   let query = supabase.from("monthly_progress").select("*").in("halaqa_id", allowedHalaqaIds);
-  if (filters.studentId) query = query.eq("student_id", filters.studentId);
+  if (filters.studentIds.length) query = query.in("student_id", filters.studentIds);
   query = applyDateFilters(query, "progress_month", filters);
 
   const { data, error } = await query.order("progress_month", { ascending: false });
@@ -810,7 +842,7 @@ async function buildFull(scope, filters, allowedHalaqaIds) {
   const studentLinks = getCurrentStudentLinks(scope, allowedHalaqaIds, filters);
   const studentIds = uniqueNumbers(studentLinks.map((row) => row.student_id));
   const teacherIds = uniqueNumbers(
-    scope.teacherLinks.filter((row) => allowedHalaqaIds.includes(Number(row.halaqa_id))).map((row) => row.teacher_id)
+    scope.teacherLinks.filter((row) => allowedHalaqaIds.includes(Number(row.halaqa_id)) && (!filters.teacherIds.length || filters.teacherIds.includes(Number(row.teacher_id)))).map((row) => row.teacher_id)
   );
 
   let attendance = [];
@@ -818,9 +850,11 @@ async function buildFull(scope, filters, allowedHalaqaIds) {
 
   if (allowedHalaqaIds.length) {
     let attendanceQuery = supabase.from("attendance").select("id,status").in("halaqa_id", allowedHalaqaIds);
+    if (filters.studentIds.length) attendanceQuery = attendanceQuery.in("student_id", filters.studentIds);
     attendanceQuery = applyDateFilters(attendanceQuery, "attendance_date", filters);
 
     let recitationQuery = supabase.from("recitations").select("id,lesson_evaluation").in("halaqa_id", allowedHalaqaIds);
+    if (filters.studentIds.length) recitationQuery = recitationQuery.in("student_id", filters.studentIds);
     recitationQuery = applyDateFilters(recitationQuery, "recitation_date", filters);
 
     const [attendanceResult, recitationsResult] = await Promise.all([attendanceQuery, recitationQuery]);
@@ -870,7 +904,8 @@ function emptyReport(title, subtitle) {
   return { title, subtitle, layout: "empty", rows: [], summary: [], insights: [] };
 }
 
-export async function buildReport({ type, scope, filters }) {
+export async function buildReport({ type, scope, filters: inputFilters }) {
+  const filters = normalizeReportFilters(inputFilters);
   const allowedHalaqaIds = getAllowedHalaqaIds(scope, filters);
   let result;
 
