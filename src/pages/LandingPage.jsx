@@ -819,6 +819,7 @@ export default function LandingPage() {
                 التعليمية إلى الإنجاز والتحفيز والعناية المبكرة.
               </p>
 
+
               <div className="landing-hero-actions">
                 <button
                   type="button"

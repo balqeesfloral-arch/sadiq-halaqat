@@ -73,16 +73,17 @@ export default function Login() {
 
   function rememberSuccessfulLogin(account) {
     try {
-      if (rememberLogin) {
-        localStorage.setItem("sadiq_remember_login", JSON.stringify({
-          enabled: true,
-          mode: account.mode,
-          identifier: account.identifier,
-          studentNumber: account.studentNumber || "",
-        }));
-      } else {
+      if (!rememberLogin) {
         localStorage.removeItem("sadiq_remember_login");
+        return;
       }
+
+      localStorage.setItem("sadiq_remember_login", JSON.stringify({
+        enabled: true,
+        mode: account.mode,
+        identifier: account.identifier,
+        studentNumber: account.studentNumber || "",
+      }));
 
       const existing = JSON.parse(localStorage.getItem("sadiq_quick_accounts") || "[]");
       const next = [
@@ -98,12 +99,33 @@ export default function Login() {
     }
   }
 
-  function chooseQuickAccount(account) {
+  async function chooseQuickAccount(account) {
+    if (loading) return;
+
     setLoginMode(account.mode);
     setIdentifier(account.identifier || "");
     setStudentNumber(account.studentNumber || "");
-    setPassword("");
+    setPassword(account.password || "");
     setErrorMessage("");
+
+    if (account.mode === "staff" && !account.password) {
+      setErrorMessage("هذا الحساب محفوظ من إصدار سابق. أدخل كلمة المرور مرة واحدة ليتم تفعيل الدخول السريع.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (account.mode === "staff") {
+        await handleStaffLogin(account.identifier, account.password);
+      } else {
+        await handleStudentLogin(account.identifier, account.studentNumber);
+      }
+    } catch (error) {
+      console.error("Quick login error:", error);
+      setErrorMessage(error?.message || "تعذر تسجيل الدخول السريع.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function removeQuickAccount(event, account) {
@@ -135,15 +157,16 @@ export default function Login() {
     return data;
   }
 
-  async function handleStaffLogin() {
-    const email = identifier.trim().toLowerCase();
+  async function handleStaffLogin(emailOverride, passwordOverride) {
+    const email = (emailOverride ?? identifier).trim().toLowerCase();
+    const loginPassword = passwordOverride ?? password;
 
     if (!email) throw new Error("يرجى إدخال البريد الإلكتروني.");
-    if (!password) throw new Error("يرجى إدخال كلمة المرور.");
+    if (!loginPassword) throw new Error("يرجى إدخال كلمة المرور.");
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password,
+      password: loginPassword,
     });
 
     if (error) throw new Error("بيانات الدخول غير صحيحة.");
@@ -220,6 +243,7 @@ export default function Login() {
     rememberSuccessfulLogin({
       mode: "staff",
       identifier: email,
+      password: loginPassword,
       label: profile.full_name || email,
       role: profile.role,
     });
@@ -237,9 +261,9 @@ export default function Login() {
     });
   }
 
-  async function handleStudentLogin() {
-    const fullName = identifier.trim();
-    const userNumber = studentNumber.trim().toUpperCase();
+  async function handleStudentLogin(nameOverride, studentNumberOverride) {
+    const fullName = (nameOverride ?? identifier).trim();
+    const userNumber = (studentNumberOverride ?? studentNumber).trim().toUpperCase();
 
     if (!fullName) throw new Error("يرجى إدخال اسم الطالب.");
     if (!userNumber) throw new Error("يرجى إدخال رقم الطالب.");
@@ -532,7 +556,7 @@ export default function Login() {
               <span className="login-remember-toggle"><i /></span>
               <span className="login-remember-copy">
                 <strong>حفظ تسجيل الدخول</strong>
-                <small>يتذكر بيانات التعريف فقط على هذا الجهاز — لا نحفظ كلمة المرور.</small>
+                <small>يحفظ بيانات الدخول على هذا الجهاز لتفعيل الدخول المباشر من «الوصول السريع».</small>
               </span>
             </label>
 
