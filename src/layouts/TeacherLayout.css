@@ -11,7 +11,7 @@
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
-  background: var(--tl-bg);
+  background: var(--teacher-page-bg, var(--tl-bg));
   color: var(--app-color-173630,#173630);
 }
 
@@ -35,8 +35,17 @@
   overflow-y: auto;
   border-left: 1px solid rgba(255,255,255,.08);
   background:
-    radial-gradient(circle at 15% 5%, rgba(209,179,76,.13), transparent 24%),
-    linear-gradient(180deg, #062c28 0%, #0a413a 58%, #08342f 100%);
+    radial-gradient(
+      circle at 15% 5%,
+      color-mix(in srgb, var(--teacher-gold, #d1b34c) 16%, transparent),
+      transparent 24%
+    ),
+    linear-gradient(
+      180deg,
+      var(--teacher-sidebar-from, #062c28) 0%,
+      var(--teacher-sidebar-mid, #0a413a) 58%,
+      var(--teacher-sidebar-to, #08342f) 100%
+    );
   color: #fff;
   box-shadow: -14px 0 40px rgba(6,44,40,.09);
   transition: width .22s ease, transform .22s ease;
@@ -456,7 +465,7 @@
   inset: 76px 0 0 0;
   z-index: -1;
   pointer-events: none;
-  opacity: .025;
+  opacity: var(--teacher-pattern-opacity, .025);
   background-image:
     linear-gradient(45deg, transparent 47%, var(--app-color-0f4c45,#0f4c45) 48%, var(--app-color-0f4c45,#0f4c45) 52%, transparent 53%),
     linear-gradient(-45deg, transparent 47%, var(--app-color-0f4c45,#0f4c45) 48%, var(--app-color-0f4c45,#0f4c45) 52%, transparent 53%);
@@ -676,4 +685,47 @@
   .teacher-main::before {
     inset: 68px 0 0 0;
   }
+}
+
+
+/* =========================================================
+   Teacher appearance runtime
+========================================================= */
+
+.teacher-shell[data-teacher-motion="reduced"] *,
+.teacher-shell[data-teacher-motion="reduced"] *::before,
+.teacher-shell[data-teacher-motion="reduced"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+.teacher-shell[data-teacher-pattern="none"] .teacher-main::before {
+  opacity: 0;
+}
+
+.teacher-shell[data-teacher-pattern="rich"] .teacher-main::before {
+  background-size: 82px 82px;
+}
+
+.teacher-shell .teacher-topbar {
+  border-bottom-color:
+    color-mix(in srgb, var(--app-primary, #0f4c45) 12%, #e1e8e5);
+}
+
+.teacher-shell .teacher-menu-button {
+  color: var(--app-primary, #0f4c45);
+  background:
+    color-mix(in srgb, var(--app-primary, #0f4c45) 8%, #ffffff);
+}
+
+.teacher-shell .teacher-topbar-icon,
+.teacher-shell .teacher-topbar-profile {
+  border-color:
+    color-mix(in srgb, var(--app-primary, #0f4c45) 10%, #dfe7e4);
+}
+
+.teacher-shell .teacher-topbar-profile strong {
+  color: var(--app-color-173630, #294840);
 }

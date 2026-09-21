@@ -27,6 +27,17 @@ import {
 } from "react-router-dom";
 
 import { supabase } from "../lib/supabase";
+import {
+  TEACHER_PREFERENCES_DEFAULTS,
+  normalizeTeacherPreferences,
+} from "../lib/teacherPreferences";
+import {
+  buildTeacherAppearanceVariables,
+  normalizeTeacherAppearance,
+} from "../lib/teacherAppearance";
+import {
+  TeacherPreferencesContext,
+} from "../context/TeacherPreferencesContext";
 import "./TeacherLayout.css";
 import "./TeacherMobileStats.css";
 
@@ -141,16 +152,103 @@ export default function TeacherLayout() {
   const [teacher, setTeacher] = useState(null);
   const [hasAssignment, setHasAssignment] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [teacherPreferences, setTeacherPreferences] = useState(
+    normalizeTeacherPreferences(TEACHER_PREFERENCES_DEFAULTS)
+  );
+  const [appearancePreview, setAppearancePreview] = useState(null);
 
   const pageTitle = useMemo(
     () => currentPageTitle(location.pathname),
     [location.pathname]
   );
 
+  const activeAppearance = useMemo(
+    () =>
+      normalizeTeacherAppearance({
+        ...teacherPreferences,
+        ...(appearancePreview || {}),
+      }),
+    [teacherPreferences, appearancePreview]
+  );
+
+  const teacherAppearanceStyle = useMemo(
+    () =>
+      buildTeacherAppearanceVariables(
+        activeAppearance,
+        appearancePreview?.ui_density ??
+          teacherPreferences?.ui_density ??
+          "comfortable"
+      ),
+    [activeAppearance, appearancePreview, teacherPreferences]
+  );
+
   useEffect(() => {
     setMobileOpen(false);
     loadTeacherContext();
   }, [location.pathname]);
+
+  useEffect(() => {
+    function handlePreferencesUpdated(event) {
+      if (event?.detail) {
+        setTeacherPreferences({
+          ...event.detail,
+          ...normalizeTeacherPreferences(event.detail),
+        });
+      } else {
+        refreshTeacherPreferences();
+      }
+    }
+
+    function handleAppearancePreview(event) {
+      setAppearancePreview(event?.detail || null);
+    }
+
+    window.addEventListener(
+      "teacher-preferences-updated",
+      handlePreferencesUpdated
+    );
+    window.addEventListener(
+      "teacher-appearance-preview",
+      handleAppearancePreview
+    );
+
+    return () => {
+      window.removeEventListener(
+        "teacher-preferences-updated",
+        handlePreferencesUpdated
+      );
+      window.removeEventListener(
+        "teacher-appearance-preview",
+        handleAppearancePreview
+      );
+    };
+  }, [teacher?.id]);
+
+  async function refreshTeacherPreferences(teacherId = teacher?.id) {
+    if (!teacherId) return;
+
+    const { data, error } = await supabase
+      .from("teacher_preferences")
+      .select("*")
+      .eq("teacher_id", teacherId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Teacher preferences:", error);
+      return;
+    }
+
+    const source =
+      data || {
+        ...TEACHER_PREFERENCES_DEFAULTS,
+        teacher_id: teacherId,
+      };
+
+    setTeacherPreferences({
+      ...source,
+      ...normalizeTeacherPreferences(source),
+    });
+  }
 
   async function loadTeacherContext() {
     try {
@@ -179,6 +277,7 @@ export default function TeacherLayout() {
       }
 
       setTeacher(profile);
+      await refreshTeacherPreferences(profile.id);
 
       const { data: assignments, error: assignmentsError } =
         await supabase.rpc("get_my_teacher_assignments");
@@ -212,6 +311,10 @@ export default function TeacherLayout() {
     <div
       className={`teacher-shell ${collapsed ? "teacher-shell--collapsed" : ""}`}
       dir="rtl"
+      style={teacherAppearanceStyle}
+      data-teacher-theme={activeAppearance.appearance_theme}
+      data-teacher-pattern={activeAppearance.appearance_pattern}
+      data-teacher-motion={activeAppearance.appearance_motion}
     >
       {mobileOpen && (
         <button
@@ -394,7 +497,15 @@ export default function TeacherLayout() {
         </header>
 
         <main className="teacher-main">
-          <Outlet />
+          <TeacherPreferencesContext.Provider
+            value={{
+              teacher,
+              teacherPreferences,
+              refreshTeacherPreferences,
+            }}
+          >
+            <Outlet />
+          </TeacherPreferencesContext.Provider>
         </main>
       </div>
     </div>

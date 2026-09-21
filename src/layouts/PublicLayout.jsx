@@ -246,10 +246,13 @@ export default function PublicLayout() {
         ========================= */
 
         .public-header {
-          position: sticky;
-          top: 0;
+          position: fixed;
+          inset: 0 0 auto;
           z-index: 100;
           width: 100%;
+          background: rgba(251, 250, 245, 0.78);
+          backdrop-filter: blur(14px) saturate(1.08);
+          -webkit-backdrop-filter: blur(14px) saturate(1.08);
           transition:
             background 0.3s ease,
             box-shadow 0.3s ease,
@@ -259,7 +262,7 @@ export default function PublicLayout() {
 
         .public-header.is-scrolled {
           background:
-            rgba(248, 246, 239, 0.88);
+            rgba(248, 246, 239, 0.94);
           backdrop-filter: blur(18px);
           -webkit-backdrop-filter: blur(18px);
 
@@ -472,6 +475,7 @@ export default function PublicLayout() {
           position: relative;
           z-index: 2;
           min-height: calc(100vh - 82px);
+          padding-top: 82px;
         }
 
         /* =========================
@@ -520,6 +524,10 @@ export default function PublicLayout() {
             width: 46px;
             min-width: 46px;
             padding: 0;
+          }
+
+          .public-content {
+            padding-top: 74px;
           }
 
           .public-mobile-menu {

@@ -45,6 +45,11 @@ import {
   Trophy,
   UserRoundCheck,
   Users,
+  Headphones,
+  Loader2,
+  MessageCircle,
+  Send,
+  X,
   UsersRound,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -533,6 +538,1209 @@ function StatsSkeleton() {
     </div>
   );
 }
+
+
+const LANDING_FAQS = [
+  {
+    id: "about",
+    question: "ما هو الصديق؟",
+    aliases: [
+      "ما هو الصديق",
+      "ماهو الصديق",
+      "وش الصديق",
+      "ايش الصديق",
+      "عرفني على الصديق",
+      "عن المنصة",
+      "عن النظام",
+      "وش يسوي الصديق",
+    ],
+    concepts: ["الصديق", "منصه", "نظام"],
+    answer:
+      "الصِّديق منظومة لإدارة حلقات تحفيظ القرآن الكريم والعناية بمسيرة الطالب. تجمع إدارة المساجد والحلقات والطلاب والمعلمين مع الحضور والتسميع والخطط والاختبارات والتحفيز والتقارير في تجربة واحدة مترابطة.",
+  },
+  {
+    id: "login",
+    question: "كيف أسجل الدخول؟",
+    aliases: [
+      "كيف اسجل الدخول",
+      "كيف ادخل",
+      "طريقة الدخول",
+      "وين تسجيل الدخول",
+      "ابغى ادخل حسابي",
+      "كيف افتح حسابي",
+      "دخول المشرف",
+      "دخول المعلم",
+      "دخول المدير",
+    ],
+    concepts: ["دخول", "حساب"],
+    answer:
+      "اضغط «تسجيل الدخول» من أعلى الصفحة، ثم استخدم بيانات الحساب المخصصة لك. إذا كانت البيانات صحيحة ولا يزال الدخول لا يعمل، استخدم «التواصل مع فريق الإدارة» مع وصف المشكلة من غير إرسال كلمة المرور.",
+  },
+  {
+    id: "student-login",
+    question: "كيف يدخل الطالب؟",
+    aliases: [
+      "كيف يدخل الطالب",
+      "طريقة دخول الطالب",
+      "تسجيل دخول الطالب",
+      "دخول طالب",
+      "رقم الطالب",
+      "بطاقة الطالب",
+      "من وين الطالب يجيب بيانات الدخول",
+      "كيف الطالب يدخل حسابه",
+    ],
+    concepts: ["طالب", "دخول"],
+    answer:
+      "يدخل الطالب بالبيانات المخصصة له في المنظومة، ويمكن الحصول على رقم الطالب وبياناته من بطاقة الطالب أو من إدارة الحلقة. إذا لم تعمل البيانات فلا ترسل كلمة المرور؛ أرسل المشكلة لفريق الإدارة.",
+  },
+  {
+    id: "create-teacher",
+    question: "كيف أنشئ حساب معلم؟",
+    aliases: [
+      "كيف انشئ حساب معلم",
+      "كيف اسوي حساب معلم",
+      "كيف اعمل حساب معلم",
+      "كيف افتح حساب معلم",
+      "كيف اضيف معلم",
+      "طريقة اضافة معلم",
+      "تسجيل معلم جديد",
+      "انشاء مدرس",
+      "اضافة مدرس",
+      "سوي حساب مدرس",
+      "اعمل حساب مدرس",
+    ],
+    concepts: ["انشاء", "حساب", "معلم"],
+    answer:
+      "حساب المعلم لا يُنشأ من الصفحة العامة. ينشئه المشرف أو الجهة المخوّلة من صفحة المعلمين داخل المنظومة، ثم تُربط بيانات المعلم بالحلقات التي يعمل عليها وتُسلَّم له بيانات الدخول.",
+  },
+  {
+    id: "create-student",
+    question: "كيف أنشئ حساب طالب؟",
+    aliases: [
+      "كيف انشئ حساب طالب",
+      "كيف اسوي حساب طالب",
+      "كيف اعمل حساب طالب",
+      "كيف اضيف طالب",
+      "طريقة اضافة طالب",
+      "تسجيل طالب جديد",
+      "سوي حساب للطالب",
+      "اضافة طالب للحلقة",
+    ],
+    concepts: ["انشاء", "حساب", "طالب"],
+    answer:
+      "يُنشأ الطالب من داخل بوابة الجهة المخوّلة، ثم يُربط بحلقته وتظهر له بياناته ورقم الطالب. إنشاء حساب الطالب ليس تسجيلًا عامًا مفتوحًا من الصفحة الرئيسية.",
+  },
+  {
+    id: "create-supervisor",
+    question: "كيف أنشئ حساب مشرف؟",
+    aliases: [
+      "كيف انشئ حساب مشرف",
+      "كيف اسوي حساب مشرف",
+      "كيف اضيف مشرف",
+      "تسجيل مشرف",
+      "دعوة مشرف",
+      "حساب مشرف جديد",
+    ],
+    concepts: ["انشاء", "حساب", "مشرف"],
+    answer:
+      "إنشاء المشرف يتم من خلال مدير النظام وبمسار صلاحيات مخصص. بعد إنشاء أو قبول الدعوة يُربط المشرف بالمساجد المحددة له، ولا يرى إلا نطاق إشرافه.",
+  },
+  {
+    id: "add-mosque",
+    question: "كيف أضيف مسجدًا؟",
+    aliases: [
+      "كيف اضيف مسجد",
+      "اضافة مسجد",
+      "انشاء مسجد",
+      "سوي مسجد جديد",
+      "ابغى اضيف مسجد",
+      "طلب اضافة مسجد",
+      "كيف اربط مسجد بالمشرف",
+    ],
+    concepts: ["انشاء", "مسجد"],
+    answer:
+      "إذا كنت مشرفًا، ترفع «طلب إضافة مسجد» من إدارة المساجد. يراجع مدير النظام الطلب، وعند الموافقة يُنشأ المسجد ويُربط بحساب المشرف تلقائيًا.",
+  },
+  {
+    id: "join",
+    question: "كيف تنضم جهة أو مسجد للصديق؟",
+    aliases: [
+      "كيف انضم",
+      "كيف نسجل المسجد",
+      "كيف نسجل الجمعية",
+      "كيف اسجل جهتي",
+      "ابي اشترك للمسجد",
+      "ابغى اشترك",
+      "انضمام مسجد",
+      "انضمام جمعية",
+      "تسجيل جهة",
+      "تسجيل مسجد",
+    ],
+    concepts: ["انضمام", "مسجد", "جهه"],
+    answer:
+      "من خيار «التواصل مع فريق الإدارة» أرسل اسم الجهة أو المسجد، رقم واتساب صحيحًا، وما الذي تحتاجه. تصل الرسالة مباشرة إلى مركز تنبيهات مدير النظام ليتم التواصل معك.",
+  },
+  {
+    id: "forgot-login",
+    question: "نسيت بيانات الدخول، ماذا أفعل؟",
+    aliases: [
+      "نسيت بيانات الدخول",
+      "نسيت كلمة المرور",
+      "نسيت الباسورد",
+      "نسيت الرقم",
+      "الحساب ما يدخل",
+      "ما اقدر ادخل",
+      "الدخول ما يشتغل",
+      "بيانات الدخول غلط",
+      "مشكلة تسجيل الدخول",
+    ],
+    concepts: ["نسيان", "دخول"],
+    answer:
+      "أرسل لفريق الإدارة اسمك أو اسم الجهة ورقم واتساب ووصف المشكلة. لا ترسل كلمة المرور أو رمز التحقق داخل الرسالة.",
+  },
+  {
+    id: "supervisor-role",
+    question: "ماذا يستطيع المشرف أن يفعل؟",
+    aliases: [
+      "وش يقدر يسوي المشرف",
+      "مميزات المشرف",
+      "صلاحيات المشرف",
+      "ماذا يقدم للمشرف",
+      "ايش يسوي المشرف",
+      "ادارة المشرف",
+      "لوحة المشرف",
+    ],
+    concepts: ["مشرف", "صلاحيات"],
+    answer:
+      "المشرف يدير نطاق المساجد المرتبطة به، ويتابع الحلقات والمعلمين والطلاب والحضور والتسميع والاختبارات والتقارير والإنجاز، إضافة إلى الإشعارات والتواصل ومؤشرات الأداء.",
+  },
+  {
+    id: "teacher-role",
+    question: "ماذا يستطيع المعلم أن يفعل؟",
+    aliases: [
+      "وش يقدر يسوي المعلم",
+      "مميزات المعلم",
+      "صلاحيات المعلم",
+      "ماذا يقدم للمعلم",
+      "ايش يسوي المدرس",
+      "لوحة المعلم",
+      "ادوات المعلم",
+    ],
+    concepts: ["معلم", "صلاحيات"],
+    answer:
+      "المعلم يتابع طلاب حلقاته، ويسجل الحضور والتسميع، ويعمل على الخطط والإنجاز الشهري والاختبارات والنقاط والمكافآت والعناية بالطالب والتقارير المرتبطة بنطاقه.",
+  },
+  {
+    id: "student-role",
+    question: "ماذا يرى الطالب في حسابه؟",
+    aliases: [
+      "وش يشوف الطالب",
+      "مميزات الطالب",
+      "حساب الطالب",
+      "لوحة الطالب",
+      "ايش يظهر للطالب",
+      "وش يقدر يسوي الطالب",
+    ],
+    concepts: ["طالب", "حساب"],
+    answer:
+      "حساب الطالب يركز على رحلته التعليمية: تقدمه، سجل التسميع، الحضور، الإنجاز، النتائج والتنبيهات والمعلومات التي تتيحها له الجهة داخل المنظومة.",
+  },
+  {
+    id: "attendance",
+    question: "كيف يعمل الحضور؟",
+    aliases: [
+      "كيف اسجل الحضور",
+      "تسجيل الحضور",
+      "الغياب",
+      "التأخر",
+      "الحضور والغياب",
+      "ادارة الحضور",
+      "كشف الحضور",
+    ],
+    concepts: ["حضور", "غياب"],
+    answer:
+      "يسجل المعلم أو الجهة المخوّلة حالة الطالب للحصة، مثل حاضر أو غائب أو متأخر أو بعذر، وتدخل البيانات في متابعة الطالب والتقارير والمؤشرات.",
+  },
+  {
+    id: "recitation",
+    question: "كيف يعمل التسميع؟",
+    aliases: [
+      "كيف اسجل التسميع",
+      "تسجيل تسميع",
+      "التسميع",
+      "الحفظ والمراجعة",
+      "سجل التسميع",
+      "متابعة الحفظ",
+      "متابعة المراجعة",
+    ],
+    concepts: ["تسميع", "حفظ", "مراجعه"],
+    answer:
+      "يوثق التسميع الحفظ والمراجعة للطالب، ويجعل تقدمه قابلًا للمتابعة بدل الاعتماد على الملاحظات المتفرقة. ويمكن ربطه بالخطط والإنجاز والتقارير.",
+  },
+  {
+    id: "monthly-plan",
+    question: "ما هي الخطة والإنجاز الشهري؟",
+    aliases: [
+      "الخطة الشهرية",
+      "الانجاز الشهري",
+      "الإنجاز الشهري",
+      "هدف الحفظ الشهري",
+      "هدف المراجعة الشهري",
+      "خطة الطالب",
+      "كيف اسوي خطة",
+    ],
+    concepts: ["خطه", "شهري"],
+    answer:
+      "تساعد الخطة الشهرية على تحديد أهداف الحفظ والمراجعة، ثم مقارنة المنجز فعليًا بالهدف. الهدف هو معرفة التقدم أو التأخر مبكرًا واتخاذ إجراء مناسب.",
+  },
+  {
+    id: "exams",
+    question: "هل يوجد نظام اختبارات؟",
+    aliases: [
+      "الاختبارات",
+      "نظام الاختبارات",
+      "كيف اسوي اختبار",
+      "كيف انشئ اختبار",
+      "نتائج الاختبار",
+      "درجات الطلاب",
+      "اختبار طالب",
+    ],
+    concepts: ["اختبار", "نتائج"],
+    answer:
+      "نعم. المنظومة تتضمن إدارة الاختبارات وربطها بالطلاب والحلقات والمختبرين، مع متابعة المحاولات والدرجات والنتائج ضمن الصلاحيات المتاحة.",
+  },
+  {
+    id: "rewards",
+    question: "كيف تعمل النقاط والمكافآت؟",
+    aliases: [
+      "النقاط",
+      "المكافآت",
+      "الجوائز",
+      "تحفيز الطلاب",
+      "كيف اعطي نقاط",
+      "كيف اضيف مكافأة",
+      "خصم النقاط",
+    ],
+    concepts: ["نقاط", "مكافات"],
+    answer:
+      "النقاط والمكافآت أداة تحفيز داخل المنظومة. يمكن استخدامها لتعزيز الإنجاز والسلوك الإيجابي وفق صلاحيات الجهة، مع سجل واضح للحركات والمكافآت.",
+  },
+  {
+    id: "reports",
+    question: "ما التقارير الموجودة؟",
+    aliases: [
+      "التقارير",
+      "تقارير الطلاب",
+      "تقرير الطالب",
+      "تقارير الحضور",
+      "تقارير التسميع",
+      "اطبع تقرير",
+      "تصدير التقرير",
+      "pdf",
+      "excel",
+    ],
+    concepts: ["تقارير", "تقرير"],
+    answer:
+      "مركز التقارير يجمع بيانات مثل الطلاب والحضور والتسميع والإنجاز والاختبارات حسب الصلاحيات والفلاتر المتاحة، مع خيارات عرض وطباعة أو تصدير في المواضع المدعومة.",
+  },
+  {
+    id: "student-care",
+    question: "ما هو مركز العناية بالطالب؟",
+    aliases: [
+      "العناية بالطالب",
+      "مركز العناية",
+      "طالب متعثر",
+      "الطلاب المعرضين للخطر",
+      "تنبيه الغياب",
+      "طالب متأخر",
+      "ضعف التسميع",
+      "متابعة التعثر",
+    ],
+    concepts: ["عنايه", "طالب", "تنبيه"],
+    answer:
+      "مركز العناية يساعد على لفت الانتباه للحالات التي تحتاج متابعة، مثل تكرر الغياب أو التأخر عن الخطة أو ضعف النشاط، حتى يكون التدخل مبكرًا بدل انتظار تفاقم المشكلة.",
+  },
+  {
+    id: "notifications",
+    question: "هل يوجد نظام إشعارات وتواصل؟",
+    aliases: [
+      "الاشعارات",
+      "الإشعارات",
+      "التنبيهات",
+      "الرسائل",
+      "التواصل",
+      "ارسال رسالة",
+      "رسالة للمعلم",
+      "رسالة للمشرف",
+      "التواصل الداخلي",
+    ],
+    concepts: ["اشعارات", "رسائل", "تواصل"],
+    answer:
+      "نعم. يوجد مركز للإشعارات والتواصل ضمن الأدوار المدعومة، ويهدف إلى جمع التنبيهات والرسائل في مكان واحد بدل تشتتها خارج المنظومة.",
+  },
+  {
+    id: "tv",
+    question: "ما هي شاشة العرض التلفزيوني؟",
+    aliases: [
+      "شاشة التلفزيون",
+      "العرض التلفزيوني",
+      "شاشة العرض",
+      "tv",
+      "عرض الطلاب على الشاشة",
+      "لوحة التلفزيون",
+    ],
+    concepts: ["تلفزيون", "عرض"],
+    answer:
+      "شاشة العرض مخصصة لعرض معلومات مختارة للحلقة بصورة مناسبة للشاشات الكبيرة، مثل لوحات التحفيز والنتائج التي تسمح بها إعدادات الجهة.",
+  },
+  {
+    id: "mobile",
+    question: "هل الصديق يعمل على الجوال؟",
+    aliases: [
+      "هل يعمل على الجوال",
+      "يفتح بالجوال",
+      "يدعم الجوال",
+      "موبايل",
+      "ايفون",
+      "اندرويد",
+      "تابلت",
+      "كمبيوتر",
+      "متوافق مع الجوال",
+    ],
+    concepts: ["جوال", "اجهزه"],
+    answer:
+      "نعم. الواجهات مصممة لتتكيف مع الجوال والتابلت والكمبيوتر، مع ترتيب العناصر بحسب مساحة الشاشة.",
+  },
+  {
+    id: "privacy",
+    question: "كيف تُحفظ الخصوصية والصلاحيات؟",
+    aliases: [
+      "الخصوصية",
+      "الأمان",
+      "امان البيانات",
+      "صلاحيات المستخدمين",
+      "مين يشوف البيانات",
+      "هل البيانات آمنة",
+      "حماية البيانات",
+    ],
+    concepts: ["خصوصيه", "امان", "صلاحيات"],
+    answer:
+      "الوصول للبيانات يعتمد على الدور ونطاق الارتباط داخل المنظومة؛ فالمشرف يعمل ضمن مساجده، والمعلم ضمن حلقاته، والصفحة العامة لا تعرض تفاصيل شخصية للطلاب.",
+  },
+  {
+    id: "public-data",
+    question: "هل بيانات الطلاب ظاهرة في الصفحة العامة؟",
+    aliases: [
+      "هل بيانات الطلاب ظاهرة",
+      "هل الناس تشوف الطلاب",
+      "بيانات الطالب في الموقع",
+      "اسماء الطلاب للعامة",
+      "هل الصفحة العامة تعرض بيانات",
+    ],
+    concepts: ["بيانات", "طلاب", "عامه"],
+    answer:
+      "لا. الصفحة العامة تعرض معلومات وإحصائيات مجمعة، ولا يُفترض أن تعرض بيانات شخصية تفصيلية للطلاب للزوار.",
+  },
+  {
+    id: "multiple-mosques",
+    question: "هل يستطيع المشرف إدارة أكثر من مسجد؟",
+    aliases: [
+      "اكثر من مسجد",
+      "عدة مساجد",
+      "مشرف على مسجدين",
+      "ربط المشرف بمساجد",
+      "هل المشرف يدير اكثر من مسجد",
+    ],
+    concepts: ["مشرف", "مساجد"],
+    answer:
+      "نعم، يمكن ربط المشرف بأكثر من مسجد بحسب صلاحيات مدير النظام، وتبقى بياناته وواجهاته محصورة في المساجد المرتبطة به.",
+  },
+  {
+    id: "teacher-halaqat",
+    question: "هل يمكن ربط المعلم بأكثر من حلقة؟",
+    aliases: [
+      "معلم اكثر من حلقة",
+      "ربط المعلم بالحلقات",
+      "المعلم له حلقتين",
+      "عدة حلقات للمعلم",
+      "اضافة معلم لحلقة",
+    ],
+    concepts: ["معلم", "حلقات", "ربط"],
+    answer:
+      "يمكن ربط المعلم بالحلقات المصرح بها وفق إعداد الجهة، وتُبنى صفحات المعلم على الحلقات المرتبطة بحسابه.",
+  },
+  {
+    id: "student-halaqa",
+    question: "كيف أربط الطالب بحلقة؟",
+    aliases: [
+      "ربط الطالب بحلقة",
+      "اضافة الطالب للحلقة",
+      "نقل الطالب للحلقة",
+      "الطالب بدون حلقة",
+      "اختيار حلقة الطالب",
+    ],
+    concepts: ["طالب", "حلقه", "ربط"],
+    answer:
+      "يتم ربط الطالب بالحَلقة من داخل الإدارة المصرح لها. هذا الربط هو الذي يحدد سياق متابعة الطالب في الحضور والتسميع والخطط وغيرها.",
+  },
+  {
+    id: "parent-contact",
+    question: "هل يمكن متابعة ولي الأمر؟",
+    aliases: [
+      "ولي الامر",
+      "ولي أمر الطالب",
+      "رقم ولي الامر",
+      "التواصل مع ولي الامر",
+      "رسالة لولي الامر",
+      "واتساب ولي الامر",
+    ],
+    concepts: ["ولي", "امر", "تواصل"],
+    answer:
+      "تدعم بيانات الطالب معلومات ولي الأمر في المواضع المخصصة، ويمكن أن تساعد أدوات العناية والتواصل في تسهيل المتابعة عندما تكون بيانات الاتصال متوفرة للجهة المخوّلة.",
+  },
+  {
+    id: "noorania",
+    question: "هل يدعم الصديق النورانية؟",
+    aliases: [
+      "النورانية",
+      "القاعدة النورانية",
+      "نورانية",
+      "طلاب النورانية",
+      "متابعة النورانية",
+    ],
+    concepts: ["نورانيه"],
+    answer:
+      "توجد في المنظومة وظائف مرتبطة بمتابعة النورانية ضمن نطاق الحلقات والأدوار التي تستخدمها.",
+  },
+  {
+    id: "pricing",
+    question: "كم سعر الاشتراك؟",
+    aliases: [
+      "كم السعر",
+      "كم الاشتراك",
+      "سعر الصديق",
+      "الاسعار",
+      "الأسعار",
+      "الباقات",
+      "الباقة",
+      "رسوم الاشتراك",
+      "كم يكلف",
+    ],
+    concepts: ["سعر", "اشتراك", "باقات"],
+    answer:
+      "الأسعار والباقات قد تتغير حسب الخطة المعتمدة وقت التسجيل، لذلك الأفضل إرسال طلب لفريق الإدارة للحصول على السعر الحالي المناسب للجهة.",
+  },
+  {
+    id: "payment",
+    question: "كيف يتم الدفع أو التجديد؟",
+    aliases: [
+      "طريقة الدفع",
+      "كيف ادفع",
+      "التجديد",
+      "تجديد الاشتراك",
+      "الفاتورة",
+      "الفواتير",
+      "الدفع",
+    ],
+    concepts: ["دفع", "تجديد", "فاتوره"],
+    answer:
+      "تفاصيل الدفع والتجديد تعتمد على الباقات ووسائل الدفع المفعلة وقت الاشتراك. للحصول على المعلومة الحالية الدقيقة استخدم التواصل مع فريق الإدارة.",
+  },
+  {
+    id: "support",
+    question: "كيف أتواصل مع فريق الإدارة؟",
+    aliases: [
+      "كيف اتواصل",
+      "ابي الدعم",
+      "ابغى الدعم",
+      "محتاج مساعدة",
+      "عندي مشكلة",
+      "فريق الادارة",
+      "الدعم الفني",
+      "رقم التواصل",
+      "واتساب الدعم",
+    ],
+    concepts: ["دعم", "تواصل", "مساعده"],
+    answer:
+      "ارجع للشاشة الرئيسية للمساعد واختر «التواصل مع فريق الإدارة». أدخل رقم واتساب صحيحًا ورسالتك، وستصل مباشرة إلى مركز تنبيهات مدير النظام.",
+  },
+];
+
+const LANDING_FAQ_SUGGESTIONS = [
+  "كيف أسوي حساب معلم؟",
+  "كيف يدخل الطالب؟",
+  "كيف أضيف مسجدًا؟",
+  "ما هو مركز العناية بالطالب؟",
+  "هل يعمل على الجوال؟",
+  "كم سعر الاشتراك؟",
+];
+
+const FAQ_SYNONYM_GROUPS = [
+  ["انشاء", "انشئ", "انشا", "اسوي", "سوي", "اعمل", "عمل", "افتح", "فتح", "اضيف", "اضف", "اضافه"],
+  ["معلم", "مدرس", "محفظ", "محفظ"],
+  ["طالب", "دارس", "متعلم"],
+  ["مشرف", "مشرفين"],
+  ["مسجد", "جامع", "مساجد"],
+  ["حلقه", "حلقات"],
+  ["حساب", "يوزر", "مستخدم"],
+  ["دخول", "لوقن", "login"],
+  ["نسيان", "نسيت", "فاقد", "ضاعت"],
+  ["كلمه", "باسورد", "password", "مرور"],
+  ["واتساب", "واتس", "whatsapp"],
+  ["تواصل", "اتواصل", "اكلم", "راسل", "اراسل", "رساله"],
+  ["دعم", "مساعده", "ساعدني"],
+  ["خصوصيه", "خصوصية", "حمايه", "حماية"],
+  ["امان", "أمان", "امن", "آمن"],
+  ["تقارير", "تقرير"],
+  ["اختبار", "اختبارات", "امتحان", "امتحانات"],
+  ["نتائج", "نتيجه", "درجات", "درجه"],
+  ["مكافات", "مكافاه", "مكافآت", "جوائز", "جائزه"],
+  ["نقاط", "نقط"],
+  ["اشعارات", "إشعارات", "تنبيهات", "تنبيه"],
+  ["تسميع", "تسميعه"],
+  ["مراجعه", "مراجعة"],
+  ["خطه", "خطة", "خطط"],
+  ["شهري", "شهريه", "شهرية"],
+  ["انجاز", "إنجاز"],
+  ["عنايه", "عناية", "اهتمام"],
+  ["جوال", "موبايل", "هاتف", "ايفون", "اندرويد"],
+  ["اجهزه", "أجهزة", "جهاز"],
+  ["تلفزيون", "tv", "شاشه", "شاشة"],
+  ["سعر", "اسعار", "أسعار", "تكلفه", "تكلفة"],
+  ["اشتراك", "اشترك", "الباقه", "الباقة", "باقات"],
+  ["دفع", "اسدد", "سداد"],
+  ["فاتوره", "فاتورة", "فواتير"],
+  ["انضمام", "انضم", "التحاق"],
+  ["جهه", "جهة", "جمعيه", "جمعية", "مؤسسه", "مؤسسة"],
+  ["صلاحيات", "صلاحية", "صلاحياته", "يقدر"],
+  ["ربط", "اربط", "مرتبط"],
+  ["نورانيه", "نورانية", "النورانيه", "النورانية"],
+];
+
+const FAQ_STOP_WORDS = new Set([
+  "كيف",
+  "وش",
+  "ايش",
+  "ما",
+  "ماذا",
+  "هل",
+  "هو",
+  "هي",
+  "في",
+  "من",
+  "على",
+  "عن",
+  "الى",
+  "إلى",
+  "ابي",
+  "ابغى",
+  "اريد",
+  "ممكن",
+  "لو",
+  "لي",
+  "لـ",
+]);
+
+function normalizeArabicText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+    .replace(/[إأآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/ـ/g, "")
+    .replace(/[^\u0600-\u06FFa-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const FAQ_SYNONYM_LOOKUP = (() => {
+  const lookup = new Map();
+
+  for (const group of FAQ_SYNONYM_GROUPS) {
+    const canonical = normalizeArabicText(group[0]);
+
+    for (const word of group) {
+      lookup.set(normalizeArabicText(word), canonical);
+    }
+  }
+
+  return lookup;
+})();
+
+function semanticFaqTokens(value) {
+  return normalizeArabicText(value)
+    .split(" ")
+    .filter(Boolean)
+    .map((token) => FAQ_SYNONYM_LOOKUP.get(token) || token)
+    .filter((token) => token.length > 1 && !FAQ_STOP_WORDS.has(token));
+}
+
+function semanticFaqText(value) {
+  return semanticFaqTokens(value).join(" ");
+}
+
+function faqTokenSimilarity(queryTokens, candidateTokens) {
+  if (!queryTokens.length || !candidateTokens.length) return 0;
+
+  const querySet = new Set(queryTokens);
+  const candidateSet = new Set(candidateTokens);
+
+  let intersection = 0;
+  for (const token of candidateSet) {
+    if (querySet.has(token)) intersection += 1;
+  }
+
+  const recall = intersection / candidateSet.size;
+  const precision = intersection / querySet.size;
+
+  return recall * 0.68 + precision * 0.32;
+}
+
+function getLandingFaqAnswer(question) {
+  const normalized = normalizeArabicText(question);
+  const semantic = semanticFaqText(question);
+  const queryTokens = semanticFaqTokens(question);
+
+  if (!normalized || !queryTokens.length) return null;
+
+  let best = null;
+  let bestScore = 0;
+
+  for (const item of LANDING_FAQS) {
+    const candidates = [item.question, ...(item.aliases || [])];
+    let itemScore = 0;
+
+    for (const candidate of candidates) {
+      const normalizedCandidate = normalizeArabicText(candidate);
+      const semanticCandidate = semanticFaqText(candidate);
+      const candidateTokens = semanticFaqTokens(candidate);
+
+      if (
+        normalized === normalizedCandidate ||
+        semantic === semanticCandidate
+      ) {
+        itemScore = Math.max(itemScore, 20);
+        continue;
+      }
+
+      if (
+        normalized.includes(normalizedCandidate) ||
+        normalizedCandidate.includes(normalized)
+      ) {
+        itemScore = Math.max(itemScore, 13);
+      }
+
+      if (
+        semantic &&
+        semanticCandidate &&
+        (semantic.includes(semanticCandidate) ||
+          semanticCandidate.includes(semantic))
+      ) {
+        itemScore = Math.max(itemScore, 12);
+      }
+
+      const similarity = faqTokenSimilarity(
+        queryTokens,
+        candidateTokens
+      );
+
+      itemScore = Math.max(
+        itemScore,
+        similarity * 9
+      );
+    }
+
+    const conceptTokens = semanticFaqTokens(
+      (item.concepts || []).join(" ")
+    );
+
+    if (conceptTokens.length) {
+      const querySet = new Set(queryTokens);
+      const matchedConcepts = conceptTokens.filter((token) =>
+        querySet.has(token)
+      ).length;
+
+      itemScore +=
+        (matchedConcepts / conceptTokens.length) * 4.5;
+
+      if (matchedConcepts === conceptTokens.length) {
+        itemScore += 2.5;
+      }
+    }
+
+    if (itemScore > bestScore) {
+      best = item;
+      bestScore = itemScore;
+    }
+  }
+
+  return bestScore >= 5.2 ? best : null;
+}
+
+
+function AssistantRosette({ className = "" }) {
+  return (
+    <svg
+      className={`landing-assistant-rosette ${className}`}
+      viewBox="0 0 120 120"
+      aria-hidden="true"
+    >
+      <g fill="none" stroke="currentColor" strokeWidth="1.25">
+        <circle cx="60" cy="60" r="50" />
+        <circle cx="60" cy="60" r="34" />
+        <polygon points="60,10 72,36 101,19 84,48 110,60 84,72 101,101 72,84 60,110 48,84 19,101 36,72 10,60 36,48 19,19 48,36" />
+        <polygon points="60,26 70,50 94,60 70,70 60,94 50,70 26,60 50,50" />
+        <polygon points="60,38 82,60 60,82 38,60" />
+        <circle cx="60" cy="60" r="8" />
+      </g>
+    </svg>
+  );
+}
+
+function LandingAssistant() {
+  const [open, setOpen] = useState(false);
+  const [screen, setScreen] = useState("home");
+  const [question, setQuestion] = useState("");
+  const [conversation, setConversation] = useState([
+    {
+      id: "welcome",
+      role: "assistant",
+      text:
+        "حيّاك الله 🌿 أنا مساعد الصِّديق. أقدر أجاوبك فورًا عن المنصة وطريقة الدخول والانضمام، أو أوصل رسالتك مباشرة إلى فريق الإدارة.",
+    },
+  ]);
+
+  const [contact, setContact] = useState({
+    name: "",
+    whatsapp: "",
+    message: "",
+  });
+  const [contactError, setContactError] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  function askFaq(text) {
+    const clean = String(text || "").trim();
+    if (!clean) return;
+
+    const matched = getLandingFaqAnswer(clean);
+
+    setConversation((current) => [
+      ...current,
+      {
+        id: `q-${Date.now()}`,
+        role: "user",
+        text: clean,
+      },
+      {
+        id: `a-${Date.now()}-${Math.random()}`,
+        role: "assistant",
+        text: matched
+          ? matched.answer
+          : "ما لقيت إجابة مطابقة بما يكفي حتى أضمن لك معلومة صحيحة. جرّب صياغة السؤال بكلمات أخرى مثل: إنشاء حساب معلم، دخول الطالب، إضافة مسجد، الحضور، التسميع، الاختبارات، التقارير، الإشعارات أو الاشتراك. وإذا كان السؤال خاصًا بحسابك تقدر تراسل فريق الإدارة.",
+        canContact: !matched,
+      },
+    ]);
+
+    setQuestion("");
+  }
+
+  async function sendContact(event) {
+    event.preventDefault();
+    setContactError("");
+
+    const whatsapp = contact.whatsapp.trim();
+    const message = contact.message.trim();
+
+    if (!whatsapp) {
+      setContactError("رقم الواتساب مطلوب حتى يستطيع فريق الإدارة التواصل معك.");
+      return;
+    }
+
+    if (!message || message.length < 10) {
+      setContactError("اكتب تفاصيل الرسالة بشكل أوضح، على الأقل 10 أحرف.");
+      return;
+    }
+
+    setSending(true);
+
+    try {
+      const { error } = await supabase.rpc(
+        "submit_public_support_request",
+        {
+          p_name: contact.name.trim() || null,
+          p_whatsapp: whatsapp,
+          p_message: message,
+          p_page_path: window.location.pathname || "/",
+        }
+      );
+
+      if (error) throw error;
+
+      setSent(true);
+      setContact({
+        name: "",
+        whatsapp: "",
+        message: "",
+      });
+    } catch (error) {
+      const messageText = String(error?.message || error || "");
+
+      if (messageText.includes("INVALID_WHATSAPP")) {
+        setContactError("تأكد من رقم الواتساب وأدخله بصيغة صحيحة.");
+      } else if (messageText.includes("SUPPORT_RATE_LIMIT")) {
+        setContactError("وصلتنا رسالة منك قبل قليل. انتظر دقيقة ثم حاول مرة أخرى.");
+      } else if (messageText.includes("MESSAGE_TOO_SHORT")) {
+        setContactError("اكتب تفاصيل أكثر حتى يستطيع الفريق خدمتك بشكل أفضل.");
+      } else {
+        console.error("Support request failed:", error);
+        setContactError("تعذر إرسال الرسالة الآن. حاول مرة أخرى بعد قليل.");
+      }
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function resetHome() {
+    setScreen("home");
+    setSent(false);
+    setContactError("");
+  }
+
+  return (
+    <div className={`landing-assistant ${open ? "is-open" : ""}`}>
+      {open && (
+        <button
+          type="button"
+          className="landing-assistant-backdrop"
+          aria-label="إغلاق المساعد"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      <div className="landing-assistant-launch-wrap">
+        <AssistantRosette className="is-launch-ring" />
+
+        <button
+          type="button"
+          className="landing-assistant-launch"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          aria-label={open ? "إغلاق المساعد" : "فتح المساعد"}
+          title={open ? "إغلاق" : "المساعدة"}
+        >
+          {open ? <X size={22} /> : <MessageCircle size={24} />}
+          {!open && (
+            <span className="landing-assistant-launch-spark" aria-hidden="true">
+              <Sparkles size={10} />
+            </span>
+          )}
+        </button>
+      </div>
+
+      <section
+        className="landing-assistant-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="مساعد الصديق"
+      >
+        <header className="landing-assistant-head">
+          <div className="landing-assistant-head-ornament">
+            <AssistantRosette />
+          </div>
+
+          <div className="landing-assistant-head-top">
+            {screen !== "home" ? (
+              <button
+                type="button"
+                className="landing-assistant-back"
+                onClick={resetHome}
+                aria-label="العودة"
+              >
+                <ArrowLeft size={17} />
+              </button>
+            ) : (
+              <span className="landing-assistant-live">
+                <i />
+                متاح الآن
+              </span>
+            )}
+
+            <button
+              type="button"
+              className="landing-assistant-close"
+              onClick={() => setOpen(false)}
+              aria-label="إغلاق"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="landing-assistant-emblem">
+            <Sparkles size={19} />
+          </div>
+
+          <h2>
+            {screen === "home" && "حيّاك الله، كيف نخدمك؟"}
+            {screen === "faq" && "اسأل مساعد الصِّديق"}
+            {screen === "contact" && "تواصل مع فريق الإدارة"}
+          </h2>
+
+          <p>
+            {screen === "home" &&
+              "اختر ما يناسبك، وسنحاول أن نجعل وصولك للمعلومة أوضح وأسرع."}
+            {screen === "faq" &&
+              "اكتب سؤالك بطريقتك؛ أفهم الصيغ المتقاربة والمرادفات وأبحث عن أقرب إجابة معتمدة داخل المنظومة."}
+            {screen === "contact" &&
+              "اكتب رسالتك وسيتم إرسالها مباشرة إلى مركز تنبيهات مدير النظام."}
+          </p>
+        </header>
+
+        {screen === "home" && (
+          <div className="landing-assistant-home">
+            <button
+              type="button"
+              className="landing-assistant-choice is-support"
+              onClick={() => setScreen("contact")}
+            >
+              <span className="landing-assistant-choice-icon">
+                <Headphones size={21} />
+              </span>
+
+              <span className="landing-assistant-choice-copy">
+                <strong>التواصل مع فريق الإدارة</strong>
+                <small>
+                  أرسل طلبًا أو استفسارًا وسيصل مباشرة إلى مدير النظام.
+                </small>
+              </span>
+
+              <ArrowLeft size={18} />
+            </button>
+
+            <button
+              type="button"
+              className="landing-assistant-choice"
+              onClick={() => setScreen("faq")}
+            >
+              <span className="landing-assistant-choice-icon">
+                <Sparkles size={21} />
+              </span>
+
+              <span className="landing-assistant-choice-copy">
+                <strong>اسألني عن الصِّديق</strong>
+                <small>
+                  دخول، انضمام، أدوار المستخدمين، الخصوصية وأكثر.
+                </small>
+              </span>
+
+              <ArrowLeft size={18} />
+            </button>
+
+            <div className="landing-assistant-home-note">
+              <ShieldCheck size={16} />
+              <span>
+                لن يطلب منك المساعد كلمة المرور أو أي بيانات دخول حساسة.
+              </span>
+            </div>
+          </div>
+        )}
+
+        {screen === "faq" && (
+          <div className="landing-assistant-faq">
+            <div className="landing-assistant-chat">
+              {conversation.slice(-6).map((message) => (
+                <div
+                  key={message.id}
+                  className={`landing-assistant-bubble is-${message.role}`}
+                >
+                  {message.role === "assistant" && (
+                    <span className="landing-assistant-mini-avatar">
+                      <Sparkles size={13} />
+                    </span>
+                  )}
+
+                  <div>
+                    <p>{message.text}</p>
+
+                    {message.canContact && (
+                      <button
+                        type="button"
+                        onClick={() => setScreen("contact")}
+                      >
+                        تواصل مع فريق الإدارة
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="landing-assistant-suggestions">
+              {LANDING_FAQ_SUGGESTIONS.map((suggestion) => (
+                <button
+                  type="button"
+                  key={suggestion}
+                  onClick={() => askFaq(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+
+            <form
+              className="landing-assistant-question-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                askFaq(question);
+              }}
+            >
+              <input
+                value={question}
+                onChange={(event) => setQuestion(event.target.value)}
+                placeholder="اكتب سؤالك هنا…"
+                maxLength={220}
+                autoComplete="off"
+              />
+
+              <button
+                type="submit"
+                disabled={!question.trim()}
+                aria-label="إرسال السؤال"
+              >
+                <Send size={17} />
+              </button>
+            </form>
+          </div>
+        )}
+
+        {screen === "contact" && (
+          <div className="landing-assistant-contact">
+            {sent ? (
+              <div className="landing-assistant-success">
+                <span>
+                  <CheckCircle2 size={27} />
+                </span>
+                <h3>وصلت رسالتك بنجاح</h3>
+                <p>
+                  أرسلناها إلى مركز تنبيهات مدير النظام، ويمكن لفريق
+                  الإدارة التواصل معك عبر رقم الواتساب الذي أدخلته.
+                </p>
+                <button type="button" onClick={resetHome}>
+                  العودة للمساعد
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={sendContact}>
+                <label className="landing-assistant-field">
+                  <span>الاسم <small>اختياري</small></span>
+                  <input
+                    value={contact.name}
+                    onChange={(event) =>
+                      setContact((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                    maxLength={120}
+                    placeholder="اكتب اسمك أو اسم الجهة"
+                    autoComplete="name"
+                  />
+                </label>
+
+                <label className="landing-assistant-field">
+                  <span>
+                    رقم الواتساب <b>*</b>
+                  </span>
+                  <input
+                    value={contact.whatsapp}
+                    onChange={(event) =>
+                      setContact((current) => ({
+                        ...current,
+                        whatsapp: event.target.value,
+                      }))
+                    }
+                    required
+                    inputMode="tel"
+                    dir="ltr"
+                    maxLength={24}
+                    placeholder="05xxxxxxxx أو 9665xxxxxxxx"
+                    autoComplete="tel"
+                  />
+                </label>
+
+                <label className="landing-assistant-field">
+                  <span>
+                    رسالتك <b>*</b>
+                  </span>
+                  <textarea
+                    value={contact.message}
+                    onChange={(event) =>
+                      setContact((current) => ({
+                        ...current,
+                        message: event.target.value,
+                      }))
+                    }
+                    required
+                    maxLength={3000}
+                    rows={5}
+                    placeholder="اكتب استفسارك أو طلبك بالتفصيل…"
+                  />
+                  <small>{contact.message.length} / 3000</small>
+                </label>
+
+                {contactError && (
+                  <div className="landing-assistant-error">
+                    {contactError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="landing-assistant-submit"
+                  disabled={sending}
+                >
+                  {sending ? (
+                    <Loader2
+                      size={17}
+                      className="landing-assistant-spin"
+                    />
+                  ) : (
+                    <Send size={17} />
+                  )}
+                  {sending ? "جارٍ إرسال الرسالة…" : "إرسال لفريق الإدارة"}
+                </button>
+
+                <div className="landing-assistant-privacy">
+                  <ShieldCheck size={14} />
+                  <span>
+                    رقم الواتساب مطلوب للمتابعة فقط. لا ترسل كلمات المرور
+                    أو رموز التحقق.
+                  </span>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -1659,6 +2867,8 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <LandingAssistant />
     </div>
   );
 }

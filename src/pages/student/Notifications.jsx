@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BellRing, BookOpen, CheckCircle2, GraduationCap, Heart, Sparkles, UserX } from "lucide-react";
+import { BellRing, BookOpen, CheckCircle2, GraduationCap, Heart, MessageCircle, Send, Sparkles, UserX } from "lucide-react";
 import StudentPage from "../../components/student/StudentPage";
 import { useStudentPortal } from "../../context/StudentPortalContext";
 import { supabase } from "../../lib/supabase";
@@ -14,6 +14,12 @@ export default function StudentNotifications(){
   const [loading,setLoading]=useState(true);
   const [manual,setManual]=useState([]);
   const [smart,setSmart]=useState([]);
+  const [contacts,setContacts]=useState([]);
+  const [recipientId,setRecipientId]=useState("");
+  const [messageSubject,setMessageSubject]=useState("");
+  const [messageBody,setMessageBody]=useState("");
+  const [sendingMessage,setSendingMessage]=useState(false);
+  const [messageStatus,setMessageStatus]=useState("");
 
   useEffect(()=>{load();},[profile?.id]);
 
@@ -22,11 +28,55 @@ export default function StudentNotifications(){
     try{
       setLoading(true);
 
-      const manualResult=await supabase.from("student_notifications")
-        .select("id, title, body, kind, action_path, created_at, read_at, sender_id")
-        .eq("student_id",profile.id).order("created_at",{ascending:false}).limit(60);
+      const [manualResult,contactsResult]=await Promise.all([
+        supabase.from("student_notifications")
+          .select("id, title, body, kind, action_path, created_at, read_at, sender_id")
+          .eq("student_id",profile.id).order("created_at",{ascending:false}).limit(60),
+        supabase.rpc("get_student_communication_contacts"),
+      ]);
 
       if(!manualResult.error)setManual(manualResult.data||[]);
+
+      if(contactsResult.error)throw contactsResult.error;
+
+      const contactMap=new Map();
+      (contactsResult.data||[]).forEach(row=>{
+        const id=Number(row.profile_id);
+        if(!id)return;
+
+        if(!contactMap.has(id)){
+          contactMap.set(id,{
+            id,
+            name:row.full_name||(
+              row.role==="teacher"?"المعلم":"مشرف المسجد"
+            ),
+            role:row.role,
+            role_label:row.role_label||(
+              row.role==="teacher"?"المعلم":"مشرف المسجد"
+            ),
+            contexts:[],
+          });
+        }
+
+        contactMap.get(id).contexts.push({
+          mosque_id:row.mosque_id,
+          mosque_name:row.mosque_name,
+          halaqa_id:row.halaqa_id,
+          halaqa_name:row.halaqa_name,
+        });
+      });
+
+      const linkedContacts=[...contactMap.values()];
+      setContacts(linkedContacts);
+
+      setRecipientId(current=>{
+        if(current&&linkedContacts.some(item=>String(item.id)===String(current))){
+          return current;
+        }
+
+        const teacher=linkedContacts.find(item=>item.role==="teacher");
+        return teacher?String(teacher.id):(linkedContacts[0]?String(linkedContacts[0].id):"");
+      });
 
       const from35=daysAgo(35);
       const [quranResult,nooraniaResult,attendanceResult,examResult,progressResult]=await Promise.all([
@@ -118,12 +168,59 @@ export default function StudentNotifications(){
     if(!error)setManual(current=>current.map(item=>item.id===id?{...item,read_at:new Date().toISOString()}:item));
   }
 
+  const contactById=useMemo(
+    ()=>new Map(contacts.map(item=>[Number(item.id),item])),
+    [contacts]
+  );
+
   const notifications=useMemo(()=>[
-    ...manual.map(item=>({...item,source:"manual"})),
+    ...manual.map(item=>({
+      ...item,
+      source:"manual",
+      sender:contactById.get(Number(item.sender_id))||null,
+    })),
     ...smart.map(item=>({...item,source:"smart",read_at:true})),
-  ].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)),[manual,smart]);
+  ].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)),[manual,smart,contactById]);
 
   const unread=manual.filter(item=>!item.read_at).length;
+
+  async function sendMessage(event){
+    event.preventDefault();
+
+    if(!profile?.id||!recipientId||!messageBody.trim())return;
+
+    try{
+      setSendingMessage(true);
+      setMessageStatus("");
+
+      const {error}=await supabase.rpc("send_internal_message",{
+        p_recipient_id:Number(recipientId),
+        p_subject:messageSubject.trim()||"رسالة من الطالب",
+        p_body:messageBody.trim(),
+        p_message_type:"general",
+        p_priority:"normal",
+        p_student_context_id:Number(profile.id),
+        p_reply_to_id:null,
+      });
+
+      if(error)throw error;
+
+      const recipient=contacts.find(item=>Number(item.id)===Number(recipientId));
+
+      setMessageBody("");
+      setMessageSubject("");
+      setMessageStatus(
+        recipient?.role==="supervisor"
+          ?"تم إرسال الرسالة إلى مشرف المسجد"
+          :"تم إرسال الرسالة إلى المعلم"
+      );
+    }catch(error){
+      console.error("Student message:",error);
+      setMessageStatus("تعذر إرسال الرسالة. حاول مرة أخرى.");
+    }finally{
+      setSendingMessage(false);
+    }
+  }
 
   return(
     <StudentPage
@@ -137,6 +234,166 @@ export default function StudentNotifications(){
         <Metric icon={Sparkles} label="تنبيهات ذكية" value={smart.length} note="مبنية على نشاطك"/>
         <Metric icon={Heart} label="التحفيز" value="مستمر" note="في النجاح والتعثر"/>
         <Metric icon={CheckCircle2} label="الهدف" value="تقدمك" note="وليس كثرة الإشعارات"/>
+      </section>
+
+      <section className="student-panel">
+        <div className="student-panel-head">
+          <div className="student-panel-title">
+            <div className="student-panel-title-icon"><MessageCircle size={19}/></div>
+            <div><span>التواصل</span><h3>المعلم والمشرف</h3></div>
+          </div>
+        </div>
+
+        {!contacts.length?(
+          <div className="student-empty">
+            <MessageCircle size={29}/>
+            <strong>لا توجد جهة تواصل مرتبطة بحسابك حاليًا</strong>
+          </div>
+        ):(
+          <form
+            onSubmit={sendMessage}
+            style={{
+              display:"grid",
+              gap:12,
+              padding:"14px 16px 18px",
+            }}
+          >
+            <div
+              style={{
+                display:"grid",
+                gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",
+                gap:10,
+              }}
+            >
+              <label style={{display:"grid",gap:6}}>
+                <span style={{fontSize:12,fontWeight:800,color:"#53665f"}}>إلى</span>
+                <select
+                  value={recipientId}
+                  onChange={event=>{
+                    setRecipientId(event.target.value);
+                    setMessageStatus("");
+                  }}
+                  style={{
+                    width:"100%",
+                    minHeight:42,
+                    border:"1px solid #dce7e2",
+                    borderRadius:12,
+                    padding:"0 10px",
+                    background:"#fff",
+                    color:"#354a41",
+                    font:"inherit",
+                    outline:"none",
+                  }}
+                >
+                  {contacts.map(contact=>{
+                    const context=contact.contexts?.[0];
+                    const role=contact.role==="teacher"?"المعلم":"مشرف المسجد";
+                    const place=context?.halaqa_name||context?.mosque_name||"";
+                    return(
+                      <option key={contact.id} value={contact.id}>
+                        {role} — {contact.name}{place?` • ${place}`:""}
+                      </option>
+                    );
+                  })}
+                </select>
+              </label>
+
+              <label style={{display:"grid",gap:6}}>
+                <span style={{fontSize:12,fontWeight:800,color:"#53665f"}}>الموضوع</span>
+                <input
+                  value={messageSubject}
+                  onChange={event=>setMessageSubject(event.target.value)}
+                  maxLength={160}
+                  placeholder="موضوع الرسالة"
+                  style={{
+                    width:"100%",
+                    minHeight:42,
+                    border:"1px solid #dce7e2",
+                    borderRadius:12,
+                    padding:"0 11px",
+                    background:"#fff",
+                    color:"#354a41",
+                    font:"inherit",
+                    outline:"none",
+                  }}
+                />
+              </label>
+            </div>
+
+            <label style={{display:"grid",gap:6}}>
+              <span style={{fontSize:12,fontWeight:800,color:"#53665f"}}>الرسالة</span>
+              <textarea
+                value={messageBody}
+                onChange={event=>{
+                  setMessageBody(event.target.value);
+                  setMessageStatus("");
+                }}
+                required
+                maxLength={5000}
+                rows={4}
+                placeholder="اكتب رسالتك هنا…"
+                style={{
+                  width:"100%",
+                  minHeight:105,
+                  resize:"vertical",
+                  border:"1px solid #dce7e2",
+                  borderRadius:12,
+                  padding:11,
+                  background:"#fff",
+                  color:"#354a41",
+                  font:"inherit",
+                  lineHeight:1.7,
+                  outline:"none",
+                }}
+              />
+            </label>
+
+            <div
+              style={{
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"space-between",
+                gap:10,
+                flexWrap:"wrap",
+              }}
+            >
+              <span
+                style={{
+                  minHeight:20,
+                  color:messageStatus.startsWith("تم ")?"#0f6f52":"#9b453e",
+                  fontSize:12,
+                  fontWeight:800,
+                }}
+              >
+                {messageStatus}
+              </span>
+
+              <button
+                type="submit"
+                disabled={sendingMessage||!recipientId||!messageBody.trim()}
+                style={{
+                  minHeight:40,
+                  display:"inline-flex",
+                  alignItems:"center",
+                  justifyContent:"center",
+                  gap:7,
+                  padding:"0 14px",
+                  border:0,
+                  borderRadius:11,
+                  color:"#fff",
+                  background:"#0f4c45",
+                  font:"inherit",
+                  fontWeight:900,
+                  cursor:sendingMessage?"wait":"pointer",
+                  opacity:sendingMessage||!recipientId||!messageBody.trim()?0.55:1,
+                }}
+              >
+                <Send size={16}/>
+                {sendingMessage?"جارٍ الإرسال…":"إرسال"}
+              </button>
+            </div>
+          </form>
+        )}
       </section>
 
       <section className="student-panel">
@@ -166,7 +423,16 @@ function NotificationItem({item,onRead}){
   return(
     <article className={`student-notification ${item.source==="manual"&&!item.read_at?"unread":""}`}>
       <div className="student-notification-icon"><Icon size={18}/></div>
-      <div className="student-notification-copy"><strong>{item.title}</strong><p>{item.body}</p><span>{formatDateTime(item.created_at)}</span></div>
+      <div className="student-notification-copy">
+        <strong>{item.title}</strong>
+        {item.sender&&(
+          <span style={{display:"block",marginTop:3,fontWeight:800,color:"#5f746c"}}>
+            {item.sender.role==="teacher"?"المعلم":"مشرف المسجد"}: {item.sender.name}
+          </span>
+        )}
+        <p>{item.body}</p>
+        <span>{formatDateTime(item.created_at)}</span>
+      </div>
       {item.source==="manual"&&!item.read_at&&<button type="button" onClick={()=>onRead(item.id)}>تم الاطلاع</button>}
     </article>
   );

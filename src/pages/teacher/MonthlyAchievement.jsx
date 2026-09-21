@@ -194,6 +194,222 @@ function getAcceptedReviewFaces(record) {
   return Number(record?.review_faces || 0);
 }
 
+function normalizeArabicNumberText(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/[٠١٢٣٤٥٦٧٨٩]/g, (digit) =>
+      "٠١٢٣٤٥٦٧٨٩".indexOf(digit)
+    )
+    .replace(/[۰۱۲۳۴۵۶۷۸۹]/g, (digit) =>
+      "۰۱۲۳۴۵۶۷۸۹".indexOf(digit)
+    )
+    .replace(/٫/g, ".")
+    .replace(/،/g, " ")
+    .replace(/[إأآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function parseSideLessonFaces(value) {
+  const text =
+    normalizeArabicNumberText(
+      value
+    );
+
+  if (!text) {
+    return 0;
+  }
+
+  /*
+    رقم فقط = عدد أوجه.
+    أمثلة: 1 ، 1.5 ، ٢.٩ ، 10
+  */
+
+  if (
+    /^\d+(?:\.\d+)?$/.test(
+      text
+    )
+  ) {
+    return roundFaces(
+      Number(text)
+    );
+  }
+
+  /*
+    الأسطر تتحول إلى أوجه
+    باعتبار 15 سطرًا = وجهًا واحدًا.
+  */
+
+  const numericLines =
+    text.match(
+      /(\d+(?:\.\d+)?)\s*(?:سطر|سطرين|سطران|اسطر|سطور)/
+    );
+
+  if (
+    numericLines
+  ) {
+    return roundFaces(
+      Number(
+        numericLines[1]
+      ) / 15
+    );
+  }
+
+  if (
+    /\b(?:سطران|سطرين)\b/.test(
+      text
+    )
+  ) {
+    return roundFaces(
+      2 / 15
+    );
+  }
+
+  if (
+    /\bسطر\b/.test(
+      text
+    )
+  ) {
+    return roundFaces(
+      1 / 15
+    );
+  }
+
+  /*
+    الكسور الشائعة.
+  */
+
+  if (
+    /(?:صفحه|وجه)\s+ونصف/.test(
+      text
+    )
+  ) {
+    return 1.5;
+  }
+
+  if (
+    /(?:صفحتان|صفحتين|وجهان|وجهين)\s+ونصف/.test(
+      text
+    )
+  ) {
+    return 2.5;
+  }
+
+  if (
+    /\bنصف\s+(?:صفحه|وجه)\b/.test(
+      text
+    )
+  ) {
+    return 0.5;
+  }
+
+  if (
+    /\bربع\s+(?:صفحه|وجه)\b/.test(
+      text
+    )
+  ) {
+    return 0.25;
+  }
+
+  if (
+    /\bثلاثه\s+ارباع\s+(?:صفحه|وجه)\b/.test(
+      text
+    )
+  ) {
+    return 0.75;
+  }
+
+  /*
+    رقم + وحدة أوجه / صفحات.
+  */
+
+  const numericFaces =
+    text.match(
+      /(\d+(?:\.\d+)?)\s*(?:وجه|اوجه|صفحه|صفحات)/
+    );
+
+  if (
+    numericFaces
+  ) {
+    return roundFaces(
+      Number(
+        numericFaces[1]
+      )
+    );
+  }
+
+  /*
+    الأعداد المكتوبة بالكلمات.
+  */
+
+  const wordNumbers = [
+    ["عشره", 10],
+    ["تسعه", 9],
+    ["ثمانيه", 8],
+    ["سبعه", 7],
+    ["سته", 6],
+    ["خمسه", 5],
+    ["اربعه", 4],
+    ["ثلاثه", 3],
+    ["اثنان", 2],
+    ["اثنين", 2],
+    ["اثنتان", 2],
+    ["اثنتين", 2],
+    ["واحد", 1],
+    ["واحده", 1],
+  ];
+
+  if (
+    /(?:وجهان|وجهين|صفحتان|صفحتين)/.test(
+      text
+    )
+  ) {
+    return 2;
+  }
+
+  for (
+    const [
+      word,
+      amount,
+    ] of wordNumbers
+  ) {
+    if (
+      text.includes(
+        word
+      ) &&
+      /(?:وجه|اوجه|صفحه|صفحات)/.test(
+        text
+      )
+    ) {
+      return amount;
+    }
+  }
+
+  if (
+    /(?:^|\s)(?:وجه|صفحه)(?:\s|$)/.test(
+      text
+    )
+  ) {
+    return 1;
+  }
+
+  return 0;
+}
+
+function getSideLessonFaces(
+  record,
+  second = false
+) {
+  return parseSideLessonFaces(
+    second
+      ? record?.next2_surah
+      : record?.next_surah
+  );
+}
+
 function getHijriParts(
   date = new Date()
 ) {
@@ -1403,6 +1619,11 @@ export default function MonthlyAchievement() {
             lesson_amount_value,
             lesson_amount_unit,
 
+            next_surah,
+            next_evaluation,
+            next2_surah,
+            next2_evaluation,
+
             review_surah,
             review_from_ayah,
             review_to_surah,
@@ -1481,6 +1702,7 @@ export default function MonthlyAchievement() {
               sessions: 0,
               lessonSessions: 0,
               revisionSessions: 0,
+              sideLessonFaces: 0,
               lastDate: null,
             };
 
@@ -1511,6 +1733,19 @@ export default function MonthlyAchievement() {
             old.revisionSessions +=
               1;
           }
+
+          const sideLessonFaces =
+            getSideLessonFaces(
+              record,
+              false
+            ) +
+            getSideLessonFaces(
+              record,
+              true
+            );
+
+          old.sideLessonFaces +=
+            sideLessonFaces;
 
           if (
             !old.lastDate ||
@@ -1552,6 +1787,7 @@ export default function MonthlyAchievement() {
                   sessions: 0,
                   lessonSessions: 0,
                   revisionSessions: 0,
+                  sideLessonFaces: 0,
                   lastDate: null,
                 };
 
@@ -1739,6 +1975,12 @@ export default function MonthlyAchievement() {
                 revision_sessions:
                   Number(
                     auto.revisionSessions
+                  ),
+
+                side_lesson_faces:
+                  roundFaces(
+                    auto.sideLessonFaces ||
+                      0
                   ),
 
                 last_recitation_date:
@@ -2485,7 +2727,7 @@ export default function MonthlyAchievement() {
     ) {
       const confirmed =
         window.confirm(
-          "سيتم إلغاء التعديلات غير المحفوظة وإعادة الحساب من سجلات التسميع.\n\nهل تريد المتابعة؟"
+          "سيتم إلغاء التعديلات غير المحفوظة وتحديث البيانات.\n\nهل تريد المتابعة؟"
         );
 
       if (!confirmed) {
@@ -2496,7 +2738,7 @@ export default function MonthlyAchievement() {
     await loadMonthlyData();
 
     showToast(
-      "تم إعادة احتساب الإنجاز من التسميع",
+      "تم تحديث الإنجاز",
       "success"
     );
   }
@@ -2643,6 +2885,20 @@ export default function MonthlyAchievement() {
           0
         );
 
+      const sideLessonFaces =
+        rows.reduce(
+          (
+            sum,
+            row
+          ) =>
+            sum +
+            Number(
+              row.side_lesson_faces ||
+                0
+            ),
+          0
+        );
+
       const approved =
         rows.filter(
           (row) =>
@@ -2709,6 +2965,8 @@ export default function MonthlyAchievement() {
           ),
 
         sessions,
+
+        sideLessonFaces,
 
         approved,
 
@@ -2915,11 +3173,12 @@ export default function MonthlyAchievement() {
       "هدف الحفظ",
       "إنجاز الحفظ",
       "حالة الحفظ",
+      "جنب الدرس",
       "هدف المراجعة",
       "إنجاز المراجعة",
       "حالة المراجعة",
       "الحالة الشهرية",
-      "سبب التعثر الذكي",
+      "سبب التعثر",
       "الغياب",
       "الغياب بعذر",
       "الإعادات",
@@ -2941,6 +3200,7 @@ export default function MonthlyAchievement() {
           : row.memorization_completed
             ? "منجز"
             : "غير منجز",
+        formatFaces(row.side_lesson_faces || 0),
         formatFaces(row.revision_target_faces),
         formatFaces(row.final_revision_faces),
         Number(row.revision_target_faces || 0) <= 0
@@ -2981,8 +3241,8 @@ export default function MonthlyAchievement() {
 
     worksheet["!cols"] = [
       { wch: 6 }, { wch: 25 }, { wch: 16 }, { wch: 13 }, { wch: 14 }, { wch: 14 },
-      { wch: 13 }, { wch: 14 }, { wch: 14 }, { wch: 15 }, { wch: 32 }, { wch: 10 },
-      { wch: 12 }, { wch: 10 }, { wch: 13 }, { wch: 30 }, { wch: 13 },
+      { wch: 12 }, { wch: 13 }, { wch: 14 }, { wch: 14 }, { wch: 15 }, { wch: 32 },
+      { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 13 }, { wch: 30 }, { wch: 13 },
     ];
     worksheet["!views"] = [{ rightToLeft: true }];
 
@@ -3055,6 +3315,7 @@ export default function MonthlyAchievement() {
           <td>${escapeHtml(row.user_number || "-")}</td>
           <td>${formatFaces(row.final_memorization_faces)} / ${formatFaces(row.memorization_target_faces)}</td>
           <td><span class="status ${memStatus === "منجز" ? "ok" : memStatus === "غير منجز" ? "bad" : "muted"}">${memStatus}</span></td>
+          <td>${formatFaces(row.side_lesson_faces || 0)}</td>
           <td>${formatFaces(row.final_revision_faces)} / ${formatFaces(row.revision_target_faces)}</td>
           <td><span class="status ${revStatus === "منجز" ? "ok" : revStatus === "غير منجز" ? "bad" : "muted"}">${revStatus}</span></td>
           <td><span class="status ${overall === true ? "ok" : overall === false ? "bad" : "muted"}">${overall === null ? "لا توجد خطة" : overall ? "منجز" : "غير منجز"}</span></td>
@@ -3173,7 +3434,7 @@ export default function MonthlyAchievement() {
               <img class="header-logo" src="${origin}/icon-512.png" onerror="this.src='${origin}/logo.png'" />
               <div class="title">
                 <h1>تقرير الإنجاز الشهري</h1>
-                <p>نظام الصديق لإدارة حلقات القرآن الكريم — قراءة ذكية للإنجاز والتعثر</p>
+                <p>نظام الصديق لإدارة حلقات القرآن الكريم</p>
               </div>
               <div class="month-box">
                 <span>الشهر الهجري</span>
@@ -3200,7 +3461,7 @@ export default function MonthlyAchievement() {
               <thead>
                 <tr>
                   <th>م</th><th>الطالب</th><th>الرقم</th><th>الحفظ / الهدف</th><th>حالة الحفظ</th>
-                  <th>المراجعة / الهدف</th><th>حالة المراجعة</th><th>الشهر</th><th>سبب التعثر الذكي</th><th>الجلسات</th>
+                  <th>جنب الدرس</th><th>المراجعة / الهدف</th><th>حالة المراجعة</th><th>الشهر</th><th>سبب التعثر</th><th>الجلسات</th>
                 </tr>
               </thead>
               <tbody>${rowsHtml}</tbody>
@@ -3457,28 +3718,6 @@ export default function MonthlyAchievement() {
         </div>
       )}
 
-      {/* =================================================
-          SOURCE INFO
-      ================================================= */}
-
-      <div
-        className="monthly-source-note"
-      >
-        <Sparkles
-          size={14}
-        />
-
-        <div>
-          <strong>
-            الإنجاز الشهري الذكي
-          </strong>
-
-          <span>
-            الصفحة تعرض الإنجاز الفعلي وحالة الطالب وسبب التعثر المحلل تلقائيًا.
-            التدخل اليدوي مخصص فقط لإنجاز لم يُسجل في التسميع.
-          </span>
-        </div>
-      </div>
 
       {/* =================================================
           PERIOD
@@ -3901,11 +4140,7 @@ export default function MonthlyAchievement() {
               stats.finalMem
             )
           }
-          subtitle={`${formatFaces(
-            stats.autoMem
-          )} تلقائي + ${formatFaces(
-            stats.manualMem
-          )} يدوي`}
+          subtitle="إجمالي أوجه الحفظ"
           tone="memorization"
         />
 
@@ -3919,12 +4154,20 @@ export default function MonthlyAchievement() {
               stats.finalRev
             )
           }
-          subtitle={`${formatFaces(
-            stats.autoRev
-          )} تلقائي + ${formatFaces(
-            stats.manualRev
-          )} يدوي`}
+          subtitle="إجمالي أوجه المراجعة"
           tone="revision"
+        />
+
+        <MonthlyStat
+          icon={Target}
+          title="جنب الدرس"
+          value={
+            formatFaces(
+              stats.sideLessonFaces
+            )
+          }
+          subtitle="إجمالي الأوجه"
+          tone="side-lessons"
         />
 
         <MonthlyStat
@@ -3933,7 +4176,7 @@ export default function MonthlyAchievement() {
           value={
             stats.sessions
           }
-          subtitle="مصدر الحساب التلقائي"
+          subtitle="إجمالي الجلسات"
           tone="sessions"
         />
 
@@ -3941,7 +4184,7 @@ export default function MonthlyAchievement() {
           icon={BadgeCheck}
           title="السجلات المعتمدة"
           value={`${stats.approved}/${stats.totalStudents}`}
-          subtitle={`${stats.manualStudents} بها إضافة يدوية`}
+          subtitle="سجلات الشهر"
           tone="approved"
         />
       </section>
@@ -4137,12 +4380,18 @@ function StudentAchievementCard({
           target={row.revision_target_faces}
           percent={row.revision_percent}
         />
+
+        <SideLessonSummaryItem
+          faces={
+            row.side_lesson_faces
+          }
+        />
       </div>
 
       <div className={`smart-delay-summary ${row.smart_delay?.hasDelay ? "has-delay" : "clear"}`}>
         {row.smart_delay?.hasDelay ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
         <div>
-          <span>سبب التعثر الذكي</span>
+          <span>سبب التعثر</span>
           <strong>{row.delay_reason || "لا يوجد تعثر ظاهر"}</strong>
         </div>
       </div>
@@ -4172,6 +4421,29 @@ function AchievementSummaryItem({ title, status, done, target, percent }) {
       <em>
         {status === "no-plan" ? "لا توجد خطة" : status === "done" ? "منجز" : `${percent ?? 0}%`}
       </em>
+    </div>
+  );
+}
+
+
+function SideLessonSummaryItem({
+  faces,
+}) {
+  return (
+    <div className="achievement-summary-item side-lessons">
+      <span>
+        جنب الدرس
+      </span>
+
+      <strong>
+        {formatFaces(
+          faces
+        )}
+
+        <small>
+          {" "}وجه
+        </small>
+      </strong>
     </div>
   );
 }
@@ -4229,7 +4501,7 @@ function AchievementBlock({
           />
 
           <span>
-            من التسميع
+            المسجل
           </span>
         </div>
 
@@ -4400,7 +4672,7 @@ function DetailsModal({
         >
           <div>
             <span>
-              تفاصيل مصدر
+              تفاصيل
               الإنجاز
             </span>
 
@@ -4411,9 +4683,8 @@ function DetailsModal({
             </h2>
 
             <p>
-              كل جلسة دخلت في
-              الحساب التلقائي
-              لهذا الشهر.
+              تفاصيل جلسات
+              الطالب خلال الشهر.
             </p>
           </div>
 
@@ -4446,7 +4717,7 @@ function DetailsModal({
 
           <div>
             <span>
-              الحفظ التلقائي
+              الحفظ
             </span>
 
             <strong>
@@ -4458,12 +4729,25 @@ function DetailsModal({
 
           <div>
             <span>
-              المراجعة التلقائية
+              المراجعة
             </span>
 
             <strong>
               {formatFaces(
                 revisionTotal
+              )}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              جنب الدرس
+            </span>
+
+            <strong>
+              {formatFaces(
+                student.side_lesson_faces ||
+                  0
               )}
             </strong>
           </div>
@@ -4473,7 +4757,7 @@ function DetailsModal({
           <div className="details-analysis-head">
             <Sparkles size={16} />
             <div>
-              <span>التحليل الذكي</span>
+              <span>المتابعة</span>
               <strong>{student.delay_reason || "لا يوجد تعثر ظاهر"}</strong>
             </div>
           </div>
@@ -4625,6 +4909,25 @@ function DetailsModal({
 
                       <div>
                         <span>
+                          جنب الدرس
+                        </span>
+
+                        <strong>
+                          {formatFaces(
+                            getSideLessonFaces(
+                              record,
+                              false
+                            ) +
+                              getSideLessonFaces(
+                                record,
+                                true
+                              )
+                          )}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>
                           أوجه المراجعة
                         </span>
 
@@ -4756,7 +5059,8 @@ function InlineLoading() {
 
       <span>
         يتم جمع أوجه الحفظ
-        والمراجعة لكل طالب.
+        والمراجعة وجنب الدرس
+        لكل طالب.
       </span>
     </div>
   );
@@ -5529,7 +5833,7 @@ function MonthlyStyles() {
 
           grid-template-columns:
             repeat(
-              5,
+              6,
               minmax(0,1fr)
             );
 
@@ -5589,6 +5893,12 @@ function MonthlyStyles() {
         .monthly-stat-icon {
           color: #0f766e;
           background: #edf8f7;
+        }
+
+        .monthly-stat.side-lessons
+        .monthly-stat-icon {
+          color: #8b6819;
+          background: #fff7dd;
         }
 
         .monthly-stat.sessions
@@ -6346,7 +6656,7 @@ function MonthlyStyles() {
 
           grid-template-columns:
             repeat(
-              3,
+              4,
               1fr
             );
 
@@ -6945,7 +7255,7 @@ function MonthlyStyles() {
         .monthly-completion-badge.pending { color:#9a5c0c; background:#fff6dc; }
         .monthly-completion-badge.neutral { color:#6b7b75; background:#eef2f0; }
 
-        .achievement-summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+        .achievement-summary-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:12px; }
         .achievement-summary-item { min-height:82px; padding:10px; border:1px solid #e4ebe8; border-radius:12px; background:#fff; }
         .achievement-summary-item > span { display:block; color:#7f9089; font-size:10px; font-weight:800; }
         .achievement-summary-item > strong { display:block; margin-top:5px; color:#183e34; font-size:14px; font-weight:950; }
@@ -6953,6 +7263,11 @@ function MonthlyStyles() {
         .achievement-summary-item > em { display:inline-flex; margin-top:7px; padding:3px 7px; border-radius:999px; font-size:9px; font-style:normal; font-weight:900; }
         .achievement-summary-item.done > em { color:#166534; background:#dcfce7; }
         .achievement-summary-item.pending > em { color:#9a5c0c; background:#fff6dc; }
+        .achievement-summary-item.side-lessons {
+          border-color:#eadfb9;
+          background:linear-gradient(180deg,#fffdf7,#fff);
+        }
+        .achievement-summary-item.side-lessons > strong { color:#7b5e18; }
         .achievement-summary-item.no-plan > em { color:#6b7b75; background:#eef2f0; }
 
         .smart-delay-summary { display:grid; grid-template-columns:18px 1fr; gap:7px; align-items:start; margin-top:9px; padding:9px 10px; border-radius:11px; }

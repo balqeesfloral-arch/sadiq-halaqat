@@ -21,6 +21,7 @@ import {
   Menu,
   MessageCircle,
   MoreHorizontal,
+  Phone,
   Plus,
   RefreshCw,
   Search,
@@ -190,6 +191,7 @@ export default function SystemAdmin() {
   const [invites, setInvites] = useState([]);
   const [users, setUsers] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [supportRequests, setSupportRequests] = useState([]);
   const [toast, setToast] = useState(null);
 
   function notify(message, type = "success") {
@@ -230,7 +232,7 @@ export default function SystemAdmin() {
 
       setAdminProfile(profile);
 
-      const [dashboardRes, mosquesRes, mosqueSectionsRes, supervisorsRes, invitesRes, usersRes, auditRes] =
+      const [dashboardRes, mosquesRes, mosqueSectionsRes, supervisorsRes, invitesRes, usersRes, auditRes, supportRes] =
         await Promise.all([
           supabase.rpc("get_system_admin_dashboard"),
           supabase.rpc("get_system_admin_mosques"),
@@ -239,6 +241,7 @@ export default function SystemAdmin() {
           supabase.rpc("get_system_admin_supervisor_invites"),
           supabase.rpc("get_system_admin_users"),
           supabase.rpc("get_system_admin_audit_logs", { p_limit: 120 }),
+          supabase.rpc("get_system_admin_support_requests", { p_limit: 150 }),
         ]);
 
       const errors = [
@@ -249,6 +252,7 @@ export default function SystemAdmin() {
         invitesRes.error,
         usersRes.error,
         auditRes.error,
+        supportRes.error,
       ].filter(Boolean);
 
       if (errors.length) throw errors[0];
@@ -276,6 +280,7 @@ export default function SystemAdmin() {
       setInvites(normalizeArray(invitesRes.data));
       setUsers(normalizeArray(usersRes.data));
       setAuditLogs(normalizeArray(auditRes.data));
+      setSupportRequests(normalizeArray(supportRes.data));
     } catch (error) {
       console.error("System Admin load error:", error);
       setPageError(getErrorMessage(error));
@@ -284,6 +289,11 @@ export default function SystemAdmin() {
       setRefreshing(false);
     }
   }
+
+  const openSupportRequests = useMemo(
+    () => supportRequests.filter((item) => item.status === "open"),
+    [supportRequests]
+  );
 
   const alerts = useMemo(() => {
     const rows = [];
@@ -351,6 +361,9 @@ export default function SystemAdmin() {
 
     return rows;
   }, [mosques, supervisors, invites]);
+
+  const attentionCount =
+    alerts.length + openSupportRequests.length;
 
   async function testActivateSubscription() {
     const confirmed = window.confirm(
@@ -444,8 +457,8 @@ export default function SystemAdmin() {
               >
                 <span className="sa-nav-item-icon"><Icon /></span>
                 <span>{item.label}</span>
-                {item.id === "alerts" && alerts.length > 0 && (
-                  <em className="sa-nav-badge">{alerts.length}</em>
+                {item.id === "alerts" && attentionCount > 0 && (
+                  <em className="sa-nav-badge">{attentionCount > 99 ? "99+" : attentionCount}</em>
                 )}
                 {activeView === item.id && <ChevronLeft className="sa-nav-arrow" />}
               </button>
@@ -498,7 +511,7 @@ export default function SystemAdmin() {
             </button>
             <button className="sa-alert-button" onClick={() => goTo("alerts")}>
               <BellRing />
-              {alerts.length > 0 && <span>{alerts.length > 99 ? "99+" : alerts.length}</span>}
+              {attentionCount > 0 && <span>{attentionCount > 99 ? "99+" : attentionCount}</span>}
             </button>
           </div>
         </header>
@@ -551,7 +564,15 @@ export default function SystemAdmin() {
             />
           )}
 
-          {activeView === "alerts" && <AlertsView alerts={alerts} goTo={goTo} />}
+          {activeView === "alerts" && (
+            <AlertsView
+              alerts={alerts}
+              supportRequests={supportRequests}
+              goTo={goTo}
+              notify={notify}
+              reload={() => loadEverything({ silent: true })}
+            />
+          )}
 
           {activeView === "audit" && <AuditView logs={auditLogs} />}
 
@@ -1642,16 +1663,214 @@ function UsersView({ users, notify, reload, currentAdminId }) {
   );
 }
 
-function AlertsView({ alerts, goTo }) {
+function AlertsView({ alerts, supportRequests, goTo, notify, reload }) {
+  const [savingRequestId, setSavingRequestId] = useState(null);
+  const openRequests = supportRequests.filter((item) => item.status === "open");
+  const resolvedRequests = supportRequests.filter((item) => item.status === "resolved").slice(0, 12);
+
+  async function resolveSupportRequest(requestId, resolved = true) {
+    setSavingRequestId(requestId);
+
+    try {
+      const { error } = await supabase.rpc(
+        "system_admin_resolve_support_request",
+        {
+          p_request_id: requestId,
+          p_resolved: resolved,
+        }
+      );
+
+      if (error) throw error;
+
+      notify(
+        resolved ? "تمت معالجة رسالة الزائر." : "تمت إعادة الرسالة إلى قائمة المتابعة."
+      );
+      await reload();
+    } catch (error) {
+      console.error("Support request update error:", error);
+      notify(getErrorMessage(error), "error");
+    } finally {
+      setSavingRequestId(null);
+    }
+  }
+
+  function openWhatsApp(phone) {
+    const digits = String(phone || "").replace(/\D/g, "");
+    if (!digits) return;
+
+    window.open(
+      `https://wa.me/${digits}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
   return (
     <div className="sa-view-stack">
-      <SectionHero eyebrow="مركز القرار" title="مركز التنبيهات" description="هنا تظهر الحالات التشغيلية غير الطبيعية بدل أن تضيع وسط الأرقام والجداول." icon={BellRing} />
+      <SectionHero
+        eyebrow="مركز القرار والتواصل"
+        title="مركز التنبيهات"
+        description="يجمع الحالات التشغيلية ورسائل زوار الموقع في مكان واحد حتى لا يضيع أي طلب يحتاج متابعة."
+        icon={BellRing}
+      />
+
+      <section className="sa-panel sa-support-panel">
+        <PanelHeader
+          eyebrow="رسائل الموقع"
+          title="طلبات التواصل من المساعد الذكي"
+          description={`${openRequests.length} رسالة مفتوحة تحتاج متابعة`}
+        />
+
+        <div className="sa-support-list">
+          {openRequests.length === 0 ? (
+            <EmptyState
+              icon={MessageCircle}
+              title="لا توجد رسائل جديدة"
+              description="أي رسالة تُرسل من المساعد في الصفحة الرئيسية ستظهر هنا مباشرة."
+              compact
+            />
+          ) : (
+            openRequests.map((request) => (
+              <article className="sa-support-card is-open" key={request.request_id}>
+                <span className="sa-support-avatar">
+                  <MessageCircle />
+                </span>
+
+                <div className="sa-support-copy">
+                  <div className="sa-support-title-row">
+                    <div>
+                      <strong>{request.visitor_name || "زائر الموقع"}</strong>
+                      <span>{formatDate(request.created_at)}</span>
+                    </div>
+                    <em>جديد</em>
+                  </div>
+
+                  <p>{request.message}</p>
+
+                  <div className="sa-support-meta">
+                    <span>
+                      <Phone />
+                      {request.whatsapp}
+                    </span>
+                    <span>
+                      <Sparkles />
+                      المساعد الذكي
+                    </span>
+                  </div>
+                </div>
+
+                <div className="sa-support-actions">
+                  <button
+                    type="button"
+                    className="sa-support-whatsapp"
+                    onClick={() => openWhatsApp(request.whatsapp)}
+                  >
+                    <MessageCircle />
+                    رد عبر واتساب
+                  </button>
+
+                  <button
+                    type="button"
+                    className="sa-support-resolve"
+                    onClick={() => resolveSupportRequest(request.request_id, true)}
+                    disabled={savingRequestId === request.request_id}
+                  >
+                    {savingRequestId === request.request_id ? (
+                      <Loader2 className="sa-spin" />
+                    ) : (
+                      <CheckCircle2 />
+                    )}
+                    تمت المعالجة
+                  </button>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+
+        {resolvedRequests.length > 0 && (
+          <details className="sa-support-resolved">
+            <summary>
+              آخر الرسائل المعالجة
+              <span>{resolvedRequests.length}</span>
+            </summary>
+
+            <div className="sa-support-resolved-list">
+              {resolvedRequests.map((request) => (
+                <article className="sa-support-card is-resolved" key={request.request_id}>
+                  <span className="sa-support-avatar">
+                    <CheckCircle2 />
+                  </span>
+
+                  <div className="sa-support-copy">
+                    <div className="sa-support-title-row">
+                      <div>
+                        <strong>{request.visitor_name || "زائر الموقع"}</strong>
+                        <span>{formatDate(request.created_at)}</span>
+                      </div>
+                      <em>تمت المعالجة</em>
+                    </div>
+
+                    <p>{request.message}</p>
+
+                    <div className="sa-support-meta">
+                      <span><Phone />{request.whatsapp}</span>
+                    </div>
+                  </div>
+
+                  <div className="sa-support-actions">
+                    <button
+                      type="button"
+                      className="sa-support-whatsapp"
+                      onClick={() => openWhatsApp(request.whatsapp)}
+                    >
+                      <MessageCircle />
+                      واتساب
+                    </button>
+
+                    <button
+                      type="button"
+                      className="sa-action-neutral"
+                      onClick={() => resolveSupportRequest(request.request_id, false)}
+                      disabled={savingRequestId === request.request_id}
+                    >
+                      إعادة للمتابعة
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </details>
+        )}
+      </section>
+
       <section className="sa-panel">
-        <div className="sa-attention-list sa-attention-list-full">
-          {alerts.length === 0 ? <EmptyState icon={CheckCircle2} title="النظام هادئ حاليًا" description="لا توجد حالات تتطلب تدخل مدير النظام." /> : alerts.map((alert) => <AlertRow key={alert.id} alert={alert} />)}
+        <PanelHeader
+          eyebrow="التشغيل"
+          title="تنبيهات المنظومة"
+          description={`${alerts.length} حالة تشغيلية تحتاج مراجعة`}
+        />
+
+        <div className="sa-attention-list">
+          {alerts.length === 0 ? (
+            <EmptyState
+              icon={CheckCircle2}
+              title="النظام هادئ حاليًا"
+              description="لا توجد حالات تشغيلية تتطلب تدخل مدير النظام."
+              compact
+            />
+          ) : (
+            alerts.map((alert) => <AlertRow key={alert.id} alert={alert} />)
+          )}
         </div>
       </section>
-      <div className="sa-alert-footer"><button className="sa-btn sa-btn-secondary" onClick={() => goTo("dashboard")}><LayoutDashboard /> العودة للوحة القيادة</button></div>
+
+      <div className="sa-alert-footer">
+        <button className="sa-btn sa-btn-secondary" onClick={() => goTo("dashboard")}>
+          <LayoutDashboard />
+          العودة للوحة القيادة
+        </button>
+      </div>
     </div>
   );
 }

@@ -38,6 +38,10 @@ import {
 } from "../../lib/supabase";
 
 import {
+  useTeacherPreferences,
+} from "../../context/TeacherPreferencesContext";
+
+import {
   showToast,
 } from "../../components/Toast";
 
@@ -45,7 +49,7 @@ import {
    CONSTANTS
 ========================================================= */
 
-const CARE_THRESHOLDS = {
+const CARE_THRESHOLD_DEFAULTS = {
   repeatedAbsenceDays: 14,
   repeatedAbsenceCount: 2,
   repeatedLateDays: 14,
@@ -438,9 +442,68 @@ function buildAlerts({
   plans,
   progressRows,
   period,
+  preferences = {},
 }) {
   const today = getLocalDate();
-  const fourteenDaysAgo = addDays(today, -13);
+
+  const repeatedAbsenceDays = Math.max(
+    1,
+    Number(
+      preferences.care_absence_window_days ??
+        CARE_THRESHOLD_DEFAULTS.repeatedAbsenceDays
+    )
+  );
+
+  const repeatedAbsenceCount = Math.max(
+    1,
+    Number(
+      preferences.care_absence_threshold ??
+        CARE_THRESHOLD_DEFAULTS.repeatedAbsenceCount
+    )
+  );
+
+  const repeatedLateCount = Math.max(
+    1,
+    Number(
+      preferences.care_late_threshold ??
+        CARE_THRESHOLD_DEFAULTS.repeatedLateCount
+    )
+  );
+
+  const noRecitationDays = Math.max(
+    1,
+    Number(
+      preferences.care_no_recitation_days ??
+        CARE_THRESHOLD_DEFAULTS.noRecitationDays
+    )
+  );
+
+  const planWarningGap = Math.max(
+    0,
+    Number(
+      preferences.care_plan_delay_threshold ??
+        CARE_THRESHOLD_DEFAULTS.planWarningGap
+    )
+  );
+
+  const planSevereGap = Math.max(
+    planWarningGap + 10,
+    CARE_THRESHOLD_DEFAULTS.planSevereGap
+  );
+
+  const escalateAbsences = Math.max(
+    repeatedAbsenceCount,
+    Number(
+      preferences.care_escalate_absences ??
+        Math.max(4, repeatedAbsenceCount + 1)
+    )
+  );
+
+  const recentAttendanceFrom = addDays(
+    today,
+    -(repeatedAbsenceDays - 1)
+  );
+
   const expectedPercent = getElapsedMonthPercent(period);
   const alerts = [];
 
@@ -459,7 +522,7 @@ function buildAlerts({
     );
 
     const recentAttendance = studentAttendance.filter(
-      (record) => record.attendance_date >= fourteenDaysAgo
+      (record) => record.attendance_date >= recentAttendanceFrom
     );
 
     const absenceCount = recentAttendance.filter(
@@ -472,7 +535,7 @@ function buildAlerts({
 
     if (
       todayAttendance?.status === "absent" &&
-      absenceCount < CARE_THRESHOLDS.repeatedAbsenceCount
+      absenceCount < repeatedAbsenceCount
     ) {
       alerts.push(
         makeAlert({
@@ -491,7 +554,7 @@ function buildAlerts({
               value: formatHijriDate(today),
             },
             {
-              label: "غيابات آخر 14 يومًا",
+              label: `غيابات آخر ${repeatedAbsenceDays} يومًا`,
               value: String(absenceCount),
             },
           ],
@@ -504,7 +567,7 @@ function buildAlerts({
     }
 
     if (
-      absenceCount >= CARE_THRESHOLDS.repeatedAbsenceCount
+      absenceCount >= repeatedAbsenceCount
     ) {
       alerts.push(
         makeAlert({
@@ -512,9 +575,12 @@ function buildAlerts({
           student,
           type: "absence_repeated",
           category: "attendance",
-          severity: absenceCount >= 3 ? "critical" : "high",
+          severity:
+            absenceCount >= escalateAbsences
+              ? "critical"
+              : "high",
           title: "تكرار الغياب",
-          description: `تكرر غياب الطالب ${absenceCount} مرات خلال آخر ${CARE_THRESHOLDS.repeatedAbsenceDays} يومًا، مما قد يؤثر على استمراره وإنجازه.`,
+          description: `تكرر غياب الطالب ${absenceCount} مرات خلال آخر ${repeatedAbsenceDays} يومًا، مما قد يؤثر على استمراره وإنجازه.`,
           recommendedAction:
             "التواصل مع ولي الأمر ومتابعة سبب تكرار الغياب.",
           metrics: [
@@ -524,7 +590,7 @@ function buildAlerts({
             },
             {
               label: "الفترة",
-              value: "آخر 14 يومًا",
+              value: `آخر ${repeatedAbsenceDays} يومًا`,
             },
           ],
           payload: {
@@ -535,7 +601,7 @@ function buildAlerts({
     }
 
     if (
-      lateCount >= CARE_THRESHOLDS.repeatedLateCount
+      lateCount >= repeatedLateCount
     ) {
       alerts.push(
         makeAlert({
@@ -545,7 +611,7 @@ function buildAlerts({
           category: "attendance",
           severity: lateCount >= 4 ? "high" : "medium",
           title: "تكرار التأخر عن الحلقة",
-          description: `تأخر الطالب ${lateCount} مرات خلال آخر ${CARE_THRESHOLDS.repeatedLateDays} يومًا، ويستحسن معالجة السبب قبل أن يتحول إلى نمط دائم.`,
+          description: `تأخر الطالب ${lateCount} مرات خلال آخر ${repeatedAbsenceDays} يومًا، ويستحسن معالجة السبب قبل أن يتحول إلى نمط دائم.`,
           recommendedAction:
             "التواصل بلطف مع الطالب أو ولي الأمر بشأن وقت الحضور.",
           metrics: [
@@ -555,7 +621,7 @@ function buildAlerts({
             },
             {
               label: "الفترة",
-              value: "آخر 14 يومًا",
+              value: `آخر ${repeatedAbsenceDays} يومًا`,
             },
           ],
           payload: {
@@ -589,7 +655,7 @@ function buildAlerts({
     );
 
     if (
-      daysWithoutRecitation >= CARE_THRESHOLDS.noRecitationDays
+      daysWithoutRecitation >= noRecitationDays
     ) {
       alerts.push(
         makeAlert({
@@ -598,7 +664,9 @@ function buildAlerts({
           type: "no_recitation",
           category: "recitation",
           severity:
-            daysWithoutRecitation >= 14 ? "high" : "medium",
+            daysWithoutRecitation >= noRecitationDays * 2
+              ? "high"
+              : "medium",
           title: "انقطاع عن التسميع",
           description: lastRecitationDate
             ? `مضى ${daysWithoutRecitation} يومًا منذ آخر تسميع مسجل للطالب.`
@@ -632,7 +700,7 @@ function buildAlerts({
     );
 
     if (!plan) {
-      if (period.hijriDay > CARE_THRESHOLDS.planGraceHijriDays) {
+      if (period.hijriDay > CARE_THRESHOLD_DEFAULTS.planGraceHijriDays) {
         alerts.push(
           makeAlert({
             key: `plan_missing:${studentId}:${halaqaId}:${period.hijriYear}-${period.hijriMonth}`,
@@ -762,26 +830,26 @@ function buildAlerts({
     if (memTarget > 0) {
       const memGap = expectedPercent - memPercent;
 
-      if (memGap >= CARE_THRESHOLDS.planWarningGap) {
+      if (memGap >= planWarningGap) {
         alerts.push(
           makeAlert({
             key: `plan_mem_${
-              memGap >= CARE_THRESHOLDS.planSevereGap
+              memGap >= planSevereGap
                 ? "severe"
                 : "behind"
             }:${studentId}:${halaqaId}:${period.hijriYear}-${period.hijriMonth}`,
             student,
             type:
-              memGap >= CARE_THRESHOLDS.planSevereGap
+              memGap >= planSevereGap
                 ? "plan_mem_severe"
                 : "plan_mem_behind",
             category: "plan",
             severity:
-              memGap >= CARE_THRESHOLDS.planSevereGap
+              memGap >= planSevereGap
                 ? "high"
                 : "medium",
             title:
-              memGap >= CARE_THRESHOLDS.planSevereGap
+              memGap >= planSevereGap
                 ? "تأخر واضح في خطة الحفظ"
                 : "متأخر عن خطة الحفظ",
             description: `حقق الطالب ${memPercent}% من خطة الحفظ، بينما المتوقع حتى اليوم يقارب ${expectedPercent}%.`,
@@ -815,26 +883,26 @@ function buildAlerts({
     if (revTarget > 0) {
       const revGap = expectedPercent - revPercent;
 
-      if (revGap >= CARE_THRESHOLDS.planWarningGap) {
+      if (revGap >= planWarningGap) {
         alerts.push(
           makeAlert({
             key: `plan_rev_${
-              revGap >= CARE_THRESHOLDS.planSevereGap
+              revGap >= planSevereGap
                 ? "severe"
                 : "behind"
             }:${studentId}:${halaqaId}:${period.hijriYear}-${period.hijriMonth}`,
             student,
             type:
-              revGap >= CARE_THRESHOLDS.planSevereGap
+              revGap >= planSevereGap
                 ? "plan_rev_severe"
                 : "plan_rev_behind",
             category: "plan",
             severity:
-              revGap >= CARE_THRESHOLDS.planSevereGap
+              revGap >= planSevereGap
                 ? "high"
                 : "medium",
             title:
-              revGap >= CARE_THRESHOLDS.planSevereGap
+              revGap >= planSevereGap
                 ? "تأخر واضح في خطة المراجعة"
                 : "متأخر عن خطة المراجعة",
             description: `حقق الطالب ${revPercent}% من خطة المراجعة، بينما المتوقع حتى اليوم يقارب ${expectedPercent}%.`,
@@ -884,11 +952,26 @@ function buildAlerts({
    WHATSAPP TEMPLATES
 ========================================================= */
 
-function buildWhatsAppMessage(alert) {
+function buildWhatsAppMessage(alert, preferences = {}) {
   const studentName = alert.student.student_name;
-  const greeting = "السلام عليكم ورحمة الله وبركاته،";
-  const ending =
-    "\n\nشاكرين لكم تعاونكم واهتمامكم، وبارك الله فيكم وفي أبنائكم.\n\nنظام الصديق\nمتابعة حلقات القرآن الكريم";
+  const greeting =
+    preferences.whatsapp_greeting ||
+    "السلام عليكم ورحمة الله وبركاته،";
+
+  const closing =
+    preferences.whatsapp_closing ||
+    "شاكرين لكم تعاونكم واهتمامكم، وبارك الله فيكم وفي أبنائكم.";
+
+  const signature =
+    preferences.whatsapp_include_signature === false
+      ? ""
+      : preferences.whatsapp_signature ||
+        "نظام الصديق\nمتابعة حلقات القرآن الكريم";
+
+  const ending = [closing, signature]
+    .filter(Boolean)
+    .map((part) => `\n\n${part}`)
+    .join("");
 
   switch (alert.type) {
     case "absence_today":
@@ -919,31 +1002,15 @@ function buildWhatsAppMessage(alert) {
   }
 }
 
-function mapMessageTypeToStudentNotificationKind(messageType) {
-  switch (messageType) {
-    case "attendance":
-      return "attendance";
-
-    case "recitation":
-      return "recitation";
-
-    case "achievement":
-    case "monthly_plan":
-      return "progress";
-
-    case "student_followup":
-      return "motivation";
-
-    default:
-      return "info";
-  }
-}
-
 /* =========================================================
    PAGE
 ========================================================= */
 
 export default function StudentCare() {
+  const {
+    teacherPreferences = {},
+  } = useTeacherPreferences();
+
   const [teacher, setTeacher] = useState(null);
   const [halaqat, setHalaqat] = useState([]);
   const [students, setStudents] = useState([]);
@@ -990,6 +1057,69 @@ export default function StudentCare() {
   useEffect(() => {
     loadAll();
   }, []);
+
+  useEffect(() => {
+    if (!halaqat.length || !teacher?.id) return;
+
+    let preferred = "";
+
+    if (teacherPreferences.remember_last_halaqa) {
+      try {
+        preferred =
+          localStorage.getItem(
+            `sadiq_teacher_last_halaqa_${teacher.id}`
+          ) || "";
+      } catch {
+        preferred = "";
+      }
+    }
+
+    if (
+      !preferred &&
+      teacherPreferences.default_halaqa_id
+    ) {
+      preferred = String(
+        teacherPreferences.default_halaqa_id
+      );
+    }
+
+    if (
+      preferred &&
+      halaqat.some(
+        (item) => String(item.id) === String(preferred)
+      )
+    ) {
+      setSelectedHalaqa(String(preferred));
+    }
+  }, [
+    halaqat,
+    teacher?.id,
+    teacherPreferences.default_halaqa_id,
+    teacherPreferences.remember_last_halaqa,
+  ]);
+
+  useEffect(() => {
+    if (
+      !teacher?.id ||
+      selectedHalaqa === "all" ||
+      !teacherPreferences.remember_last_halaqa
+    ) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        `sadiq_teacher_last_halaqa_${teacher.id}`,
+        String(selectedHalaqa)
+      );
+    } catch {
+      // التذكر المحلي تحسين تجربة فقط.
+    }
+  }, [
+    selectedHalaqa,
+    teacher?.id,
+    teacherPreferences.remember_last_halaqa,
+  ]);
 
   /* =====================================================
      LOAD
@@ -1142,8 +1272,8 @@ export default function StudentCare() {
       setStudents(preparedStudents);
 
       const today = getLocalDate();
-      const attendanceFrom = addDays(today, -30);
-      const recitationFrom = addDays(today, -45);
+      const attendanceFrom = addDays(today, -90);
+      const recitationFrom = addDays(today, -90);
 
       const [
         guardianResult,
@@ -1262,63 +1392,45 @@ export default function StudentCare() {
     halaqaRows,
     currentStudents,
   }) {
-    const mosqueIds = [
-      ...new Set(
-        (halaqaRows || [])
-          .map((row) => row.mosque_id)
-          .filter(Boolean)
-          .map(Number)
-      ),
-    ];
+    const {
+      data: supervisorRows,
+      error: supervisorError,
+    } = await supabase.rpc(
+      "get_teacher_supervisors"
+    );
 
-    let supervisorProfiles = [];
-
-    if (mosqueIds.length > 0) {
-      const {
-        data: supervisorLinks,
-        error: supervisorLinksError,
-      } = await supabase
-        .from("mosque_supervisors")
-        .select("mosque_id, supervisor_id")
-        .in("mosque_id", mosqueIds);
-
-      if (!supervisorLinksError) {
-        const supervisorIds = [
-          ...new Set(
-            (supervisorLinks || [])
-              .map((row) => Number(row.supervisor_id))
-              .filter(Boolean)
-          ),
-        ];
-
-        if (supervisorIds.length > 0) {
-          const {
-            data,
-            error,
-          } = await supabase
-            .from("profiles")
-            .select("id, full_name, user_number, role, status")
-            .in("id", supervisorIds)
-            .eq("role", "supervisor");
-
-          if (!error) {
-            supervisorProfiles = data || [];
-          }
-        }
-      } else {
-        console.warn(
-          "mosque_supervisors lookup skipped:",
-          supervisorLinksError.message
-        );
-      }
+    if (supervisorError) {
+      throw supervisorError;
     }
+
+    const supervisorProfiles = Array.from(
+      new Map(
+        (supervisorRows || []).map((row) => [
+          Number(row.supervisor_id),
+          {
+            id: Number(row.supervisor_id),
+            name:
+              row.supervisor_name ||
+              "مشرف المسجد",
+            mosque_name:
+              row.mosque_name ||
+              "",
+            halaqa_name:
+              row.halaqa_name ||
+              "",
+          },
+        ])
+      ).values()
+    );
 
     const recipientRows = [
       ...supervisorProfiles.map((profile) => ({
         id: Number(profile.id),
-        name: profile.full_name || "مشرف",
+        name: profile.name,
         role: "supervisor",
-        roleLabel: "مشرف",
+        roleLabel: profile.mosque_name
+          ? `مشرف • ${profile.mosque_name}`
+          : "مشرف",
       })),
 
       ...(currentStudents || []).map((student) => ({
@@ -1455,13 +1567,23 @@ export default function StudentCare() {
         const studentPhone =
           student.phone || "";
 
-        const contactPhone =
+        const guardianPhone =
           guardianTablePhone ||
-          guardianProfilePhone ||
-          studentPhone;
+          guardianProfilePhone;
+
+        const guardianFirst =
+          teacherPreferences.whatsapp_guardian_first !== false;
+
+        const contactPhone = guardianFirst
+          ? guardianPhone || studentPhone
+          : studentPhone || guardianPhone;
 
         const usesGuardianPhone =
-          Boolean(guardianTablePhone || guardianProfilePhone);
+          Boolean(
+            contactPhone &&
+            guardianPhone &&
+            String(contactPhone) === String(guardianPhone)
+          );
 
         return {
           ...student,
@@ -1479,7 +1601,7 @@ export default function StudentCare() {
               : "none",
         };
       }),
-    [students, guardianMap]
+    [students, guardianMap, teacherPreferences.whatsapp_guardian_first]
   );
 
   /* =====================================================
@@ -1495,6 +1617,7 @@ export default function StudentCare() {
         plans,
         progressRows,
         period,
+        preferences: teacherPreferences,
       }),
     [
       enrichedStudents,
@@ -1503,6 +1626,7 @@ export default function StudentCare() {
       plans,
       progressRows,
       period,
+      teacherPreferences,
     ]
   );
 
@@ -1673,7 +1797,7 @@ export default function StudentCare() {
       if (status === "handled") {
         showToast("تم تسجيل التعامل مع الحالة", "success");
       } else if (status === "snoozed") {
-        showToast("تم تأجيل المتابعة حتى الغد", "success");
+        showToast("تم تأجيل المتابعة حسب المدة المحددة في الإعدادات", "success");
       } else {
         showToast("تمت إعادة الحالة للمتابعة", "success");
       }
@@ -1690,11 +1814,18 @@ export default function StudentCare() {
   }
 
   async function snoozeAlert(alert) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const until = new Date();
+    const hours = Math.max(
+      1,
+      Number(
+        teacherPreferences.care_default_snooze_hours || 24
+      )
+    );
+
+    until.setHours(until.getHours() + hours);
 
     await setAlertAction(alert, "snoozed", {
-      snoozed_until: tomorrow.toISOString(),
+      snoozed_until: until.toISOString(),
     });
   }
 
@@ -1724,7 +1855,15 @@ export default function StudentCare() {
       return;
     }
 
-    const message = buildWhatsAppMessage(alert);
+    const message = buildWhatsAppMessage(alert, teacherPreferences);
+
+    if (teacherPreferences.whatsapp_mode === "preview") {
+      const confirmed = window.confirm(
+        `${message}\n\nفتح الرسالة في واتساب؟`
+      );
+
+      if (!confirmed) return;
+    }
 
     setWhatsappKey(alert.key);
 
@@ -1807,66 +1946,48 @@ export default function StudentCare() {
     setSendingMessage(true);
 
     try {
-      const {
-        error,
-      } = await supabase
-        .from("internal_messages")
-        .insert({
-          sender_id: Number(teacher.id),
-          recipient_id: Number(compose.recipient_id),
-          student_context_id:
-            compose.student_context_id
-              ? Number(compose.student_context_id)
-              : null,
-          subject: String(compose.subject || "").trim() || null,
-          body: String(compose.body).trim(),
-          message_type: compose.message_type || "general",
-          reply_to_id: compose.reply_to_id || null,
-        });
-
-      if (error) throw error;
-
       const recipient = recipients.find(
         (row) =>
-          Number(row.id) === Number(compose.recipient_id)
+          Number(row.id) ===
+          Number(compose.recipient_id)
       );
 
-      if (recipient?.role === "student") {
-        const notificationTitle =
-          String(compose.subject || "").trim() ||
-          "رسالة من المعلم";
-
-        const notificationBody =
-          String(compose.body || "").trim();
-
-        const notificationKind =
-          mapMessageTypeToStudentNotificationKind(
-            compose.message_type
-          );
-
-        const {
-          error: notificationError,
-        } = await supabase.rpc(
-          "send_student_notification",
-          {
-            p_student_id: Number(compose.recipient_id),
-            p_title: notificationTitle,
-            p_body: notificationBody,
-            p_kind: notificationKind,
-            p_action_path: "/student/notifications",
-          }
-        );
-
-        if (notificationError) {
-          console.error(
-            "SEND STUDENT NOTIFICATION:",
-            notificationError
-          );
-
-          throw new Error(
-            "تم حفظ الرسالة في سجل المعلم، لكن تعذر إيصالها إلى حساب الطالب. تأكد من تفعيل student_notifications."
-          );
+      const {
+        error,
+      } = await supabase.rpc(
+        "send_internal_message",
+        {
+          p_recipient_id:
+            Number(
+              compose.recipient_id
+            ),
+          p_subject:
+            String(
+              compose.subject || ""
+            ).trim() || null,
+          p_body:
+            String(
+              compose.body || ""
+            ).trim(),
+          p_message_type:
+            compose.message_type ||
+            "general",
+          p_priority:
+            "normal",
+          p_student_context_id:
+            compose.student_context_id
+              ? Number(
+                  compose.student_context_id
+                )
+              : null,
+          p_reply_to_id:
+            compose.reply_to_id ||
+            null,
         }
+      );
+
+      if (error) {
+        throw error;
       }
 
       setCompose({
@@ -1881,7 +2002,9 @@ export default function StudentCare() {
       showToast(
         recipient?.role === "student"
           ? "تم إرسال الرسالة ووصلت إلى حساب الطالب"
-          : "تم إرسال الرسالة داخل النظام",
+          : recipient?.role === "supervisor"
+            ? "تم إرسال الرسالة ووصلت إلى مركز إشعارات المشرف"
+            : "تم إرسال الرسالة",
         "success"
       );
 
@@ -1904,14 +2027,18 @@ export default function StudentCare() {
       return;
     }
 
-    const readAt = new Date().toISOString();
+    const readAt =
+      new Date().toISOString();
 
     const {
       error,
-    } = await supabase
-      .from("internal_messages")
-      .update({ read_at: readAt })
-      .eq("id", message.id);
+    } = await supabase.rpc(
+      "mark_internal_message_read",
+      {
+        p_message_id:
+          Number(message.id),
+      }
+    );
 
     if (error) {
       console.error(error);

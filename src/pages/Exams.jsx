@@ -170,7 +170,7 @@ export default function Exams(){
     <div className="exv2-page">
       <section className="exv2-hero">
         <div>
-          <span className="exv2-kicker"><ShieldCheck size={14}/>منظومة الاختبارات V2</span>
+          <span className="exv2-kicker"><ShieldCheck size={14}/>منظومة الاختبارات </span>
           <h1>الاختبارات</h1>
           <p>إنشاء احترافي، نطاق لكل طالب، أسئلة يحددها المشرف، توزيع على المختبرين، واعتماد ومتابعة من مكان واحد.</p>
 
@@ -229,7 +229,7 @@ function ExamCard({exam,onView,onProgress,onDelete}){
     <div className="exv2-card-actions">
       <button className="view" onClick={onView}><Eye size={14}/>عرض وإدارة</button>
       <button className="progress" onClick={onProgress}><CircleGauge size={14}/>التقدم</button>
-      {exam.derived_status==="draft"&&<button className="delete" onClick={onDelete}><Trash2 size={13}/>حذف</button>}
+      <button className="delete" onClick={onDelete}><Trash2 size={13}/>حذف</button>
     </div>
   </article>;
 }
@@ -809,4 +809,4 @@ function HijriDate({label,value,onChange,disabled=false}){
     <select className="exv2-select" value={value.year} disabled={disabled} onChange={e=>onChange({...value,year:Number(e.target.value)})}>{years.map(y=><option key={y} value={y}>{y} هـ</option>)}</select>
   </div></Field>;
 }
-function ConfirmDeleteExam({exam,onCancel,onConfirm}){return <Modal title="حذف الاختبار" subtitle={exam.title} icon={Trash2} onClose={onCancel}><Info icon={AlertTriangle}>سيحذف الاختبار وروابطه وأجزائه وأسئلته. الحذف متاح للمسودة فقط.</Info><div className="exv2-modal-foot"><button className="exv2-secondary" onClick={onCancel}>إلغاء</button><button className="exv2-danger" onClick={onConfirm}><Trash2 size={14}/>حذف نهائي</button></div></Modal>}
+function ConfirmDeleteExam({exam,onCancel,onConfirm}){return <Modal title="حذف الاختبار نهائيًا" subtitle={exam.title} icon={Trash2} onClose={onCancel}><Info icon={AlertTriangle}>سيتم حذف الاختبار نهائيًا مع جميع بياناته المرتبطة: الطلاب، المختبرون، الحلقات، الأجزاء، الأسئلة، المحاولات، الدرجات، النتائج والشهادات. لا يمكن التراجع عن هذا الإجراء.</Info><div className="exv2-modal-foot"><button className="exv2-secondary" onClick={onCancel}>إلغاء</button><button className="exv2-danger" onClick={onConfirm}><Trash2 size={14}/>حذف نهائي بكل البيانات</button></div></Modal>}

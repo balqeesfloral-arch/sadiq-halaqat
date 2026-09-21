@@ -34,6 +34,7 @@ import {
 
 import { supabase } from "../../lib/supabase";
 import { useToast } from "../../components/Toast";
+import { useTeacherPreferences } from "../../context/TeacherPreferencesContext";
 
 /* =========================================================
    ثوابت
@@ -268,6 +269,10 @@ export default function Attendance() {
   const { showToast } =
     useToast();
 
+  const {
+    teacherPreferences = {},
+  } = useTeacherPreferences();
+
   /* =====================================================
      DATA
   ===================================================== */
@@ -384,6 +389,68 @@ export default function Attendance() {
       setHolidays([]);
     }
   }, [selectedHalaqa]);
+
+  useEffect(() => {
+    if (!halaqat.length) return;
+
+    let preferred = "";
+
+    if (teacherPreferences.remember_last_halaqa && teacher?.id) {
+      try {
+        preferred =
+          localStorage.getItem(
+            `sadiq_teacher_last_halaqa_${teacher.id}`
+          ) || "";
+      } catch {
+        preferred = "";
+      }
+    }
+
+    if (
+      !preferred &&
+      teacherPreferences.default_halaqa_id
+    ) {
+      preferred = String(
+        teacherPreferences.default_halaqa_id
+      );
+    }
+
+    const exists = halaqat.some(
+      (item) => String(item.id) === String(preferred)
+    );
+
+    if (preferred && exists) {
+      setSelectedHalaqa(String(preferred));
+    }
+  }, [
+    teacherPreferences.default_halaqa_id,
+    teacherPreferences.remember_last_halaqa,
+    teacher?.id,
+    halaqat,
+  ]);
+
+  useEffect(() => {
+    if (
+      !teacher?.id ||
+      !selectedHalaqa ||
+      !teacherPreferences.remember_last_halaqa
+    ) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        `sadiq_teacher_last_halaqa_${teacher.id}`,
+        String(selectedHalaqa)
+      );
+    } catch {
+      // التذكر المحلي تحسين تجربة فقط.
+    }
+  }, [
+    teacher?.id,
+    selectedHalaqa,
+    teacherPreferences.remember_last_halaqa,
+  ]);
 
   /* =====================================================
      LOAD TEACHER HALAQAT
@@ -1753,7 +1820,12 @@ export default function Attendance() {
         ? `تسجيل الطلاب غير المسجلين كـ "${label}"`
         : `تسجيل جميع طلاب الحلقة كـ "${label}"`;
 
+    const shouldConfirm =
+      status !== "present" ||
+      teacherPreferences.attendance_confirm_mark_all !== false;
+
     const confirmed =
+      !shouldConfirm ||
       window.confirm(
         `${actionText}\n\nالحلقة: ${
           selectedHalaqaData
@@ -2128,27 +2200,31 @@ export default function Attendance() {
 
               {/* Gregorian */}
 
-              <div
-                className="gregorian-date"
-              >
-                {formatGregorianDate(
-                  selectedDate
-                )}
-              </div>
+              {teacherPreferences.calendar_mode !== "hijri" && (
+                <div
+                  className="gregorian-date"
+                >
+                  {formatGregorianDate(
+                    selectedDate
+                  )}
+                </div>
+              )}
 
               {/* Hijri */}
 
-              <div
-                className="hijri-date"
-              >
-                <Sparkles
-                  size={12}
-                />
+              {teacherPreferences.calendar_mode !== "gregorian" && (
+                <div
+                  className="hijri-date"
+                >
+                  <Sparkles
+                    size={12}
+                  />
 
-                {formatHijriDate(
-                  selectedDate
-                )}
-              </div>
+                  {formatHijriDate(
+                    selectedDate
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

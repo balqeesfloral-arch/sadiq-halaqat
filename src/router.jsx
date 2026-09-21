@@ -34,6 +34,7 @@ import TVLeaderboardPage from "./pages/TVLeaderboardPage";
 import SettingsPage from "./pages/SettingsPage";
 import JoinRequests from "./pages/JoinRequests";
 import AdminInvoices from "./pages/AdminInvoices";
+import Notifications from "./pages/Notifications";
 import InvoicePage from "./pages/InvoicePage";
 
 /* =========================================================
@@ -134,6 +135,11 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
+      },
+
+      {
+        path: "notifications",
+        element: <Notifications />,
       },
 
       {

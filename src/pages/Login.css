@@ -236,3 +236,175 @@
   .login-remember-row{min-height:46px !important;padding:calc(8px * var(--app-density,1)) calc(10px * var(--app-density,1)) !important}
   .login-remember-copy small{font-size:calc(7px * var(--app-font-scale,1)) !important}
 }
+
+
+/* =========================================================
+   LOGIN — refined return action + sparse Islamic geometry
+   Only affects the login page.
+========================================================= */
+
+/* Disable the old heavy raster ornaments. */
+.login-pro-orb {
+  display: none !important;
+}
+
+/* Icon-only return to the public home page. */
+.login-pro-home {
+  position: fixed;
+  top: clamp(18px, 2.4vw, 30px);
+  right: clamp(18px, 2.4vw, 30px);
+  z-index: 30;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(15, 76, 69, .13);
+  border-radius: calc(13px * var(--app-radius-scale,1));
+  color: var(--green);
+  background: rgba(255,255,255,.84);
+  box-shadow:
+    0 10px 30px rgba(8,47,42,.08),
+    inset 0 1px 0 rgba(255,255,255,.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background .18s ease;
+}
+
+.login-pro-home:hover {
+  transform: translateY(-2px);
+  border-color: rgba(184,145,42,.32);
+  color: #876b23;
+  background: rgba(255,255,255,.96);
+  box-shadow:
+    0 14px 34px rgba(8,47,42,.11),
+    0 0 0 4px rgba(212,175,55,.07);
+}
+
+.login-pro-home:focus-visible {
+  outline: 3px solid rgba(15,76,69,.14);
+  outline-offset: 3px;
+}
+
+.login-pro-home svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.85;
+}
+
+/* Genuine, restrained eight-point Islamic geometry. */
+.login-pro-geometry {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  color: #b18d32;
+  filter: drop-shadow(0 10px 24px rgba(117,89,24,.04));
+}
+
+.login-pro-geometry-top {
+  width: clamp(180px, 19vw, 300px);
+  height: clamp(180px, 19vw, 300px);
+  top: clamp(-62px, -3.7vw, -34px);
+  left: clamp(-58px, -3.5vw, -28px);
+  opacity: .105;
+  transform: rotate(7deg);
+}
+
+.login-pro-geometry-bottom {
+  width: clamp(120px, 12vw, 190px);
+  height: clamp(120px, 12vw, 190px);
+  right: clamp(18px, 3.2vw, 56px);
+  bottom: clamp(16px, 3vw, 46px);
+  opacity: .07;
+  color: var(--green);
+  transform: rotate(-10deg);
+}
+
+.login-pro-geometry-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Let the ornament read as a designed corner accent, not wallpaper. */
+.login-pro-shell {
+  position: relative;
+  z-index: 2;
+}
+
+.login-pro-showcase {
+  position: relative;
+  isolation: isolate;
+}
+
+.login-pro-showcase::after {
+  content: "";
+  position: absolute;
+  left: clamp(24px, 3vw, 48px);
+  bottom: clamp(22px, 3vw, 42px);
+  width: clamp(72px, 8vw, 112px);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(212,175,55,.52),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* Avoid visual crowding on tablets and phones. */
+@media (max-width: 900px) {
+  .login-pro-home {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .login-pro-geometry-top {
+    width: 150px;
+    height: 150px;
+    top: -38px;
+    left: -38px;
+    opacity: .08;
+  }
+
+  .login-pro-geometry-bottom {
+    width: 96px;
+    height: 96px;
+    right: 10px;
+    bottom: 14px;
+    opacity: .055;
+  }
+
+  .login-pro-showcase::after {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-pro-geometry-top {
+    width: 118px;
+    height: 118px;
+    top: -28px;
+    left: -28px;
+    opacity: .07;
+  }
+
+  .login-pro-geometry-bottom {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-pro-home {
+    transition: none;
+  }
+}

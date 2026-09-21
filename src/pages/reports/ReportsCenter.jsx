@@ -697,12 +697,30 @@ function FilterMultiSelect({ label, placeholder, value, onChange, options }) {
 
   useEffect(() => {
     if (!open) return;
-    searchRef.current?.focus();
-    function closeOutside(event) {
-      if (!rootRef.current?.contains(event.target)) setOpen(false);
+
+    const desktopPointer =
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches;
+
+    if (desktopPointer) {
+      requestAnimationFrame(() => {
+        searchRef.current?.focus({ preventScroll: true });
+      });
     }
-    document.addEventListener("pointerdown", closeOutside);
-    return () => document.removeEventListener("pointerdown", closeOutside);
+
+    function closeOutside(event) {
+      if (
+        rootRef.current &&
+        !rootRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOutside, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside, true);
+    };
   }, [open]);
 
   function toggle(valueToToggle) {
@@ -727,9 +745,6 @@ function FilterMultiSelect({ label, placeholder, value, onChange, options }) {
           setOpen(false);
           triggerRef.current?.focus();
         }
-      }}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
     >
       <label id={`${id}-label`} htmlFor={`${id}-trigger`}>{label}</label>

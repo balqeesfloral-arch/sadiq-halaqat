@@ -13,6 +13,7 @@ import {
 
 import {
   BarChart3,
+  Bell,
   BookOpen,
   CalendarDays,
   ChevronLeft,
@@ -22,6 +23,7 @@ import {
   Gift,
   GraduationCap,
   LayoutDashboard,
+  Landmark,
   LogOut,
   Menu,
   Mic2,
@@ -65,6 +67,11 @@ const sections = [
   {
     title: "إدارة الحلقة",
     items: [
+      {
+        name: "المساجد",
+        path: `${BASE_PATH}/mosques`,
+        icon: Landmark,
+      },
       {
         name: "الطلاب",
         path: `${BASE_PATH}/students`,
@@ -112,6 +119,17 @@ const sections = [
         name: "النقاط",
         path: `${BASE_PATH}/points-transactions`,
         icon: Gift,
+      },
+    ],
+  },
+
+  {
+    title: "التواصل",
+    items: [
+      {
+        name: "الإشعارات",
+        path: `${BASE_PATH}/notifications`,
+        icon: Bell,
       },
     ],
   },
@@ -295,6 +313,11 @@ export default function AdminLayout() {
     setLoggingOut,
   ] =
     useState(false);
+
+  const [
+    unreadNotifications,
+    setUnreadNotifications,
+  ] = useState(0);
 
   /* =====================================================
      Persist collapse
@@ -514,6 +537,89 @@ export default function AdminLayout() {
       alive = false;
     };
   }, []);
+
+  /* =====================================================
+     Notification badge
+  ===================================================== */
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    let alive = true;
+
+    async function loadNotificationBadge() {
+      try {
+        const { data, error } =
+          await supabase.rpc(
+            "get_supervisor_notification_badge"
+          );
+
+        if (error) {
+          throw error;
+        }
+
+        if (alive) {
+          setUnreadNotifications(
+            Number(data || 0)
+          );
+        }
+      } catch (error) {
+        console.error(
+          "LOAD NOTIFICATION BADGE:",
+          error
+        );
+      }
+    }
+
+    loadNotificationBadge();
+
+    const interval =
+      window.setInterval(
+        loadNotificationBadge,
+        30_000
+      );
+
+    const channel =
+      supabase
+        .channel(
+          `supervisor-layout-notifications-${profile.id}`
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table:
+              "notification_recipients",
+            filter:
+              `recipient_profile_id=eq.${profile.id}`,
+          },
+          loadNotificationBadge
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table:
+              "internal_messages",
+            filter:
+              `recipient_id=eq.${profile.id}`,
+          },
+          loadNotificationBadge
+        )
+        .subscribe();
+
+    return () => {
+      alive = false;
+      window.clearInterval(
+        interval
+      );
+      supabase.removeChannel(
+        channel
+      );
+    };
+  }, [profile?.id, location.pathname]);
 
   /* =====================================================
      Logout
@@ -829,6 +935,15 @@ export default function AdminLayout() {
                                 }
                               </span>
 
+                              {item.path === `${BASE_PATH}/notifications` &&
+                              unreadNotifications > 0 ? (
+                                <span className="admin-layout-nav-badge">
+                                  {unreadNotifications > 99
+                                    ? "99+"
+                                    : unreadNotifications}
+                                </span>
+                              ) : null}
+
                               <ChevronLeft
                                 size={13}
                                 className="admin-layout-nav-arrow"
@@ -1047,6 +1162,23 @@ export default function AdminLayout() {
           </div>
 
           <div className="admin-layout-topbar-end">
+            <NavLink
+              to={`${BASE_PATH}/notifications`}
+              className="admin-layout-notification-button"
+              aria-label="الإشعارات"
+              title="الإشعارات"
+            >
+              <Bell size={17} />
+
+              {unreadNotifications > 0 ? (
+                <span>
+                  {unreadNotifications > 99
+                    ? "99+"
+                    : unreadNotifications}
+                </span>
+              ) : null}
+            </NavLink>
+
             <div className="admin-layout-date-card">
               <CalendarDays
                 size={16}
@@ -1969,6 +2101,75 @@ export default function AdminLayout() {
             font-weight: 950;
             text-overflow: ellipsis;
             white-space: nowrap;
+          }
+
+          .admin-layout-nav-badge {
+            min-width: 19px;
+            height: 19px;
+            display: inline-grid;
+            place-items: center;
+            margin-inline-start: auto;
+            padding: 0 5px;
+            border-radius: 999px;
+            color: #fff;
+            background: #B45A4F;
+            font-size: 8px;
+            font-weight: 950;
+            line-height: 1;
+            box-shadow: 0 0 0 3px rgba(180,90,79,.10);
+          }
+
+          .admin-layout-notification-button {
+            position: relative;
+            width: 39px;
+            height: 39px;
+            flex: 0 0 39px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--sadiq-border);
+            border-radius: calc(11px * var(--app-radius-scale,1));
+            color: #55716A;
+            background: #fff;
+            text-decoration: none;
+            box-shadow: 0 5px 16px rgba(7,47,42,.035);
+            transition:
+              transform .16s ease,
+              border-color .16s ease,
+              background .16s ease;
+          }
+
+          .admin-layout-notification-button:hover {
+            transform: translateY(-1px);
+            border-color: #C9DAD2;
+            background: #F8FBF9;
+          }
+
+          .admin-layout-notification-button.active {
+            color: #fff;
+            border-color: transparent;
+            background: linear-gradient(
+              135deg,
+              var(--sadiq-green-800),
+              var(--sadiq-green-600)
+            );
+          }
+
+          .admin-layout-notification-button > span {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            min-width: 19px;
+            height: 19px;
+            display: grid;
+            place-items: center;
+            padding: 0 4px;
+            border: 2px solid #fff;
+            border-radius: 999px;
+            color: #fff;
+            background: #B44F45;
+            font-size: 7px;
+            font-weight: 950;
+            line-height: 1;
           }
 
           .admin-layout-topbar-end {

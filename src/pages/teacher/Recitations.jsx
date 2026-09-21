@@ -48,6 +48,9 @@ import {
 import {
   useToast,
 } from "../../components/Toast";
+import {
+  useTeacherPreferences,
+} from "../../context/TeacherPreferencesContext";
 
 /* =========================================================
    ثوابت
@@ -102,7 +105,10 @@ function createCommonForm() {
   };
 }
 
-function createQuranForm() {
+function createQuranForm(defaultAmountType = "") {
+  const defaultAmount =
+    legacyLessonAmount(defaultAmountType);
+
   return {
     from_surah: "",
     from_ayah: "",
@@ -110,9 +116,9 @@ function createQuranForm() {
     to_ayah: "",
 
     lesson_evaluation: "",
-    lesson_amount_type: "",
-    lesson_amount_value: "",
-    lesson_amount_unit: "lines",
+    lesson_amount_type: defaultAmountType || "",
+    lesson_amount_value: defaultAmount.amount,
+    lesson_amount_unit: defaultAmount.unit,
 
     next_surah: "",
     next_from_ayah: "",
@@ -158,6 +164,10 @@ export default function Recitations() {
   const {
     showToast,
   } = useToast();
+
+  const {
+    teacherPreferences = {},
+  } = useTeacherPreferences();
 
   /* =====================================================
      بيانات المستخدم
@@ -1543,7 +1553,26 @@ export default function Recitations() {
         student_id: "",
       }));
 
-      setQuranForm(createQuranForm());
+      if (
+        teacher?.id &&
+        value &&
+        teacherPreferences.remember_last_halaqa
+      ) {
+        try {
+          localStorage.setItem(
+            `sadiq_teacher_last_halaqa_${teacher.id}`,
+            String(value)
+          );
+        } catch {
+          // التذكر المحلي تحسين تجربة فقط.
+        }
+      }
+
+      setQuranForm(
+        createQuranForm(
+          teacherPreferences.recitation_default_amount_type
+        )
+      );
       setNooraniaForm(createNooraniaForm());
       setPlanSuggestion(null);
       return;
@@ -1556,7 +1585,11 @@ export default function Recitations() {
       }));
 
       // لا نسمح أن تنتقل مقادير الطالب السابق إلى الطالب الجديد.
-      setQuranForm(createQuranForm());
+      setQuranForm(
+        createQuranForm(
+          teacherPreferences.recitation_default_amount_type
+        )
+      );
       setNooraniaForm(createNooraniaForm());
       setPlanSuggestion(null);
       return;
@@ -1608,7 +1641,9 @@ export default function Recitations() {
     );
 
     setQuranForm(
-      createQuranForm()
+      createQuranForm(
+        teacherPreferences.recitation_default_amount_type
+      )
     );
 
     setNooraniaForm(
@@ -1633,12 +1668,47 @@ export default function Recitations() {
 
     setFormType(type);
 
+    let rememberedHalaqa = "";
+
+    if (
+      teacher?.id &&
+      teacherPreferences.remember_last_halaqa
+    ) {
+      try {
+        rememberedHalaqa =
+          localStorage.getItem(
+            `sadiq_teacher_last_halaqa_${teacher.id}`
+          ) || "";
+      } catch {
+        rememberedHalaqa = "";
+      }
+    }
+
+    const rememberedExists =
+      rememberedHalaqa &&
+      halaqat.some(
+        (item) => String(item.id) === String(rememberedHalaqa)
+      );
+
+    const preferredHalaqa =
+      rememberedExists
+        ? String(rememberedHalaqa)
+        : teacherPreferences.default_halaqa_id &&
+            halaqat.some(
+              (item) =>
+                Number(item.id) ===
+                Number(teacherPreferences.default_halaqa_id)
+            )
+          ? String(teacherPreferences.default_halaqa_id)
+          : "";
+
     const defaultHalaqa =
-      halaqat.length === 1
+      preferredHalaqa ||
+      (halaqat.length === 1
         ? String(
             halaqat[0].id
           )
-        : "";
+        : "");
 
     setCommonForm({
       ...createCommonForm(),
@@ -1648,7 +1718,9 @@ export default function Recitations() {
     });
 
     setQuranForm(
-      createQuranForm()
+      createQuranForm(
+        teacherPreferences.recitation_default_amount_type
+      )
     );
 
     setNooraniaForm(
@@ -2726,7 +2798,54 @@ export default function Recitations() {
       );
     }
 
-    resetForms();
+    const shouldAdvance =
+      !editing &&
+      teacherPreferences.recitation_advance_next_student !== false &&
+      commonForm.halaqa_id &&
+      commonForm.student_id;
+
+    if (shouldAdvance) {
+      const currentIndex = studentsForForm.findIndex(
+        (student) =>
+          String(student.id) === String(commonForm.student_id)
+      );
+
+      const nextStudent =
+        currentIndex >= 0
+          ? studentsForForm[currentIndex + 1]
+          : null;
+
+      if (nextStudent) {
+        const currentHalaqa = commonForm.halaqa_id;
+        const currentDate = commonForm.recitation_date || getLocalDate();
+
+        setEditing(null);
+        setCommonForm({
+          ...createCommonForm(),
+          halaqa_id: String(currentHalaqa),
+          student_id: String(nextStudent.id),
+          recitation_date: currentDate,
+        });
+
+        setQuranForm(
+          createQuranForm(
+            teacherPreferences.recitation_default_amount_type
+          )
+        );
+        setNooraniaForm(createNooraniaForm());
+        setPlanSuggestion(null);
+        setFormOpen(true);
+
+        showToast(
+          `تم الانتقال إلى الطالب التالي: ${nextStudent.full_name || "الطالب"}`,
+          "info"
+        );
+      } else {
+        resetForms();
+      }
+    } else {
+      resetForms();
+    }
 
     await loadData(true);
   }
@@ -3593,31 +3712,35 @@ export default function Recitations() {
                   <div
                     className="dual-date"
                   >
-                    <div>
-                      <span>
-                        هجري — أم القرى
-                      </span>
+                    {teacherPreferences.calendar_mode !== "gregorian" && (
+                      <div>
+                        <span>
+                          هجري — أم القرى
+                        </span>
 
-                      <strong>
-                        {formatHijriDate(
-                          commonForm
-                            .recitation_date
-                        )}
-                      </strong>
-                    </div>
+                        <strong>
+                          {formatHijriDate(
+                            commonForm
+                              .recitation_date
+                          )}
+                        </strong>
+                      </div>
+                    )}
 
-                    <div>
-                      <span>
-                        ميلادي
-                      </span>
+                    {teacherPreferences.calendar_mode !== "hijri" && (
+                      <div>
+                        <span>
+                          ميلادي
+                        </span>
 
-                      <strong>
-                        {formatGregorianDate(
-                          commonForm
-                            .recitation_date
-                        )}
-                      </strong>
-                    </div>
+                        <strong>
+                          {formatGregorianDate(
+                            commonForm
+                              .recitation_date
+                          )}
+                        </strong>
+                      </div>
+                    )}
                   </div>
                 )}
               </FormSection>
@@ -3643,7 +3766,8 @@ export default function Recitations() {
                     </div>
                   </div>
 
-                  {planSuggestion && (
+                  {planSuggestion &&
+                    teacherPreferences.recitation_show_monthly_plan !== false && (
                     <div className={`plan-suggestion-card ${planSuggestion.scheduledToday ? "scheduled" : "extra-day"}`}>
                       <div className="plan-suggestion-icon">
                         <Target size={18} />

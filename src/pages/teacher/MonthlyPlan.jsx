@@ -38,6 +38,10 @@ import {
 } from "../../lib/supabase";
 
 import {
+  useTeacherPreferences,
+} from "../../context/TeacherPreferencesContext";
+
+import {
   showToast,
 } from "../../components/Toast";
 
@@ -1326,6 +1330,10 @@ function createEmptyPlanData() {
 ========================================================= */
 
 export default function MonthlyPlan() {
+  const {
+    teacherPreferences = {},
+  } = useTeacherPreferences();
+
   /* =====================================================
      Scope
   ===================================================== */
@@ -1545,6 +1553,70 @@ export default function MonthlyPlan() {
     selectedHalaqa,
     hijriYear,
     hijriMonth,
+  ]);
+
+  useEffect(() => {
+    if (!halaqat.length || !teacher?.id) return;
+
+    let preferred = "";
+
+    if (teacherPreferences.remember_last_halaqa) {
+      try {
+        preferred =
+          localStorage.getItem(
+            `sadiq_teacher_last_halaqa_${teacher.id}`
+          ) || "";
+      } catch {
+        preferred = "";
+      }
+    }
+
+    if (
+      !preferred &&
+      teacherPreferences.default_halaqa_id
+    ) {
+      preferred = String(
+        teacherPreferences.default_halaqa_id
+      );
+    }
+
+    if (
+      preferred &&
+      halaqat.some(
+        (item) => String(item.id) === String(preferred)
+      ) &&
+      String(selectedHalaqa) !== String(preferred)
+    ) {
+      setSelectedHalaqa(String(preferred));
+    }
+  }, [
+    halaqat,
+    teacher?.id,
+    teacherPreferences.default_halaqa_id,
+    teacherPreferences.remember_last_halaqa,
+  ]);
+
+  useEffect(() => {
+    if (
+      !teacher?.id ||
+      !selectedHalaqa ||
+      !teacherPreferences.remember_last_halaqa
+    ) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        `sadiq_teacher_last_halaqa_${teacher.id}`,
+        String(selectedHalaqa)
+      );
+    } catch {
+      // التذكر المحلي تحسين تجربة فقط.
+    }
+  }, [
+    teacher?.id,
+    selectedHalaqa,
+    teacherPreferences.remember_last_halaqa,
   ]);
 
   /* =====================================================
@@ -1773,10 +1845,39 @@ export default function MonthlyPlan() {
       if (
         prepared.length > 0
       ) {
+        let preferredHalaqa = "";
+
+        if (teacherPreferences.remember_last_halaqa) {
+          try {
+            preferredHalaqa =
+              localStorage.getItem(
+                `sadiq_teacher_last_halaqa_${teacherProfile.id}`
+              ) || "";
+          } catch {
+            preferredHalaqa = "";
+          }
+        }
+
+        if (
+          !preferredHalaqa &&
+          teacherPreferences.default_halaqa_id
+        ) {
+          preferredHalaqa = String(
+            teacherPreferences.default_halaqa_id
+          );
+        }
+
+        const preferredExists =
+          preferredHalaqa &&
+          prepared.some(
+            (item) =>
+              String(item.id) === String(preferredHalaqa)
+          );
+
         setSelectedHalaqa(
-          String(
-            prepared[0].id
-          )
+          preferredExists
+            ? String(preferredHalaqa)
+            : String(prepared[0].id)
         );
       }
 
@@ -2302,15 +2403,35 @@ export default function MonthlyPlan() {
                     )
                   : calculatedSessions;
 
+              const defaultMemTarget =
+                Number(
+                  teacherPreferences.plan_default_mem_faces || 0
+                );
+
+              const defaultRevTarget =
+                Number(
+                  teacherPreferences.plan_default_revision_faces || 0
+                );
+
+              const baseMemTarget =
+                Number(plan?.memorization_target_faces || 0) > 0
+                  ? Number(plan.memorization_target_faces)
+                  : defaultMemTarget;
+
+              const baseRevTarget =
+                Number(plan?.revision_target_faces || 0) > 0
+                  ? Number(plan.revision_target_faces)
+                  : defaultRevTarget;
+
               const inferredMem =
                 inferDailyPlan(
-                  plan?.memorization_target_faces,
+                  baseMemTarget,
                   plannedSessions
                 );
 
               const inferredRev =
                 inferDailyPlan(
-                  plan?.revision_target_faces,
+                  baseRevTarget,
                   plannedSessions
                 );
 
@@ -2453,7 +2574,7 @@ export default function MonthlyPlan() {
                     memDailyAmount !== "" &&
                     Number(plannedSessions) > 0
                       ? calculatedMemTarget
-                      : plan?.memorization_target_faces ||
+                      : baseMemTarget ||
                         0
                   ),
 
@@ -2478,7 +2599,7 @@ export default function MonthlyPlan() {
                     revDailyAmount !== "" &&
                     Number(plannedSessions) > 0
                       ? calculatedRevTarget
-                      : plan?.revision_target_faces ||
+                      : baseRevTarget ||
                         0
                   ),
 
@@ -4178,32 +4299,34 @@ export default function MonthlyPlan() {
         <div
           className="plan-hero-actions"
         >
-          <button
-            type="button"
-            className="hero-btn secondary"
-            onClick={
-              copyPreviousMonth
-            }
-            disabled={
-              copying ||
-              loading
-            }
-          >
-            {copying ? (
-              <Loader2
-                size={16}
-                className="spin"
-              />
-            ) : (
-              <Copy
-                size={16}
-              />
-            )}
+          {teacherPreferences.plan_copy_previous_suggestion !== false && (
+            <button
+              type="button"
+              className="hero-btn secondary"
+              onClick={
+                copyPreviousMonth
+              }
+              disabled={
+                copying ||
+                loading
+              }
+            >
+              {copying ? (
+                <Loader2
+                  size={16}
+                  className="spin"
+                />
+              ) : (
+                <Copy
+                  size={16}
+                />
+              )}
 
-            <span>
-              نسخ الشهر السابق
-            </span>
-          </button>
+              <span>
+                نسخ الشهر السابق
+              </span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -4861,6 +4984,7 @@ export default function MonthlyPlan() {
                 }
                 row={row}
                 period={period}
+                showPace={teacherPreferences.plan_show_pace !== false}
                 onChange={(
                   field,
                   value
@@ -4910,6 +5034,7 @@ export default function MonthlyPlan() {
 function StudentPlanCard({
   row,
   period,
+  showPace = true,
   onChange,
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -5118,6 +5243,7 @@ function StudentPlanCard({
                         dailyAmount={row.memorization_daily_amount}
                         dailyUnit={row.memorization_daily_unit}
                         plannedSessions={row.planned_sessions}
+                        showPace={showPace}
                       />
 
                       <PlanSection
@@ -5139,6 +5265,7 @@ function StudentPlanCard({
                         dailyAmount={row.revision_daily_amount}
                         dailyUnit={row.revision_daily_unit}
                         plannedSessions={row.planned_sessions}
+                        showPace={showPace}
                       />
                     </div>
                   </section>
@@ -5228,6 +5355,7 @@ function PlanSection({
   dailyAmount,
   dailyUnit,
   plannedSessions,
+  showPace = true,
 }) {
   const targetNumber = Number(target || 0);
   const achievedNumber = Number(achieved || 0);
@@ -5250,9 +5378,11 @@ function PlanSection({
           <strong>{title}</strong>
         </div>
 
-        <span className={`pace-badge ${pace.className}`}>
-          {pace.label}
-        </span>
+        {showPace && (
+          <span className={`pace-badge ${pace.className}`}>
+            {pace.label}
+          </span>
+        )}
       </div>
 
       <div className="daily-plan-editor">
@@ -5307,6 +5437,7 @@ function PlanSection({
         </div>
       </div>
 
+      {showPace && (
       <div className="plan-progress smart-plan-progress">
         <div className="progress-heading">
           <div>
@@ -5344,6 +5475,8 @@ function PlanSection({
           </span>
         </div>
       </div>
+
+      )}
 
       <details className="advanced-route-details">
         <summary>

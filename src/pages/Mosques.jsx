@@ -1,1665 +1,1966 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
-import { useToast } from "../components/Toast";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import {
   Building2,
-  MapPin,
-  Plus,
   Search,
-  Pencil,
-  Trash2,
-  ArrowRight,
-  MapPinned,
-  Landmark,
-  X,
-  Save,
+  Plus,
   RefreshCw,
   Loader2,
+  PencilLine,
+  Power,
+  PowerOff,
+  X,
+  Save,
+  ShieldCheck,
+  Clock3,
+  CheckCircle2,
+  XCircle,
+  CircleAlert,
+  Users,
+  GraduationCap,
+  BookOpenCheck,
+  Sparkles,
+  Send,
+  FileText,
+  SlidersHorizontal,
+  MapPin,
+  Landmark,
+  ChevronLeft,
+  Ban,
+  RotateCcw,
+  Activity,
 } from "lucide-react";
 
+import { supabase } from "../lib/supabase";
+import { useToast } from "../components/Toast";
+import "./Mosques.css";
+
+const STATUS_META = {
+  active: {
+    label: "نشط",
+    tone: "success",
+    icon: CheckCircle2,
+  },
+  inactive: {
+    label: "موقوف",
+    tone: "warning",
+    icon: Ban,
+  },
+  archived: {
+    label: "مؤرشف",
+    tone: "neutral",
+    icon: FileText,
+  },
+};
+
+const REQUEST_STATUS_META = {
+  pending: {
+    label: "قيد المراجعة",
+    tone: "pending",
+    icon: Clock3,
+  },
+  approved: {
+    label: "تمت الموافقة",
+    tone: "approved",
+    icon: CheckCircle2,
+  },
+  rejected: {
+    label: "مرفوض",
+    tone: "rejected",
+    icon: XCircle,
+  },
+  cancelled: {
+    label: "ملغي",
+    tone: "neutral",
+    icon: Ban,
+  },
+};
+
+function formatDate(value) {
+  if (!value) return "—";
+
+  try {
+    return new Intl.DateTimeFormat("ar-SA", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(new Date(value));
+  } catch {
+    return "—";
+  }
+}
+
+function sectionLabel(section) {
+  return section === "women" ? "نساء" : "رجال";
+}
+
+function getCompleteness(mosque) {
+  const checks = [
+    Boolean(String(mosque?.name || "").trim()),
+    Boolean(String(mosque?.address || "").trim()),
+    Boolean(String(mosque?.notes || "").trim()),
+    Boolean(String(mosque?.section || "").trim()),
+  ];
+
+  return Math.round(
+    (checks.filter(Boolean).length / checks.length) * 100
+  );
+}
+
+function apiMessage(error) {
+  const message = String(error?.message || error || "");
+
+  if (message.includes("MOSQUE_NOT_LINKED_TO_SUPERVISOR")) {
+    return "هذا المسجد غير مرتبط بحساب المشرف الحالي.";
+  }
+
+  if (message.includes("INVALID_MOSQUE_NAME")) {
+    return "أدخل اسم مسجد صحيحًا.";
+  }
+
+  if (message.includes("STATUS_REASON_REQUIRED")) {
+    return "اكتب سبب التعطيل قبل المتابعة.";
+  }
+
+  if (message.includes("PENDING_REQUEST_ALREADY_EXISTS")) {
+    return "يوجد طلب إضافة مفتوح لهذا المسجد بالفعل.";
+  }
+
+  if (message.includes("PENDING_REQUEST_NOT_FOUND")) {
+    return "الطلب غير موجود أو لم يعد قيد المراجعة.";
+  }
+
+  if (message.includes("SUPERVISOR_ONLY")) {
+    return "هذه الصفحة متاحة لحساب المشرف فقط.";
+  }
+
+  return error?.message || "حدث خطأ غير متوقع.";
+}
+
+function IslamicGeometry() {
+  return (
+    <svg
+      viewBox="0 0 260 260"
+      className="mosques-islamic-geometry"
+      aria-hidden="true"
+    >
+      <defs>
+        <pattern
+          id="sadiqMosqueGeometry"
+          width="86"
+          height="86"
+          patternUnits="userSpaceOnUse"
+        >
+          <g
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.35"
+          >
+            <polygon points="43,4 54,22 74,12 64,32 82,43 64,54 74,74 54,64 43,82 32,64 12,74 22,54 4,43 22,32 12,12 32,22" />
+            <polygon points="43,16 52,34 70,43 52,52 43,70 34,52 16,43 34,34" />
+            <polygon points="43,25 61,43 43,61 25,43" />
+            <circle cx="43" cy="43" r="8.5" />
+          </g>
+        </pattern>
+      </defs>
+
+      <rect
+        width="260"
+        height="260"
+        fill="url(#sadiqMosqueGeometry)"
+      />
+    </svg>
+  );
+}
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  helper,
+  tone = "green",
+}) {
+  return (
+    <article className={`mosques-metric-card tone-${tone}`}>
+      <div className="mosques-metric-icon">
+        <Icon size={19} strokeWidth={1.8} />
+      </div>
+
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+        <small>{helper}</small>
+      </div>
+    </article>
+  );
+}
+
+function StatusBadge({ status }) {
+  const meta =
+    STATUS_META[status] ||
+    STATUS_META.archived;
+
+  const Icon = meta.icon;
+
+  return (
+    <span
+      className={`mosques-status-badge tone-${meta.tone}`}
+    >
+      <Icon size={13} strokeWidth={2} />
+      {meta.label}
+    </span>
+  );
+}
+
+function RequestBadge({ status }) {
+  const meta =
+    REQUEST_STATUS_META[status] ||
+    REQUEST_STATUS_META.pending;
+
+  const Icon = meta.icon;
+
+  return (
+    <span
+      className={`mosques-request-badge tone-${meta.tone}`}
+    >
+      <Icon size={13} strokeWidth={2} />
+      {meta.label}
+    </span>
+  );
+}
+
+function ModalShell({
+  open,
+  title,
+  subtitle,
+  icon: Icon,
+  children,
+  onClose,
+  footer,
+  size = "medium",
+}) {
+  if (!open) return null;
+
+  return (
+    <div
+      className="mosques-modal-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose?.();
+        }
+      }}
+    >
+      <section
+        className={`mosques-modal size-${size}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <header className="mosques-modal-head">
+          <div className="mosques-modal-title-wrap">
+            <div className="mosques-modal-icon">
+              <Icon size={20} />
+            </div>
+
+            <div>
+              <h2>{title}</h2>
+              <p>{subtitle}</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="mosques-icon-button"
+            onClick={onClose}
+            aria-label="إغلاق"
+          >
+            <X size={18} />
+          </button>
+        </header>
+
+        <div className="mosques-modal-body">
+          {children}
+        </div>
+
+        {footer ? (
+          <footer className="mosques-modal-footer">
+            {footer}
+          </footer>
+        ) : null}
+      </section>
+    </div>
+  );
+}
+
 export default function Mosques() {
-  const navigate = useNavigate();
   const { showToast } = useToast();
 
   const [mosques, setMosques] = useState([]);
+  const [requests, setRequests] = useState([]);
 
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("mosques");
 
-  const [editingId, setEditingId] = useState(null);
+  const [editingMosque, setEditingMosque] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    address: "",
+    notes: "",
+    section: "men",
+  });
 
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [statusTarget, setStatusTarget] = useState(null);
+  const [statusReason, setStatusReason] = useState("");
+
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [requestForm, setRequestForm] = useState({
+    name: "",
+    address: "",
+    notes: "",
+    section: "men",
+    reason: "",
+  });
+
+  const loadData = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!silent) setLoading(true);
+
+      try {
+        const [
+          mosqueResult,
+          requestResult,
+        ] = await Promise.all([
+          supabase.rpc(
+            "get_my_supervisor_mosques"
+          ),
+          supabase.rpc(
+            "get_my_supervisor_mosque_requests"
+          ),
+        ]);
+
+        if (mosqueResult.error) {
+          throw mosqueResult.error;
+        }
+
+        if (requestResult.error) {
+          throw requestResult.error;
+        }
+
+        setMosques(
+          Array.isArray(mosqueResult.data)
+            ? mosqueResult.data
+            : []
+        );
+
+        setRequests(
+          Array.isArray(requestResult.data)
+            ? requestResult.data
+            : []
+        );
+      } catch (error) {
+        console.error(
+          "SUPERVISOR MOSQUES LOAD:",
+          error
+        );
+
+        showToast(
+          apiMessage(error),
+          "error"
+        );
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [showToast]
+  );
 
   useEffect(() => {
-    loadMosques();
-  }, []);
+    loadData();
+  }, [loadData]);
 
-  // ==========================================
-  // تحميل المساجد
-  // ==========================================
-
-  async function loadMosques(options = {}) {
-    const silent = options.silent === true;
-
-    if (!silent) {
-      setInitialLoading(true);
-    }
-
-const { data, error } = await supabase
-  .from("mosques")
-  .select(`
-    *,
-    halaqat (
-      id,
-      name,
-      status
-    )
-  `)
-  .order("name", {
-    foreignTable: "halaqat",
-    ascending: true,
-  })
-  .order("id", { ascending: true });
-
-    if (error) {
-      console.error("loadMosques:", error);
-
-      showToast(
-        `تعذر تحميل المساجد: ${error.message}`,
-        "error"
-      );
-
-      setInitialLoading(false);
-      return false;
-    }
-
-    setMosques(data || []);
-    setInitialLoading(false);
-
-    return true;
-  }
-
-  // ==========================================
-  // تحديث البيانات
-  // ==========================================
-
-  async function refreshMosques() {
+  async function handleRefresh() {
     if (refreshing) return;
 
     setRefreshing(true);
 
-    const success = await loadMosques({
+    await loadData({
       silent: true,
     });
 
-    if (success) {
-      showToast("تم تحديث قائمة المساجد", "success");
-    }
-
     setRefreshing(false);
-  }
-
-  // ==========================================
-  // إضافة / تعديل مسجد
-  // ==========================================
-
-  async function saveMosque() {
-    const cleanName = name.trim();
-    const cleanAddress = address.trim();
-
-    if (!cleanName) {
-      showToast("أدخل اسم المسجد أولًا", "error");
-      return;
-    }
-
-    // منع التكرار محليًا قبل الإرسال
-    const duplicate = mosques.some(
-      (mosque) =>
-        String(mosque.name || "")
-          .trim()
-          .toLowerCase() ===
-          cleanName.toLowerCase() &&
-        Number(mosque.id) !== Number(editingId)
-    );
-
-    if (duplicate) {
-      showToast(
-        "يوجد مسجد مسجل بنفس الاسم بالفعل",
-        "error"
-      );
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // ========================================
-      // تعديل
-      // ========================================
-
-      if (editingId !== null) {
-        const { error } = await supabase
-          .from("mosques")
-          .update({
-            name: cleanName,
-            address: cleanAddress || null,
-          })
-          .eq("id", editingId);
-
-        if (error) {
-          console.error("update mosque:", error);
-
-          showToast(
-            `تعذر تعديل المسجد: ${error.message}`,
-            "error"
-          );
-
-          return;
-        }
-
-        showToast(
-          "تم تعديل بيانات المسجد بنجاح",
-          "success"
-        );
-      }
-
-      // ========================================
-      // إضافة
-      // ========================================
-
-      else {
-        const { error } = await supabase
-          .from("mosques")
-          .insert([
-            {
-              name: cleanName,
-              address: cleanAddress || null,
-            },
-          ]);
-
-        if (error) {
-          console.error("insert mosque:", error);
-
-          showToast(
-            `تعذر إضافة المسجد: ${error.message}`,
-            "error"
-          );
-
-          return;
-        }
-
-        showToast(
-          "تمت إضافة المسجد بنجاح",
-          "success"
-        );
-      }
-
-      clearForm();
-
-      await loadMosques({
-        silent: true,
-      });
-    } catch (error) {
-      console.error("saveMosque:", error);
-
-      showToast(
-        "حدث خطأ غير متوقع أثناء حفظ البيانات",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // ==========================================
-  // تعديل مسجد
-  // ==========================================
-
-  function editMosque(mosque) {
-    setEditingId(mosque.id);
-
-    setName(mosque.name || "");
-    setAddress(mosque.address || "");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
 
     showToast(
-      `جارٍ تعديل بيانات ${mosque.name || "المسجد"}`,
-      "info"
+      "تم تحديث مركز المساجد",
+      "success"
     );
   }
 
-  // ==========================================
-  // تنظيف النموذج
-  // ==========================================
+  const filteredMosques =
+    useMemo(() => {
+      const query =
+        search.trim().toLowerCase();
 
-  function clearForm() {
-    setEditingId(null);
-    setName("");
-    setAddress("");
-  }
+      return mosques.filter(
+        (mosque) => {
+          const matchesText =
+            !query ||
+            [
+              mosque.name,
+              mosque.address,
+              mosque.notes,
+              mosque.id,
+            ].some((value) =>
+              String(value ?? "")
+                .toLowerCase()
+                .includes(query)
+            );
 
-  // ==========================================
-  // حذف مسجد
-  // ==========================================
+          const matchesStatus =
+            statusFilter === "all" ||
+            mosque.status === statusFilter;
 
-  async function deleteMosque(id) {
-    const mosque = mosques.find(
-      (item) => Number(item.id) === Number(id)
-    );
+          const matchesSection =
+            sectionFilter === "all" ||
+            mosque.section === sectionFilter;
 
-    if (!mosque) {
-      showToast("تعذر العثور على المسجد", "error");
-      return;
-    }
+          return (
+            matchesText &&
+            matchesStatus &&
+            matchesSection
+          );
+        }
+      );
+    }, [
+      mosques,
+      search,
+      statusFilter,
+      sectionFilter,
+    ]);
 
-if (
-  mosque.halaqat &&
-  mosque.halaqat.length > 0
-) {
-  showToast(
-    "لا يمكن حذف مسجد مرتبط بحلقات",
-    "error"
-  );
+  const stats =
+    useMemo(() => {
+      const active =
+        mosques.filter(
+          (item) =>
+            item.status === "active"
+        ).length;
 
-  return;
-}
+      const inactive =
+        mosques.filter(
+          (item) =>
+            item.status === "inactive"
+        ).length;
 
-    const confirmed = window.confirm(
-      `هل أنت متأكد من حذف مسجد "${mosque.name}"؟\n\nإذا كان المسجد مرتبطًا بحلقات، قد يمنع نظام قاعدة البيانات عملية الحذف.`
-    );
-
-    if (!confirmed) return;
-
-    setLoading(true);
-
-    try {
-      const { error } = await supabase
-        .from("mosques")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        console.error("delete mosque:", error);
-
-        showToast(
-          `تعذر حذف المسجد: ${error.message}`,
-          "error"
+      const halaqat =
+        mosques.reduce(
+          (sum, item) =>
+            sum +
+            Number(
+              item.halaqat_count || 0
+            ),
+          0
         );
 
-        return;
+      const students =
+        mosques.reduce(
+          (sum, item) =>
+            sum +
+            Number(
+              item.students_count || 0
+            ),
+          0
+        );
+
+      const pending =
+        requests.filter(
+          (item) =>
+            item.status === "pending"
+        ).length;
+
+      return {
+        total: mosques.length,
+        active,
+        inactive,
+        halaqat,
+        students,
+        pending,
+      };
+    }, [mosques, requests]);
+
+  const healthInsights =
+    useMemo(() => {
+      const missingAddress =
+        mosques.filter(
+          (item) =>
+            !String(
+              item.address || ""
+            ).trim()
+        ).length;
+
+      const inactive =
+        mosques.filter(
+          (item) =>
+            item.status === "inactive"
+        ).length;
+
+      const lowCompleteness =
+        mosques.filter(
+          (item) =>
+            getCompleteness(item) < 75
+        ).length;
+
+      const items = [];
+
+      if (stats.pending > 0) {
+        items.push({
+          tone: "gold",
+          icon: Clock3,
+          title: `${stats.pending} طلب إضافة بانتظار المراجعة`,
+          text:
+            "مدير النظام يراجع الطلبات قبل إنشاء وربط أي مسجد جديد.",
+        });
+      }
+
+      if (inactive > 0) {
+        items.push({
+          tone: "warn",
+          icon: PowerOff,
+          title: `${inactive} مسجد غير نشط`,
+          text:
+            "يمكن إعادة تفعيله من بطاقة المسجد دون فقد أي بيانات سابقة.",
+        });
       }
 
       if (
-        editingId !== null &&
-        Number(editingId) === Number(id)
+        missingAddress > 0 ||
+        lowCompleteness > 0
       ) {
-        clearForm();
+        items.push({
+          tone: "blue",
+          icon: Sparkles,
+          title: "فرصة لتحسين جودة البيانات",
+          text: `${Math.max(
+            missingAddress,
+            lowCompleteness
+          )} مسجد يحتاج استكمال بعض البيانات لملف تشغيلي أوضح.`,
+        });
       }
 
+      if (!items.length) {
+        items.push({
+          tone: "green",
+          icon: ShieldCheck,
+          title: "المركز التشغيلي بحالة ممتازة",
+          text:
+            "المساجد المرتبطة نشطة وبياناتها الأساسية مكتملة.",
+        });
+      }
+
+      return items.slice(0, 3);
+    }, [mosques, stats.pending]);
+
+  function openEdit(mosque) {
+    setEditingMosque(mosque);
+
+    setEditForm({
+      name: mosque.name || "",
+      address: mosque.address || "",
+      notes: mosque.notes || "",
+      section:
+        mosque.section === "women"
+          ? "women"
+          : "men",
+    });
+  }
+
+  async function saveEdit() {
+    if (!editingMosque) return;
+
+    const cleanName =
+      editForm.name.trim();
+
+    if (!cleanName) {
       showToast(
-        `تم حذف مسجد ${mosque.name} بنجاح`,
+        "اسم المسجد مطلوب",
+        "error"
+      );
+      return;
+    }
+
+    setActionLoading(true);
+
+    try {
+      const { error } =
+        await supabase.rpc(
+          "update_my_supervisor_mosque",
+          {
+            p_mosque_id:
+              editingMosque.id,
+            p_name: cleanName,
+            p_address:
+              editForm.address.trim() ||
+              null,
+            p_notes:
+              editForm.notes.trim() ||
+              null,
+            p_section:
+              editForm.section,
+          }
+        );
+
+      if (error) throw error;
+
+      showToast(
+        "تم تحديث بيانات المسجد بنجاح",
         "success"
       );
 
-      await loadMosques({
+      setEditingMosque(null);
+
+      await loadData({
         silent: true,
       });
     } catch (error) {
-      console.error("deleteMosque:", error);
+      console.error(
+        "UPDATE SUPERVISOR MOSQUE:",
+        error
+      );
 
       showToast(
-        "حدث خطأ غير متوقع أثناء حذف المسجد",
+        apiMessage(error),
         "error"
       );
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   }
 
-  // ==========================================
-  // البحث
-  // ==========================================
+  function openStatus(mosque) {
+    setStatusTarget(mosque);
+    setStatusReason("");
+  }
 
-  const filteredMosques = useMemo(() => {
-    const text = search.trim().toLowerCase();
+  async function changeStatus() {
+    if (!statusTarget) return;
 
-    if (!text) {
-      return mosques;
+    const nextStatus =
+      statusTarget.status === "active"
+        ? "inactive"
+        : "active";
+
+    if (
+      nextStatus === "inactive" &&
+      !statusReason.trim()
+    ) {
+      showToast(
+        "اكتب سبب تعطيل المسجد",
+        "error"
+      );
+      return;
     }
 
-    return mosques.filter((mosque) => {
-      const mosqueName = String(
-        mosque.name || ""
-      ).toLowerCase();
+    setActionLoading(true);
 
-      const mosqueAddress = String(
-        mosque.address || ""
-      ).toLowerCase();
+    try {
+      const { error } =
+        await supabase.rpc(
+          "set_my_supervisor_mosque_status",
+          {
+            p_mosque_id:
+              statusTarget.id,
+            p_status:
+              nextStatus,
+            p_reason:
+              nextStatus ===
+              "inactive"
+                ? statusReason.trim()
+                : null,
+          }
+        );
 
-      return (
-        mosqueName.includes(text) ||
-        mosqueAddress.includes(text) ||
-        String(mosque.id).includes(text)
+      if (error) throw error;
+
+      showToast(
+        nextStatus === "active"
+          ? "تم تفعيل المسجد"
+          : "تم تعطيل المسجد مع حفظ جميع بياناته",
+        "success"
       );
+
+      setStatusTarget(null);
+      setStatusReason("");
+
+      await loadData({
+        silent: true,
+      });
+    } catch (error) {
+      console.error(
+        "CHANGE MOSQUE STATUS:",
+        error
+      );
+
+      showToast(
+        apiMessage(error),
+        "error"
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  function resetRequestForm() {
+    setRequestForm({
+      name: "",
+      address: "",
+      notes: "",
+      section: "men",
+      reason: "",
     });
-  }, [mosques, search]);
+  }
 
-  // ==========================================
-  // الإحصائيات
-  // ==========================================
+  async function submitRequest() {
+    const cleanName =
+      requestForm.name.trim();
 
-  const totalMosques = mosques.length;
+    if (!cleanName) {
+      showToast(
+        "أدخل اسم المسجد المطلوب",
+        "error"
+      );
+      return;
+    }
 
-const activeMosques =
-  mosques.filter(
-    (m) =>
-      (m.halaqat || []).some(
-        (h) => h.status === "active"
-      )
-  ).length;
+    setActionLoading(true);
 
-const totalHalaqat =
-  mosques.reduce(
-    (sum, mosque) =>
-      sum +
-      (mosque.halaqat || [])
-        .length,
-    0
-  );
+    try {
+      const { error } =
+        await supabase.rpc(
+          "create_supervisor_mosque_request",
+          {
+            p_name: cleanName,
+            p_address:
+              requestForm.address.trim() ||
+              null,
+            p_notes:
+              requestForm.notes.trim() ||
+              null,
+            p_section:
+              requestForm.section,
+            p_reason:
+              requestForm.reason.trim() ||
+              null,
+          }
+        );
 
-  const mosquesWithAddress = mosques.filter(
-    (mosque) =>
-      String(mosque.address || "").trim()
-        .length > 0
-  ).length;
+      if (error) throw error;
 
-  const mosquesWithoutAddress =
-    totalMosques - mosquesWithAddress;
+      showToast(
+        "تم إرسال الطلب لمدير النظام للمراجعة",
+        "success"
+      );
+
+      setRequestOpen(false);
+      resetRequestForm();
+      setActiveTab("requests");
+
+      await loadData({
+        silent: true,
+      });
+    } catch (error) {
+      console.error(
+        "CREATE MOSQUE REQUEST:",
+        error
+      );
+
+      showToast(
+        apiMessage(error),
+        "error"
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function cancelRequest(id) {
+    setActionLoading(true);
+
+    try {
+      const { error } =
+        await supabase.rpc(
+          "cancel_my_supervisor_mosque_request",
+          {
+            p_request_id: id,
+          }
+        );
+
+      if (error) throw error;
+
+      showToast(
+        "تم إلغاء الطلب",
+        "success"
+      );
+
+      await loadData({
+        silent: true,
+      });
+    } catch (error) {
+      console.error(
+        "CANCEL MOSQUE REQUEST:",
+        error
+      );
+
+      showToast(
+        apiMessage(error),
+        "error"
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div
+        className="mosques-command-page"
+        dir="rtl"
+      >
+        <div className="mosques-loading-state">
+          <div className="mosques-loading-emblem">
+            <Landmark size={27} />
+          </div>
+
+          <Loader2
+            className="mosques-spin"
+            size={22}
+          />
+
+          <strong>
+            جارٍ تجهيز مركز المساجد
+          </strong>
+
+          <span>
+            نحمّل الارتباطات والحالة التشغيلية والطلبات
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        background: "#f7f5ef",
-        direction: "rtl",
-        color: "#26332c",
-        position: "relative",
-        overflowX: "hidden",
-        padding: "calc(25px * var(--app-density,1)) calc(30px * var(--app-density,1))",
-        boxSizing: "border-box",
-      }}
+      className="mosques-command-page"
+      dir="rtl"
     >
-      {/* ================================= */}
-      {/* زخرفة الخلفية */}
-      {/* ================================= */}
+      <section className="mosques-hero">
+        <div className="mosques-hero-geometry">
+          <IslamicGeometry />
+        </div>
 
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          pointerEvents: "none",
-          opacity: 0.045,
-          backgroundImage: `
-            linear-gradient(
-              45deg,
-              transparent 42%,
-              var(--app-color-0f5132,#0f5132) 43%,
-              var(--app-color-0f5132,#0f5132) 57%,
-              transparent 58%
-            ),
-            linear-gradient(
-              -45deg,
-              transparent 42%,
-              var(--app-color-0f5132,#0f5132) 43%,
-              var(--app-color-0f5132,#0f5132) 57%,
-              transparent 58%
-            )
-          `,
-          backgroundSize: "90px 90px",
-          zIndex: 0,
-        }}
-      />
-
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          maxWidth: "1500px",
-          margin: "0 auto",
-        }}
-      >
-        {/* ================================= */}
-        {/* رأس الصفحة */}
-        {/* ================================= */}
-
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "calc(15px * var(--app-density,1))",
-            flexWrap: "wrap",
-            marginBottom: "25px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "calc(13px * var(--app-density,1))",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => navigate("/admin")}
-              style={backButtonStyle}
-              title="العودة للوحة المشرف"
-            >
-              <ArrowRight
-                size={20}
-                strokeWidth={1.8}
-              />
-            </button>
-
-            <div style={pageIconStyle}>
-              <Building2
-                size={25}
-                strokeWidth={1.7}
-              />
-            </div>
-
-            <div>
-              <h1 style={pageTitleStyle}>
-                إدارة المساجد
-              </h1>
-
-              <p style={pageSubtitleStyle}>
-                إدارة المساجد المسجلة ومواقعها
-                وبياناتها الأساسية
-              </p>
-            </div>
+        <div className="mosques-hero-copy">
+          <div className="mosques-eyebrow">
+            <span className="mosques-eyebrow-mark">
+              <Sparkles size={14} />
+            </span>
+            مركز الإدارة المؤسسية
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "calc(9px * var(--app-density,1))",
-              flexWrap: "wrap",
-            }}
+          <h1>
+            إدارة المساجد المرتبطة
+          </h1>
+
+          <p>
+            مركز موحّد للمساجد التي تشرف عليها؛
+            تعديل البيانات، متابعة الحالة التشغيلية،
+            إدارة التفعيل، ورفع طلبات إضافة جديدة
+            إلى مدير النظام.
+          </p>
+
+          <div className="mosques-hero-tags">
+            <span>
+              <ShieldCheck size={14} />
+              صلاحيات مرتبطة بالمشرف
+            </span>
+
+            <span>
+              <Activity size={14} />
+              متابعة تشغيلية مباشرة
+            </span>
+
+            <span>
+              <Clock3 size={14} />
+              طلبات إضافة بمسار اعتماد
+            </span>
+          </div>
+        </div>
+
+        <div className="mosques-hero-actions">
+          <button
+            type="button"
+            className="mosques-button ghost"
+            onClick={handleRefresh}
+            disabled={refreshing}
           >
-            <button
-              type="button"
-              onClick={refreshMosques}
-              disabled={refreshing || loading}
-              style={{
-                ...headerButtonStyle,
-                opacity:
-                  refreshing || loading
-                    ? 0.65
-                    : 1,
-                cursor:
-                  refreshing || loading
-                    ? "wait"
-                    : "pointer",
-              }}
-            >
-              {refreshing ? (
-                <Loader2
-                  size={17}
-                  className="spin"
-                />
-              ) : (
-                <RefreshCw
-                  size={17}
-                  strokeWidth={1.8}
-                />
-              )}
-
-              تحديث
-            </button>
-
-            <div style={countBadgeStyle}>
-              <Landmark
+            {refreshing ? (
+              <Loader2
+                className="mosques-spin"
                 size={17}
-                color="#0f5132"
-                strokeWidth={1.8}
               />
+            ) : (
+              <RefreshCw size={17} />
+            )}
+            تحديث
+          </button>
 
-              {totalMosques} مسجد مسجل
-            </div>
+          <button
+            type="button"
+            className="mosques-button primary"
+            onClick={() =>
+              setRequestOpen(true)
+            }
+          >
+            <Plus size={18} />
+            طلب إضافة مسجد
+          </button>
+        </div>
+      </section>
+
+      <section className="mosques-metrics-grid">
+        <MetricCard
+          icon={Landmark}
+          label="المساجد المرتبطة"
+          value={stats.total}
+          helper="ضمن نطاق إشرافك"
+        />
+
+        <MetricCard
+          icon={CheckCircle2}
+          label="المساجد النشطة"
+          value={stats.active}
+          helper="متاحة للتشغيل"
+          tone="emerald"
+        />
+
+        <MetricCard
+          icon={BookOpenCheck}
+          label="إجمالي الحلقات"
+          value={stats.halaqat}
+          helper="في جميع المساجد"
+          tone="gold"
+        />
+
+        <MetricCard
+          icon={Users}
+          label="الطلاب الحاليون"
+          value={stats.students}
+          helper="مرتبطون بالحلقات"
+          tone="blue"
+        />
+
+        <MetricCard
+          icon={Clock3}
+          label="طلبات بانتظار الاعتماد"
+          value={stats.pending}
+          helper="لدى مدير النظام"
+          tone="violet"
+        />
+      </section>
+
+      <section className="mosques-insights">
+        <div className="mosques-section-heading compact">
+          <div>
+            <span>
+              <Sparkles size={14} />
+              قراءة ذكية
+            </span>
+            <h2>
+              ملخص يحتاج انتباهك
+            </h2>
           </div>
+        </div>
+
+        <div className="mosques-insight-grid">
+          {healthInsights.map(
+            (item, index) => {
+              const Icon = item.icon;
+
+              return (
+                <article
+                  key={`${item.title}-${index}`}
+                  className={`mosques-insight-card tone-${item.tone}`}
+                >
+                  <div>
+                    <Icon size={18} />
+                  </div>
+
+                  <section>
+                    <strong>
+                      {item.title}
+                    </strong>
+                    <p>
+                      {item.text}
+                    </p>
+                  </section>
+                </article>
+              );
+            }
+          )}
+        </div>
+      </section>
+
+      <section className="mosques-workspace">
+        <header className="mosques-workspace-head">
+          <div className="mosques-tabs">
+            <button
+              type="button"
+              className={
+                activeTab === "mosques"
+                  ? "active"
+                  : ""
+              }
+              onClick={() =>
+                setActiveTab("mosques")
+              }
+            >
+              <Building2 size={16} />
+              المساجد
+              <b>{stats.total}</b>
+            </button>
+
+            <button
+              type="button"
+              className={
+                activeTab === "requests"
+                  ? "active"
+                  : ""
+              }
+              onClick={() =>
+                setActiveTab("requests")
+              }
+            >
+              <Clock3 size={16} />
+              طلبات الإضافة
+              <b>{requests.length}</b>
+            </button>
+          </div>
+
+          {activeTab === "mosques" ? (
+            <div className="mosques-filter-tools">
+              <label className="mosques-search">
+                <Search size={17} />
+
+                <input
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(
+                      event.target.value
+                    )
+                  }
+                  placeholder="ابحث باسم المسجد أو العنوان..."
+                />
+
+                {search ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearch("")
+                    }
+                    aria-label="مسح البحث"
+                  >
+                    <X size={14} />
+                  </button>
+                ) : null}
+              </label>
+
+              <label className="mosques-compact-select">
+                <SlidersHorizontal size={15} />
+
+                <select
+                  value={statusFilter}
+                  onChange={(event) =>
+                    setStatusFilter(
+                      event.target.value
+                    )
+                  }
+                >
+                  <option value="all">
+                    كل الحالات
+                  </option>
+                  <option value="active">
+                    النشطة
+                  </option>
+                  <option value="inactive">
+                    الموقوفة
+                  </option>
+                  <option value="archived">
+                    المؤرشفة
+                  </option>
+                </select>
+              </label>
+
+              <label className="mosques-compact-select">
+                <Landmark size={15} />
+
+                <select
+                  value={sectionFilter}
+                  onChange={(event) =>
+                    setSectionFilter(
+                      event.target.value
+                    )
+                  }
+                >
+                  <option value="all">
+                    كل الأقسام
+                  </option>
+                  <option value="men">
+                    رجال
+                  </option>
+                  <option value="women">
+                    نساء
+                  </option>
+                </select>
+              </label>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="mosques-button primary compact"
+              onClick={() =>
+                setRequestOpen(true)
+              }
+            >
+              <Plus size={16} />
+              طلب جديد
+            </button>
+          )}
         </header>
 
-        {/* ================================= */}
-        {/* الإحصائيات */}
-        {/* ================================= */}
+        {activeTab === "mosques" ? (
+          filteredMosques.length ? (
+            <div className="mosques-card-grid">
+              {filteredMosques.map(
+                (mosque) => {
+                  const completeness =
+                    getCompleteness(
+                      mosque
+                    );
 
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(190px, 1fr))",
-            gap: "calc(14px * var(--app-density,1))",
-            marginBottom: "22px",
-          }}
-        >
-          <StatCard
-            icon={Building2}
-            title="إجمالي المساجد"
-            value={totalMosques}
-          />
+                  const isActive =
+                    mosque.status ===
+                    "active";
 
-<StatCard
-  icon={Landmark}
-  title="مساجد نشطة"
-  value={activeMosques}
-/>
+                  const isArchived =
+                    mosque.status ===
+                    "archived";
 
-<StatCard
-  icon={Building2}
-  title="إجمالي الحلقات"
-  value={totalHalaqat}
-/>
+                  return (
+                    <article
+                      className="mosque-command-card"
+                      key={mosque.id}
+                    >
+                      <div className="mosque-card-top">
+                        <div className="mosque-identity">
+                          <div className="mosque-identity-icon">
+                            <Landmark
+                              size={22}
+                              strokeWidth={1.7}
+                            />
+                          </div>
 
-          <StatCard
-            icon={MapPinned}
-            title="مساجد لها عنوان"
-            value={mosquesWithAddress}
-          />
+                          <div>
+                            <div className="mosque-card-badges">
+                              <StatusBadge
+                                status={
+                                  mosque.status
+                                }
+                              />
 
-          <StatCard
-            icon={MapPin}
-            title="بدون عنوان"
-            value={mosquesWithoutAddress}
-          />
-        </section>
+                              <span className="mosques-section-badge">
+                                {sectionLabel(
+                                  mosque.section
+                                )}
+                              </span>
+                            </div>
 
-        {/* ================================= */}
-        {/* نموذج الإضافة / التعديل */}
-        {/* ================================= */}
+                            <h3>
+                              {mosque.name}
+                            </h3>
 
-        <section style={cardStyle}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "calc(10px * var(--app-density,1))",
-              flexWrap: "wrap",
-              marginBottom: "18px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "calc(10px * var(--app-density,1))",
-              }}
-            >
-              <div style={formIconStyle}>
-                {editingId !== null ? (
-                  <Pencil
-                    size={19}
-                    strokeWidth={1.8}
-                  />
-                ) : (
-                  <Plus
-                    size={20}
-                    strokeWidth={1.9}
-                  />
-                )}
-              </div>
+                            <p>
+                              <MapPin
+                                size={13}
+                              />
+                              {mosque.address ||
+                                "لم تتم إضافة العنوان بعد"}
+                            </p>
+                          </div>
+                        </div>
 
-              <div>
-                <h2 style={sectionTitleStyle}>
-                  {editingId !== null
-                    ? "تعديل بيانات المسجد"
-                    : "إضافة مسجد جديد"}
-                </h2>
+                        <div
+                          className="mosque-completeness"
+                          title="اكتمال بيانات المسجد"
+                        >
+                          <strong>
+                            {completeness}%
+                          </strong>
+                          <span>
+                            اكتمال الملف
+                          </span>
+                        </div>
+                      </div>
 
-                <p style={sectionSubtitleStyle}>
-                  {editingId !== null
-                    ? "حدّث بيانات المسجد ثم احفظ التغييرات"
-                    : "أدخل بيانات المسجد الأساسية لإضافته للنظام"}
-                </p>
-              </div>
+                      <div className="mosque-operational-strip">
+                        <div>
+                          <BookOpenCheck
+                            size={16}
+                          />
+                          <span>
+                            الحلقات
+                          </span>
+                          <strong>
+                            {Number(
+                              mosque.halaqat_count ||
+                                0
+                            )}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <GraduationCap
+                            size={16}
+                          />
+                          <span>
+                            المعلمون
+                          </span>
+                          <strong>
+                            {Number(
+                              mosque.teachers_count ||
+                                0
+                            )}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <Users size={16} />
+                          <span>
+                            الطلاب
+                          </span>
+                          <strong>
+                            {Number(
+                              mosque.students_count ||
+                                0
+                            )}
+                          </strong>
+                        </div>
+                      </div>
+
+                      {mosque.notes ? (
+                        <div className="mosque-note">
+                          <FileText size={14} />
+                          <span>
+                            {mosque.notes}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mosque-note empty">
+                          <Sparkles size={14} />
+                          <span>
+                            أضف ملاحظات تشغيلية
+                            ليستفيد منها فريق
+                            الإشراف.
+                          </span>
+                        </div>
+                      )}
+
+                      {!isActive &&
+                      mosque.status_reason ? (
+                        <div className="mosque-status-reason">
+                          <CircleAlert
+                            size={14}
+                          />
+                          <div>
+                            <strong>
+                              سبب التعطيل
+                            </strong>
+                            <span>
+                              {
+                                mosque.status_reason
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <div className="mosque-card-footer">
+                        <div className="mosque-updated">
+                          <Clock3 size={13} />
+                          <span>
+                            {mosque.status_changed_at
+                              ? `آخر تغيير ${formatDate(
+                                  mosque.status_changed_at
+                                )}`
+                              : `مرتبط منذ ${formatDate(
+                                  mosque.created_at
+                                )}`}
+                          </span>
+                        </div>
+
+                        <div className="mosque-actions">
+                          <button
+                            type="button"
+                            className="mosque-action edit"
+                            onClick={() =>
+                              openEdit(
+                                mosque
+                              )
+                            }
+                            disabled={
+                              isArchived
+                            }
+                          >
+                            <PencilLine
+                              size={15}
+                            />
+                            تعديل
+                          </button>
+
+                          <button
+                            type="button"
+                            className={
+                              isActive
+                                ? "mosque-action disable"
+                                : "mosque-action enable"
+                            }
+                            onClick={() =>
+                              openStatus(
+                                mosque
+                              )
+                            }
+                            disabled={
+                              isArchived
+                            }
+                          >
+                            {isActive ? (
+                              <PowerOff
+                                size={15}
+                              />
+                            ) : (
+                              <Power
+                                size={15}
+                              />
+                            )}
+
+                            {isActive
+                              ? "تعطيل"
+                              : "تفعيل"}
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                }
+              )}
             </div>
+          ) : (
+            <div className="mosques-empty-state">
+              <div>
+                <Search size={25} />
+              </div>
 
-            {editingId !== null && (
+              <strong>
+                لا توجد مساجد مطابقة
+              </strong>
+
+              <p>
+                غيّر البحث أو الفلاتر، أو
+                ارفع طلب إضافة مسجد جديد
+                لمدير النظام.
+              </p>
+
               <button
                 type="button"
-                onClick={clearForm}
-                disabled={loading}
-                style={{
-                  ...cancelButtonStyle,
-                  opacity: loading ? 0.6 : 1,
-                }}
+                className="mosques-button primary compact"
+                onClick={() =>
+                  setRequestOpen(true)
+                }
               >
-                <X size={15} />
-                إلغاء التعديل
+                <Plus size={16} />
+                طلب إضافة مسجد
               </button>
+            </div>
+          )
+        ) : requests.length ? (
+          <div className="mosques-request-list">
+            {requests.map(
+              (request) => (
+                <article
+                  className="mosques-request-card"
+                  key={request.id}
+                >
+                  <div className="mosques-request-main">
+                    <div className="mosques-request-icon">
+                      <Landmark
+                        size={20}
+                      />
+                    </div>
+
+                    <div>
+                      <div className="mosques-request-title-line">
+                        <h3>
+                          {
+                            request.requested_name
+                          }
+                        </h3>
+
+                        <RequestBadge
+                          status={
+                            request.status
+                          }
+                        />
+                      </div>
+
+                      <div className="mosques-request-meta">
+                        <span>
+                          <Landmark
+                            size={13}
+                          />
+                          {sectionLabel(
+                            request.requested_section
+                          )}
+                        </span>
+
+                        <span>
+                          <MapPin size={13} />
+                          {request.requested_address ||
+                            "بدون عنوان"}
+                        </span>
+
+                        <span>
+                          <Clock3
+                            size={13}
+                          />
+                          {formatDate(
+                            request.created_at
+                          )}
+                        </span>
+                      </div>
+
+                      {request.request_reason ? (
+                        <p>
+                          {
+                            request.request_reason
+                          }
+                        </p>
+                      ) : null}
+
+                      {request.decision_note ? (
+                        <div className="mosques-decision-note">
+                          <strong>
+                            ملاحظة مدير النظام
+                          </strong>
+                          <span>
+                            {
+                              request.decision_note
+                            }
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mosques-request-side">
+                    {request.status ===
+                    "pending" ? (
+                      <button
+                        type="button"
+                        className="mosques-text-button danger"
+                        onClick={() =>
+                          cancelRequest(
+                            request.id
+                          )
+                        }
+                        disabled={
+                          actionLoading
+                        }
+                      >
+                        <X size={14} />
+                        إلغاء الطلب
+                      </button>
+                    ) : request.status ===
+                        "approved" ? (
+                      <span className="mosques-request-result">
+                        <CheckCircle2
+                          size={16}
+                        />
+                        تم ربط المسجد بعد
+                        الاعتماد
+                      </span>
+                    ) : null}
+                  </div>
+                </article>
+              )
             )}
           </div>
-
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              saveMosque();
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit, minmax(260px, 1fr))",
-                gap: "calc(14px * var(--app-density,1))",
-              }}
-            >
-              <FormField
-                label="اسم المسجد"
-                icon={Building2}
-                placeholder="مثال: مسجد الصديق"
-                value={name}
-                onChange={setName}
-                disabled={loading}
-              />
-
-              <FormField
-                label="العنوان"
-                icon={MapPin}
-                placeholder="مثال: حي النور، شارع الملك..."
-                value={address}
-                onChange={setAddress}
-                disabled={loading}
-              />
+        ) : (
+          <div className="mosques-empty-state">
+            <div>
+              <Clock3 size={25} />
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "calc(9px * var(--app-density,1))",
-                flexWrap: "wrap",
-                marginTop: "17px",
-              }}
-            >
-              <button
-  type="submit"
-  disabled={loading}
-  style={{
-    background:
-      "linear-gradient(135deg,var(--app-color-0f766e,#0F766E),#0B5E57)",
-    color:"#fff",
-    border:"none",
-    height:"56px",
-    padding:"0 calc(24px * var(--app-density,1))",
-    borderRadius:"calc(18px * var(--app-radius-scale,1))",
-    display:"flex",
-    alignItems:"center",
-    justifyContent:"center",
-    gap:"calc(12px * var(--app-density,1))",
-    fontSize:"calc(15px * var(--app-font-scale,1))",
-    fontWeight:"800",
-    cursor:
-      loading ? "wait" : "pointer",
-    boxShadow:
-      "0 12px 30px color-mix(in srgb,var(--app-color-0f766e,#0f766e) 25%,transparent)",
-    transition:"all .25s ease",
-    opacity: loading ? .8 : 1
-  }}
->
-  <div
-    style={{
-      width:"34px",
-      height:"34px",
-      borderRadius:"calc(12px * var(--app-radius-scale,1))",
-      background:"rgba(255,255,255,.18)",
-      display:"flex",
-      alignItems:"center",
-      justifyContent:"center"
-    }}
-  >
-    {loading ? (
-      <Loader2
-        size={18}
-        className="spin"
-      />
-    ) : editingId ? (
-      <Save size={18}/>
-    ) : (
-      <Plus size={18}/>
-    )}
-  </div>
+            <strong>
+              لا توجد طلبات إضافة
+            </strong>
 
-  <span>
-    {loading
-      ? "جاري الحفظ..."
-      : editingId
-      ? "حفظ التعديلات"
-      : "إضافة مسجد جديد"}
-  </span>
-</button>
-
-              {editingId !== null && (
-                <button
-                  type="button"
-                  onClick={clearForm}
-                  disabled={loading}
-                  style={secondaryButtonStyle}
-                >
-                  إلغاء
-                </button>
-              )}
-            </div>
-          </form>
-        </section>
-
-        {/* ================================= */}
-        {/* البحث */}
-        {/* ================================= */}
-
-        <section
-          style={{
-            ...cardStyle,
-            padding: "calc(15px * var(--app-density,1))",
-            marginBottom: "20px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "calc(12px * var(--app-density,1))",
-            }}
-          >
-            <div
-              style={{
-                position: "relative",
-                flex: 1,
-              }}
-            >
-              <Search
-                size={19}
-                color="#89918b"
-                strokeWidth={1.8}
-                style={{
-                  position: "absolute",
-                  right: "14px",
-                  top: "50%",
-                  transform:
-                    "translateY(-50%)",
-                  pointerEvents: "none",
-                }}
-              />
-
-              <input
-                value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
-                placeholder="ابحث باسم المسجد أو العنوان أو رقم المسجد..."
-                style={{
-                  ...inputStyle,
-                  paddingRight: "calc(44px * var(--app-density,1))",
-                  paddingLeft: (search) ? ("calc(45px * var(--app-density,1))") : ("calc(12px * var(--app-density,1))"),
-                }}
-              />
-
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  style={clearSearchButtonStyle}
-                  title="مسح البحث"
-                >
-                  <X size={15} />
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* ================================= */}
-        {/* عنوان القائمة */}
-        {/* ================================= */}
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "calc(10px * var(--app-density,1))",
-            marginBottom: "14px",
-          }}
-        >
-          <div>
-            <h2
-              style={{
-                margin: 0,
-                color: "var(--app-color-173d2b,#173d2b)",
-                fontSize: "calc(20px * var(--app-font-scale,1))",
-                fontWeight: "800",
-              }}
-            >
-              المساجد المسجلة
-            </h2>
-
-            <p
-              style={{
-                margin: "4px 0 0",
-                color: "#8a918d",
-                fontSize: "calc(12px * var(--app-font-scale,1))",
-              }}
-            >
-              عرض {filteredMosques.length} من{" "}
-              {mosques.length} مسجد
+            <p>
+              عند الحاجة لمسجد جديد، ارفع
+              طلبًا واضحًا وسيظهر هنا مسار
+              المراجعة والقرار.
             </p>
+
+            <button
+              type="button"
+              className="mosques-button primary compact"
+              onClick={() =>
+                setRequestOpen(true)
+              }
+            >
+              <Plus size={16} />
+              إنشاء أول طلب
+            </button>
           </div>
+        )}
+      </section>
+
+      <ModalShell
+        open={Boolean(editingMosque)}
+        title="تعديل بيانات المسجد"
+        subtitle="التغييرات هنا تخص المسجد المرتبط بنطاق إشرافك."
+        icon={PencilLine}
+        onClose={() =>
+          !actionLoading &&
+          setEditingMosque(null)
+        }
+        footer={
+          <>
+            <button
+              type="button"
+              className="mosques-button ghost"
+              onClick={() =>
+                setEditingMosque(null)
+              }
+              disabled={actionLoading}
+            >
+              إلغاء
+            </button>
+
+            <button
+              type="button"
+              className="mosques-button primary"
+              onClick={saveEdit}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <Loader2
+                  className="mosques-spin"
+                  size={16}
+                />
+              ) : (
+                <Save size={16} />
+              )}
+              حفظ التعديلات
+            </button>
+          </>
+        }
+      >
+        <div className="mosques-form-grid">
+          <label className="mosques-field span-2">
+            <span>
+              اسم المسجد
+            </span>
+            <input
+              value={editForm.name}
+              onChange={(event) =>
+                setEditForm(
+                  (current) => ({
+                    ...current,
+                    name:
+                      event.target.value,
+                  })
+                )
+              }
+              placeholder="مثال: مسجد الصديق"
+            />
+          </label>
+
+          <label className="mosques-field span-2">
+            <span>
+              العنوان
+            </span>
+            <input
+              value={
+                editForm.address
+              }
+              onChange={(event) =>
+                setEditForm(
+                  (current) => ({
+                    ...current,
+                    address:
+                      event.target.value,
+                  })
+                )
+              }
+              placeholder="الحي، الشارع أو الوصف المختصر"
+            />
+          </label>
+
+          <label className="mosques-field">
+            <span>
+              القسم
+            </span>
+            <select
+              value={
+                editForm.section
+              }
+              onChange={(event) =>
+                setEditForm(
+                  (current) => ({
+                    ...current,
+                    section:
+                      event.target.value,
+                  })
+                )
+              }
+            >
+              <option value="men">
+                رجال
+              </option>
+              <option value="women">
+                نساء
+              </option>
+            </select>
+          </label>
+
+          <div className="mosques-form-hint">
+            <ShieldCheck
+              size={16}
+            />
+            <span>
+              لا يمكن نقل المسجد من نطاق
+              الإشراف من هذه الشاشة.
+            </span>
+          </div>
+
+          <label className="mosques-field span-2">
+            <span>
+              ملاحظات تشغيلية
+            </span>
+            <textarea
+              value={editForm.notes}
+              onChange={(event) =>
+                setEditForm(
+                  (current) => ({
+                    ...current,
+                    notes:
+                      event.target.value,
+                  })
+                )
+              }
+              placeholder="أي معلومات مفيدة عن الموقع أو التشغيل..."
+            />
+          </label>
         </div>
+      </ModalShell>
 
-        {/* ================================= */}
-        {/* المحتوى */}
-        {/* ================================= */}
+      <ModalShell
+        open={Boolean(statusTarget)}
+        title={
+          statusTarget?.status ===
+          "active"
+            ? "تعطيل المسجد"
+            : "إعادة تفعيل المسجد"
+        }
+        subtitle={
+          statusTarget?.status ===
+          "active"
+            ? "التعطيل لا يحذف المسجد أو الحلقات أو السجلات."
+            : "سيعود المسجد إلى الحالة التشغيلية النشطة."
+        }
+        icon={
+          statusTarget?.status ===
+          "active"
+            ? PowerOff
+            : Power
+        }
+        onClose={() =>
+          !actionLoading &&
+          setStatusTarget(null)
+        }
+        size="small"
+        footer={
+          <>
+            <button
+              type="button"
+              className="mosques-button ghost"
+              onClick={() =>
+                setStatusTarget(null)
+              }
+              disabled={actionLoading}
+            >
+              إلغاء
+            </button>
 
-        {initialLoading ? (
-          <LoadingState />
-        ) : filteredMosques.length === 0 ? (
-          <EmptyState
-            search={search}
-            onClear={() => setSearch("")}
-          />
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(290px, 1fr))",
-              gap: "calc(16px * var(--app-density,1))",
-            }}
-          >
-            {filteredMosques.map((mosque) => (
-              <MosqueCard
-                key={mosque.id}
-                mosque={mosque}
-                onEdit={editMosque}
-                onDelete={deleteMosque}
-                loading={loading}
+            <button
+              type="button"
+              className={
+                statusTarget?.status ===
+                "active"
+                  ? "mosques-button danger"
+                  : "mosques-button primary"
+              }
+              onClick={changeStatus}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <Loader2
+                  className="mosques-spin"
+                  size={16}
+                />
+              ) : statusTarget?.status ===
+                "active" ? (
+                <PowerOff size={16} />
+              ) : (
+                <Power size={16} />
+              )}
+
+              {statusTarget?.status ===
+              "active"
+                ? "تأكيد التعطيل"
+                : "تأكيد التفعيل"}
+            </button>
+          </>
+        }
+      >
+        <div className="mosques-status-confirm-card">
+          <div className="mosques-status-mosque">
+            <Landmark size={18} />
+            <div>
+              <span>
+                المسجد
+              </span>
+              <strong>
+                {statusTarget?.name}
+              </strong>
+            </div>
+          </div>
+
+          {statusTarget?.status ===
+          "active" ? (
+            <label className="mosques-field">
+              <span>
+                سبب التعطيل
+              </span>
+              <textarea
+                value={statusReason}
+                onChange={(event) =>
+                  setStatusReason(
+                    event.target.value
+                  )
+                }
+                placeholder="مثال: توقف مؤقت للصيانة أو إعادة التنظيم..."
               />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// حقل النموذج
-// ==========================================
-
-function FormField({
-  label,
-  icon: Icon,
-  placeholder,
-  value,
-  onChange,
-  disabled,
-}) {
-  return (
-    <div>
-      <label style={labelStyle}>
-        {label}
-      </label>
-
-      <div
-        style={{
-          position: "relative",
-        }}
-      >
-        <Icon
-          size={18}
-          color="#89918b"
-          strokeWidth={1.7}
-          style={{
-            position: "absolute",
-            right: "13px",
-            top: "50%",
-            transform:
-              "translateY(-50%)",
-            pointerEvents: "none",
-          }}
-        />
-
-        <input
-          value={value}
-          disabled={disabled}
-          onChange={(event) =>
-            onChange(event.target.value)
-          }
-          placeholder={placeholder}
-          style={{
-            ...inputStyle,
-            paddingRight: "calc(42px * var(--app-density,1))",
-            opacity: disabled ? 0.7 : 1,
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// بطاقة المسجد
-// ==========================================
-
-function MosqueCard({
-  mosque,
-  onEdit,
-  onDelete,
-  loading,
-}) {
-  const hasAddress = Boolean(
-    String(mosque.address || "").trim()
-  );
-
-  return (
-    <div
-      style={{
-        background: "#fff",
-        border:
-          "1px solid #e4e8e4",
-        borderRadius: "calc(18px * var(--app-radius-scale,1))",
-        padding: "calc(18px * var(--app-density,1))",
-        boxShadow:
-          "0 5px 18px rgba(0,0,0,0.04)",
-        transition:
-          "transform .2s ease, box-shadow .2s ease",
-      }}
-    >
-<div
-  style={{
-    display: "flex",
-    gap: "calc(8px * var(--app-density,1))",
-    marginTop: 8,
-    flexWrap: "wrap",
-  }}
->
-  <span
-    style={{
-      background: "#f4f8f5",
-      padding: "calc(4px * var(--app-density,1)) calc(10px * var(--app-density,1))",
-      borderRadius: "calc(20px * var(--app-radius-scale,1))",
-      fontSize: "calc(11px * var(--app-font-scale,1))",
-      fontWeight: 700,
-      color: "var(--app-color-0f5132,#0f5132)",
-    }}
-  >
-    {(mosque.halaqat || []).length} حلقة
-  </span>
-</div>
-      {/* رأس البطاقة */}
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "calc(12px * var(--app-density,1))",
-          marginBottom: "17px",
-        }}
-      >
-        <div
-          style={{
-            width: "50px",
-            height: "50px",
-            flexShrink: 0,
-            borderRadius: "calc(14px * var(--app-radius-scale,1))",
-            background:
-              "linear-gradient(145deg,var(--app-color-edf5ef,#edf5ef),#e2eee7)",
-            color: "var(--app-color-0f5132,#0f5132)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Building2
-            size={25}
-            strokeWidth={1.7}
-          />
+            </label>
+          ) : (
+            <div className="mosques-safe-message">
+              <RotateCcw size={17} />
+              <span>
+                ستتم إعادة تشغيل المسجد مع
+                الاحتفاظ بجميع الحلقات
+                والبيانات السابقة.
+              </span>
+            </div>
+          )}
         </div>
+      </ModalShell>
 
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
-          <h3
-            style={{
-              margin: 0,
-              color: "var(--app-color-173d2b,#173d2b)",
-              fontSize: "calc(17px * var(--app-font-scale,1))",
-              fontWeight: "800",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {mosque.name || "بدون اسم"}
-          </h3>
+      <ModalShell
+        open={requestOpen}
+        title="طلب إضافة مسجد جديد"
+        subtitle="لا يتم إنشاء المسجد مباشرة؛ يرسل الطلب إلى مدير النظام للاعتماد."
+        icon={Send}
+        onClose={() =>
+          !actionLoading &&
+          setRequestOpen(false)
+        }
+        footer={
+          <>
+            <button
+              type="button"
+              className="mosques-button ghost"
+              onClick={() =>
+                setRequestOpen(false)
+              }
+              disabled={actionLoading}
+            >
+              إلغاء
+            </button>
 
-          <div
-            style={{
-              marginTop: "5px",
-              color: "#969d98",
-              fontSize: "calc(10px * var(--app-font-scale,1))",
-            }}
-          >
-            معرف المسجد: {mosque.id}
+            <button
+              type="button"
+              className="mosques-button primary"
+              onClick={submitRequest}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <Loader2
+                  className="mosques-spin"
+                  size={16}
+                />
+              ) : (
+                <Send size={16} />
+              )}
+              إرسال لمدير النظام
+            </button>
+          </>
+        }
+      >
+        <div className="mosques-approval-banner">
+          <ShieldCheck size={20} />
+
+          <div>
+            <strong>
+              مسار اعتماد آمن
+            </strong>
+
+            <span>
+              يراجع مدير النظام الطلب، وعند
+              الموافقة يُنشأ المسجد ويُربط
+              بحسابك تلقائيًا.
+            </span>
           </div>
         </div>
 
-<div
-  style={{
-    marginTop: 6,
-    fontSize: "calc(11px * var(--app-font-scale,1))",
-    color: "var(--app-color-0f5132,#0f5132)",
-    fontWeight: "700",
-  }}
->
-  عدد الحلقات:
-  {" "}
-  {(mosque.halaqat || [])
-    .length}
-</div>
-        <span
-          style={{
-            flexShrink: 0,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "calc(5px * var(--app-density,1))",
-            padding: "calc(5px * var(--app-density,1)) calc(8px * var(--app-density,1))",
-            borderRadius: "calc(20px * var(--app-radius-scale,1))",
-            background: hasAddress
-              ? "#eaf6ee"
-              : "#f4f4f4",
-            color: hasAddress
-              ? "var(--app-color-0f5132,#0f5132)"
-              : "#777",
-            fontSize: "calc(10px * var(--app-font-scale,1))",
-            fontWeight: "700",
-          }}
-        >
-          <span
-            style={{
-              width: "6px",
-              height: "6px",
-              borderRadius: "50%",
-              background: hasAddress
-                ? "#2b9a58"
-                : "#999",
-            }}
-          />
+        <div className="mosques-form-grid">
+          <label className="mosques-field span-2">
+            <span>
+              اسم المسجد المطلوب
+            </span>
+            <input
+              value={requestForm.name}
+              onChange={(event) =>
+                setRequestForm(
+                  (current) => ({
+                    ...current,
+                    name:
+                      event.target.value,
+                  })
+                )
+              }
+              placeholder="اسم المسجد"
+            />
+          </label>
 
-          {hasAddress
-            ? "مكتمل"
-            : "ناقص العنوان"}
-        </span>
-      </div>
+          <label className="mosques-field span-2">
+            <span>
+              العنوان
+            </span>
+            <input
+              value={
+                requestForm.address
+              }
+              onChange={(event) =>
+                setRequestForm(
+                  (current) => ({
+                    ...current,
+                    address:
+                      event.target.value,
+                  })
+                )
+              }
+              placeholder="المدينة، الحي، الشارع"
+            />
+          </label>
 
-      {/* العنوان */}
+          <label className="mosques-field">
+            <span>
+              القسم
+            </span>
+            <select
+              value={
+                requestForm.section
+              }
+              onChange={(event) =>
+                setRequestForm(
+                  (current) => ({
+                    ...current,
+                    section:
+                      event.target.value,
+                  })
+                )
+              }
+            >
+              <option value="men">
+                رجال
+              </option>
+              <option value="women">
+                نساء
+              </option>
+            </select>
+          </label>
 
-      <div
-        style={{
-          background: "#fafbf9",
-          border:
-            "1px solid #eef0ed",
-          borderRadius: "calc(12px * var(--app-radius-scale,1))",
-          padding: "calc(12px * var(--app-density,1))",
-          minHeight: "48px",
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "calc(9px * var(--app-density,1))",
-          marginBottom: "17px",
-        }}
-      >
-        <MapPin
-          size={18}
-          color={
-            hasAddress
-              ? "#0f5132"
-              : "#8d958f"
-          }
-          strokeWidth={1.7}
-          style={{
-            flexShrink: 0,
-            marginTop: "1px",
-          }}
-        />
+          <label className="mosques-field">
+            <span>
+              سبب الإضافة
+            </span>
+            <input
+              value={
+                requestForm.reason
+              }
+              onChange={(event) =>
+                setRequestForm(
+                  (current) => ({
+                    ...current,
+                    reason:
+                      event.target.value,
+                  })
+                )
+              }
+              placeholder="مثال: توسع نطاق الإشراف"
+            />
+          </label>
 
-        <span
-          style={{
-            color: hasAddress
-              ? "#59635d"
-              : "#9da39f",
-            fontSize: "calc(12px * var(--app-font-scale,1))",
-            lineHeight: 1.7,
-          }}
-        >
-          {hasAddress
-            ? mosque.address
-            : "لم يتم تسجيل عنوان المسجد"}
-        </span>
-      </div>
-{mosque.halaqat?.length > 0 && (
-  <div
-    style={{
-      marginBottom: 16,
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "calc(6px * var(--app-density,1))",
-    }}
-  >
-    {mosque.halaqat.map(
-      (halaqa) => (
-        <span
-          key={halaqa.id}
-          style={{
-            background:
-              "#edf8f1",
-            color:
-              "var(--app-color-0f5132,#0f5132)",
-            borderRadius:
-              "calc(20px * var(--app-radius-scale,1))",
-            padding:
-              "calc(4px * var(--app-density,1)) calc(10px * var(--app-density,1))",
-            fontSize:
-              "calc(11px * var(--app-font-scale,1))",
-            fontWeight:
-              "700",
-          }}
-        >
-          {halaqa.name}
-        </span>
-      )
-    )}
-  </div>
-)}
-
-      {/* الأزرار */}
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "1fr 1fr",
-          gap: "calc(8px * var(--app-density,1))",
-        }}
-      >
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => onEdit(mosque)}
-          style={{
-            ...editButtonStyle,
-            opacity: loading ? 0.6 : 1,
-            cursor: loading
-              ? "not-allowed"
-              : "pointer",
-          }}
-        >
-          <Pencil
-            size={16}
-            strokeWidth={1.8}
-          />
-
-          تعديل
-        </button>
-
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() =>
-            onDelete(mosque.id)
-          }
-          style={{
-            ...deleteButtonStyle,
-            opacity: loading ? 0.6 : 1,
-            cursor: loading
-              ? "not-allowed"
-              : "pointer",
-          }}
-        >
-          <Trash2
-            size={16}
-            strokeWidth={1.8}
-          />
-
-          حذف
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ==========================================
-// بطاقة الإحصائية
-// ==========================================
-
-function StatCard({
-  icon: Icon,
-  title,
-  value,
-}) {
-  return (
-    <div
-      style={{
-        background: "#fff",
-        border:
-          "1px solid #e6e9e5",
-        borderRadius: "calc(16px * var(--app-radius-scale,1))",
-        padding: "calc(18px * var(--app-density,1))",
-        display: "flex",
-        alignItems: "center",
-        gap: "calc(13px * var(--app-density,1))",
-        boxShadow:
-          "0 3px 12px rgba(0,0,0,0.03)",
-      }}
-    >
-      <div
-        style={{
-          width: "46px",
-          height: "46px",
-          flexShrink: 0,
-          borderRadius: "calc(13px * var(--app-radius-scale,1))",
-          background: "var(--app-color-edf5ef,#edf5ef)",
-          color: "var(--app-color-0f5132,#0f5132)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Icon
-          size={22}
-          strokeWidth={1.7}
-        />
-      </div>
-
-      <div>
-        <div
-          style={{
-            color: "#7e8781",
-            fontSize: "calc(11px * var(--app-font-scale,1))",
-            marginBottom: "3px",
-          }}
-        >
-          {title}
+          <label className="mosques-field span-2">
+            <span>
+              ملاحظات لمدير النظام
+            </span>
+            <textarea
+              value={
+                requestForm.notes
+              }
+              onChange={(event) =>
+                setRequestForm(
+                  (current) => ({
+                    ...current,
+                    notes:
+                      event.target.value,
+                  })
+                )
+              }
+              placeholder="أي معلومات تساعد مدير النظام على مراجعة الطلب..."
+            />
+          </label>
         </div>
-
-        <div
-          style={{
-            color: "var(--app-color-173d2b,#173d2b)",
-            fontSize: "calc(24px * var(--app-font-scale,1))",
-            fontWeight: "800",
-          }}
-        >
-          {value}
-        </div>
-      </div>
+      </ModalShell>
     </div>
   );
 }
-
-// ==========================================
-// حالة فارغة
-// ==========================================
-
-function EmptyState({
-  search,
-  onClear,
-}) {
-  return (
-    <div
-      style={{
-        background: "#fff",
-        border:
-          "1px solid #e5e8e4",
-        borderRadius: "calc(18px * var(--app-radius-scale,1))",
-        padding: "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
-        textAlign: "center",
-      }}
-    >
-      <div
-        style={{
-          width: "64px",
-          height: "64px",
-          margin: "0 auto 14px",
-          borderRadius: "calc(18px * var(--app-radius-scale,1))",
-          background: "var(--app-color-edf5ef,#edf5ef)",
-          color: "var(--app-color-0f5132,#0f5132)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {search ? (
-          <Search
-            size={28}
-            strokeWidth={1.6}
-          />
-        ) : (
-          <Building2
-            size={28}
-            strokeWidth={1.6}
-          />
-        )}
-      </div>
-
-      <h3
-        style={{
-          margin: "0 0 7px",
-          color: "#354139",
-          fontSize: "calc(17px * var(--app-font-scale,1))",
-        }}
-      >
-        {search
-          ? "لا توجد نتائج"
-          : "لا توجد مساجد حتى الآن"}
-      </h3>
-
-      <p
-        style={{
-          margin: 0,
-          color: "#929993",
-          fontSize: "calc(12px * var(--app-font-scale,1))",
-        }}
-      >
-        {search
-          ? "لم نجد مسجدًا مطابقًا لبحثك."
-          : "ابدأ بإضافة أول مسجد إلى النظام."}
-      </p>
-
-      {search && (
-        <button
-          type="button"
-          onClick={onClear}
-          style={{
-            marginTop: "15px",
-            border: "none",
-            background: "var(--app-color-0f5132,#0f5132)",
-            color: "#fff",
-            padding: "calc(9px * var(--app-density,1)) calc(16px * var(--app-density,1))",
-            borderRadius: "calc(9px * var(--app-radius-scale,1))",
-            cursor: "pointer",
-            fontSize: "calc(12px * var(--app-font-scale,1))",
-            fontWeight: "700",
-          }}
-        >
-          مسح البحث
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ==========================================
-// حالة التحميل
-// ==========================================
-
-function LoadingState() {
-  return (
-    <div
-      style={{
-        background: "#fff",
-        border:
-          "1px solid #e5e8e4",
-        borderRadius: "calc(18px * var(--app-radius-scale,1))",
-        padding: "calc(55px * var(--app-density,1)) calc(20px * var(--app-density,1))",
-        textAlign: "center",
-        color: "#7f8781",
-      }}
-    >
-      <div
-        style={{
-          width: "40px",
-          height: "40px",
-          margin: "0 auto 13px",
-          border:
-            "3px solid #e1e8e3",
-          borderTopColor: "#0f5132",
-          borderRadius: "50%",
-          animation:
-            "spin 0.8s linear infinite",
-        }}
-      />
-
-      جاري تحميل المساجد...
-    </div>
-  );
-}
-
-// ==========================================
-// Styles
-// ==========================================
-
-const cardStyle = {
-  background: "#fff",
-  border:
-    "1px solid #e5e8e4",
-  borderRadius: "calc(18px * var(--app-radius-scale,1))",
-  padding: "calc(22px * var(--app-density,1))",
-  marginBottom: "22px",
-  boxShadow:
-    "0 4px 15px rgba(0,0,0,0.035)",
-};
-
-const pageTitleStyle = {
-  margin: 0,
-  color: "var(--app-color-173d2b,#173d2b)",
-  fontSize: "calc(28px * var(--app-font-scale,1))",
-  fontWeight: "800",
-};
-
-const pageSubtitleStyle = {
-  margin: "5px 0 0",
-  color: "#818983",
-  fontSize: "calc(13px * var(--app-font-scale,1))",
-};
-
-const pageIconStyle = {
-  width: "48px",
-  height: "48px",
-  borderRadius: "calc(14px * var(--app-radius-scale,1))",
-  background: "#eaf3ed",
-  color: "var(--app-color-0f5132,#0f5132)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const backButtonStyle = {
-  width: "43px",
-  height: "43px",
-  border: "1px solid #e0e4df",
-  background: "#fff",
-  color: "var(--app-color-173d2b,#173d2b)",
-  borderRadius: "calc(11px * var(--app-radius-scale,1))",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const headerButtonStyle = {
-  border: "1px solid #dfe4e0",
-  background: "#fff",
-  color: "var(--app-color-173d2b,#173d2b)",
-  borderRadius: "calc(10px * var(--app-radius-scale,1))",
-  padding: "calc(9px * var(--app-density,1)) calc(13px * var(--app-density,1))",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "calc(7px * var(--app-density,1))",
-  fontSize: "calc(12px * var(--app-font-scale,1))",
-  fontWeight: "700",
-};
-
-const countBadgeStyle = {
-  background: "#fff",
-  border: "1px solid #e4e7e3",
-  borderRadius: "11px",
-  padding: "9px 13px",
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  color: "#707872",
-  fontSize: "12px",
-  fontWeight: "600",
-};
-
-const formIconStyle = {
-  width: "40px",
-  height: "40px",
-  borderRadius: "calc(11px * var(--app-radius-scale,1))",
-  background: "var(--app-color-edf5ef,#edf5ef)",
-  color: "var(--app-color-0f5132,#0f5132)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const sectionTitleStyle = {
-  margin: 0,
-  color: "var(--app-color-173d2b,#173d2b)",
-  fontSize: "calc(18px * var(--app-font-scale,1))",
-  fontWeight: "800",
-};
-
-const sectionSubtitleStyle = {
-  margin: "4px 0 0",
-  color: "#8a918d",
-  fontSize: "calc(11px * var(--app-font-scale,1))",
-};
-
-const labelStyle = {
-  display: "block",
-  marginBottom: "7px",
-  color: "#465149",
-  fontSize: "calc(12px * var(--app-font-scale,1))",
-  fontWeight: "700",
-};
-
-const inputStyle = {
-  width: "100%",
-  height: "46px",
-  padding: "0 calc(12px * var(--app-density,1))",
-  border: "1px solid #d9ded9",
-  borderRadius: "calc(10px * var(--app-radius-scale,1))",
-  outline: "none",
-  fontSize: "calc(13px * var(--app-font-scale,1))",
-  boxSizing: "border-box",
-  background: "#fff",
-  color: "#26332c",
-};
-
-const primaryButtonStyle = {
-  border:"none",
-  background:
-    "linear-gradient(135deg,var(--app-color-0f766e,#0F766E),var(--app-color-115e59,#115E59))",
-  color:"#fff",
-  borderRadius:"calc(18px * var(--app-radius-scale,1))",
-  padding:"calc(14px * var(--app-density,1)) calc(24px * var(--app-density,1))",
-  minHeight:"52px",
-  display:"inline-flex",
-  alignItems:"center",
-  justifyContent:"center",
-  gap:"calc(10px * var(--app-density,1))",
-  fontSize:"calc(14px * var(--app-font-scale,1))",
-  fontWeight:"800",
-  boxShadow:
-    "0 10px 25px color-mix(in srgb,var(--app-color-0f766e,#0f766e) 22%,transparent)",
-  transition:"all .25s ease"
-};
-const secondaryButtonStyle = {
-  border:"1px solid #DCE3E8",
-  background:"#FFFFFF",
-  color:"#334155",
-  borderRadius:"calc(18px * var(--app-radius-scale,1))",
-  padding:"calc(14px * var(--app-density,1)) calc(22px * var(--app-density,1))",
-  minHeight:"52px",
-  cursor:"pointer",
-  fontSize:"calc(14px * var(--app-font-scale,1))",
-  fontWeight:"700",
-  boxShadow:
-    "0 4px 14px rgba(15,23,42,.04)"
-};
-
-const cancelButtonStyle = {
-  border:"1px solid #E2E8F0",
-  background:"#FFFFFF",
-  color:"#64748B",
-  borderRadius:"calc(16px * var(--app-radius-scale,1))",
-  padding:"calc(12px * var(--app-density,1)) calc(18px * var(--app-density,1))",
-  minHeight:"48px",
-  cursor:"pointer",
-  display:"inline-flex",
-  alignItems:"center",
-  gap:"calc(8px * var(--app-density,1))",
-  fontSize:"calc(13px * var(--app-font-scale,1))",
-  fontWeight:"700"
-};
-
-const clearSearchButtonStyle = {
-  position:"absolute",
-  left:"10px",
-  top:"50%",
-  transform:"translateY(-50%)",
-  width:"34px",
-  height:"34px",
-  border:"none",
-  borderRadius:"calc(10px * var(--app-radius-scale,1))",
-  background:"#F8FAFC",
-  color:"#64748B",
-  cursor:"pointer",
-  display:"flex",
-  alignItems:"center",
-  justifyContent:"center"
-};
-
-const editButtonStyle = {
-  border:"1px solid #BFDBFE",
-  background:"#EFF6FF",
-  color:"#2563EB",
-  borderRadius:"calc(14px * var(--app-radius-scale,1))",
-  width:"42px",
-  height:"42px",
-  display:"flex",
-  alignItems:"center",
-  justifyContent:"center",
-  cursor:"pointer",
-  transition:"all .2s"
-};
-
-const deleteButtonStyle = {
-  border:"1px solid #FECACA",
-  background:"#FEF2F2",
-  color:"#DC2626",
-  borderRadius:"calc(14px * var(--app-radius-scale,1))",
-  width:"42px",
-  height:"42px",
-  display:"flex",
-  alignItems:"center",
-  justifyContent:"center",
-  cursor:"pointer",
-  transition:"all .2s"
-};
