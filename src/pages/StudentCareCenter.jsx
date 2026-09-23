@@ -1,0 +1,399 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  AlertTriangle,
+  BookOpenCheck,
+  CheckCircle2,
+  ChevronLeft,
+  CircleDot,
+  HeartHandshake,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  UserRoundSearch,
+  Users,
+  X,
+} from "lucide-react";
+import { supabase } from "../lib/supabase";
+import "./StudentCareCenter.css";
+
+const CARE_ORDER = { needs_attention: 0, watch: 1, steady: 2 };
+
+function careMeta(level) {
+  if (level === "needs_attention") return { label: "يحتاج عناية", tone: "danger" };
+  if (level === "watch") return { label: "متابعة", tone: "warning" };
+  return { label: "مستقر", tone: "success" };
+}
+
+function severityMeta(severity) {
+  if (severity === "high") return { label: "أولوية عالية", tone: "danger" };
+  if (severity === "warning") return { label: "متابعة", tone: "warning" };
+  if (severity === "positive") return { label: "إيجابي", tone: "success" };
+  return { label: "معلومة", tone: "neutral" };
+}
+
+function formatRange(row) {
+  if (!row?.from_surah || !row?.to_surah) return "موضع محفوظ";
+  if (row.from_surah === row.to_surah) return `${row.from_surah} ${row.from_ayah} ← ${row.to_ayah}`;
+  return `${row.from_surah} ${row.from_ayah} ← ${row.to_surah} ${row.to_ayah}`;
+}
+
+function segmentLabel(type) {
+  if (type === "lesson") return "الدرس";
+  if (type === "side_lesson") return "جنب الدرس";
+  if (type === "revision") return "المراجعة";
+  return "المطلوب";
+}
+
+export default function StudentCareCenter() {
+  const [loading, setLoading] = useState(true);
+  const [loadingRows, setLoadingRows] = useState(false);
+  const [halaqas, setHalaqas] = useState([]);
+  const [halaqaId, setHalaqaId] = useState("");
+  const [rows, setRows] = useState([]);
+  const [role, setRole] = useState("");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState(null);
+  const [intervention, setIntervention] = useState(null);
+  const [savingIntervention, setSavingIntervention] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => { boot(); }, []);
+  useEffect(() => { if (halaqaId) loadCare(Number(halaqaId)); }, [halaqaId]);
+
+  async function boot() {
+    try {
+      setLoading(true);
+      setError("");
+      const [halaqaResult, roleResult] = await Promise.all([
+        supabase.rpc("get_care_center_halaqas"),
+        supabase.rpc("current_profile_role"),
+      ]);
+      if (halaqaResult.error) throw halaqaResult.error;
+      if (roleResult.error) throw roleResult.error;
+      const list = halaqaResult.data || [];
+      setRole(roleResult.data || "");
+      setHalaqas(list);
+      if (list[0]?.halaqa_id) setHalaqaId(String(list[0].halaqa_id));
+    } catch (e) {
+      console.error("Care center boot:", e);
+      setError("تعذر تحميل نطاق مركز العناية.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadCare(id) {
+    try {
+      setLoadingRows(true);
+      setError("");
+      const { data, error: rpcError } = await supabase.rpc("get_halaqa_care_analysis", {
+        p_halaqa_id: id,
+      });
+      if (rpcError) throw rpcError;
+      setRows(data || []);
+      setSelected((current) => {
+        if (!current) return null;
+        const next = (data || []).find((row) => Number(row.student_id) === Number(current.student_id));
+        return next || null;
+      });
+    } catch (e) {
+      console.error("Care center analysis:", e);
+      setRows([]);
+      setError("تعذر قراءة التحليل المركزي لهذه الحلقة.");
+    } finally {
+      setLoadingRows(false);
+    }
+  }
+
+  const stats = useMemo(() => ({
+    total: rows.length,
+    attention: rows.filter((row) => row.care_level === "needs_attention").length,
+    watch: rows.filter((row) => row.care_level === "watch").length,
+    steady: rows.filter((row) => row.care_level === "steady").length,
+  }), [rows]);
+
+  const visible = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return [...rows]
+      .filter((row) => filter === "all" || row.care_level === filter)
+      .filter((row) => !query || String(row.student_name || "").toLowerCase().includes(query))
+      .sort((a, b) => {
+        const careDiff = (CARE_ORDER[a.care_level] ?? 9) - (CARE_ORDER[b.care_level] ?? 9);
+        if (careDiff) return careDiff;
+        const highDiff = Number(b.high_count || 0) - Number(a.high_count || 0);
+        if (highDiff) return highDiff;
+        return Number(b.warning_count || 0) - Number(a.warning_count || 0);
+      });
+  }, [rows, search, filter]);
+
+  const selectedHalaqa = halaqas.find((item) => String(item.halaqa_id) === String(halaqaId));
+  const canApproveIntervention = role === "teacher" || role === "admin";
+
+  function openIntervention(row, signal = null) {
+    if (!canApproveIntervention) return;
+    setIntervention({
+      row,
+      type: "stabilization_partial",
+      reason: "",
+      trigger: signal?.staff_body || signal?.staff_title || "مؤشرات من مركز العناية",
+    });
+  }
+
+  async function saveIntervention(event) {
+    event.preventDefault();
+    if (!intervention?.reason?.trim()) return;
+
+    try {
+      setSavingIntervention(true);
+      const analysis = intervention.row.analysis || {};
+      const { error: rpcError } = await supabase.rpc("create_learning_intervention_from_analysis", {
+        p_student_id: Number(intervention.row.student_id),
+        p_halaqa_id: Number(halaqaId),
+        p_intervention_type: intervention.type,
+        p_confirmed_reason: intervention.reason.trim(),
+        p_trigger_summary: intervention.trigger || null,
+        p_source_plan_id: analysis.plan?.id || null,
+      });
+      if (rpcError) throw rpcError;
+      setIntervention(null);
+      await loadCare(Number(halaqaId));
+    } catch (e) {
+      console.error("Create intervention:", e);
+      setError("تعذر تسجيل قرار العناية. تأكد من صلاحية المعلم والسبب المؤكد.");
+    } finally {
+      setSavingIntervention(false);
+    }
+  }
+
+  if (loading) {
+    return <div className="care-page"><div className="care-loading"><RefreshCw size={22}/><span>جارٍ تجهيز مركز العناية…</span></div></div>;
+  }
+
+  return (
+    <div className="care-page" dir="rtl">
+      <header className="care-hero">
+        <div className="care-hero-mark"><HeartHandshake size={28}/></div>
+        <div className="care-hero-copy">
+          <span>مركز العناية بالطالب</span>
+          <h1>نرى الإشارة مبكرًا… والمعلم يقرر التدخل</h1>
+          <p>تحليل موحّد للحضور والتسميع والخطة والمراجعة والاختبارات. المؤشرات لا تغيّر الخطة تلقائيًا ولا تفترض سببًا لم يؤكده المعلم.</p>
+        </div>
+        <button type="button" className="care-refresh" onClick={() => halaqaId && loadCare(Number(halaqaId))} disabled={loadingRows}>
+          <RefreshCw size={17}/><span>{loadingRows ? "جارٍ التحديث" : "تحديث"}</span>
+        </button>
+      </header>
+
+      {error && <div className="care-error"><AlertTriangle size={17}/><span>{error}</span></div>}
+
+      <section className="care-toolbar">
+        <label className="care-field">
+          <span>الحلقة</span>
+          <select value={halaqaId} onChange={(e) => setHalaqaId(e.target.value)}>
+            {halaqas.map((item) => (
+              <option key={item.halaqa_id} value={item.halaqa_id}>{item.halaqa_name} — {item.mosque_name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="care-search">
+          <Search size={18}/>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث باسم الطالب" />
+        </label>
+        <div className="care-filters">
+          {[
+            ["all", "الكل"],
+            ["needs_attention", "يحتاج عناية"],
+            ["watch", "متابعة"],
+            ["steady", "مستقر"],
+          ].map(([value, label]) => (
+            <button type="button" key={value} className={filter === value ? "active" : ""} onClick={() => setFilter(value)}>{label}</button>
+          ))}
+        </div>
+      </section>
+
+      <section className="care-metrics">
+        <CareMetric icon={Users} label="طلاب الحلقة" value={stats.total} note={selectedHalaqa?.halaqa_name || "الحلقة الحالية"} />
+        <CareMetric icon={AlertTriangle} label="يحتاج عناية" value={stats.attention} note="إشارة عالية واحدة فأكثر" tone="danger" />
+        <CareMetric icon={Activity} label="تحت المتابعة" value={stats.watch} note="إشارات تحتاج مراقبة" tone="warning" />
+        <CareMetric icon={ShieldCheck} label="مستقر" value={stats.steady} note="لا توجد إشارة مقلقة الآن" tone="success" />
+      </section>
+
+      <section className="care-grid">
+        {loadingRows ? (
+          <div className="care-empty"><RefreshCw size={25}/><strong>جارٍ تحليل طلاب الحلقة…</strong></div>
+        ) : !visible.length ? (
+          <div className="care-empty"><UserRoundSearch size={28}/><strong>لا توجد نتائج مطابقة</strong><span>غيّر الفلتر أو عبارة البحث.</span></div>
+        ) : visible.map((row) => {
+          const meta = careMeta(row.care_level);
+          const signals = row.analysis?.signals || [];
+          const primary = signals.find((item) => item.severity === "high") || signals.find((item) => item.severity === "warning") || signals[0];
+          return (
+            <article className={`care-student-card ${meta.tone}`} key={row.student_id}>
+              <div className="care-student-head">
+                <div className="care-avatar"><span>{String(row.student_name || "ط").trim().charAt(0) || "ط"}</span></div>
+                <div className="care-student-name"><span>الطالب</span><h3>{row.student_name}</h3></div>
+                <span className={`care-badge ${meta.tone}`}>{meta.label}</span>
+              </div>
+              <div className="care-signal-summary">
+                <strong>{primary?.staff_title || "لا توجد إشارة مقلقة الآن"}</strong>
+                <p>{primary?.staff_body || "المؤشرات الحالية مستقرة ضمن البيانات المتاحة."}</p>
+              </div>
+              <div className="care-mini-stats">
+                <span><b>{row.high_count || 0}</b> عالية</span>
+                <span><b>{row.warning_count || 0}</b> متابعة</span>
+                <span><b>{row.positive_count || 0}</b> إيجابية</span>
+              </div>
+              <button type="button" className="care-open" onClick={() => setSelected(row)}>
+                <span>فتح التحليل</span><ChevronLeft size={17}/>
+              </button>
+            </article>
+          );
+        })}
+      </section>
+
+      {selected && (
+        <CareDetails
+          row={selected}
+          role={role}
+          onClose={() => setSelected(null)}
+          onIntervention={openIntervention}
+        />
+      )}
+
+      {intervention && (
+        <div className="care-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && setIntervention(null)}>
+          <form className="care-intervention-modal" onSubmit={saveIntervention}>
+            <div className="care-modal-head">
+              <div><span>قرار المعلم</span><h3>تسجيل تدخل تربوي</h3></div>
+              <button type="button" onClick={() => setIntervention(null)}><X size={19}/></button>
+            </div>
+            <div className="care-decision-note"><Sparkles size={17}/><span>المحرك اقترح المتابعة فقط. اختيار التدخل وتأكيد السبب هنا قرار بشري، ولا يغيّر الخطة تلقائيًا في هذه المرحلة.</span></div>
+            <label className="care-form-field">
+              <span>نوع التدخل</span>
+              <select value={intervention.type} onChange={(e) => setIntervention((v) => ({ ...v, type: e.target.value }))}>
+                <option value="stabilization_partial">تثبيت جزئي</option>
+                <option value="stabilization_full">تثبيت كامل</option>
+                <option value="pause">إيقاف مؤقت</option>
+              </select>
+            </label>
+            <label className="care-form-field">
+              <span>السبب المؤكد من المعلم</span>
+              <textarea
+                value={intervention.reason}
+                onChange={(e) => setIntervention((v) => ({ ...v, reason: e.target.value }))}
+                rows={4}
+                required
+                placeholder="اكتب السبب الذي تأكدت منه بعد مراجعة حالة الطالب…"
+              />
+            </label>
+            <div className="care-trigger"><span>المؤشر الذي فتح القرار</span><p>{intervention.trigger}</p></div>
+            <div className="care-modal-actions">
+              <button type="button" className="ghost" onClick={() => setIntervention(null)}>إلغاء</button>
+              <button type="submit" className="primary" disabled={savingIntervention || !intervention.reason.trim()}>{savingIntervention ? "جارٍ الحفظ…" : "تسجيل القرار"}</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CareMetric({ icon: Icon, label, value, note, tone = "neutral" }) {
+  return (
+    <article className={`care-metric ${tone}`}>
+      <div className="care-metric-icon"><Icon size={20}/></div>
+      <div><span>{label}</span><strong>{value}</strong><small>{note}</small></div>
+    </article>
+  );
+}
+
+function CareDetails({ row, role, onClose, onIntervention }) {
+  const analysis = row.analysis || {};
+  const metrics = analysis.metrics || {};
+  const att = metrics.attendance_14d || {};
+  const rec = metrics.recitation_recent || {};
+  const plan = analysis.plan;
+  const signals = analysis.signals || [];
+  const next = analysis.next_assignments || [];
+  const meta = careMeta(row.care_level);
+  const canApprove = role === "teacher" || role === "admin";
+
+  return (
+    <div className="care-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="care-details-modal">
+        <div className="care-modal-head">
+          <div><span>الملف التحليلي</span><h3>{row.student_name}</h3></div>
+          <button type="button" onClick={onClose}><X size={19}/></button>
+        </div>
+
+        <div className="care-detail-summary">
+          <span className={`care-badge ${meta.tone}`}>{meta.label}</span>
+          <p>{analysis.analysis_note}</p>
+        </div>
+
+        <div className="care-detail-metrics">
+          <MiniMetric label="الحضور 14 يوم" value={att.rate == null ? "—" : `${att.rate}%`} note={`${att.absent || 0} غياب • ${att.late || 0} تأخر`} />
+          <MiniMetric label="نتائج حديثة" value={rec.outcomes || 0} note={`${rec.repeat || 0} إعادة • ${rec.under || 0} أقل`} />
+          <MiniMetric label="آخر تسميع" value={rec.days_since_recitation == null ? "—" : `قبل ${rec.days_since_recitation} يوم`} note={rec.last_recitation || "لا يوجد"} />
+          <MiniMetric label="الخطة" value={plan?.status === "approved" ? `${plan.overall_percent ?? 0}%` : plan ? "غير معتمدة" : "لا توجد"} note={plan?.active_for_analysis ? `المتوقع تقريبًا ${plan.expected_percent}%` : "لا ينتج عنها إنذار تأخر"} />
+        </div>
+
+        <section className="care-detail-section">
+          <div className="care-section-title"><AlertTriangle size={18}/><div><span>الإشارات</span><h4>لماذا ظهر الطالب هنا؟</h4></div></div>
+          {!signals.length ? <div className="care-small-empty">لا توجد إشارات تحليلية حاليًا.</div> : (
+            <div className="care-signal-list">
+              {signals.map((signal) => {
+                const s = severityMeta(signal.severity);
+                return (
+                  <article className={`care-signal ${s.tone}`} key={signal.code}>
+                    <div className="care-signal-top"><strong>{signal.staff_title}</strong><span>{s.label}</span></div>
+                    <p>{signal.staff_body}</p>
+                    {signal.suggested_action && <div className="care-suggestion"><Target size={15}/><span>{signal.suggested_action}</span></div>}
+                    {canApprove && signal.teacher_decision_required && (
+                      <button type="button" onClick={() => onIntervention(row, signal)}>تسجيل قرار عناية</button>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="care-detail-section">
+          <div className="care-section-title"><BookOpenCheck size={18}/><div><span>القادم</span><h4>المطلوب القرآني القادم</h4></div></div>
+          {!next.length ? <div className="care-small-empty">لا يوجد مطلوب قادم مولّد حاليًا.</div> : (
+            <div className="care-next-list">
+              {next.map((item) => (
+                <article key={item.id}>
+                  <span>{segmentLabel(item.segment_type)} • {item.date}</span>
+                  <strong>{formatRange(item)}</strong>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {analysis.active_intervention && (
+          <section className="care-detail-section">
+            <div className="care-section-title"><CircleDot size={18}/><div><span>قرار قائم</span><h4>تدخل تربوي نشط</h4></div></div>
+            <div className="care-active-intervention">
+              <strong>{analysis.active_intervention.type}</strong>
+              <p>{analysis.active_intervention.confirmed_reason || analysis.active_intervention.trigger_summary || "تدخل مسجل"}</p>
+            </div>
+          </section>
+        )}
+
+        {!canApprove && (
+          <div className="care-supervisor-note"><CheckCircle2 size={17}/><span>المشرف يرى المؤشرات والمتابعة، أما اعتماد التدخل التعليمي فيبقى للمعلم أو مدير النظام.</span></div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value, note }) {
+  return <article><span>{label}</span><strong>{value}</strong><small>{note}</small></article>;
+}

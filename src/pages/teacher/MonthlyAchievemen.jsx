@@ -172,14 +172,6 @@ function getAcceptedLessonFaces(record) {
     return 0;
   }
 
-  /*
-    السجلات الجديدة تحسب lesson_faces_manual من نطاق المصحف
-    داخل قاعدة البيانات. نعطيه الأولوية حتى لا نعود لمعادلة /15 القديمة.
-  */
-  if (record?.lesson_faces_manual !== null && record?.lesson_faces_manual !== undefined) {
-    return Number(record.lesson_faces_manual || 0);
-  }
-
   const amount = Number(record?.lesson_amount_value || 0);
   const unit = record?.lesson_amount_unit;
 
@@ -187,7 +179,11 @@ function getAcceptedLessonFaces(record) {
     return unit === "lines" ? amount / 15 : amount;
   }
 
-  return Number(record?.lesson_faces || 0);
+  return Number(
+    record?.lesson_faces_manual ??
+      record?.lesson_faces ??
+      0
+  );
 }
 
 function getAcceptedReviewFaces(record) {
@@ -196,6 +192,53 @@ function getAcceptedReviewFaces(record) {
   }
 
   return Number(record?.review_faces || 0);
+}
+
+function acceptedSegmentFaces(
+  segment
+) {
+  if (
+    segment?.completion_status ===
+      "repeat" ||
+    String(
+      segment?.evaluation || ""
+    ).trim() === "إعادة"
+  ) {
+    return 0;
+  }
+
+  const faces =
+    Number(
+      segment?.actual_faces ||
+        0
+    );
+
+  if (
+    Number.isFinite(faces) &&
+    faces > 0
+  ) {
+    return roundFaces(
+      faces
+    );
+  }
+
+  const lines =
+    Number(
+      segment
+        ?.actual_quran_lines ||
+        0
+    );
+
+  if (
+    Number.isFinite(lines) &&
+    lines > 0
+  ) {
+    return roundFaces(
+      lines / 15
+    );
+  }
+
+  return 0;
 }
 
 function normalizeArabicNumberText(value) {
@@ -836,63 +879,6 @@ function selectExistingProgress({
   );
 }
 
-
-/* =========================================================
-   أيام التسميع + الإجازات
-========================================================= */
-
-const RECITATION_DAY_META = [
-  { value: "sunday", jsDay: 0 },
-  { value: "monday", jsDay: 1 },
-  { value: "tuesday", jsDay: 2 },
-  { value: "wednesday", jsDay: 3 },
-  { value: "thursday", jsDay: 4 },
-  { value: "friday", jsDay: 5 },
-  { value: "saturday", jsDay: 6 },
-];
-
-function normalizeRecitationDays(value) {
-  if (!Array.isArray(value)) return [];
-
-  return value.filter((day) =>
-    RECITATION_DAY_META.some((item) => item.value === day)
-  );
-}
-
-function countScheduledSessions(period, recitationDays, holidayDates = []) {
-  const days = normalizeRecitationDays(recitationDays);
-
-  if (!period || days.length === 0) return 0;
-
-  const allowed = new Set(
-    RECITATION_DAY_META
-      .filter((item) => days.includes(item.value))
-      .map((item) => item.jsDay)
-  );
-
-  const excluded = holidayDates instanceof Set
-    ? holidayDates
-    : new Set((holidayDates || []).filter(Boolean));
-
-  const cursor = parseLocalDate(period.start);
-  const end = parseLocalDate(period.end);
-  let count = 0;
-
-  while (cursor <= end) {
-    const dateText = getLocalDate(cursor);
-
-    if (
-      allowed.has(cursor.getDay()) &&
-      !excluded.has(dateText)
-    ) {
-      count += 1;
-    }
-
-    cursor.setDate(cursor.getDate() + 1);
-  }
-
-  return count;
-}
 
 /* =========================================================
    Smart Monthly Analysis
@@ -1607,7 +1593,7 @@ export default function MonthlyAchievement() {
          Monthly plans + Attendance + Noorania
       ----------------------------------------- */
 
-      const [plansResult, attendanceResult, nooraniaResult, holidaysResult] = await Promise.all([
+      const [plansResult, attendanceResult, nooraniaResult] = await Promise.all([
         supabase
           .from("monthly_plans")
           .select(`
@@ -1639,27 +1625,15 @@ export default function MonthlyAchievement() {
           .in("student_id", studentIds)
           .gte("recitation_date", period.start)
           .lte("recitation_date", period.end),
-
-        supabase
-          .from("attendance_holidays")
-          .select("holiday_date")
-          .eq("halaqa_id", Number(selectedHalaqa))
-          .gte("holiday_date", period.start)
-          .lte("holiday_date", period.end),
       ]);
 
       if (plansResult.error) throw plansResult.error;
       if (attendanceResult.error) throw attendanceResult.error;
       if (nooraniaResult.error) throw nooraniaResult.error;
-      if (holidaysResult.error) throw holidaysResult.error;
 
       const planMap = new Map((plansResult.data || []).map((item) => [Number(item.student_id), item]));
       const attendanceRows = attendanceResult.data || [];
       const nooraniaRows = nooraniaResult.data || [];
-      const holidayDates = (holidaysResult.data || [])
-        .map((item) => item.holiday_date)
-        .filter(Boolean);
-      const holidayDateSet = new Set(holidayDates);
 
       /* -----------------------------------------
          Recitations
@@ -1751,6 +1725,97 @@ export default function MonthlyAchievement() {
       );
 
       /* -----------------------------------------
+         Structured recitation segments
+
+         عند وجود المسارات الجديدة:
+         نستخدم actual_faces / actual_quran_lines.
+         وإذا كان السجل قديمًا بدون segments
+         نرجع للحساب القديم فقط لذلك السجل.
+      ----------------------------------------- */
+
+      const recitationIds =
+        (
+          recitations || []
+        )
+          .map(
+            (record) =>
+              Number(
+                record.id
+              )
+          )
+          .filter(Boolean);
+
+      let recitationSegments = [];
+
+      if (
+        recitationIds.length >
+        0
+      ) {
+        const {
+          data:
+            segmentRows,
+          error:
+            segmentsError,
+        } =
+          await supabase
+            .from(
+              "recitation_segments"
+            )
+            .select(`
+              id,
+              recitation_id,
+              student_id,
+              segment_type,
+              actual_quran_lines,
+              actual_faces,
+              evaluation,
+              completion_status
+            `)
+            .in(
+              "recitation_id",
+              recitationIds
+            );
+
+        if (
+          segmentsError
+        ) {
+          console.error(
+            "LOAD ACHIEVEMENT SEGMENTS:",
+            segmentsError
+          );
+        } else {
+          recitationSegments =
+            segmentRows || [];
+        }
+      }
+
+      const segmentsByRecitation =
+        new Map();
+
+      recitationSegments.forEach(
+        (segment) => {
+          const key =
+            Number(
+              segment.recitation_id
+            );
+
+          const current =
+            segmentsByRecitation.get(
+              key
+            ) || [];
+
+          current.push(
+            segment
+          );
+
+          segmentsByRecitation.set(
+            key,
+            current
+          );
+        }
+      );
+
+      /* -----------------------------------------
          Aggregate
       ----------------------------------------- */
 
@@ -1779,11 +1844,64 @@ export default function MonthlyAchievement() {
               lastDate: null,
             };
 
-          const lesson =
-            getAcceptedLessonFaces(record);
+          const structured =
+            segmentsByRecitation.get(
+              Number(
+                record.id
+              )
+            ) || [];
 
-          const revision =
-            getAcceptedReviewFaces(record);
+          let lesson = 0;
+          let revision = 0;
+
+          if (
+            structured.length >
+            0
+          ) {
+            lesson =
+              structured
+                .filter(
+                  (segment) =>
+                    segment.segment_type ===
+                    "lesson"
+                )
+                .reduce(
+                  (sum, segment) =>
+                    sum +
+                    acceptedSegmentFaces(
+                      segment
+                    ),
+                  0
+                );
+
+            revision =
+              structured
+                .filter(
+                  (segment) =>
+                    segment.segment_type ===
+                      "revision" ||
+                    segment.segment_type ===
+                      "stabilization_review"
+                )
+                .reduce(
+                  (sum, segment) =>
+                    sum +
+                    acceptedSegmentFaces(
+                      segment
+                    ),
+                  0
+                );
+          } else {
+            lesson =
+              getAcceptedLessonFaces(
+                record
+              );
+
+            revision =
+              getAcceptedReviewFaces(
+                record
+              );
+          }
 
           old.sessions += 1;
 
@@ -1917,32 +2035,7 @@ export default function MonthlyAchievement() {
               const monthlyPlan = planMap.get(studentId) || null;
               const memTarget = roundFaces(monthlyPlan?.memorization_target_faces || 0);
               const revTarget = roundFaces(monthlyPlan?.revision_target_faces || 0);
-
-              const recitationDays = normalizeRecitationDays(
-                monthlyPlan?.recitation_days_snapshot
-              );
-
-              const scheduledSessionsBeforeHolidays =
-                recitationDays.length > 0
-                  ? countScheduledSessions(period, recitationDays)
-                  : Number(monthlyPlan?.planned_sessions || 0);
-
-              const effectiveScheduledSessions =
-                recitationDays.length > 0
-                  ? countScheduledSessions(period, recitationDays, holidayDateSet)
-                  : Number(monthlyPlan?.planned_sessions || 0);
-
-              const holidaySessions =
-                Math.max(
-                  scheduledSessionsBeforeHolidays - effectiveScheduledSessions,
-                  0
-                );
-
-              /*
-                الإنجاز والتحليل يعتمدان عدد الجلسات الفعلية بعد
-                خصم الإجازات التي وقعت فعلًا على أحد أيام التسميع.
-              */
-              const plannedSessions = effectiveScheduledSessions;
+              const plannedSessions = Number(monthlyPlan?.planned_sessions || 0);
 
               const studentAttendance = attendanceRows.filter(
                 (item) => Number(item.student_id) === studentId
@@ -2091,8 +2184,6 @@ export default function MonthlyAchievement() {
                 memorization_target_faces: memTarget,
                 revision_target_faces: revTarget,
                 planned_sessions: plannedSessions,
-                scheduled_sessions_before_holidays: scheduledSessionsBeforeHolidays,
-                holiday_sessions: holidaySessions,
                 recitation_days_snapshot: monthlyPlan?.recitation_days_snapshot || [],
                 memorization_daily_amount: monthlyPlan?.memorization_daily_amount || 0,
                 memorization_daily_unit: monthlyPlan?.memorization_daily_unit || "lines",
@@ -3666,11 +3757,8 @@ export default function MonthlyAchievement() {
             </h1>
 
             <p>
-              احتساب فعلي من
-              جلسات التسميع، مع
-              إمكانية إضافة الأوجه
-              غير المسجلة يدويًا
-              وتوثيق مصدر كل رقم.
+              احتساب فعلي من جلسات التسميع ومسارات المحرك الجديدة،
+              مع رجوع آمن للسجلات القديمة وإمكانية توثيق أي إضافة يدوية.
             </p>
           </div>
         </div>
@@ -4499,16 +4587,7 @@ function StudentAchievementCard({
       <div className="achievement-summary-footer">
         <div>
           <History size={14} />
-          <span>{row.smart_total_sessions ?? row.source_recitations_count ?? 0} جلسة تسميع فعلية</span>
-        </div>
-        <div className="effective-plan-sessions">
-          <CalendarDays size={14} />
-          <span>
-            الخطة: {row.planned_sessions || 0} جلسة
-            {Number(row.holiday_sessions || 0) > 0
-              ? ` • خُصم ${row.holiday_sessions} إجازة`
-              : ""}
-          </span>
+          <span>{row.smart_total_sessions ?? row.source_recitations_count ?? 0} جلسة تسميع</span>
         </div>
         <button type="button" onClick={onDetails}>
           <Search size={15} />
@@ -4875,9 +4954,7 @@ function DetailsModal({
             <div><span>غياب</span><strong>{student.smart_delay?.absent || 0}</strong></div>
             <div><span>غياب بعذر</span><strong>{student.smart_delay?.excused || 0}</strong></div>
             <div><span>إعادات</span><strong>{student.smart_delay?.repeats || 0}</strong></div>
-            <div><span>الجلسات المنفذة</span><strong>{student.smart_total_sessions ?? student.source_recitations_count ?? 0}</strong></div>
-            <div><span>جلسات الخطة الفعلية</span><strong>{student.planned_sessions || 0}</strong></div>
-            <div><span>جلسات الإجازة المخصومة</span><strong>{student.holiday_sessions || 0}</strong></div>
+            <div><span>الجلسات</span><strong>{student.smart_total_sessions ?? student.source_recitations_count ?? 0}</strong></div>
           </div>
         </div>
 
@@ -7387,7 +7464,7 @@ function MonthlyStyles() {
         .smart-delay-summary span { display:block; font-size:9px; font-weight:800; opacity:.78; }
         .smart-delay-summary strong { display:block; margin-top:3px; font-size:10px; line-height:1.55; font-weight:900; }
 
-        .effective-plan-sessions { color:#8a6a10; }\n      .achievement-summary-footer { display:flex; align-items:center; justify-content:space-between; gap:9px; margin-top:10px; padding-top:10px; border-top:1px solid #edf1ef; }
+        .achievement-summary-footer { display:flex; align-items:center; justify-content:space-between; gap:9px; margin-top:10px; padding-top:10px; border-top:1px solid #edf1ef; }
         .achievement-summary-footer > div { display:flex; align-items:center; gap:5px; color:#778982; font-size:10px; font-weight:750; }
         .achievement-summary-footer button { min-height:35px; display:inline-flex; align-items:center; gap:5px; padding:0 12px; border:0; border-radius:9px; background:#0f4c45; color:#fff; font-family:inherit; font-size:10px; font-weight:900; cursor:pointer; }
 

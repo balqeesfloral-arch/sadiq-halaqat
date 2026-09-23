@@ -304,6 +304,9 @@ export default function Attendance() {
   const [holidayHijriYear, setHolidayHijriYear] = useState(initialHijri.year);
   const [holidayHijriMonth, setHolidayHijriMonth] = useState(initialHijri.month);
   const [holidayHijriDay, setHolidayHijriDay] = useState(initialHijri.day);
+  const [holidayEndHijriYear, setHolidayEndHijriYear] = useState(initialHijri.year);
+  const [holidayEndHijriMonth, setHolidayEndHijriMonth] = useState(initialHijri.month);
+  const [holidayEndHijriDay, setHolidayEndHijriDay] = useState(initialHijri.day);
   const [holidaySaving, setHolidaySaving] = useState(false);
 
   /* =====================================================
@@ -971,7 +974,7 @@ export default function Attendance() {
 
     const { data, error } = await supabase
       .from("attendance_holidays")
-      .select("id, halaqa_id, holiday_date, title, created_at")
+      .select("id, halaqa_id, holiday_date, title, created_at, holiday_group_id, range_start, range_end")
       .eq("halaqa_id", Number(selectedHalaqa))
       .order("holiday_date", { ascending: false });
 
@@ -989,46 +992,113 @@ export default function Attendance() {
     [holidays, selectedDate]
   );
 
+  const groupedHolidays = useMemo(() => {
+    const groups = new Map();
+
+    (holidays || []).forEach((item) => {
+      const key = item.holiday_group_id || `single-${item.id}`;
+      const startDate = item.range_start || item.holiday_date;
+      const endDate = item.range_end || item.holiday_date;
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          holiday_group_id: item.holiday_group_id || null,
+          id: item.id,
+          title: item.title || "إجازة",
+          start_date: startDate,
+          end_date: endDate,
+          days: 0,
+        });
+      }
+
+      groups.get(key).days += 1;
+    });
+
+    return Array.from(groups.values()).sort((a, b) =>
+      String(b.start_date || "").localeCompare(String(a.start_date || ""))
+    );
+  }, [holidays]);
+
+  const holidayStartGregorian = useMemo(
+    () => hijriToGregorian(
+      holidayHijriYear,
+      holidayHijriMonth,
+      holidayHijriDay
+    ),
+    [holidayHijriYear, holidayHijriMonth, holidayHijriDay]
+  );
+
+  const holidayEndGregorian = useMemo(
+    () => hijriToGregorian(
+      holidayEndHijriYear,
+      holidayEndHijriMonth,
+      holidayEndHijriDay
+    ),
+    [holidayEndHijriYear, holidayEndHijriMonth, holidayEndHijriDay]
+  );
+
+  const holidayRangeDays = useMemo(() => {
+    if (!holidayStartGregorian || !holidayEndGregorian) return 0;
+
+    const startDate = parseLocalDate(holidayStartGregorian);
+    const endDate = parseLocalDate(holidayEndGregorian);
+
+    if (endDate < startDate) return 0;
+
+    return Math.floor((endDate - startDate) / 86400000) + 1;
+  }, [holidayStartGregorian, holidayEndGregorian]);
+
   async function addHoliday() {
     if (!selectedHalaqa) {
       showToast("اختر الحلقة أولًا", "error");
       return;
     }
 
-    const gregorianDate = hijriToGregorian(
-      holidayHijriYear,
-      holidayHijriMonth,
-      holidayHijriDay
-    );
+    if (!holidayStartGregorian || !holidayEndGregorian) {
+      showToast("أحد تاريخي الإجازة غير صحيح", "error");
+      return;
+    }
 
-    if (!gregorianDate) {
-      showToast("التاريخ الهجري المحدد غير صحيح", "error");
+    if (holidayEndGregorian < holidayStartGregorian) {
+      showToast("تاريخ نهاية الإجازة يجب أن يكون بعد تاريخ البداية", "error");
       return;
     }
 
     setHolidaySaving(true);
+
     try {
-      const { error } = await supabase
-        .from("attendance_holidays")
-        .insert({
-          halaqa_id: Number(selectedHalaqa),
-          holiday_date: gregorianDate,
-          title: holidayTitle.trim() || "إجازة",
-          created_by: teacher?.id || null,
-        });
+      const { data, error } = await supabase.rpc(
+        "create_attendance_holiday_range",
+        {
+          p_halaqa_id: Number(selectedHalaqa),
+          p_start: holidayStartGregorian,
+          p_end: holidayEndGregorian,
+          p_title: holidayTitle.trim() || "إجازة",
+        }
+      );
 
       if (error) throw error;
 
+      const insertedDays = Number(data?.[0]?.inserted_days || holidayRangeDays || 1);
+
       showToast(
-        `تمت إضافة الإجازة: ${formatHijriDate(gregorianDate)}`,
+        insertedDays > 1
+          ? `تمت إضافة الإجازة لمدة ${insertedDays} أيام`
+          : `تمت إضافة الإجازة: ${formatHijriDate(holidayStartGregorian)}`,
         "success"
       );
+
       await loadHolidays();
     } catch (error) {
+      const message = String(error?.message || "");
+
       showToast(
-        error?.code === "23505"
-          ? "هذا التاريخ مسجل كإجازة مسبقًا"
-          : error.message || "تعذر إضافة الإجازة",
+        message.includes("HOLIDAY_RANGE_OVERLAP")
+          ? "يوجد يوم داخل هذه الفترة مسجل كإجازة مسبقًا"
+          : message.includes("HOLIDAY_RANGE_REVERSED")
+            ? "تاريخ نهاية الإجازة يسبق تاريخ البداية"
+            : error.message || "تعذر إضافة الإجازة",
         "error"
       );
     } finally {
@@ -1036,20 +1106,40 @@ export default function Attendance() {
     }
   }
 
-  async function removeHoliday(id) {
-    if (!window.confirm("هل تريد حذف هذه الإجازة؟")) return;
+  async function removeHoliday(holiday) {
+    const isRange =
+      Boolean(holiday?.holiday_group_id) &&
+      String(holiday?.start_date || "") !== String(holiday?.end_date || "");
 
-    const { error } = await supabase
+    if (
+      !window.confirm(
+        isRange
+          ? `هل تريد حذف فترة الإجازة كاملة من ${formatHijriDate(holiday.start_date)} إلى ${formatHijriDate(holiday.end_date)}؟`
+          : "هل تريد حذف هذه الإجازة؟"
+      )
+    ) {
+      return;
+    }
+
+    let query = supabase
       .from("attendance_holidays")
       .delete()
-      .eq("id", id);
+      .eq("halaqa_id", Number(selectedHalaqa));
+
+    if (holiday?.holiday_group_id) {
+      query = query.eq("holiday_group_id", holiday.holiday_group_id);
+    } else {
+      query = query.eq("id", holiday?.id);
+    }
+
+    const { error } = await query;
 
     if (error) {
       showToast(error.message || "تعذر حذف الإجازة", "error");
       return;
     }
 
-    showToast("تم حذف الإجازة", "success");
+    showToast(isRange ? "تم حذف فترة الإجازة" : "تم حذف الإجازة", "success");
     await loadHolidays();
   }
 
@@ -1058,6 +1148,9 @@ export default function Attendance() {
     setHolidayHijriYear(hijri.year);
     setHolidayHijriMonth(hijri.month);
     setHolidayHijriDay(hijri.day);
+    setHolidayEndHijriYear(hijri.year);
+    setHolidayEndHijriMonth(hijri.month);
+    setHolidayEndHijriDay(hijri.day);
     setShowHolidays(true);
   }
 
@@ -2857,40 +2950,89 @@ export default function Attendance() {
                 <input value={holidayTitle} onChange={(e) => setHolidayTitle(e.target.value)} placeholder="مثال: إجازة نهاية الأسبوع" />
               </label>
 
-              <div className="hijri-picker-label">التاريخ الهجري (أم القرى)</div>
-              <div className="hijri-picker-grid">
-                <select value={holidayHijriDay} onChange={(e) => setHolidayHijriDay(Number(e.target.value))}>
-                  {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => <option key={day} value={day}>{day}</option>)}
-                </select>
-                <select value={holidayHijriMonth} onChange={(e) => setHolidayHijriMonth(Number(e.target.value))}>
-                  {HIJRI_MONTHS.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
-                </select>
-                <select value={holidayHijriYear} onChange={(e) => setHolidayHijriYear(Number(e.target.value))}>
-                  {Array.from({ length: 7 }, (_, i) => initialHijri.year - 2 + i).map((year) => <option key={year} value={year}>{year} هـ</option>)}
-                </select>
+              <div className="hijri-picker-label">فترة الإجازة بالتاريخ الهجري (أم القرى)</div>
+
+              <div className="holiday-range-pickers">
+                <div className="holiday-range-block">
+                  <span className="holiday-range-caption">من</span>
+                  <div className="hijri-picker-grid">
+                    <select value={holidayHijriDay} onChange={(e) => setHolidayHijriDay(Number(e.target.value))}>
+                      {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => <option key={day} value={day}>{day}</option>)}
+                    </select>
+                    <select value={holidayHijriMonth} onChange={(e) => setHolidayHijriMonth(Number(e.target.value))}>
+                      {HIJRI_MONTHS.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
+                    </select>
+                    <select value={holidayHijriYear} onChange={(e) => setHolidayHijriYear(Number(e.target.value))}>
+                      {Array.from({ length: 7 }, (_, i) => initialHijri.year - 2 + i).map((year) => <option key={year} value={year}>{year} هـ</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="holiday-range-block">
+                  <span className="holiday-range-caption">إلى</span>
+                  <div className="hijri-picker-grid">
+                    <select value={holidayEndHijriDay} onChange={(e) => setHolidayEndHijriDay(Number(e.target.value))}>
+                      {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => <option key={day} value={day}>{day}</option>)}
+                    </select>
+                    <select value={holidayEndHijriMonth} onChange={(e) => setHolidayEndHijriMonth(Number(e.target.value))}>
+                      {HIJRI_MONTHS.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
+                    </select>
+                    <select value={holidayEndHijriYear} onChange={(e) => setHolidayEndHijriYear(Number(e.target.value))}>
+                      {Array.from({ length: 7 }, (_, i) => initialHijri.year - 2 + i).map((year) => <option key={year} value={year}>{year} هـ</option>)}
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              <div className="holiday-gregorian-preview">
-                يُحفظ في الجدول بالميلادي: <strong>{hijriToGregorian(holidayHijriYear, holidayHijriMonth, holidayHijriDay) || "تاريخ غير صالح"}</strong>
+              <div className={`holiday-gregorian-preview ${holidayEndGregorian && holidayStartGregorian && holidayEndGregorian < holidayStartGregorian ? "invalid" : ""}`}>
+                <span>الميلادي:</span>
+                <strong>
+                  {holidayStartGregorian || "تاريخ غير صالح"}
+                  {holidayEndGregorian && holidayEndGregorian !== holidayStartGregorian
+                    ? ` ← ${holidayEndGregorian}`
+                    : ""}
+                </strong>
+                {holidayRangeDays > 0 && (
+                  <small>{holidayRangeDays} {holidayRangeDays === 1 ? "يوم" : "أيام"}</small>
+                )}
               </div>
 
-              <button type="button" className="holiday-save-btn" onClick={addHoliday} disabled={holidaySaving}>
+              <button
+                type="button"
+                className="holiday-save-btn"
+                onClick={addHoliday}
+                disabled={
+                  holidaySaving ||
+                  !holidayStartGregorian ||
+                  !holidayEndGregorian ||
+                  holidayEndGregorian < holidayStartGregorian
+                }
+              >
                 {holidaySaving ? <Loader2 size={16} className="spin" /> : <CalendarOff size={16} />}
-                إضافة الإجازة
+                {holidayRangeDays > 1 ? "إضافة فترة الإجازة" : "إضافة الإجازة"}
               </button>
             </div>
 
             <div className="holiday-list">
-              {holidays.length === 0 ? (
+              {groupedHolidays.length === 0 ? (
                 <div className="holiday-empty">لا توجد إجازات مسجلة لهذه الحلقة.</div>
-              ) : holidays.map((holiday) => (
-                <div className="holiday-item" key={holiday.id}>
+              ) : groupedHolidays.map((holiday) => (
+                <div className="holiday-item" key={holiday.key}>
                   <div>
                     <strong>{holiday.title}</strong>
-                    <span>{formatHijriDate(holiday.holiday_date)}</span>
-                    <small>{formatGregorianDate(holiday.holiday_date)}</small>
+                    <span>
+                      {holiday.start_date === holiday.end_date
+                        ? formatHijriDate(holiday.start_date)
+                        : `${formatHijriDate(holiday.start_date)} ← ${formatHijriDate(holiday.end_date)}`}
+                    </span>
+                    <small>
+                      {holiday.start_date === holiday.end_date
+                        ? formatGregorianDate(holiday.start_date)
+                        : `${formatGregorianDate(holiday.start_date)} ← ${formatGregorianDate(holiday.end_date)}`}
+                      {holiday.days > 1 ? ` • ${holiday.days} أيام` : ""}
+                    </small>
                   </div>
-                  <button type="button" onClick={() => removeHoliday(holiday.id)} title="حذف الإجازة"><Trash2 size={15} /></button>
+                  <button type="button" onClick={() => removeHoliday(holiday)} title="حذف الإجازة"><Trash2 size={15} /></button>
                 </div>
               ))}
             </div>
@@ -3702,12 +3844,17 @@ function PageStyles() {
         .holiday-modal-head strong { font-size:calc(16px * var(--app-font-scale,1)); color:var(--app-color-173d2b,#173d2b); }
         .holiday-modal-head button, .holiday-item button { width:34px; height:34px; border:1px solid #e2e9e5; border-radius:calc(10px * var(--app-radius-scale,1)); background:#fff; color:#5f6c64; display:grid; place-items:center; cursor:pointer; }
         .holiday-form { padding:calc(16px * var(--app-density,1)) calc(20px * var(--app-density,1)); border-bottom:1px solid #edf1ef; }
+        .holiday-range-pickers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:calc(12px * var(--app-density,1)); margin-top:calc(8px * var(--app-density,1)); }
+        .holiday-range-block { padding:calc(10px * var(--app-density,1)); border:1px solid #e5ece8; border-radius:calc(12px * var(--app-radius-scale,1)); background:#fbfdfc; }
+        .holiday-range-caption { display:block; margin-bottom:calc(7px * var(--app-density,1)); font-size:calc(9px * var(--app-font-scale,1)); font-weight:950; color:var(--app-color-0f5132,#0f5132); }
         .holiday-form label { display:flex; flex-direction:column; gap:calc(6px * var(--app-density,1)); }
         .holiday-form label span, .hijri-picker-label { font-size:calc(9px * var(--app-font-scale,1)); font-weight:900; color:#53645a; }
         .holiday-form input, .holiday-form select { width:100%; height:40px; border:1px solid #dfe7e2; border-radius:calc(10px * var(--app-radius-scale,1)); padding:0 calc(11px * var(--app-density,1)); background:#fff; color:var(--app-color-173d2b,#173d2b); font-family:inherit; outline:none; }
         .hijri-picker-label { margin-top:14px; margin-bottom:6px; }
         .hijri-picker-grid { display:grid; grid-template-columns:.7fr 1.3fr 1fr; gap:calc(8px * var(--app-density,1)); }
-        .holiday-gregorian-preview { margin-top:9px; padding:calc(9px * var(--app-density,1)) calc(11px * var(--app-density,1)); border-radius:calc(9px * var(--app-radius-scale,1)); background:#f5f8f6; color:#6b7770; font-size:calc(9px * var(--app-font-scale,1)); }
+        .holiday-gregorian-preview { margin-top:9px; padding:calc(9px * var(--app-density,1)) calc(11px * var(--app-density,1)); border-radius:calc(9px * var(--app-radius-scale,1)); background:#f5f8f6; color:#6b7770; font-size:calc(9px * var(--app-font-scale,1)); display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+        .holiday-gregorian-preview small { margin-inline-start:auto; color:#8a6a10; font-weight:900; }
+        .holiday-gregorian-preview.invalid { background:#fff3f2; color:#a43b35; }
         .holiday-save-btn { margin-top:12px; min-height:40px; padding:0 calc(15px * var(--app-density,1)); border:0; border-radius:calc(11px * var(--app-radius-scale,1)); background:var(--app-color-0f5132,#0f5132); color:#fff; display:inline-flex; align-items:center; justify-content:center; gap:calc(7px * var(--app-density,1)); font-family:inherit; font-size:calc(10px * var(--app-font-scale,1)); font-weight:900; cursor:pointer; }
         .holiday-save-btn:disabled { opacity:.55; cursor:wait; }
         .holiday-list { padding:calc(10px * var(--app-density,1)) calc(20px * var(--app-density,1)) calc(18px * var(--app-density,1)); display:grid; gap:calc(7px * var(--app-density,1)); }
@@ -5430,6 +5577,7 @@ function PageStyles() {
           .attendance-hero-actions { width:100%; }
           .attendance-hero-actions .attendance-refresh { flex:1; }
           .hijri-picker-grid { grid-template-columns:1fr; }
+          .holiday-range-pickers { grid-template-columns:1fr; }
           .holiday-modal { max-height:88vh; }
         }
       `}

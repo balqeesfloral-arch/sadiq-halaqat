@@ -10,7 +10,9 @@ import {
   BookOpen,
   CalendarDays,
   CheckCircle2,
+  CircleAlert,
   ChevronDown,
+  ChevronLeft,
   Clock3,
   Edit3,
   FileText,
@@ -19,6 +21,7 @@ import {
   Loader2,
   MessageSquareText,
   Plus,
+  Play,
   RefreshCw,
   Search,
   Sparkles,
@@ -26,6 +29,7 @@ import {
   Trash2,
   Trophy,
   UserRound,
+  UserX,
   X,
   BookMarked,
   Hash,
@@ -138,6 +142,14 @@ function createQuranForm(defaultAmountType = "") {
     review_to_ayah: "",
     review_evaluation: "",
     review_faces: "",
+  };
+}
+
+function createCompletionModes() {
+  return {
+    lesson: "exact",
+    side1: "exact",
+    review: "exact",
   };
 }
 
@@ -303,6 +315,55 @@ export default function Recitations() {
     setPlanSuggestion,
   ] = useState(null);
 
+  const [
+    rangeMetrics,
+    setRangeMetrics,
+  ] = useState({
+    lesson: null,
+    side1: null,
+    side2: null,
+    review: null,
+  });
+
+  const [
+    rangeMetricsLoading,
+    setRangeMetricsLoading,
+  ] = useState(false);
+
+  const [
+    completionModes,
+    setCompletionModes,
+  ] = useState(createCompletionModes);
+
+  /* =====================================================
+     جلسة الحلقة القابلة للاستئناف
+  ===================================================== */
+
+  const [
+    activeSession,
+    setActiveSession,
+  ] = useState(null);
+
+  const [
+    sessionStudents,
+    setSessionStudents,
+  ] = useState([]);
+
+  const [
+    sessionBusy,
+    setSessionBusy,
+  ] = useState(false);
+
+  const [
+    sessionLauncherHalaqa,
+    setSessionLauncherHalaqa,
+  ] = useState("");
+
+  const [
+    sessionLauncherDate,
+    setSessionLauncherDate,
+  ] = useState(getLocalDate());
+
   /* =====================================================
      سجل العمليات - Filters
   ===================================================== */
@@ -335,6 +396,15 @@ export default function Recitations() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (
+      !sessionLauncherHalaqa &&
+      halaqat.length === 1
+    ) {
+      setSessionLauncherHalaqa(String(halaqat[0].id));
+    }
+  }, [halaqat, sessionLauncherHalaqa]);
+
   /* =====================================================
      منع Scroll خلف Modal
   ===================================================== */
@@ -355,6 +425,95 @@ export default function Recitations() {
         "";
     };
   }, [formOpen]);
+
+  /* =====================================================
+     جلسة الحلقة - تحميل / استئناف
+  ===================================================== */
+
+  async function loadActiveSessionForTeacher(
+    teacherId,
+    knownProfiles = []
+  ) {
+    if (!teacherId) {
+      setActiveSession(null);
+      setSessionStudents([]);
+      return null;
+    }
+
+    const { data: session, error } = await supabase
+      .from("recitation_sessions")
+      .select("*")
+      .eq("teacher_id", Number(teacherId))
+      .eq("session_type", "quran")
+      .eq("status", "active")
+      .order("last_activity_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!session) {
+      setActiveSession(null);
+      setSessionStudents([]);
+      return null;
+    }
+
+    const { data: rows, error: rowsError } = await supabase
+      .from("recitation_session_students")
+      .select("*")
+      .eq("session_id", Number(session.id))
+      .order("position", { ascending: true });
+
+    if (rowsError) throw rowsError;
+
+    const baseProfiles = Array.isArray(knownProfiles)
+      ? knownProfiles
+      : [];
+
+    const profileMap = new Map(
+      baseProfiles.map((profile) => [
+        Number(profile.id),
+        profile,
+      ])
+    );
+
+    const missingIds = [
+      ...new Set(
+        (rows || [])
+          .map((row) => Number(row.student_id))
+          .filter((id) => id && !profileMap.has(id))
+      ),
+    ];
+
+    if (missingIds.length > 0) {
+      const { data: missingProfiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, user_number, phone, status")
+        .in("id", missingIds);
+
+      if (profilesError) throw profilesError;
+
+      (missingProfiles || []).forEach((profile) => {
+        profileMap.set(Number(profile.id), profile);
+      });
+    }
+
+    const preparedRows = (rows || []).map((row) => ({
+      ...row,
+      student_profile:
+        profileMap.get(Number(row.student_id)) || null,
+    }));
+
+    setActiveSession(session);
+    setSessionStudents(preparedRows);
+    setSessionLauncherHalaqa(String(session.halaqa_id));
+    setSessionLauncherDate(session.session_date || getLocalDate());
+
+    return {
+      session,
+      students: preparedRows,
+    };
+  }
 
   /* =====================================================
      تحميل البيانات
@@ -898,6 +1057,11 @@ export default function Recitations() {
         currentStudents
       );
 
+      await loadActiveSessionForTeacher(
+        teacherProfile.id,
+        profileRows
+      );
+
     } catch (error) {
       console.error(
         "LOAD RECITATIONS:",
@@ -1266,13 +1430,14 @@ export default function Recitations() {
     ]);
 
   /* =====================================================
-     الخطة الشهرية → افتراضيات التسميع
+     الخطة الشهرية → المطلوب القرآني الفعلي
   ===================================================== */
 
   useEffect(() => {
     if (
       editing ||
       !formOpen ||
+      formType !== "quran" ||
       !commonForm.student_id ||
       !commonForm.halaqa_id ||
       !commonForm.recitation_date
@@ -1284,6 +1449,49 @@ export default function Recitations() {
     }
 
     let active = true;
+
+    async function rpcOne(name, args) {
+      const { data, error } = await supabase.rpc(name, args);
+      if (error) throw error;
+      return Array.isArray(data) ? data[0] || null : data || null;
+    }
+
+    async function generateRange({
+      startSurah,
+      startAyah,
+      amount,
+      unit,
+      limitSurah,
+      limitAyah,
+    }) {
+      if (
+        !startSurah ||
+        !startAyah ||
+        !limitSurah ||
+        !limitAyah ||
+        Number(amount || 0) <= 0
+      ) {
+        return null;
+      }
+
+      return rpcOne("quran_generate_assignment", {
+        p_start_surah: startSurah,
+        p_start_ayah: Number(startAyah),
+        p_target_amount: Number(amount),
+        p_target_unit: unit || "lines",
+        p_limit_surah: limitSurah,
+        p_limit_ayah: Number(limitAyah),
+      });
+    }
+
+    async function nextPosition(surahName, ayahNumber) {
+      if (!surahName || !ayahNumber) return null;
+
+      return rpcOne("quran_next_ayah", {
+        p_surah: surahName,
+        p_ayah: Number(ayahNumber),
+      });
+    }
 
     async function loadPlanSuggestion() {
       try {
@@ -1302,6 +1510,14 @@ export default function Recitations() {
             memorization_daily_unit,
             revision_daily_amount,
             revision_daily_unit,
+            memorization_from_surah,
+            memorization_from_ayah,
+            memorization_to_surah,
+            memorization_to_ayah,
+            revision_from_surah,
+            revision_from_ayah,
+            revision_to_surah,
+            revision_to_ayah,
             memorization_target_faces,
             revision_target_faces,
             planned_sessions,
@@ -1365,6 +1581,142 @@ export default function Recitations() {
         const revisionUnit =
           plan.revision_daily_unit || revFallback.unit || "faces";
 
+        const { data: history, error: historyError } = await supabase
+          .from("recitations")
+          .select(`
+            id,
+            recitation_date,
+            from_surah,
+            from_ayah,
+            to_surah,
+            to_ayah,
+            lesson_evaluation,
+            review_surah,
+            review_from_ayah,
+            review_to_surah,
+            review_to_ayah,
+            review_evaluation
+          `)
+          .eq("student_id", Number(commonForm.student_id))
+          .eq("halaqa_id", Number(commonForm.halaqa_id))
+          .lte("recitation_date", commonForm.recitation_date)
+          .order("recitation_date", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(30);
+
+        if (historyError) throw historyError;
+
+        const previousLesson = (history || []).find(
+          (item) =>
+            item.lesson_evaluation !== "إعادة" &&
+            item.to_surah &&
+            item.to_ayah
+        );
+
+        const previousReview = (history || []).find(
+          (item) =>
+            item.review_evaluation !== "إعادة" &&
+            item.review_to_surah &&
+            item.review_to_ayah
+        );
+
+        let lessonStart = {
+          surah: plan.memorization_from_surah,
+          ayah: plan.memorization_from_ayah,
+        };
+
+        if (previousLesson) {
+          const next = await nextPosition(
+            previousLesson.to_surah,
+            previousLesson.to_ayah
+          );
+
+          if (next) {
+            lessonStart = {
+              surah: next.surah_name,
+              ayah: next.ayah,
+            };
+          }
+        }
+
+        let reviewStart = {
+          surah: plan.revision_from_surah,
+          ayah: plan.revision_from_ayah,
+        };
+
+        if (previousReview) {
+          const next = await nextPosition(
+            previousReview.review_to_surah,
+            previousReview.review_to_ayah
+          );
+
+          if (next) {
+            reviewStart = {
+              surah: next.surah_name,
+              ayah: next.ayah,
+            };
+          }
+        }
+
+        let generatedLesson = null;
+        let generatedReview = null;
+
+        try {
+          generatedLesson = await generateRange({
+            startSurah: lessonStart.surah,
+            startAyah: lessonStart.ayah,
+            amount: memorizationAmount,
+            unit: memorizationUnit,
+            limitSurah: plan.memorization_to_surah,
+            limitAyah: plan.memorization_to_ayah,
+          });
+        } catch (generationError) {
+          if (!String(generationError?.message || "").includes("QURAN_LIMIT_BEFORE_START")) {
+            throw generationError;
+          }
+        }
+
+        try {
+          generatedReview = await generateRange({
+            startSurah: reviewStart.surah,
+            startAyah: reviewStart.ayah,
+            amount: revisionAmount,
+            unit: revisionUnit,
+            limitSurah: plan.revision_to_surah,
+            limitAyah: plan.revision_to_ayah,
+          });
+        } catch (generationError) {
+          if (String(generationError?.message || "").includes("QURAN_LIMIT_BEFORE_START")) {
+            generatedReview = await generateRange({
+              startSurah: plan.revision_from_surah,
+              startAyah: plan.revision_from_ayah,
+              amount: revisionAmount,
+              unit: revisionUnit,
+              limitSurah: plan.revision_to_surah,
+              limitAyah: plan.revision_to_ayah,
+            });
+          } else {
+            throw generationError;
+          }
+        }
+
+        let generatedSideLesson = null;
+
+        if (generatedLesson) {
+          generatedSideLesson = await rpcOne(
+            "quran_generate_side_lesson_from_policy",
+            {
+              p_student_id: Number(commonForm.student_id),
+              p_halaqa_id: Number(commonForm.halaqa_id),
+              p_lesson_start_surah: generatedLesson.start_surah_name,
+              p_lesson_start_ayah: Number(generatedLesson.start_ayah),
+              p_on_date: commonForm.recitation_date,
+            }
+          );
+        }
+
+        if (!active) return;
+
         setPlanSuggestion({
           ...plan,
           scheduledToday,
@@ -1373,78 +1725,51 @@ export default function Recitations() {
           memorizationUnit,
           revisionAmount,
           revisionUnit,
+          generatedLesson,
+          generatedSideLesson,
+          generatedReview,
         });
 
-        if (formType === "quran") {
-          setQuranForm((current) => {
-            const next = { ...current };
+        setCompletionModes(createCompletionModes());
+  
+        setQuranForm((current) => {
+          const next = { ...current };
 
-            if (
-              (current.lesson_amount_value === "" || current.lesson_amount_value === null) &&
-              Number(memorizationAmount || 0) > 0
-            ) {
-              next.lesson_amount_value = Number(memorizationAmount);
-              next.lesson_amount_unit = memorizationUnit;
-            }
+          if (generatedLesson) {
+            next.from_surah = generatedLesson.start_surah_name;
+            next.from_ayah = String(generatedLesson.start_ayah);
+            next.to_surah = generatedLesson.end_surah_name;
+            next.to_ayah = String(generatedLesson.end_ayah);
+            next.lesson_amount_value = "";
+            next.lesson_amount_unit = memorizationUnit;
+            next.lesson_amount_type = "";
+          }
 
-            if (
-              (current.review_faces === "" || current.review_faces === null) &&
-              Number(revisionAmount || 0) > 0
-            ) {
-              next.review_faces = amountToFaces(
-                revisionAmount,
-                revisionUnit
-              );
-            }
+          if (
+            generatedSideLesson?.start_surah_name &&
+            generatedSideLesson?.start_ayah &&
+            generatedSideLesson?.end_surah_name &&
+            generatedSideLesson?.end_ayah
+          ) {
+            next.next_surah = generatedSideLesson.start_surah_name;
+            next.next_from_ayah = String(generatedSideLesson.start_ayah);
+            next.next_to_surah = generatedSideLesson.end_surah_name;
+            next.next_to_ayah = String(generatedSideLesson.end_ayah);
+          }
 
-            return next;
-          });
-        }
+          if (generatedReview) {
+            next.review_surah = generatedReview.start_surah_name;
+            next.review_from_ayah = String(generatedReview.start_ayah);
+            next.review_to_surah = generatedReview.end_surah_name;
+            next.review_to_ayah = String(generatedReview.end_ayah);
+            next.review_faces = "";
+          }
 
-        if (formType === "noorania") {
-          setNooraniaForm((current) => {
-            const next = { ...current };
-
-            const lessonAmount = Number(
-              plan.noorania_lesson_daily_amount || 0
-            );
-
-            const lessonUnit =
-              plan.noorania_lesson_daily_unit || "lesson";
-
-            const revisionNooraniaAmount = Number(
-              plan.noorania_revision_daily_amount || 0
-            );
-
-            const revisionNooraniaUnit =
-              plan.noorania_revision_daily_unit || "faces";
-
-            if (lessonAmount > 0) {
-              if (lessonUnit === "lesson" && !current.lesson) {
-                next.lesson = `${lessonAmount} ${lessonAmount === 1 ? "درس" : "دروس"}`;
-              } else if (!current.lesson_faces) {
-                next.lesson_faces = amountToFaces(
-                  lessonAmount,
-                  lessonUnit
-                );
-              }
-            }
-
-            if (
-              revisionNooraniaAmount > 0 &&
-              !current.revision_faces
-            ) {
-              next.revision_faces = amountToFaces(
-                revisionNooraniaAmount,
-                revisionNooraniaUnit
-              );
-            }
-
-            return next;
-          });
-        }
+          return next;
+        });
       } catch (error) {
-        console.error("LOAD RECITATION PLAN SUGGESTION:", error);
+        console.error("LOAD QURAN ASSIGNMENT:", error);
+
         if (active) {
           setPlanSuggestion(null);
         }
@@ -1465,6 +1790,180 @@ export default function Recitations() {
     commonForm.recitation_date,
     profiles,
   ]);
+
+  /* =====================================================
+     حساب النطاقات من جدول المصحف
+  ===================================================== */
+
+  useEffect(() => {
+    if (!formOpen || formType !== "quran") {
+      setRangeMetrics({
+        lesson: null,
+        side1: null,
+        side2: null,
+        review: null,
+      });
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setRangeMetricsLoading(true);
+
+      async function metric(fromSurah, fromAyah, toSurah, toAyah) {
+        if (!hasCompleteQuranRange(fromSurah, fromAyah, toSurah, toAyah)) {
+          return null;
+        }
+
+        const { data, error } = await supabase.rpc("quran_range_metrics", {
+          p_from_surah: fromSurah,
+          p_from_ayah: Number(fromAyah),
+          p_to_surah: toSurah,
+          p_to_ayah: Number(toAyah),
+        });
+
+        if (error) throw error;
+        return Array.isArray(data) ? data[0] || null : data || null;
+      }
+
+      try {
+        const [lesson, side1, side2, review] = await Promise.all([
+          metric(
+            quranForm.from_surah,
+            quranForm.from_ayah,
+            quranForm.to_surah,
+            quranForm.to_ayah
+          ),
+          metric(
+            quranForm.next_surah,
+            quranForm.next_from_ayah,
+            quranForm.next_to_surah,
+            quranForm.next_to_ayah
+          ),
+          metric(
+            quranForm.next2_surah,
+            quranForm.next2_from_ayah,
+            quranForm.next2_to_surah,
+            quranForm.next2_to_ayah
+          ),
+          metric(
+            quranForm.review_surah,
+            quranForm.review_from_ayah,
+            quranForm.review_to_surah,
+            quranForm.review_to_ayah
+          ),
+        ]);
+
+        if (active) {
+          setRangeMetrics({ lesson, side1, side2, review });
+        }
+      } catch (error) {
+        console.error("QURAN RANGE METRICS:", error);
+
+        if (active) {
+          setRangeMetrics({
+            lesson: null,
+            side1: null,
+            side2: null,
+            review: null,
+          });
+        }
+      } finally {
+        if (active) {
+          setRangeMetricsLoading(false);
+        }
+      }
+    }, 180);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [
+    formOpen,
+    formType,
+    quranForm.from_surah,
+    quranForm.from_ayah,
+    quranForm.to_surah,
+    quranForm.to_ayah,
+    quranForm.next_surah,
+    quranForm.next_from_ayah,
+    quranForm.next_to_surah,
+    quranForm.next_to_ayah,
+    quranForm.next2_surah,
+    quranForm.next2_from_ayah,
+    quranForm.next2_to_surah,
+    quranForm.next2_to_ayah,
+    quranForm.review_surah,
+    quranForm.review_from_ayah,
+    quranForm.review_to_surah,
+    quranForm.review_to_ayah,
+  ]);
+
+  /* =====================================================
+     حالة جلسة الحلقة الحالية
+  ===================================================== */
+
+  const sessionProgress = useMemo(() => {
+    const total = sessionStudents.length;
+    const completed = sessionStudents.filter(
+      (item) => item.status === "completed"
+    ).length;
+    const absent = sessionStudents.filter(
+      (item) => item.status === "absent"
+    ).length;
+    const skipped = sessionStudents.filter(
+      (item) => item.status === "skipped"
+    ).length;
+    const pending = sessionStudents.filter(
+      (item) => item.status === "pending"
+    ).length;
+    const handled = completed + absent + skipped;
+
+    return {
+      total,
+      completed,
+      absent,
+      skipped,
+      pending,
+      handled,
+      percent:
+        total > 0
+          ? Math.round((handled / total) * 100)
+          : 0,
+    };
+  }, [sessionStudents]);
+
+  const currentSessionStudent = useMemo(() => {
+    if (!activeSession) return null;
+
+    const currentId = Number(activeSession.current_student_id || 0);
+
+    return (
+      sessionStudents.find(
+        (item) =>
+          item.status === "pending" &&
+          Number(item.student_id) === currentId
+      ) ||
+      sessionStudents.find(
+        (item) => item.status === "pending"
+      ) ||
+      null
+    );
+  }, [activeSession, sessionStudents]);
+
+  const isActiveSessionForm = Boolean(
+    !editing &&
+      formType === "quran" &&
+      activeSession &&
+      String(activeSession.halaqa_id) === String(commonForm.halaqa_id) &&
+      String(activeSession.session_date) === String(commonForm.recitation_date) &&
+      sessionStudents.some(
+        (item) =>
+          item.status === "pending" &&
+          String(item.student_id) === String(commonForm.student_id)
+      )
+  );
 
   /* =====================================================
      مقدار الدرس الحالي
@@ -1575,6 +2074,7 @@ export default function Recitations() {
       );
       setNooraniaForm(createNooraniaForm());
       setPlanSuggestion(null);
+      setCompletionModes(createCompletionModes());
       return;
     }
 
@@ -1592,6 +2092,7 @@ export default function Recitations() {
       );
       setNooraniaForm(createNooraniaForm());
       setPlanSuggestion(null);
+      setCompletionModes(createCompletionModes());
       return;
     }
 
@@ -1613,6 +2114,86 @@ export default function Recitations() {
         [key]: value,
       })
     );
+  }
+
+  function setTrackCompletion(
+    track,
+    mode
+  ) {
+    const config =
+      track === "lesson"
+        ? {
+            generated: planSuggestion?.generatedLesson,
+            fromSurahKey: "from_surah",
+            fromAyahKey: "from_ayah",
+            toSurahKey: "to_surah",
+            toAyahKey: "to_ayah",
+            evaluationKey: "lesson_evaluation",
+          }
+        : track === "side1"
+          ? {
+              generated: planSuggestion?.generatedSideLesson,
+              fromSurahKey: "next_surah",
+              fromAyahKey: "next_from_ayah",
+              toSurahKey: "next_to_surah",
+              toAyahKey: "next_to_ayah",
+              evaluationKey: "next_evaluation",
+            }
+          : {
+              generated: planSuggestion?.generatedReview,
+              fromSurahKey: "review_surah",
+              fromAyahKey: "review_from_ayah",
+              toSurahKey: "review_to_surah",
+              toAyahKey: "review_to_ayah",
+              evaluationKey: "review_evaluation",
+            };
+
+    const generated = config.generated;
+
+    setCompletionModes((current) => ({
+      ...current,
+      [track]: mode,
+    }));
+
+    if (!generated) return;
+
+    setQuranForm((current) => {
+      const next = { ...current };
+
+      next[config.fromSurahKey] = generated.start_surah_name;
+      next[config.fromAyahKey] = String(generated.start_ayah);
+
+      if (mode === "exact" || mode === "repeat") {
+        next[config.toSurahKey] = generated.end_surah_name;
+        next[config.toAyahKey] = String(generated.end_ayah);
+      }
+
+      if (mode === "repeat") {
+        next[config.evaluationKey] = "إعادة";
+      } else if (next[config.evaluationKey] === "إعادة") {
+        next[config.evaluationKey] = "";
+      }
+
+      return next;
+    });
+  }
+
+  function setTrackEvaluation(
+    track,
+    key,
+    value
+  ) {
+    setQuran(key, value);
+
+    if (value === "إعادة") {
+      setTrackCompletion(track, "repeat");
+      return;
+    }
+
+    if (completionModes[track] === "repeat") {
+      setTrackCompletion(track, "exact");
+      setQuran(key, value);
+    }
   }
 
   function setNoorania(
@@ -1651,6 +2232,13 @@ export default function Recitations() {
     );
 
     setPlanSuggestion(null);
+    setCompletionModes(createCompletionModes());
+    setRangeMetrics({
+      lesson: null,
+      side1: null,
+      side2: null,
+      review: null,
+    });
 
     if (close) {
       setFormOpen(false);
@@ -1728,8 +2316,461 @@ export default function Recitations() {
     );
 
     setPlanSuggestion(null);
+    setCompletionModes(createCompletionModes());
 
     setFormOpen(true);
+  }
+
+  /* =====================================================
+     إجراءات جلسة الحلقة
+  ===================================================== */
+
+  async function openSessionStudent(
+    sessionRow,
+    sessionOverride = null
+  ) {
+    const session = sessionOverride || activeSession;
+
+    if (!session || !sessionRow) return;
+
+    const now = new Date().toISOString();
+
+    const { error } = await supabase
+      .from("recitation_sessions")
+      .update({
+        current_student_id: Number(sessionRow.student_id),
+        last_activity_at: now,
+        updated_at: now,
+      })
+      .eq("id", Number(session.id));
+
+    if (error) throw error;
+
+    setActiveSession((current) =>
+      current
+        ? {
+            ...current,
+            current_student_id: Number(sessionRow.student_id),
+            last_activity_at: now,
+            updated_at: now,
+          }
+        : current
+    );
+
+    setEditing(null);
+    setFormType("quran");
+    setCommonForm({
+      ...createCommonForm(),
+      halaqa_id: String(session.halaqa_id),
+      student_id: String(sessionRow.student_id),
+      recitation_date: session.session_date || getLocalDate(),
+    });
+    setQuranForm(
+      createQuranForm(
+        teacherPreferences.recitation_default_amount_type
+      )
+    );
+    setNooraniaForm(createNooraniaForm());
+    setPlanSuggestion(null);
+    setCompletionModes(createCompletionModes());
+    setRangeMetrics({
+      lesson: null,
+      side1: null,
+      side2: null,
+      review: null,
+    });
+    setFormOpen(true);
+  }
+
+  async function resumeActiveSession() {
+    if (!activeSession) return;
+
+    const target = currentSessionStudent;
+
+    if (!target) {
+      showToast(
+        "لا يوجد طلاب متبقون في هذه الجلسة",
+        "info"
+      );
+      return;
+    }
+
+    try {
+      setSessionBusy(true);
+      await openSessionStudent(target);
+    } catch (error) {
+      console.error("RESUME RECITATION SESSION:", error);
+      showToast(
+        error.message || "تعذر استئناف جلسة الحلقة",
+        "error"
+      );
+    } finally {
+      setSessionBusy(false);
+    }
+  }
+
+  async function startQuranSession() {
+    if (!teacher?.id) {
+      showToast("تعذر تحديد حساب المعلم", "error");
+      return;
+    }
+
+    const halaqaId = Number(
+      sessionLauncherHalaqa ||
+        (halaqat.length === 1 ? halaqat[0].id : 0)
+    );
+
+    if (!halaqaId) {
+      showToast("اختر الحلقة لبدء الجلسة", "error");
+      return;
+    }
+
+    if (!sessionLauncherDate) {
+      showToast("حدد تاريخ الجلسة", "error");
+      return;
+    }
+
+    if (sessionLauncherDate > getLocalDate()) {
+      showToast("لا يمكن بدء جلسة بتاريخ مستقبلي", "error");
+      return;
+    }
+
+    const roster = students
+      .filter(
+        (student) => Number(student.halaqa_id) === halaqaId
+      )
+      .slice()
+      .sort((a, b) =>
+        String(a.full_name || "").localeCompare(
+          String(b.full_name || ""),
+          "ar"
+        )
+      );
+
+    if (roster.length === 0) {
+      showToast("لا يوجد طلاب نشطون في هذه الحلقة", "error");
+      return;
+    }
+
+    setSessionBusy(true);
+
+    try {
+      const { data: existing, error: existingError } = await supabase
+        .from("recitation_sessions")
+        .select("*")
+        .eq("teacher_id", Number(teacher.id))
+        .eq("session_type", "quran")
+        .eq("status", "active")
+        .order("last_activity_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      if (existing) {
+        const loaded = await loadActiveSessionForTeacher(
+          teacher.id,
+          profiles
+        );
+
+        showToast(
+          "لديك جلسة قائمة؛ تم فتحها بدل إنشاء جلسة جديدة",
+          "info"
+        );
+
+        const target =
+          loaded?.students?.find(
+            (item) =>
+              item.status === "pending" &&
+              Number(item.student_id) ===
+                Number(loaded.session.current_student_id)
+          ) ||
+          loaded?.students?.find(
+            (item) => item.status === "pending"
+          );
+
+        if (target) {
+          await openSessionStudent(target, loaded.session);
+        }
+
+        return;
+      }
+
+      const now = new Date().toISOString();
+
+      const { data: session, error: sessionError } = await supabase
+        .from("recitation_sessions")
+        .insert([
+          {
+            teacher_id: Number(teacher.id),
+            halaqa_id: halaqaId,
+            session_date: sessionLauncherDate,
+            session_type: "quran",
+            status: "active",
+            current_student_id: Number(roster[0].id),
+            started_at: now,
+            last_activity_at: now,
+            updated_at: now,
+          },
+        ])
+        .select("*")
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      const sessionRows = roster.map((student, index) => ({
+        session_id: Number(session.id),
+        student_id: Number(student.id),
+        position: index + 1,
+        status: "pending",
+        updated_at: now,
+      }));
+
+      const { data: insertedRows, error: rowsError } = await supabase
+        .from("recitation_session_students")
+        .insert(sessionRows)
+        .select("*");
+
+      if (rowsError) {
+        await supabase
+          .from("recitation_sessions")
+          .delete()
+          .eq("id", Number(session.id));
+        throw rowsError;
+      }
+
+      const profileMap = new Map(
+        roster.map((student) => [Number(student.id), student])
+      );
+
+      const prepared = (insertedRows || [])
+        .map((row) => ({
+          ...row,
+          student_profile:
+            profileMap.get(Number(row.student_id)) || null,
+        }))
+        .sort((a, b) => Number(a.position) - Number(b.position));
+
+      setActiveSession(session);
+      setSessionStudents(prepared);
+
+      showToast(
+        `بدأت جلسة الحلقة — ${prepared.length} طالب`,
+        "success"
+      );
+
+      if (prepared[0]) {
+        await openSessionStudent(prepared[0], session);
+      }
+    } catch (error) {
+      console.error("START RECITATION SESSION:", error);
+      showToast(
+        error.message || "تعذر بدء جلسة الحلقة",
+        "error"
+      );
+    } finally {
+      setSessionBusy(false);
+    }
+  }
+
+  async function completeSessionStudent({
+    studentId,
+    recitationId,
+  }) {
+    if (
+      !activeSession ||
+      String(activeSession.halaqa_id) !== String(commonForm.halaqa_id) ||
+      String(activeSession.session_date) !== String(commonForm.recitation_date)
+    ) {
+      return null;
+    }
+
+    const currentRow = sessionStudents.find(
+      (item) =>
+        Number(item.student_id) === Number(studentId) &&
+        item.status === "pending"
+    );
+
+    if (!currentRow) return null;
+
+    const now = new Date().toISOString();
+
+    const { error } = await supabase
+      .from("recitation_session_students")
+      .update({
+        status: "completed",
+        quran_recitation_id: Number(recitationId),
+        completed_at: now,
+        updated_at: now,
+      })
+      .eq("id", Number(currentRow.id))
+      .eq("session_id", Number(activeSession.id));
+
+    if (error) throw error;
+
+    const updatedRows = sessionStudents.map((item) =>
+      Number(item.id) === Number(currentRow.id)
+        ? {
+            ...item,
+            status: "completed",
+            quran_recitation_id: Number(recitationId),
+            completed_at: now,
+            updated_at: now,
+          }
+        : item
+    );
+
+    const nextRow =
+      updatedRows.find(
+        (item) =>
+          item.status === "pending" &&
+          Number(item.position) > Number(currentRow.position)
+      ) ||
+      updatedRows.find((item) => item.status === "pending") ||
+      null;
+
+    setSessionStudents(updatedRows);
+
+    if (nextRow) {
+      const { error: sessionError } = await supabase
+        .from("recitation_sessions")
+        .update({
+          current_student_id: Number(nextRow.student_id),
+          last_activity_at: now,
+          updated_at: now,
+        })
+        .eq("id", Number(activeSession.id));
+
+      if (sessionError) throw sessionError;
+
+      setActiveSession((current) =>
+        current
+          ? {
+              ...current,
+              current_student_id: Number(nextRow.student_id),
+              last_activity_at: now,
+              updated_at: now,
+            }
+          : current
+      );
+
+      return { handled: true, nextRow };
+    }
+
+    const { error: finishError } = await supabase
+      .from("recitation_sessions")
+      .update({
+        status: "completed",
+        current_student_id: null,
+        completed_at: now,
+        last_activity_at: now,
+        updated_at: now,
+      })
+      .eq("id", Number(activeSession.id));
+
+    if (finishError) throw finishError;
+
+    setActiveSession(null);
+    setSessionStudents([]);
+
+    return { handled: true, nextRow: null, completed: true };
+  }
+
+  async function markCurrentSessionAbsent() {
+    if (!activeSession || !currentSessionStudent) return;
+
+    setSessionBusy(true);
+
+    try {
+      const now = new Date().toISOString();
+
+      const { error } = await supabase
+        .from("recitation_session_students")
+        .update({
+          status: "absent",
+          completed_at: now,
+          updated_at: now,
+        })
+        .eq("id", Number(currentSessionStudent.id))
+        .eq("session_id", Number(activeSession.id));
+
+      if (error) throw error;
+
+      const updatedRows = sessionStudents.map((item) =>
+        Number(item.id) === Number(currentSessionStudent.id)
+          ? {
+              ...item,
+              status: "absent",
+              completed_at: now,
+              updated_at: now,
+            }
+          : item
+      );
+
+      const nextRow =
+        updatedRows.find(
+          (item) =>
+            item.status === "pending" &&
+            Number(item.position) > Number(currentSessionStudent.position)
+        ) ||
+        updatedRows.find((item) => item.status === "pending") ||
+        null;
+
+      setSessionStudents(updatedRows);
+
+      if (nextRow) {
+        const { error: sessionError } = await supabase
+          .from("recitation_sessions")
+          .update({
+            current_student_id: Number(nextRow.student_id),
+            last_activity_at: now,
+            updated_at: now,
+          })
+          .eq("id", Number(activeSession.id));
+
+        if (sessionError) throw sessionError;
+
+        setActiveSession((current) =>
+          current
+            ? {
+                ...current,
+                current_student_id: Number(nextRow.student_id),
+                last_activity_at: now,
+                updated_at: now,
+              }
+            : current
+        );
+
+        showToast("تم تسجيل الغياب والانتقال للطالب التالي", "info");
+        await openSessionStudent(nextRow);
+      } else {
+        const { error: finishError } = await supabase
+          .from("recitation_sessions")
+          .update({
+            status: "completed",
+            current_student_id: null,
+            completed_at: now,
+            last_activity_at: now,
+            updated_at: now,
+          })
+          .eq("id", Number(activeSession.id));
+
+        if (finishError) throw finishError;
+
+        setActiveSession(null);
+        setSessionStudents([]);
+        resetForms();
+        showToast("اكتملت جلسة الحلقة", "success");
+      }
+    } catch (error) {
+      console.error("MARK SESSION ABSENT:", error);
+      showToast(
+        error.message || "تعذر تسجيل غياب الطالب",
+        "error"
+      );
+    } finally {
+      setSessionBusy(false);
+    }
   }
 
   /* =====================================================
@@ -1879,6 +2920,10 @@ export default function Recitations() {
     });
 
     setPlanSuggestion(null);
+    setCompletionModes({
+      lesson: record.lesson_evaluation === "إعادة" ? "repeat" : "exact",
+      review: record.review_evaluation === "إعادة" ? "repeat" : "exact",
+    });
 
     setFormOpen(true);
   }
@@ -2063,205 +3108,1123 @@ export default function Recitations() {
     }
   }
 
+  async function getQuranPositionInfo(
+    surah,
+    ayah
+  ) {
+    if (!surah || !ayah) {
+      return null;
+    }
+
+    const { data, error } = await supabase.rpc(
+      "quran_position_info",
+      {
+        p_surah: surah,
+        p_ayah: Number(ayah),
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return Array.isArray(data)
+      ? data[0] || null
+      : data || null;
+  }
+
+  async function getQuranRangeMetrics(
+    fromSurah,
+    fromAyah,
+    toSurah,
+    toAyah
+  ) {
+    if (!hasCompleteQuranRange(
+      fromSurah,
+      fromAyah,
+      toSurah,
+      toAyah
+    )) {
+      return null;
+    }
+
+    const { data, error } = await supabase.rpc(
+      "quran_range_metrics",
+      {
+        p_from_surah: fromSurah,
+        p_from_ayah: Number(fromAyah),
+        p_to_surah: toSurah,
+        p_to_ayah: Number(toAyah),
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return Array.isArray(data)
+      ? data[0] || null
+      : data || null;
+  }
+
+  async function getNextQuranPosition(
+    surah,
+    ayah
+  ) {
+    if (!surah || !ayah) {
+      return null;
+    }
+
+    const { data, error } = await supabase.rpc(
+      "quran_next_ayah",
+      {
+        p_surah: surah,
+        p_ayah: Number(ayah),
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    return Array.isArray(data)
+      ? data[0] || null
+      : data || null;
+  }
+
+  async function getGeneratedSideLesson({
+    studentId,
+    halaqaId,
+    lessonStartSurah,
+    lessonStartAyah,
+    onDate,
+  }) {
+    if (
+      !studentId ||
+      !halaqaId ||
+      !lessonStartSurah ||
+      !lessonStartAyah
+    ) {
+      return null;
+    }
+
+    const { data, error } = await supabase.rpc(
+      "quran_generate_side_lesson_from_policy",
+      {
+        p_student_id: Number(studentId),
+        p_halaqa_id: Number(halaqaId),
+        p_lesson_start_surah: lessonStartSurah,
+        p_lesson_start_ayah: Number(lessonStartAyah),
+        p_on_date: onDate || getLocalDate(),
+      }
+    );
+
+    if (error) throw error;
+
+    const row = Array.isArray(data)
+      ? data[0] || null
+      : data || null;
+
+    if (
+      !row ||
+      row.side_lesson_mode === "none" ||
+      !row.start_surah_name ||
+      !row.start_ayah ||
+      !row.end_surah_name ||
+      !row.end_ayah
+    ) {
+      return row || null;
+    }
+
+    return row;
+  }
+
+  async function generateQuranAssignmentRange({
+    startSurah,
+    startAyah,
+    amount,
+    unit,
+    limitSurah,
+    limitAyah,
+  }) {
+    if (
+      !startSurah ||
+      !startAyah ||
+      !limitSurah ||
+      !limitAyah ||
+      Number(amount || 0) <= 0
+    ) {
+      return null;
+    }
+
+    const { data, error } = await supabase.rpc(
+      "quran_generate_assignment",
+      {
+        p_start_surah: startSurah,
+        p_start_ayah: Number(startAyah),
+        p_target_amount: Number(amount),
+        p_target_unit: unit || "lines",
+        p_limit_surah: limitSurah,
+        p_limit_ayah: Number(limitAyah),
+      }
+    );
+
+    if (error) {
+      if (
+        String(error.message || "").includes(
+          "QURAN_LIMIT_BEFORE_START"
+        )
+      ) {
+        return null;
+      }
+
+      throw error;
+    }
+
+    return Array.isArray(data)
+      ? data[0] || null
+      : data || null;
+  }
+
+  async function resolveGeneratedCompletion({
+    track,
+    generated,
+    actualEndSurah,
+    actualEndAyah,
+    evaluation,
+  }) {
+    if (!generated) {
+      return evaluation === "إعادة"
+        ? "repeat"
+        : "exact";
+    }
+
+    if (evaluation === "إعادة") {
+      return "repeat";
+    }
+
+    const [
+      plannedStart,
+      plannedEnd,
+      actualEnd,
+    ] = await Promise.all([
+      getQuranPositionInfo(
+        generated.start_surah_name,
+        generated.start_ayah
+      ),
+      getQuranPositionInfo(
+        generated.end_surah_name,
+        generated.end_ayah
+      ),
+      getQuranPositionInfo(
+        actualEndSurah,
+        actualEndAyah
+      ),
+    ]);
+
+    if (!plannedStart || !plannedEnd || !actualEnd) {
+      throw new Error(
+        "تعذر التحقق من موضع النهاية الفعلية في المصحف"
+      );
+    }
+
+    if (
+      Number(actualEnd.source_id) <
+      Number(plannedStart.source_id)
+    ) {
+      throw new Error(
+        "النهاية الفعلية لا يمكن أن تكون قبل بداية المطلوب"
+      );
+    }
+
+    const derived =
+      Number(actualEnd.source_id) ===
+      Number(plannedEnd.source_id)
+        ? "exact"
+        : Number(actualEnd.source_id) <
+            Number(plannedEnd.source_id)
+          ? "under"
+          : "over";
+
+    const selected =
+      completionModes[track] || "exact";
+
+    if (
+      selected === "under" &&
+      derived !== "under"
+    ) {
+      throw new Error(
+        "اختر نهاية فعلية قبل نهاية المطلوب لأنك حددت «أقل»"
+      );
+    }
+
+    if (
+      selected === "over" &&
+      derived !== "over"
+    ) {
+      throw new Error(
+        "اختر نهاية فعلية بعد نهاية المطلوب لأنك حددت «أكثر»"
+      );
+    }
+
+    if (
+      selected === "exact" &&
+      derived !== "exact"
+    ) {
+      throw new Error(
+        "في حالة «أتم» يجب أن تكون النهاية الفعلية هي نهاية المطلوب"
+      );
+    }
+
+    return derived;
+  }
+
+  async function buildRecitationSegment({
+    recitationRecord,
+    segmentType,
+    sequenceNo = 1,
+    actualRange,
+    plannedRange = null,
+    plannedAmount = null,
+    plannedUnit = null,
+    evaluation = "",
+    completionStatus = "exact",
+  }) {
+    if (
+      !hasCompleteQuranRange(
+        actualRange?.fromSurah,
+        actualRange?.fromAyah,
+        actualRange?.toSurah,
+        actualRange?.toAyah
+      )
+    ) {
+      return null;
+    }
+
+    const effectivePlanned =
+      plannedRange || {
+        start_surah_name: actualRange.fromSurah,
+        start_ayah: Number(actualRange.fromAyah),
+        end_surah_name: actualRange.toSurah,
+        end_ayah: Number(actualRange.toAyah),
+      };
+
+    const [
+      plannedStart,
+      plannedEnd,
+      actualStart,
+      actualEnd,
+      actualMetrics,
+    ] = await Promise.all([
+      getQuranPositionInfo(
+        effectivePlanned.start_surah_name,
+        effectivePlanned.start_ayah
+      ),
+      getQuranPositionInfo(
+        effectivePlanned.end_surah_name,
+        effectivePlanned.end_ayah
+      ),
+      getQuranPositionInfo(
+        actualRange.fromSurah,
+        actualRange.fromAyah
+      ),
+      getQuranPositionInfo(
+        actualRange.toSurah,
+        actualRange.toAyah
+      ),
+      getQuranRangeMetrics(
+        actualRange.fromSurah,
+        actualRange.fromAyah,
+        actualRange.toSurah,
+        actualRange.toAyah
+      ),
+    ]);
+
+    if (
+      !plannedStart ||
+      !plannedEnd ||
+      !actualStart ||
+      !actualEnd ||
+      !actualMetrics
+    ) {
+      throw new Error(
+        "تعذر بناء مقطع التسميع من بيانات المصحف"
+      );
+    }
+
+    return {
+      recitation_id: Number(recitationRecord.id),
+      assignment_id: null,
+      student_id: Number(recitationRecord.student_id),
+      halaqa_id: Number(recitationRecord.halaqa_id),
+      teacher_id: recitationRecord.teacher_id
+        ? Number(recitationRecord.teacher_id)
+        : teacher?.id || null,
+      segment_type: segmentType,
+      sequence_no: Number(sequenceNo),
+
+      planned_start_word_id: null,
+      planned_end_word_id: null,
+      actual_start_word_id: null,
+      actual_end_word_id: null,
+
+      planned_start_ayah_id: Number(plannedStart.ayah_id),
+      planned_end_ayah_id: Number(plannedEnd.ayah_id),
+      actual_start_ayah_id: Number(actualStart.ayah_id),
+      actual_end_ayah_id: Number(actualEnd.ayah_id),
+
+      planned_amount:
+        plannedAmount === null ||
+        plannedAmount === undefined ||
+        plannedAmount === ""
+          ? null
+          : Number(plannedAmount),
+
+      planned_unit:
+        plannedUnit || null,
+
+      actual_quran_lines:
+        Number(actualMetrics.quran_lines || 0),
+
+      actual_faces:
+        Number(actualMetrics.faces || 0),
+
+      evaluation:
+        textOrNull(evaluation),
+
+      completion_status:
+        completionStatus,
+    };
+  }
+
+  async function buildNextAssignment({
+    recitationRecord,
+    segmentType,
+    sequenceNo,
+    generatedRange,
+    actualEndSurah,
+    actualEndAyah,
+    completionStatus,
+    amount,
+    unit,
+    planEndSurah,
+    planEndAyah,
+  }) {
+    if (
+      !planSuggestion?.id ||
+      !generatedRange ||
+      Number(amount || 0) <= 0
+    ) {
+      return null;
+    }
+
+    let nextRange = null;
+
+    if (completionStatus === "repeat") {
+      nextRange = generatedRange;
+    } else {
+      const nextStart = await getNextQuranPosition(
+        actualEndSurah,
+        actualEndAyah
+      );
+
+      if (!nextStart) {
+        return null;
+      }
+
+      nextRange = await generateQuranAssignmentRange({
+        startSurah: nextStart.surah_name,
+        startAyah: nextStart.ayah,
+        amount,
+        unit,
+        limitSurah: planEndSurah,
+        limitAyah: planEndAyah,
+      });
+    }
+
+    if (!nextRange) {
+      return null;
+    }
+
+    const [startPosition, endPosition] =
+      await Promise.all([
+        getQuranPositionInfo(
+          nextRange.start_surah_name,
+          nextRange.start_ayah
+        ),
+        getQuranPositionInfo(
+          nextRange.end_surah_name,
+          nextRange.end_ayah
+        ),
+      ]);
+
+    if (!startPosition || !endPosition) {
+      throw new Error(
+        "تعذر تجهيز موضع المطلوب القادم"
+      );
+    }
+
+    return {
+      student_id: Number(recitationRecord.student_id),
+      halaqa_id: Number(recitationRecord.halaqa_id),
+      teacher_id: recitationRecord.teacher_id
+        ? Number(recitationRecord.teacher_id)
+        : teacher?.id || null,
+      monthly_plan_id: Number(planSuggestion.id),
+      intervention_id: null,
+      generated_from_recitation_id:
+        Number(recitationRecord.id),
+      assignment_date:
+        getNextScheduledRecitationDate(
+          recitationRecord.recitation_date,
+          planSuggestion.days
+        ),
+      segment_type: segmentType,
+      sequence_no: Number(sequenceNo),
+      start_word_id: null,
+      end_word_id: null,
+      start_ayah_id: Number(startPosition.ayah_id),
+      end_ayah_id: Number(endPosition.ayah_id),
+      target_amount: Number(amount),
+      target_unit: unit,
+      source: "generated",
+      status: "planned",
+      generated_reason:
+        completionStatus === "repeat"
+          ? "إعادة نفس المطلوب بحسب نتيجة الجلسة السابقة"
+          : completionStatus === "under"
+            ? "متابعة من آخر موضع فعلي بعد إنجاز أقل من المطلوب"
+            : completionStatus === "over"
+              ? "متابعة بعد آخر موضع فعلي لأن الطالب تجاوز المطلوب"
+              : "توليد تلقائي بعد إتمام المطلوب",
+      _range: nextRange,
+    };
+  }
+
+  async function buildSideAssignmentForLesson({
+    recitationRecord,
+    lessonAssignment,
+  }) {
+    if (!lessonAssignment?._range || !planSuggestion?.id) {
+      return null;
+    }
+
+    const sideRange = await getGeneratedSideLesson({
+      studentId: recitationRecord.student_id,
+      halaqaId: recitationRecord.halaqa_id,
+      lessonStartSurah: lessonAssignment._range.start_surah_name,
+      lessonStartAyah: lessonAssignment._range.start_ayah,
+      onDate: lessonAssignment.assignment_date,
+    });
+
+    if (
+      !sideRange?.start_surah_name ||
+      !sideRange?.start_ayah ||
+      !sideRange?.end_surah_name ||
+      !sideRange?.end_ayah
+    ) {
+      return null;
+    }
+
+    const [startPosition, endPosition] = await Promise.all([
+      getQuranPositionInfo(sideRange.start_surah_name, sideRange.start_ayah),
+      getQuranPositionInfo(sideRange.end_surah_name, sideRange.end_ayah),
+    ]);
+
+    if (!startPosition || !endPosition) {
+      throw new Error("تعذر تجهيز جنب الدرس القادم");
+    }
+
+    return {
+      student_id: Number(recitationRecord.student_id),
+      halaqa_id: Number(recitationRecord.halaqa_id),
+      teacher_id: recitationRecord.teacher_id
+        ? Number(recitationRecord.teacher_id)
+        : teacher?.id || null,
+      monthly_plan_id: Number(planSuggestion.id),
+      intervention_id: null,
+      generated_from_recitation_id: Number(recitationRecord.id),
+      assignment_date: lessonAssignment.assignment_date,
+      segment_type: "side_lesson",
+      sequence_no: 1,
+      start_word_id: null,
+      end_word_id: null,
+      start_ayah_id: Number(startPosition.ayah_id),
+      end_ayah_id: Number(endPosition.ayah_id),
+      target_amount:
+        sideRange.side_lesson_amount ?? sideRange.faces ?? null,
+      target_unit:
+        sideRange.side_lesson_unit ||
+        (sideRange.faces ? "faces" : null),
+      source: "generated",
+      status: "planned",
+      generated_reason: `جنب درس تلقائي حسب السياسة: ${sideRange.side_lesson_mode}`,
+      _range: sideRange,
+    };
+  }
+
+  async function syncQuranEngineAfterSave(
+    recitationRecord
+  ) {
+    const generatedLesson =
+      planSuggestion?.generatedLesson || null;
+
+    const generatedSideLesson =
+      planSuggestion?.generatedSideLesson || null;
+
+    const generatedReview =
+      planSuggestion?.generatedReview || null;
+
+    const lessonCompletion =
+      hasCompleteQuranRange(
+        recitationRecord.from_surah,
+        recitationRecord.from_ayah,
+        recitationRecord.to_surah,
+        recitationRecord.to_ayah
+      )
+        ? await resolveGeneratedCompletion({
+            track: "lesson",
+            generated: generatedLesson,
+            actualEndSurah: recitationRecord.to_surah,
+            actualEndAyah: recitationRecord.to_ayah,
+            evaluation: recitationRecord.lesson_evaluation,
+          })
+        : null;
+
+    const sideCompletion =
+      hasCompleteQuranRange(
+        recitationRecord.next_surah,
+        recitationRecord.next_from_ayah,
+        recitationRecord.next_to_surah,
+        recitationRecord.next_to_ayah
+      )
+        ? await resolveGeneratedCompletion({
+            track: "side1",
+            generated: generatedSideLesson,
+            actualEndSurah: recitationRecord.next_to_surah,
+            actualEndAyah: recitationRecord.next_to_ayah,
+            evaluation: recitationRecord.next_evaluation,
+          })
+        : null;
+
+    const reviewCompletion =
+      hasCompleteQuranRange(
+        recitationRecord.review_surah,
+        recitationRecord.review_from_ayah,
+        recitationRecord.review_to_surah,
+        recitationRecord.review_to_ayah
+      )
+        ? await resolveGeneratedCompletion({
+            track: "review",
+            generated: generatedReview,
+            actualEndSurah: recitationRecord.review_to_surah,
+            actualEndAyah: recitationRecord.review_to_ayah,
+            evaluation: recitationRecord.review_evaluation,
+          })
+        : null;
+
+    const segmentRows = (
+      await Promise.all([
+        buildRecitationSegment({
+          recitationRecord,
+          segmentType: "lesson",
+          sequenceNo: 1,
+          actualRange: {
+            fromSurah: recitationRecord.from_surah,
+            fromAyah: recitationRecord.from_ayah,
+            toSurah: recitationRecord.to_surah,
+            toAyah: recitationRecord.to_ayah,
+          },
+          plannedRange: generatedLesson,
+          plannedAmount:
+            planSuggestion?.memorizationAmount ?? null,
+          plannedUnit:
+            planSuggestion?.memorizationUnit ?? null,
+          evaluation:
+            recitationRecord.lesson_evaluation,
+          completionStatus:
+            lessonCompletion || "exact",
+        }),
+
+        buildRecitationSegment({
+          recitationRecord,
+          segmentType: "side_lesson",
+          sequenceNo: 1,
+          actualRange: {
+            fromSurah: recitationRecord.next_surah,
+            fromAyah: recitationRecord.next_from_ayah,
+            toSurah: recitationRecord.next_to_surah,
+            toAyah: recitationRecord.next_to_ayah,
+          },
+          plannedRange:
+            generatedSideLesson?.start_surah_name
+              ? generatedSideLesson
+              : null,
+          plannedAmount:
+            generatedSideLesson?.side_lesson_amount ??
+            generatedSideLesson?.faces ??
+            null,
+          plannedUnit:
+            generatedSideLesson?.side_lesson_unit ||
+            (generatedSideLesson?.faces ? "faces" : null),
+          evaluation:
+            recitationRecord.next_evaluation,
+          completionStatus:
+            sideCompletion ||
+            (recitationRecord.next_evaluation === "إعادة"
+              ? "repeat"
+              : "exact"),
+        }),
+
+        buildRecitationSegment({
+          recitationRecord,
+          segmentType: "side_lesson",
+          sequenceNo: 2,
+          actualRange: {
+            fromSurah: recitationRecord.next2_surah,
+            fromAyah: recitationRecord.next2_from_ayah,
+            toSurah: recitationRecord.next2_to_surah,
+            toAyah: recitationRecord.next2_to_ayah,
+          },
+          evaluation:
+            recitationRecord.next2_evaluation,
+          completionStatus:
+            recitationRecord.next2_evaluation === "إعادة"
+              ? "repeat"
+              : "exact",
+        }),
+
+        buildRecitationSegment({
+          recitationRecord,
+          segmentType: "revision",
+          sequenceNo: 1,
+          actualRange: {
+            fromSurah: recitationRecord.review_surah,
+            fromAyah: recitationRecord.review_from_ayah,
+            toSurah: recitationRecord.review_to_surah,
+            toAyah: recitationRecord.review_to_ayah,
+          },
+          plannedRange: generatedReview,
+          plannedAmount:
+            planSuggestion?.revisionAmount ?? null,
+          plannedUnit:
+            planSuggestion?.revisionUnit ?? null,
+          evaluation:
+            recitationRecord.review_evaluation,
+          completionStatus:
+            reviewCompletion || "exact",
+        }),
+      ])
+    ).filter(Boolean);
+
+    const { error: deleteSegmentsError } =
+      await supabase
+        .from("recitation_segments")
+        .delete()
+        .eq(
+          "recitation_id",
+          Number(recitationRecord.id)
+        );
+
+    if (deleteSegmentsError) {
+      throw deleteSegmentsError;
+    }
+
+    if (segmentRows.length > 0) {
+      const { error: segmentsError } =
+        await supabase
+          .from("recitation_segments")
+          .insert(segmentRows);
+
+      if (segmentsError) {
+        throw segmentsError;
+      }
+    }
+
+    const { error: clearGeneratedError } =
+      await supabase
+        .from("quran_assignments")
+        .delete()
+        .eq(
+          "generated_from_recitation_id",
+          Number(recitationRecord.id)
+        );
+
+    if (clearGeneratedError) {
+      throw clearGeneratedError;
+    }
+
+    if (!planSuggestion?.id) {
+      return null;
+    }
+
+    const nextLesson =
+      lessonCompletion
+        ? await buildNextAssignment({
+            recitationRecord,
+            segmentType: "lesson",
+            sequenceNo: 1,
+            generatedRange: generatedLesson,
+            actualEndSurah:
+              recitationRecord.to_surah,
+            actualEndAyah:
+              recitationRecord.to_ayah,
+            completionStatus:
+              lessonCompletion,
+            amount:
+              planSuggestion.memorizationAmount,
+            unit:
+              planSuggestion.memorizationUnit,
+            planEndSurah:
+              planSuggestion.memorization_to_surah,
+            planEndAyah:
+              planSuggestion.memorization_to_ayah,
+          })
+        : null;
+
+    const nextReview =
+      reviewCompletion
+        ? await buildNextAssignment({
+            recitationRecord,
+            segmentType: "revision",
+            sequenceNo: 1,
+            generatedRange: generatedReview,
+            actualEndSurah:
+              recitationRecord.review_to_surah,
+            actualEndAyah:
+              recitationRecord.review_to_ayah,
+            completionStatus:
+              reviewCompletion,
+            amount:
+              planSuggestion.revisionAmount,
+            unit:
+              planSuggestion.revisionUnit,
+            planEndSurah:
+              planSuggestion.revision_to_surah,
+            planEndAyah:
+              planSuggestion.revision_to_ayah,
+          })
+        : null;
+
+    const nextSideLesson = nextLesson
+      ? await buildSideAssignmentForLesson({
+          recitationRecord,
+          lessonAssignment: nextLesson,
+        })
+      : null;
+
+    const assignmentRows = [
+      nextLesson,
+      nextSideLesson,
+      nextReview,
+    ].filter(Boolean);
+
+    const refreshTargets = [
+      generatedLesson && lessonCompletion
+        ? {
+            segment_type: "lesson",
+            sequence_no: 1,
+          }
+        : null,
+
+      generatedSideLesson?.start_surah_name && sideCompletion
+        ? {
+            segment_type: "side_lesson",
+            sequence_no: 1,
+          }
+        : null,
+
+      generatedReview && reviewCompletion
+        ? {
+            segment_type: "revision",
+            sequence_no: 1,
+          }
+        : null,
+    ].filter(Boolean);
+
+    for (const target of refreshTargets) {
+      const { error: supersedeError } =
+        await supabase
+          .from("quran_assignments")
+          .update({
+            status: "superseded",
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            "student_id",
+            Number(recitationRecord.student_id)
+          )
+          .eq(
+            "halaqa_id",
+            Number(recitationRecord.halaqa_id)
+          )
+          .eq(
+            "monthly_plan_id",
+            Number(planSuggestion.id)
+          )
+          .eq(
+            "segment_type",
+            target.segment_type
+          )
+          .eq(
+            "sequence_no",
+            target.sequence_no
+          )
+          .eq("source", "generated")
+          .eq("status", "planned")
+          .neq(
+            "generated_from_recitation_id",
+            Number(recitationRecord.id)
+          );
+
+      if (supersedeError) {
+        throw supersedeError;
+      }
+    }
+
+    if (assignmentRows.length > 0) {
+      const rowsToInsert =
+        assignmentRows.map(
+          ({ _range, ...row }) => row
+        );
+
+      const { error: assignmentsError } =
+        await supabase
+          .from("quran_assignments")
+          .insert(rowsToInsert);
+
+      if (assignmentsError) {
+        throw assignmentsError;
+      }
+    }
+
+    const preview = {
+      date:
+        assignmentRows[0]?.assignment_date ||
+        null,
+      lesson:
+        nextLesson?._range || null,
+      sideLesson:
+        nextSideLesson?._range || null,
+      review:
+        nextReview?._range || null,
+      lessonCompletion,
+      sideCompletion,
+      reviewCompletion,
+    };
+
+
+    return preview;
+  }
+
   /* =====================================================
      SAVE QURAN
   ===================================================== */
 
   async function saveQuran() {
-    /*
-      واجهة القرآن الجديدة لا تطلب نطاق سورة/آية.
-      الحقول القديمة تبقى داخل quranForm فقط حتى لا نمسح
-      بيانات السجلات القديمة عند تعديلها.
-    */
+    const lessonRangeComplete = hasCompleteQuranRange(
+      quranForm.from_surah,
+      quranForm.from_ayah,
+      quranForm.to_surah,
+      quranForm.to_ayah
+    );
 
-    const hasLegacyLesson =
-      Boolean(
-        quranForm.from_surah ||
-        quranForm.to_surah
+    const lessonRangePartial = hasAnyQuranRange(
+      quranForm.from_surah,
+      quranForm.from_ayah,
+      quranForm.to_surah,
+      quranForm.to_ayah
+    );
+
+    const firstSideComplete = hasCompleteQuranRange(
+      quranForm.next_surah,
+      quranForm.next_from_ayah,
+      quranForm.next_to_surah,
+      quranForm.next_to_ayah
+    );
+
+    const firstSidePartial = hasAnyQuranRange(
+      quranForm.next_surah,
+      quranForm.next_from_ayah,
+      quranForm.next_to_surah,
+      quranForm.next_to_ayah
+    );
+
+    const secondSideComplete = hasCompleteQuranRange(
+      quranForm.next2_surah,
+      quranForm.next2_from_ayah,
+      quranForm.next2_to_surah,
+      quranForm.next2_to_ayah
+    );
+
+    const secondSidePartial = hasAnyQuranRange(
+      quranForm.next2_surah,
+      quranForm.next2_from_ayah,
+      quranForm.next2_to_surah,
+      quranForm.next2_to_ayah
+    );
+
+    const reviewRangeComplete = hasCompleteQuranRange(
+      quranForm.review_surah,
+      quranForm.review_from_ayah,
+      quranForm.review_to_surah,
+      quranForm.review_to_ayah
+    );
+
+    const reviewRangePartial = hasAnyQuranRange(
+      quranForm.review_surah,
+      quranForm.review_from_ayah,
+      quranForm.review_to_surah,
+      quranForm.review_to_ayah
+    );
+
+    const oldLessonOnly =
+      editing &&
+      !lessonRangePartial &&
+      (
+        Number(quranForm.lesson_amount_value || 0) > 0 ||
+        quranForm.lesson_amount_type
       );
+
+    const oldReviewOnly =
+      editing &&
+      !reviewRangePartial &&
+      Number(quranForm.review_faces || 0) > 0;
 
     const hasLesson =
-      Boolean(
-        Number(quranForm.lesson_amount_value || 0) > 0 ||
-        quranForm.lesson_amount_type ||
-        quranForm.lesson_evaluation ||
-        hasLegacyLesson
-      );
+      lessonRangeComplete ||
+      oldLessonOnly ||
+      Boolean(quranForm.lesson_evaluation);
 
     const hasFirstSide =
-      Boolean(
-        String(
-          quranForm.next_surah || ""
-        ).trim() ||
-        quranForm.next_evaluation ||
-        quranForm.next_to_surah
-      );
+      firstSideComplete ||
+      firstSidePartial ||
+      Boolean(quranForm.next_evaluation);
 
     const hasSecondSide =
-      Boolean(
-        String(
-          quranForm.next2_surah || ""
-        ).trim() ||
-        quranForm.next2_evaluation ||
-        quranForm.next2_to_surah
-      );
-
-    const hasLegacyReview =
-      Boolean(
-        quranForm.review_surah ||
-        quranForm.review_to_surah
-      );
+      secondSideComplete ||
+      secondSidePartial ||
+      Boolean(quranForm.next2_evaluation);
 
     const hasReview =
-      Boolean(
-        quranForm.review_faces !== "" ||
-        quranForm.review_evaluation ||
-        hasLegacyReview
-      );
+      reviewRangeComplete ||
+      oldReviewOnly ||
+      Boolean(quranForm.review_evaluation);
 
-    if (
-      !hasLesson &&
-      !hasFirstSide &&
-      !hasSecondSide &&
-      !hasReview
-    ) {
+    if (!hasLesson && !hasFirstSide && !hasSecondSide && !hasReview) {
       showToast(
-        "سجل الدرس أو جنب الدرس أو المراجعة أولًا",
+        "سجل نطاق الدرس أو جنب الدرس أو المراجعة أولًا",
         "error"
       );
-
       return;
     }
 
-    /*
-      الدرس اليومي:
-      في السجل الجديد نحتاج فقط مقدار + تقييم.
-      السجل القديم قد لا يملك lesson_amount_type، لذلك لا نجبره.
-    */
-
-    if (
-      !editing &&
-      hasLesson &&
-      Number(quranForm.lesson_amount_value || 0) <= 0
-    ) {
+    if (lessonRangePartial && !lessonRangeComplete) {
       showToast(
-        "حدد مقدار الدرس",
+        "أكمل نطاق الدرس: من سورة وآية إلى سورة وآية",
         "error"
       );
-
       return;
     }
 
-    if (
-      hasLesson &&
-      !quranForm.lesson_evaluation &&
-      !hasLegacyLesson
-    ) {
-      showToast(
-        "حدد تقييم الدرس",
-        "error"
-      );
-
+    if (lessonRangeComplete && !quranForm.lesson_evaluation) {
+      showToast("حدد تقييم الدرس", "error");
       return;
     }
 
-    /*
-      جنب الدرس:
-      نستخدم next_surah / next2_surah كنص مختصر
-      دون إضافة أعمدة جديدة أو تغيير هيكل قاعدة البيانات.
-    */
-
-    if (
-      String(
-        quranForm.next_surah || ""
-      ).trim() &&
-      !quranForm.next_evaluation
-    ) {
+    if (firstSidePartial && !firstSideComplete) {
       showToast(
-        "حدد تقييم جنب الدرس الأول",
+        "أكمل نطاق جنب الدرس الأول بالكامل",
         "error"
       );
-
       return;
     }
 
-    if (
-      quranForm.next_evaluation &&
-      !String(
-        quranForm.next_surah || ""
-      ).trim() &&
-      !quranForm.next_to_surah
-    ) {
-      showToast(
-        "اكتب جنب الدرس الأول أو أزل تقييمه",
-        "error"
-      );
-
+    if (firstSideComplete && !quranForm.next_evaluation) {
+      showToast("حدد تقييم جنب الدرس الأول", "error");
       return;
     }
 
-    if (
-      String(
-        quranForm.next2_surah || ""
-      ).trim() &&
-      !quranForm.next2_evaluation
-    ) {
+    if (secondSidePartial && !secondSideComplete) {
       showToast(
-        "حدد تقييم جنب الدرس الثاني",
+        "أكمل نطاق جنب الدرس الثاني بالكامل",
         "error"
       );
-
       return;
     }
 
-    if (
-      quranForm.next2_evaluation &&
-      !String(
-        quranForm.next2_surah || ""
-      ).trim() &&
-      !quranForm.next2_to_surah
-    ) {
-      showToast(
-        "اكتب جنب الدرس الثاني أو أزل تقييمه",
-        "error"
-      );
-
+    if (secondSideComplete && !quranForm.next2_evaluation) {
+      showToast("حدد تقييم جنب الدرس الثاني", "error");
       return;
     }
 
-    /*
-      المراجعة:
-      لا نطلب سورة أو آية؛ فقط مقدار المراجعة + التقييم.
-    */
-
-    if (
-      hasReview &&
-      !hasLegacyReview &&
-      (
-        quranForm.review_faces === "" ||
-        Number(
-          quranForm.review_faces
-        ) <= 0
-      )
-    ) {
+    if (reviewRangePartial && !reviewRangeComplete) {
       showToast(
-        "أدخل مقدار المراجعة",
+        "أكمل نطاق المراجعة: من سورة وآية إلى سورة وآية",
         "error"
       );
-
       return;
     }
 
-    if (
-      hasReview &&
-      !quranForm.review_evaluation &&
-      !hasLegacyReview
-    ) {
+    if (reviewRangeComplete && !quranForm.review_evaluation) {
+      showToast("حدد تقييم المراجعة", "error");
+      return;
+    }
+
+    try {
+      if (
+        lessonRangeComplete &&
+        planSuggestion?.generatedLesson
+      ) {
+        await resolveGeneratedCompletion({
+          track: "lesson",
+          generated:
+            planSuggestion.generatedLesson,
+          actualEndSurah:
+            quranForm.to_surah,
+          actualEndAyah:
+            quranForm.to_ayah,
+          evaluation:
+            quranForm.lesson_evaluation,
+        });
+      }
+
+      if (
+        firstSideComplete &&
+        planSuggestion?.generatedSideLesson?.start_surah_name
+      ) {
+        await resolveGeneratedCompletion({
+          track: "side1",
+          generated: planSuggestion.generatedSideLesson,
+          actualEndSurah: quranForm.next_to_surah,
+          actualEndAyah: quranForm.next_to_ayah,
+          evaluation: quranForm.next_evaluation,
+        });
+      }
+
+      if (
+        reviewRangeComplete &&
+        planSuggestion?.generatedReview
+      ) {
+        await resolveGeneratedCompletion({
+          track: "review",
+          generated:
+            planSuggestion.generatedReview,
+          actualEndSurah:
+            quranForm.review_to_surah,
+          actualEndAyah:
+            quranForm.review_to_ayah,
+          evaluation:
+            quranForm.review_evaluation,
+        });
+      }
+    } catch (completionError) {
       showToast(
-        "حدد تقييم المراجعة",
+        completionError.message ||
+          "تعذر التحقق من الإنجاز الفعلي",
         "error"
       );
-
       return;
     }
 
@@ -2269,191 +4232,85 @@ export default function Recitations() {
 
     try {
       const payload = {
-        student_id:
-          Number(
-            commonForm.student_id
-          ),
+        student_id: Number(commonForm.student_id),
+        halaqa_id: Number(commonForm.halaqa_id),
+        teacher_id: teacher.id,
+        recitation_date: commonForm.recitation_date,
 
-        halaqa_id:
-          Number(
-            commonForm.halaqa_id
-          ),
-
-        teacher_id:
-          teacher.id,
-
-        recitation_date:
-          commonForm.recitation_date,
+        from_surah: textOrNull(quranForm.from_surah),
+        from_ayah: numberOrNull(quranForm.from_ayah),
+        to_surah: textOrNull(quranForm.to_surah),
+        to_ayah: numberOrNull(quranForm.to_ayah),
+        lesson_evaluation: textOrNull(quranForm.lesson_evaluation),
 
         /*
-          لا تظهر هذه الحقول في الواجهة الجديدة.
-          عند إنشاء سجل جديد ستكون null.
-          وعند تعديل سجل قديم نحافظ على قيمه القديمة.
+          في النظام الجديد لا يدخل المعلم الأوجه أو الأسطر كإنجاز.
+          Trigger قاعدة البيانات يحسب هذه الحقول تلقائيًا من النطاق.
+          نحافظ فقط على القيم القديمة إذا كان السجل تاريخيًا بلا نطاق.
         */
-
-        from_surah:
-          textOrNull(
-            quranForm.from_surah
-          ),
-
-        from_ayah:
-          numberOrNull(
-            quranForm.from_ayah
-          ),
-
-        to_surah:
-          textOrNull(
-            quranForm.to_surah
-          ),
-
-        to_ayah:
-          numberOrNull(
-            quranForm.to_ayah
-          ),
-
-        lesson_evaluation:
-          textOrNull(
-            quranForm.lesson_evaluation
-          ),
-
         lesson_amount_type:
-          textOrNull(
-            legacyTypeForFreeAmount(
-              quranForm.lesson_amount_value,
-              quranForm.lesson_amount_unit
-            ) || quranForm.lesson_amount_type
-          ),
+          lessonRangeComplete
+            ? null
+            : textOrNull(quranForm.lesson_amount_type),
 
         lesson_amount_value:
-          numberOrNull(
-            quranForm.lesson_amount_value
-          ),
+          lessonRangeComplete
+            ? null
+            : numberOrNull(quranForm.lesson_amount_value),
 
         lesson_amount_unit:
-          textOrNull(
-            quranForm.lesson_amount_unit
-          ),
+          lessonRangeComplete
+            ? null
+            : textOrNull(quranForm.lesson_amount_unit),
 
         lesson_faces_manual:
-          Number(quranForm.lesson_amount_value || 0) > 0
-            ? (
-                quranForm.lesson_amount_unit === "lines"
-                  ? Number(quranForm.lesson_amount_value) / 15
-                  : Number(quranForm.lesson_amount_value)
-              )
-            : null,
+          lessonRangeComplete
+            ? null
+            : (
+                Number(quranForm.lesson_amount_value || 0) > 0
+                  ? (
+                      quranForm.lesson_amount_unit === "lines"
+                        ? Number(quranForm.lesson_amount_value) / 15
+                        : Number(quranForm.lesson_amount_value)
+                    )
+                  : null
+              ),
 
-        /*
-          lesson_faces القديم Generated Column لا نعدله.
-          السجلات الجديدة تستخدم lesson_faces_manual حتى ندعم أي مقدار حر.
-          PostgreSQL يحسبه تلقائيًا كما في النظام الحالي.
-        */
+        next_surah: textOrNull(quranForm.next_surah),
+        next_from_ayah: numberOrNull(quranForm.next_from_ayah),
+        next_to_surah: textOrNull(quranForm.next_to_surah),
+        next_to_ayah: numberOrNull(quranForm.next_to_ayah),
+        next_evaluation: textOrNull(quranForm.next_evaluation),
 
-        next_surah:
-          textOrNull(
-            quranForm.next_surah
-          ),
+        next2_surah: textOrNull(quranForm.next2_surah),
+        next2_from_ayah: numberOrNull(quranForm.next2_from_ayah),
+        next2_to_surah: textOrNull(quranForm.next2_to_surah),
+        next2_to_ayah: numberOrNull(quranForm.next2_to_ayah),
+        next2_evaluation: textOrNull(quranForm.next2_evaluation),
 
-        next_from_ayah:
-          numberOrNull(
-            quranForm.next_from_ayah
-          ),
-
-        next_to_surah:
-          textOrNull(
-            quranForm.next_to_surah
-          ),
-
-        next_to_ayah:
-          numberOrNull(
-            quranForm.next_to_ayah
-          ),
-
-        next_evaluation:
-          textOrNull(
-            quranForm.next_evaluation
-          ),
-
-        next2_surah:
-          textOrNull(
-            quranForm.next2_surah
-          ),
-
-        next2_from_ayah:
-          numberOrNull(
-            quranForm.next2_from_ayah
-          ),
-
-        next2_to_surah:
-          textOrNull(
-            quranForm.next2_to_surah
-          ),
-
-        next2_to_ayah:
-          numberOrNull(
-            quranForm.next2_to_ayah
-          ),
-
-        next2_evaluation:
-          textOrNull(
-            quranForm.next2_evaluation
-          ),
-
-        review_surah:
-          textOrNull(
-            quranForm.review_surah
-          ),
-
-        review_from_ayah:
-          numberOrNull(
-            quranForm.review_from_ayah
-          ),
-
-        review_to_surah:
-          textOrNull(
-            quranForm.review_to_surah
-          ),
-
-        review_to_ayah:
-          numberOrNull(
-            quranForm.review_to_ayah
-          ),
-
-        review_evaluation:
-          textOrNull(
-            quranForm.review_evaluation
-          ),
-
+        review_surah: textOrNull(quranForm.review_surah),
+        review_from_ayah: numberOrNull(quranForm.review_from_ayah),
+        review_to_surah: textOrNull(quranForm.review_to_surah),
+        review_to_ayah: numberOrNull(quranForm.review_to_ayah),
+        review_evaluation: textOrNull(quranForm.review_evaluation),
         review_faces:
-          numberOrNull(
-            quranForm.review_faces
-          ),
+          reviewRangeComplete
+            ? null
+            : numberOrNull(quranForm.review_faces),
 
-        notes:
-          textOrNull(
-            commonForm.notes
-          ),
-
-        points:
-          quranPoints,
+        notes: textOrNull(commonForm.notes),
+        points: quranPoints,
       };
 
       await saveToTable({
-        table:
-          "recitations",
-
-        type:
-          "quran",
-
+        table: "recitations",
+        type: "quran",
         payload,
-
-        points:
-          quranPoints,
-
-        reason:
-          "تسميع القرآن الكريم",
+        points: quranPoints,
+        reason: "تسميع القرآن الكريم",
+        afterPersist:
+          syncQuranEngineAfterSave,
       });
-
     } finally {
       setSaving(false);
     }
@@ -2663,7 +4520,11 @@ export default function Recitations() {
     payload,
     points,
     reason,
+    afterPersist = null,
   }) {
+    let persistedRecord = null;
+    let postPersistResult = null;
+
     /*
       ============================================
       UPDATE
@@ -2672,8 +4533,7 @@ export default function Recitations() {
 
     if (
       editing &&
-      editing.type ===
-        type
+      editing.type === type
     ) {
       const source =
         type === "quran"
@@ -2683,12 +4543,8 @@ export default function Recitations() {
       const oldRecord =
         source.find(
           (record) =>
-            Number(
-              record.id
-            ) ===
-            Number(
-              editing.id
-            )
+            Number(record.id) ===
+            Number(editing.id)
         );
 
       if (!oldRecord) {
@@ -2698,47 +4554,50 @@ export default function Recitations() {
       }
 
       const {
+        data,
         error,
       } =
         await supabase
           .from(table)
           .update(payload)
-          .eq(
-            "id",
-            editing.id
-          )
+          .eq("id", editing.id)
           .eq(
             "halaqa_id",
             oldRecord.halaqa_id
-          );
+          )
+          .select("*")
+          .single();
 
       if (error) {
         throw error;
       }
 
-      const oldPoints =
-        Number(
-          oldRecord.points ||
-            0
-        );
-
-      const difference =
-        Number(points) -
-        oldPoints;
+      persistedRecord = data;
 
       if (
-        difference !== 0
+        afterPersist &&
+        persistedRecord
       ) {
+        postPersistResult =
+          await afterPersist(
+            persistedRecord
+          );
+      }
+
+      const oldPoints =
+        Number(oldRecord.points || 0);
+
+      const difference =
+        Number(points) - oldPoints;
+
+      if (difference !== 0) {
         await addPointsTransaction({
           studentId:
             payload.student_id,
-
           points:
             difference,
-
           date:
             payload.recitation_date,
-
           reason:
             `تعديل ${reason}`,
         });
@@ -2762,30 +4621,38 @@ export default function Recitations() {
 
     else {
       const {
+        data,
         error,
       } =
         await supabase
           .from(table)
-          .insert([
-            payload,
-          ]);
+          .insert([payload])
+          .select("*")
+          .single();
 
       if (error) {
         throw error;
       }
 
+      persistedRecord = data;
+
       if (
-        Number(points) !== 0
+        afterPersist &&
+        persistedRecord
       ) {
+        postPersistResult =
+          await afterPersist(
+            persistedRecord
+          );
+      }
+
+      if (Number(points) !== 0) {
         await addPointsTransaction({
           studentId:
             payload.student_id,
-
           points,
-
           date:
             payload.recitation_date,
-
           reason,
         });
       }
@@ -2798,6 +4665,84 @@ export default function Recitations() {
       );
     }
 
+    if (
+      type === "quran" &&
+      postPersistResult
+    ) {
+      const nextParts = [];
+
+      if (postPersistResult.lesson) {
+        nextParts.push(
+          `الحفظ ${formatGeneratedRange(
+            postPersistResult.lesson
+          )}`
+        );
+      }
+
+      if (postPersistResult.sideLesson) {
+        nextParts.push(
+          `جنب الدرس ${formatGeneratedRange(
+            postPersistResult.sideLesson
+          )}`
+        );
+      }
+
+      if (postPersistResult.review) {
+        nextParts.push(
+          `المراجعة ${formatGeneratedRange(
+            postPersistResult.review
+          )}`
+        );
+      }
+
+      if (nextParts.length > 0) {
+        showToast(
+          `المطلوب القادم: ${nextParts.join(" • ")}`,
+          "info"
+        );
+      } else if (
+        planSuggestion?.id
+      ) {
+        showToast(
+          "تم تسجيل الجلسة ولا يوجد مطلوب تالٍ داخل حدود الخطة الحالية لهذا المسار",
+          "info"
+        );
+      }
+    }
+
+    const sessionAdvance =
+      type === "quran" &&
+      !editing &&
+      persistedRecord
+        ? await completeSessionStudent({
+            studentId: payload.student_id,
+            recitationId: persistedRecord.id,
+          })
+        : null;
+
+    if (sessionAdvance?.handled) {
+      if (sessionAdvance.nextRow) {
+        await openSessionStudent(sessionAdvance.nextRow);
+
+        showToast(
+          `الطالب التالي: ${
+            sessionAdvance.nextRow.student_profile?.full_name || "الطالب"
+          }`,
+          "info"
+        );
+      } else {
+        resetForms();
+        showToast("اكتملت جلسة الحلقة بنجاح", "success");
+      }
+
+      await loadData(true);
+
+      return {
+        record: persistedRecord,
+        engine: postPersistResult,
+      };
+    }
+
     const shouldAdvance =
       !editing &&
       teacherPreferences.recitation_advance_next_student !== false &&
@@ -2805,39 +4750,58 @@ export default function Recitations() {
       commonForm.student_id;
 
     if (shouldAdvance) {
-      const currentIndex = studentsForForm.findIndex(
-        (student) =>
-          String(student.id) === String(commonForm.student_id)
-      );
+      const currentIndex =
+        studentsForForm.findIndex(
+          (student) =>
+            String(student.id) ===
+            String(commonForm.student_id)
+        );
 
       const nextStudent =
         currentIndex >= 0
-          ? studentsForForm[currentIndex + 1]
+          ? studentsForForm[
+              currentIndex + 1
+            ]
           : null;
 
       if (nextStudent) {
-        const currentHalaqa = commonForm.halaqa_id;
-        const currentDate = commonForm.recitation_date || getLocalDate();
+        const currentHalaqa =
+          commonForm.halaqa_id;
+        const currentDate =
+          commonForm.recitation_date ||
+          getLocalDate();
 
         setEditing(null);
         setCommonForm({
           ...createCommonForm(),
-          halaqa_id: String(currentHalaqa),
-          student_id: String(nextStudent.id),
-          recitation_date: currentDate,
+          halaqa_id:
+            String(currentHalaqa),
+          student_id:
+            String(nextStudent.id),
+          recitation_date:
+            currentDate,
         });
 
         setQuranForm(
           createQuranForm(
-            teacherPreferences.recitation_default_amount_type
+            teacherPreferences
+              .recitation_default_amount_type
           )
         );
-        setNooraniaForm(createNooraniaForm());
+        setNooraniaForm(
+          createNooraniaForm()
+        );
         setPlanSuggestion(null);
+        setCompletionModes(
+          createCompletionModes()
+        );
         setFormOpen(true);
 
         showToast(
-          `تم الانتقال إلى الطالب التالي: ${nextStudent.full_name || "الطالب"}`,
+          `تم الانتقال إلى الطالب التالي: ${
+            nextStudent.full_name ||
+            "الطالب"
+          }`,
           "info"
         );
       } else {
@@ -2848,6 +4812,11 @@ export default function Recitations() {
     }
 
     await loadData(true);
+
+    return {
+      record: persistedRecord,
+      engine: postPersistResult,
+    };
   }
 
   /* =====================================================
@@ -3207,6 +5176,150 @@ export default function Recitations() {
         التسميع اليومي الآن أخف: اختر الطالب، المقدار، التقييم والمراجعة فقط.
         جنب الدرس باقٍ كما هو، والسجلات القديمة محفوظة في قاعدة البيانات.
       </div>
+
+      {/* =================================================
+          HALAQA SESSION
+      ================================================= */}
+
+      {activeSession ? (
+        <section className="halaqa-session-card active">
+          <div className="halaqa-session-top">
+            <div className="halaqa-session-heading">
+              <div className="halaqa-session-icon">
+                <Play size={18} />
+              </div>
+
+              <div>
+                <span className="halaqa-session-kicker">جلسة قرآن جارية</span>
+                <h2>
+                  {halaqaName(activeSession.halaqa_id)}
+                </h2>
+                <p>
+                  {currentSessionStudent
+                    ? `وصلت إلى الطالب ${currentSessionStudent.position} من ${sessionProgress.total} — ${currentSessionStudent.student_profile?.full_name || studentName(currentSessionStudent.student_id)}`
+                    : "تمت معالجة جميع طلاب الجلسة"}
+                </p>
+              </div>
+            </div>
+
+            <div className="halaqa-session-actions">
+              {currentSessionStudent && (
+                <button
+                  type="button"
+                  className="session-absent-button"
+                  onClick={markCurrentSessionAbsent}
+                  disabled={sessionBusy}
+                >
+                  <UserX size={15} />
+                  غائب
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="session-resume-button"
+                onClick={resumeActiveSession}
+                disabled={sessionBusy || !currentSessionStudent}
+              >
+                {sessionBusy ? <Loader2 size={15} className="spin" /> : <Play size={15} />}
+                متابعة الجلسة
+              </button>
+            </div>
+          </div>
+
+          <div className="halaqa-session-progress">
+            <div
+              className="halaqa-session-progress-bar"
+              style={{ width: `${sessionProgress.percent}%` }}
+            />
+          </div>
+
+          <div className="halaqa-session-meta">
+            <div><CheckCircle2 size={14} /><strong>{sessionProgress.completed}</strong><span>مكتمل</span></div>
+            <div><UserX size={14} /><strong>{sessionProgress.absent}</strong><span>غائب</span></div>
+            <div><Clock3 size={14} /><strong>{sessionProgress.pending}</strong><span>متبقٍ</span></div>
+            <div><CalendarDays size={14} /><span>{formatGregorianDate(activeSession.session_date)}</span></div>
+          </div>
+
+          <div className="halaqa-session-roster">
+            {sessionStudents.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                className={`session-student-chip ${item.status} ${
+                  currentSessionStudent && Number(currentSessionStudent.id) === Number(item.id)
+                    ? "current"
+                    : ""
+                }`}
+                onClick={() =>
+                  item.status === "pending"
+                    ? openSessionStudent(item)
+                    : undefined
+                }
+                disabled={sessionBusy || item.status !== "pending"}
+                title={item.student_profile?.full_name || studentName(item.student_id)}
+              >
+                <span>{item.position}</span>
+                <strong>{item.student_profile?.full_name || studentName(item.student_id)}</strong>
+                {item.status === "completed" ? (
+                  <CheckCircle2 size={13} />
+                ) : item.status === "absent" ? (
+                  <UserX size={13} />
+                ) : (
+                  <Clock3 size={13} />
+                )}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="halaqa-session-card launcher">
+          <div className="halaqa-session-heading">
+            <div className="halaqa-session-icon">
+              <Play size={18} />
+            </div>
+
+            <div>
+              <span className="halaqa-session-kicker">الوضع السريع للمعلم</span>
+              <h2>ابدأ جلسة الحلقة</h2>
+              <p>يحفظ النظام ترتيب الطلاب وتقدم الجلسة تلقائيًا، ويمكنك الرجوع والمتابعة من نفس الطالب.</p>
+            </div>
+          </div>
+
+          <div className="halaqa-session-launch-controls">
+            <select
+              value={sessionLauncherHalaqa}
+              onChange={(event) => setSessionLauncherHalaqa(event.target.value)}
+              disabled={sessionBusy}
+            >
+              <option value="">اختر الحلقة</option>
+              {halaqat.map((halaqa) => (
+                <option key={halaqa.id} value={halaqa.id}>
+                  {halaqa.name} — {halaqa.mosque_name}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              value={sessionLauncherDate}
+              max={getLocalDate()}
+              onChange={(event) => setSessionLauncherDate(event.target.value)}
+              disabled={sessionBusy}
+            />
+
+            <button
+              type="button"
+              className="session-start-button"
+              onClick={startQuranSession}
+              disabled={sessionBusy || halaqat.length === 0}
+            >
+              {sessionBusy ? <Loader2 size={15} className="spin" /> : <Play size={15} />}
+              بدء جلسة القرآن
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* =================================================
           STATS
@@ -3581,6 +5694,32 @@ export default function Recitations() {
             <div
               className="modal-body"
             >
+              {isActiveSessionForm && currentSessionStudent && (
+                <div className="session-modal-progress">
+                  <div>
+                    <span>جلسة الحلقة</span>
+                    <strong>
+                      الطالب {currentSessionStudent.position} من {sessionProgress.total}
+                    </strong>
+                    <small>
+                      {currentSessionStudent.student_profile?.full_name || studentName(currentSessionStudent.student_id)}
+                    </small>
+                  </div>
+
+                  <div className="session-modal-progress-track">
+                    <i style={{ width: `${sessionProgress.percent}%` }} />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={markCurrentSessionAbsent}
+                    disabled={sessionBusy || saving}
+                  >
+                    <UserX size={14} />
+                    غائب والانتقال للتالي
+                  </button>
+                </div>
+              )}
               <FormSection
                 icon={
                   <GraduationCap
@@ -3602,7 +5741,8 @@ export default function Recitations() {
                     }
                     disabled={
                       Boolean(
-                        editing
+                        editing ||
+                        isActiveSessionForm
                       )
                     }
                     onChange={(
@@ -3648,7 +5788,8 @@ export default function Recitations() {
                     }
                     disabled={
                       Boolean(
-                        editing
+                        editing ||
+                        isActiveSessionForm
                       ) ||
                       !commonForm
                         .halaqa_id
@@ -3696,6 +5837,7 @@ export default function Recitations() {
                       commonForm
                         .recitation_date
                     }
+                    disabled={isActiveSessionForm}
                     onChange={(
                       value
                     ) =>
@@ -3749,19 +5891,21 @@ export default function Recitations() {
                   QURAN
               ========================================= */}
 
-              {formType ===
-                "quran" && (
+              {/* =========================================
+                  QURAN
+              ========================================= */}
+
+              {formType === "quran" && (
                 <>
-                  <div className="quick-entry-banner">
+                  <div className="quran-engine-banner">
                     <div className="quick-entry-icon">
                       <Sparkles size={18} />
                     </div>
 
                     <div>
-                      <strong>تسميع سريع</strong>
+                      <strong>محرك المصحف يعمل بالنطاق القرآني</strong>
                       <span>
-                        لا تحتاج الآن إلى تحديد سورة أو رقم آية.
-                        سجّل المقدار والتقييم فقط، وأضف جنب الدرس أو المراجعة عند الحاجة.
+                        البداية والنهاية هما مصدر الحقيقة. عدد الأسطر والأوجه يُحسب تلقائيًا من جداول المصحف ولا يكتبه المعلم يدويًا.
                       </span>
                     </div>
                   </div>
@@ -3774,210 +5918,333 @@ export default function Recitations() {
                       </div>
 
                       <div className="plan-suggestion-copy">
-                        <span>الخطة الشهرية قرأت تلقائيًا</span>
+                        <span>المطلوب اليوم تولّد من الخطة تلقائيًا</span>
+
                         <strong>
-                          {Number(planSuggestion.memorizationAmount || 0) > 0
-                            ? `${planSuggestion.memorizationAmount} ${planSuggestion.memorizationUnit === "lines" ? "سطر حفظ" : "صفحة حفظ"}`
-                            : "بدون حفظ"}
-                          {Number(planSuggestion.revisionAmount || 0) > 0
-                            ? ` • ${formatFaces(amountToFaces(planSuggestion.revisionAmount, planSuggestion.revisionUnit))} صفحة مراجعة`
+                          {planSuggestion.generatedLesson
+                            ? `الحفظ: ${formatGeneratedRange(planSuggestion.generatedLesson)}`
+                            : "الحفظ: لا يوجد نطاق مولّد"}
+                          {planSuggestion.generatedSideLesson?.start_surah_name
+                            ? ` • جنب الدرس: ${formatGeneratedRange(planSuggestion.generatedSideLesson)}`
+                            : ""}
+                          {planSuggestion.generatedReview
+                            ? ` • المراجعة: ${formatGeneratedRange(planSuggestion.generatedReview)}`
                             : ""}
                         </strong>
+
                         <small>
                           {planSuggestion.scheduledToday
-                            ? "اليوم من أيام تسميع الطالب — يمكنك التعديل على المقادير لهذه الجلسة فقط."
-                            : "اليوم ليس من أيام التسميع المجدولة، لكن يمكنك تسجيل جلسة إضافية دون تغيير الخطة."}
+                            ? "اليوم من أيام التسميع. يمكنك تعديل النهاية الفعلية فقط إذا زاد الطالب أو نقص."
+                            : "هذه جلسة إضافية خارج الأيام المجدولة؛ النطاق المقترح ما زال مبنيًا على آخر تقدم فعلي للطالب."}
                         </small>
+
+                        {(planSuggestion.generatedLesson?.precision_label === "ayah_boundary_shared_line" ||
+                          planSuggestion.generatedSideLesson?.precision_label === "ayah_boundary_shared_line" ||
+                          planSuggestion.generatedSideLesson?.precision_label === "ayah_line_range_shared_boundary" ||
+                          planSuggestion.generatedReview?.precision_label === "ayah_boundary_shared_line") && (
+                          <div className="precision-warning">
+                            <CircleAlert size={14} />
+                            <span>
+                              يوجد سطر تشترك فيه أكثر من آية؛ لذلك يعرض النظام نهاية آية آمنة ولا يدّعي موضع كلمة غير موثق بعد.
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
-                  {/* LESSON */}
-
                   <FormSection
-                    icon={
-                      <BookOpen
-                        size={17}
-                      />
+                    icon={<BookOpen size={17} />}
+                    title="الدرس الجديد"
+                    subtitle={
+                      planSuggestion?.generatedLesson && !editing
+                        ? "المطلوب جاهز — في الوضع الطبيعي قيّم الطالب فقط"
+                        : "النطاق الفعلي الذي سمعه الطالب — الحساب يتم تلقائيًا من المصحف"
                     }
-                    title="الدرس"
-                    subtitle="المقدار الجديد الذي سمعه الطالب"
                   >
-                    <div className="quick-section-grid">
-                      <div className="quick-amount-column">
-                        <LessonAmountField
-                          value={quranForm.lesson_amount_value}
-                          unit={quranForm.lesson_amount_unit}
-                          onValueChange={(value) =>
-                            setQuran("lesson_amount_value", value)
-                          }
-                          onUnitChange={(value) =>
-                            setQuran("lesson_amount_unit", value)
+                    {planSuggestion?.generatedLesson && !editing ? (
+                      <>
+                        <PlannedQuranTask
+                          title="المطلوب"
+                          assignment={planSuggestion.generatedLesson}
+                          amount={planSuggestion.memorizationAmount}
+                          unit={planSuggestion.memorizationUnit}
+                        />
+
+                        <CompletionStatusSelector
+                          value={completionModes.lesson}
+                          onChange={(value) =>
+                            setTrackCompletion("lesson", value)
                           }
                         />
 
-                        <div className="faces-preview quick-faces-preview">
-                          <Target size={15} />
+                        {(completionModes.lesson === "under" ||
+                          completionModes.lesson === "over") && (
+                          <QuranActualEndEditor
+                            label={
+                              completionModes.lesson === "under"
+                                ? "آخر موضع وصل إليه الطالب"
+                                : "آخر موضع زاد إليه الطالب"
+                            }
+                            toSurah={quranForm.to_surah}
+                            toAyah={quranForm.to_ayah}
+                            onToSurah={(value) =>
+                              setQuran("to_surah", value)
+                            }
+                            onToAyah={(value) =>
+                              setQuran("to_ayah", value)
+                            }
+                          />
+                        )}
 
-                          {Number(quranForm.lesson_amount_value || 0) > 0 ? (
-                            <>
-                              يدخل في الإنجاز:
-                              <strong>
-                                {formatFaces(lessonFaces)} وجه
-                              </strong>
-                            </>
-                          ) : editing && quranForm.lesson_amount_type ? (
-                            <>
-                              السجل القديم:
-                              <strong>{getLessonAmountLabel(quranForm.lesson_amount_type)}</strong>
-                            </>
-                          ) : (
-                            "اكتب المقدار واختر أسطر أو صفحات."
-                          )}
+                        {completionModes.lesson === "repeat" && (
+                          <div className="completion-repeat-note">
+                            <RefreshCw size={15} />
+                            <span>
+                              لن يتحرك مؤشر الحفظ؛ سيعاد نفس المطلوب في الجلسة القادمة.
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <QuranRangeEditor
+                        fromSurah={quranForm.from_surah}
+                        fromAyah={quranForm.from_ayah}
+                        toSurah={quranForm.to_surah}
+                        toAyah={quranForm.to_ayah}
+                        onFromSurah={(value) => setQuran("from_surah", value)}
+                        onFromAyah={(value) => setQuran("from_ayah", value)}
+                        onToSurah={(value) => setQuran("to_surah", value)}
+                        onToAyah={(value) => setQuran("to_ayah", value)}
+                      />
+                    )}
+
+                    <RangeMetricPreview
+                      metrics={rangeMetrics.lesson}
+                      loading={rangeMetricsLoading}
+                      emptyText="اختر نطاق الدرس ليحسب النظام الإنجاز تلقائيًا."
+                    />
+
+                    <EvaluationSelector
+                      label="تقييم الدرس"
+                      value={quranForm.lesson_evaluation}
+                      onChange={(value) =>
+                        setTrackEvaluation(
+                          "lesson",
+                          "lesson_evaluation",
+                          value
+                        )
+                      }
+                    />
+                  </FormSection>
+
+                  <FormSection
+                    icon={<Target size={17} />}
+                    title="جنب الدرس"
+                    subtitle="يولد تلقائيًا من سياسة الطالب ويبقى مستقلًا عن الحفظ الجديد"
+                  >
+                    {planSuggestion?.generatedSideLesson?.start_surah_name && !editing ? (
+                      <>
+                        <div className="side-policy-live-badge">
+                          <ShieldCheck size={15} />
+                          <span>{formatSideLessonMode(planSuggestion.generatedSideLesson.side_lesson_mode)}</span>
+                          <small>مولد من سياسة الطالب</small>
+                        </div>
+
+                        <PlannedQuranTask
+                          title="جنب الدرس المطلوب"
+                          assignment={planSuggestion.generatedSideLesson}
+                          amount={
+                            planSuggestion.generatedSideLesson.side_lesson_amount ??
+                            planSuggestion.generatedSideLesson.faces
+                          }
+                          unit={
+                            planSuggestion.generatedSideLesson.side_lesson_unit || "faces"
+                          }
+                        />
+
+                        <CompletionStatusSelector
+                          value={completionModes.side1}
+                          onChange={(value) => setTrackCompletion("side1", value)}
+                        />
+
+                        {(completionModes.side1 === "under" || completionModes.side1 === "over") && (
+                          <QuranActualEndEditor
+                            label={completionModes.side1 === "under" ? "آخر موضع وصل إليه في جنب الدرس" : "آخر موضع زاد إليه في جنب الدرس"}
+                            toSurah={quranForm.next_to_surah}
+                            toAyah={quranForm.next_to_ayah}
+                            onToSurah={(value) => setQuran("next_to_surah", value)}
+                            onToAyah={(value) => setQuran("next_to_ayah", value)}
+                          />
+                        )}
+
+                        {completionModes.side1 === "repeat" && (
+                          <div className="completion-repeat-note">
+                            <RefreshCw size={15} />
+                            <span>سيبقى جنب الدرس نفسه مطلوبًا بحسب نتيجة هذه الجلسة.</span>
+                          </div>
+                        )}
+                      </>
+                    ) : planSuggestion?.generatedSideLesson?.side_lesson_mode === "none" && !editing ? (
+                      <div className="side-policy-none-state">
+                        <ShieldCheck size={16} />
+                        <div>
+                          <strong>لا يوجد جنب درس لهذا الطالب</strong>
+                          <span>يمكن تغييره من سياسة جنب الدرس في الخطة الشهرية.</span>
                         </div>
                       </div>
-
-                      <div className="quick-evaluation-column">
-                        <EvaluationSelector
-                          label="تقييم الدرس"
-                          value={
-                            quranForm.lesson_evaluation
-                          }
-                          onChange={(value) =>
-                            setQuran(
-                              "lesson_evaluation",
-                              value
-                            )
-                          }
-                        />
-                      </div>
-                    </div>
-                  </FormSection>
-
-                  {/* NEXT */}
-
-                  <FormSection
-                    icon={
-                      <Target
-                        size={17}
+                    ) : (
+                      <QuranRangeEditor
+                        fromSurah={quranForm.next_surah}
+                        fromAyah={quranForm.next_from_ayah}
+                        toSurah={quranForm.next_to_surah}
+                        toAyah={quranForm.next_to_ayah}
+                        onFromSurah={(value) => setQuran("next_surah", value)}
+                        onFromAyah={(value) => setQuran("next_from_ayah", value)}
+                        onToSurah={(value) => setQuran("next_to_surah", value)}
+                        onToAyah={(value) => setQuran("next_to_ayah", value)}
                       />
-                    }
-                    title="جنب الدرس الأول"
-                    subtitle="يبقى مستقلاً عن الخطة الشهرية"
-                  >
-                    <div className="form-grid two quick-side-grid">
-                      <TextField
-                        label="جنب الدرس"
-                        value={
-                          quranForm.next_surah
-                        }
-                        onChange={(value) =>
-                          setQuran(
-                            "next_surah",
-                            value
-                          )
-                        }
-                        placeholder="مثال: سطران إضافيان / وجه سابق / تمرين مرافق"
-                      />
+                    )}
 
+                    <RangeMetricPreview
+                      metrics={rangeMetrics.side1}
+                      loading={rangeMetricsLoading}
+                      emptyText="لا يوجد نطاق جنب درس في هذه الجلسة."
+                    />
+
+                    {hasCompleteQuranRange(
+                      quranForm.next_surah,
+                      quranForm.next_from_ayah,
+                      quranForm.next_to_surah,
+                      quranForm.next_to_ayah
+                    ) && (
                       <EvaluationSelector
                         label="تقييم جنب الدرس"
-                        value={
-                          quranForm.next_evaluation
-                        }
+                        value={quranForm.next_evaluation}
                         onChange={(value) =>
-                          setQuran(
-                            "next_evaluation",
-                            value
-                          )
+                          planSuggestion?.generatedSideLesson?.start_surah_name && !editing
+                            ? setTrackEvaluation("side1", "next_evaluation", value)
+                            : setQuran("next_evaluation", value)
                         }
                       />
-                    </div>
+                    )}
                   </FormSection>
 
-                  {/* NEXT 2 */}
+                  <details className="secondary-side-details">
+                    <summary>
+                      <Plus size={15} />
+                      جنب درس إضافي — اختياري
+                    </summary>
 
-                  <FormSection
-                    icon={
-                      <Plus
-                        size={17}
+                    <div className="secondary-side-body">
+                      <QuranRangeEditor
+                        fromSurah={quranForm.next2_surah}
+                        fromAyah={quranForm.next2_from_ayah}
+                        toSurah={quranForm.next2_to_surah}
+                        toAyah={quranForm.next2_to_ayah}
+                        onFromSurah={(value) => setQuran("next2_surah", value)}
+                        onFromAyah={(value) => setQuran("next2_from_ayah", value)}
+                        onToSurah={(value) => setQuran("next2_to_surah", value)}
+                        onToAyah={(value) => setQuran("next2_to_ayah", value)}
                       />
-                    }
-                    title="جنب الدرس الثاني"
-                    subtitle="اختياري — اتركه فارغًا إذا لم يوجد"
-                  >
-                    <div className="form-grid two quick-side-grid">
-                      <TextField
-                        label="جنب الدرس الثاني"
-                        value={
-                          quranForm.next2_surah
-                        }
-                        onChange={(value) =>
-                          setQuran(
-                            "next2_surah",
-                            value
-                          )
-                        }
-                        placeholder="مقدار إضافي اختياري"
+
+                      <RangeMetricPreview
+                        metrics={rangeMetrics.side2}
+                        loading={rangeMetricsLoading}
+                        emptyText="اتركه فارغًا إذا لم يوجد جنب درس ثانٍ."
                       />
 
                       <EvaluationSelector
-                        label="تقييم جنب الدرس الثاني"
-                        value={
-                          quranForm.next2_evaluation
-                        }
-                        onChange={(value) =>
-                          setQuran(
-                            "next2_evaluation",
-                            value
-                          )
-                        }
+                        label="التقييم"
+                        value={quranForm.next2_evaluation}
+                        onChange={(value) => setQuran("next2_evaluation", value)}
                       />
                     </div>
-                  </FormSection>
-
-                  {/* REVIEW */}
+                  </details>
 
                   <FormSection
-                    icon={
-                      <RefreshCw
-                        size={17}
-                      />
-                    }
+                    icon={<RefreshCw size={17} />}
                     title="المراجعة"
-                    subtitle="أدخل المقدار والتقييم فقط"
+                    subtitle={
+                      planSuggestion?.generatedReview && !editing
+                        ? "المراجعة جاهزة — لا تعدّل النطاق إلا إذا اختلف الواقع"
+                        : "من موضع إلى موضع — لا يوجد إدخال يدوي لعدد الأوجه"
+                    }
                   >
-                    <div className="form-grid two evaluation-faces-grid">
-                      <NumberField
-                        label="مقدار المراجعة"
-                        value={
-                          quranForm.review_faces
-                        }
-                        onChange={(value) =>
-                          setQuran(
-                            "review_faces",
-                            value
-                          )
-                        }
-                        min="0"
-                        step="0.01"
-                        placeholder="مثال: 5"
-                        suffix="صفحة"
-                      />
+                    {planSuggestion?.generatedReview && !editing ? (
+                      <>
+                        <PlannedQuranTask
+                          title="المراجعة المطلوبة"
+                          assignment={planSuggestion.generatedReview}
+                          amount={planSuggestion.revisionAmount}
+                          unit={planSuggestion.revisionUnit}
+                        />
 
-                      <EvaluationSelector
-                        label="تقييم المراجعة"
-                        value={
-                          quranForm.review_evaluation
-                        }
-                        onChange={(value) =>
-                          setQuran(
-                            "review_evaluation",
-                            value
-                          )
-                        }
+                        <CompletionStatusSelector
+                          value={completionModes.review}
+                          onChange={(value) =>
+                            setTrackCompletion("review", value)
+                          }
+                        />
+
+                        {(completionModes.review === "under" ||
+                          completionModes.review === "over") && (
+                          <QuranActualEndEditor
+                            label={
+                              completionModes.review === "under"
+                                ? "آخر موضع راجعه الطالب"
+                                : "آخر موضع زاد في مراجعته"
+                            }
+                            toSurah={quranForm.review_to_surah}
+                            toAyah={quranForm.review_to_ayah}
+                            onToSurah={(value) =>
+                              setQuran("review_to_surah", value)
+                            }
+                            onToAyah={(value) =>
+                              setQuran("review_to_ayah", value)
+                            }
+                          />
+                        )}
+
+                        {completionModes.review === "repeat" && (
+                          <div className="completion-repeat-note">
+                            <RefreshCw size={15} />
+                            <span>
+                              ستبقى المراجعة نفسها مطلوبة في الجلسة القادمة.
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <QuranRangeEditor
+                        fromSurah={quranForm.review_surah}
+                        fromAyah={quranForm.review_from_ayah}
+                        toSurah={quranForm.review_to_surah}
+                        toAyah={quranForm.review_to_ayah}
+                        onFromSurah={(value) => setQuran("review_surah", value)}
+                        onFromAyah={(value) => setQuran("review_from_ayah", value)}
+                        onToSurah={(value) => setQuran("review_to_surah", value)}
+                        onToAyah={(value) => setQuran("review_to_ayah", value)}
                       />
-                    </div>
+                    )}
+
+                    <RangeMetricPreview
+                      metrics={rangeMetrics.review}
+                      loading={rangeMetricsLoading}
+                      emptyText="اختر نطاق المراجعة وسيحسب النظام الأوجه تلقائيًا."
+                    />
+
+                    <EvaluationSelector
+                      label="تقييم المراجعة"
+                      value={quranForm.review_evaluation}
+                      onChange={(value) =>
+                        setTrackEvaluation(
+                          "review",
+                          "review_evaluation",
+                          value
+                        )
+                      }
+                    />
                   </FormSection>
                 </>
               )}
@@ -4490,18 +6757,21 @@ function RecordCard({
             }
           >
             <div className="record-values quick-record-values">
-              <FaceBadge
-                label={
-                  formatStoredLessonAmount(record) ||
-                  getLessonAmountLabel(
-                    record.lesson_amount_type
-                  ) || "مقدار الدرس"
-                }
-                value={
-                  record.lesson_faces_manual ??
-                  record.lesson_faces
-                }
-              />
+              <strong className="quran-range-record">
+                {formatRecordRange(
+                  record.from_surah,
+                  record.from_ayah,
+                  record.to_surah,
+                  record.to_ayah
+                ) || formatStoredLessonAmount(record) || "—"}
+              </strong>
+
+              {(record.lesson_faces_manual ?? record.lesson_faces) != null && (
+                <FaceBadge
+                  label="محسوب من المصحف"
+                  value={record.lesson_faces_manual ?? record.lesson_faces}
+                />
+              )}
 
               <EvaluationBadge
                 value={
@@ -4524,7 +6794,12 @@ function RecordCard({
               {record.next_surah && (
                 <div className="sub-record-line quick-side-record">
                   <strong className="text-record-value">
-                    {record.next_surah}
+                    {formatRecordRange(
+                      record.next_surah,
+                      record.next_from_ayah,
+                      record.next_to_surah,
+                      record.next_to_ayah
+                    ) || record.next_surah}
                   </strong>
 
                   <EvaluationBadge
@@ -4538,7 +6813,12 @@ function RecordCard({
               {record.next2_surah && (
                 <div className="sub-record-line quick-side-record">
                   <strong className="text-record-value">
-                    {record.next2_surah}
+                    {formatRecordRange(
+                      record.next2_surah,
+                      record.next2_from_ayah,
+                      record.next2_to_surah,
+                      record.next2_to_ayah
+                    ) || record.next2_surah}
                   </strong>
 
                   <EvaluationBadge
@@ -4551,7 +6831,8 @@ function RecordCard({
             </RecordSection>
           )}
 
-          {(record.review_faces ||
+          {(record.review_surah ||
+            record.review_faces ||
             record.review_evaluation) && (
             <RecordSection
               title="المراجعة"
@@ -4562,12 +6843,21 @@ function RecordCard({
               }
             >
               <div className="record-values quick-record-values">
-                <FaceBadge
-                  label="أوجه المراجعة"
-                  value={
-                    record.review_faces
-                  }
-                />
+                <strong className="quran-range-record">
+                  {formatRecordRange(
+                    record.review_surah,
+                    record.review_from_ayah,
+                    record.review_to_surah,
+                    record.review_to_ayah
+                  ) || "—"}
+                </strong>
+
+                {record.review_faces != null && (
+                  <FaceBadge
+                    label="محسوب من المصحف"
+                    value={record.review_faces}
+                  />
+                )}
 
                 <EvaluationBadge
                   value={
@@ -5093,12 +7383,319 @@ function LessonAmountField({
 }
 
 /* =========================================================
+   Quran Smart Task
+========================================================= */
+
+function formatSideLessonMode(mode) {
+  switch (mode) {
+    case "previous_amount":
+      return "مقدار سابق قبل الدرس";
+    case "previous_surah":
+      return "السورة السابقة";
+    case "from_surah_start":
+      return "من بداية السورة إلى ما قبل الدرس";
+    case "custom":
+      return "نطاق مخصص";
+    default:
+      return "بدون جنب درس";
+  }
+}
+
+function PlannedQuranTask({
+  title,
+  assignment,
+  amount,
+  unit,
+}) {
+  if (!assignment) {
+    return null;
+  }
+
+  const amountText =
+    Number(amount || 0) > 0
+      ? unit === "lines"
+        ? `${amount} ${Number(amount) === 1 ? "سطر" : Number(amount) === 2 ? "سطران" : "أسطر"}`
+        : `${formatFaces(amount)} ${Number(amount) === 1 ? "وجه" : "أوجه"}`
+      : "";
+
+  return (
+    <div className="planned-quran-task">
+      <div className="planned-quran-task-head">
+        <div>
+          <span>{title}</span>
+          <strong>
+            {formatGeneratedRange(assignment)}
+          </strong>
+        </div>
+
+        {amountText && (
+          <div className="planned-quran-speed">
+            <Target size={14} />
+            <span>{amountText}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="planned-quran-task-meta">
+        <span>
+          ص {assignment.start_page}
+          {Number(assignment.end_page) !==
+          Number(assignment.start_page)
+            ? ` → ص ${assignment.end_page}`
+            : ""}
+        </span>
+
+        <span>
+          {assignment.precision_label === "ayah_boundary_shared_line"
+            ? "نهاية آية آمنة"
+            : "محسوب من المصحف"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function CompletionStatusSelector({
+  value,
+  onChange,
+}) {
+  const items = [
+    {
+      value: "exact",
+      label: "أتم",
+      hint: "أتم المطلوب",
+    },
+    {
+      value: "under",
+      label: "أقل",
+      hint: "توقف قبل النهاية",
+    },
+    {
+      value: "over",
+      label: "أكثر",
+      hint: "تجاوز المطلوب",
+    },
+    {
+      value: "repeat",
+      label: "إعادة",
+      hint: "لا يتقدم المسار",
+    },
+  ];
+
+  return (
+    <div className="completion-status-block">
+      <div className="completion-status-heading">
+        <span>نتيجة المقدار</span>
+        <small>
+          في «أقل» أو «أكثر» عدّل النهاية الفعلية فقط
+        </small>
+      </div>
+
+      <div className="completion-status-options">
+        {items.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            className={
+              value === item.value
+                ? `completion-status-btn ${item.value} active`
+                : `completion-status-btn ${item.value}`
+            }
+            onClick={() =>
+              onChange(item.value)
+            }
+          >
+            <strong>{item.label}</strong>
+            <span>{item.hint}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function QuranActualEndEditor({
+  label,
+  toSurah,
+  toAyah,
+  onToSurah,
+  onToAyah,
+}) {
+  const options = [
+    { value: "", label: "اختر السورة" },
+    ...surahs.map((surah) => ({
+      value: surah,
+      label: surah,
+    })),
+  ];
+
+  return (
+    <div className="actual-end-editor">
+      <div className="actual-end-heading">
+        <Edit3 size={15} />
+
+        <div>
+          <strong>{label}</strong>
+          <span>
+            البداية ثابتة من المطلوب؛ غيّر آخر موضع فقط.
+          </span>
+        </div>
+      </div>
+
+      <div className="form-grid two">
+        <SelectField
+          label="آخر سورة"
+          value={toSurah}
+          onChange={onToSurah}
+          options={options}
+        />
+
+        <NumberField
+          label="آخر آية"
+          value={toAyah}
+          onChange={onToAyah}
+          min="1"
+          step="1"
+          placeholder="رقم الآية"
+        />
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   Quran Range
+========================================================= */
+
+function QuranRangeEditor({
+  fromSurah,
+  fromAyah,
+  toSurah,
+  toAyah,
+  onFromSurah,
+  onFromAyah,
+  onToSurah,
+  onToAyah,
+}) {
+  const options = [
+    { value: "", label: "اختر السورة" },
+    ...surahs.map((surah) => ({ value: surah, label: surah })),
+  ];
+
+  return (
+    <div className="quran-range-editor">
+      <div className="quran-range-side">
+        <span className="quran-range-side-title">البداية</span>
+
+        <div className="quran-range-fields">
+          <SelectField
+            label="من سورة"
+            value={fromSurah}
+            onChange={onFromSurah}
+            options={options}
+          />
+
+          <NumberField
+            label="من آية"
+            value={fromAyah}
+            onChange={onFromAyah}
+            min="1"
+            step="1"
+            placeholder="1"
+          />
+        </div>
+      </div>
+
+      <div className="quran-range-arrow">
+        <ChevronLeft size={18} />
+      </div>
+
+      <div className="quran-range-side">
+        <span className="quran-range-side-title">النهاية الفعلية</span>
+
+        <div className="quran-range-fields">
+          <SelectField
+            label="إلى سورة"
+            value={toSurah}
+            onChange={onToSurah}
+            options={options}
+          />
+
+          <NumberField
+            label="إلى آية"
+            value={toAyah}
+            onChange={onToAyah}
+            min="1"
+            step="1"
+            placeholder="1"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RangeMetricPreview({
+  metrics,
+  loading,
+  emptyText,
+}) {
+  if (loading && !metrics) {
+    return (
+      <div className="range-metric-preview loading">
+        <Loader2 size={15} className="spin" />
+        <span>يحسب من جداول المصحف…</span>
+      </div>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <div className="range-metric-preview empty">
+        <BookMarked size={15} />
+        <span>{emptyText}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="range-metric-preview ready">
+      <div>
+        <span>الموضع</span>
+        <strong>
+          ص {metrics.start_page}
+          {Number(metrics.end_page) !== Number(metrics.start_page)
+            ? ` → ص ${metrics.end_page}`
+            : ""}
+        </strong>
+      </div>
+
+      <div>
+        <span>أسطر القرآن</span>
+        <strong>{metrics.quran_lines}</strong>
+      </div>
+
+      <div>
+        <span>الأوجه المحسوبة</span>
+        <strong>{formatFaces(metrics.faces)}</strong>
+      </div>
+
+      <div className="range-source-chip">
+        <ShieldCheck size={14} />
+        من المصحف المعتمد
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
    Date
 ========================================================= */
 
 function DateField({
   value,
   onChange,
+  disabled = false,
 }) {
   return (
     <div
@@ -5126,6 +7723,7 @@ function DateField({
           type="date"
           value={value}
           max={getLocalDate()}
+          disabled={disabled}
           onChange={(e) =>
             onChange(
               e.target.value
@@ -5783,6 +8381,53 @@ function isScheduledRecitationDate(dateString, days) {
   );
 }
 
+function getNextScheduledRecitationDate(
+  dateString,
+  days
+) {
+  const cursor = parseDate(
+    dateString || getLocalDate()
+  );
+
+  const allowed =
+    Array.isArray(days)
+      ? days
+          .map(
+            (day) =>
+              RECITATION_DAY_TO_JS[day]
+          )
+          .filter(
+            (day) =>
+              Number.isInteger(day)
+          )
+      : [];
+
+  for (
+    let offset = 1;
+    offset <= 14;
+    offset += 1
+  ) {
+    cursor.setDate(
+      cursor.getDate() + 1
+    );
+
+    if (
+      allowed.length === 0 ||
+      allowed.includes(
+        cursor.getDay()
+      )
+    ) {
+      return getLocalDate(
+        cursor
+      );
+    }
+  }
+
+  return getLocalDate(
+    cursor
+  );
+}
+
 function formatStoredLessonAmount(record) {
   const amount = Number(record?.lesson_amount_value || 0);
   const unit = record?.lesson_amount_unit;
@@ -5883,6 +8528,47 @@ function formatFaces(
   return Number(
     number.toFixed(2)
   ).toString();
+}
+
+function hasCompleteQuranRange(fromSurah, fromAyah, toSurah, toAyah) {
+  return Boolean(
+    String(fromSurah || "").trim() &&
+    Number(fromAyah || 0) > 0 &&
+    String(toSurah || "").trim() &&
+    Number(toAyah || 0) > 0
+  );
+}
+
+function hasAnyQuranRange(fromSurah, fromAyah, toSurah, toAyah) {
+  return Boolean(
+    String(fromSurah || "").trim() ||
+    Number(fromAyah || 0) > 0 ||
+    String(toSurah || "").trim() ||
+    Number(toAyah || 0) > 0
+  );
+}
+
+function formatRecordRange(fromSurah, fromAyah, toSurah, toAyah) {
+  if (!hasCompleteQuranRange(fromSurah, fromAyah, toSurah, toAyah)) {
+    return "";
+  }
+
+  if (String(fromSurah) === String(toSurah)) {
+    return `${fromSurah} ${fromAyah} → ${toAyah}`;
+  }
+
+  return `${fromSurah} ${fromAyah} → ${toSurah} ${toAyah}`;
+}
+
+function formatGeneratedRange(range) {
+  if (!range) return "—";
+
+  return formatRecordRange(
+    range.start_surah_name,
+    range.start_ayah,
+    range.end_surah_name,
+    range.end_ayah
+  );
 }
 
 function textOrNull(
@@ -6184,6 +8870,300 @@ function PageStyles() {
 
           font-size: calc(9px * var(--app-font-scale,1));
           line-height: 1.7;
+        }
+
+        /* =============================================
+           HALAQA SESSION
+        ============================================= */
+
+        .halaqa-session-card {
+          position: relative;
+          overflow: hidden;
+          margin-bottom: 18px;
+          padding: calc(16px * var(--app-density,1));
+          border: 1px solid #dfe9e3;
+          border-radius: calc(19px * var(--app-radius-scale,1));
+          background: #fff;
+          box-shadow: 0 10px 28px rgba(15,81,50,.05);
+        }
+
+        .halaqa-session-card.active {
+          border-color: color-mix(in srgb,var(--app-color-0f5132,#0f5132) 18%,#dfe9e3);
+          background:
+            radial-gradient(circle at 0 0,rgba(201,162,39,.10),transparent 34%),
+            linear-gradient(135deg,#ffffff,#f7fbf8);
+        }
+
+        .halaqa-session-card.launcher {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+        }
+
+        .halaqa-session-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+        }
+
+        .halaqa-session-heading {
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          min-width: 0;
+        }
+
+        .halaqa-session-icon {
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          display: grid;
+          place-items: center;
+          border-radius: 13px;
+          color: #fff;
+          background: linear-gradient(135deg,var(--app-color-0f5132,#0f5132),var(--app-color-0f766e,#0f766e));
+          box-shadow: 0 8px 18px rgba(15,81,50,.13);
+        }
+
+        .halaqa-session-kicker {
+          display: block;
+          margin-bottom: 2px;
+          color: #9a741f;
+          font-size: calc(9px * var(--app-font-scale,1));
+          font-weight: 950;
+        }
+
+        .halaqa-session-heading h2 {
+          margin: 0;
+          color: var(--app-color-173d2b,#173d2b);
+          font-size: calc(15px * var(--app-font-scale,1));
+          font-weight: 950;
+        }
+
+        .halaqa-session-heading p {
+          margin: 4px 0 0;
+          color: #728079;
+          font-size: calc(9px * var(--app-font-scale,1));
+          line-height: 1.7;
+        }
+
+        .halaqa-session-actions,
+        .halaqa-session-launch-controls {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .halaqa-session-launch-controls select,
+        .halaqa-session-launch-controls input {
+          min-height: 40px;
+          border: 1px solid #dfe7e2;
+          border-radius: 11px;
+          padding: 0 10px;
+          background: #fff;
+          color: #28483a;
+          font-size: calc(9px * var(--app-font-scale,1));
+          font-weight: 800;
+          outline: none;
+        }
+
+        .session-start-button,
+        .session-resume-button,
+        .session-absent-button {
+          min-height: 40px;
+          border-radius: 11px;
+          padding: 0 12px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          font-size: calc(9px * var(--app-font-scale,1));
+          font-weight: 950;
+          cursor: pointer;
+        }
+
+        .session-start-button,
+        .session-resume-button {
+          border: none;
+          color: #fff;
+          background: linear-gradient(135deg,var(--app-color-0f5132,#0f5132),var(--app-color-0f766e,#0f766e));
+        }
+
+        .session-absent-button {
+          border: 1px solid #ead9d4;
+          color: #9b3a2b;
+          background: #fff8f6;
+        }
+
+        .session-start-button:disabled,
+        .session-resume-button:disabled,
+        .session-absent-button:disabled {
+          opacity: .5;
+          cursor: not-allowed;
+        }
+
+        .halaqa-session-progress {
+          position: relative;
+          height: 6px;
+          overflow: hidden;
+          margin: 14px 0 10px;
+          border-radius: 999px;
+          background: #e8efeb;
+        }
+
+        .halaqa-session-progress-bar {
+          position: absolute;
+          inset: 0 auto 0 0;
+          border-radius: inherit;
+          background: linear-gradient(90deg,var(--app-color-0f766e,#0f766e),#c9a227);
+          transition: width .28s ease;
+        }
+
+        .halaqa-session-meta {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          flex-wrap: wrap;
+          color: #607168;
+          font-size: calc(8px * var(--app-font-scale,1));
+          font-weight: 800;
+        }
+
+        .halaqa-session-meta > div {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .halaqa-session-meta strong { color: #173d2b; }
+
+        .halaqa-session-roster {
+          display: flex;
+          gap: 7px;
+          overflow-x: auto;
+          padding-top: 12px;
+          scrollbar-width: thin;
+        }
+
+        .session-student-chip {
+          min-width: 126px;
+          max-width: 180px;
+          min-height: 38px;
+          padding: 6px 8px;
+          display: grid;
+          grid-template-columns: 22px minmax(0,1fr) 16px;
+          align-items: center;
+          gap: 5px;
+          border: 1px solid #e2e9e5;
+          border-radius: 11px;
+          color: #42564b;
+          background: #fff;
+          cursor: pointer;
+          text-align: right;
+        }
+
+        .session-student-chip > span {
+          width: 22px;
+          height: 22px;
+          display: grid;
+          place-items: center;
+          border-radius: 7px;
+          background: #eef5f1;
+          font-size: 8px;
+          font-weight: 950;
+        }
+
+        .session-student-chip strong {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-size: calc(8px * var(--app-font-scale,1));
+        }
+
+        .session-student-chip.current {
+          border-color: rgba(15,118,110,.38);
+          box-shadow: 0 0 0 3px rgba(15,118,110,.06);
+        }
+
+        .session-student-chip.completed {
+          color: #25734d;
+          background: #f1faf5;
+          border-color: #cde9d8;
+        }
+
+        .session-student-chip.absent {
+          color: #9b3a2b;
+          background: #fff7f5;
+          border-color: #eed8d2;
+        }
+
+        .session-student-chip:disabled {
+          cursor: default;
+          opacity: .82;
+        }
+
+        .session-modal-progress {
+          display: grid;
+          grid-template-columns: auto minmax(140px,1fr) auto;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+          padding: 11px 12px;
+          border: 1px solid #dcebe3;
+          border-radius: 13px;
+          background: linear-gradient(135deg,#f8fcfa,#fff);
+        }
+
+        .session-modal-progress > div:first-child {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .session-modal-progress span,
+        .session-modal-progress small {
+          color: #718078;
+          font-size: calc(8px * var(--app-font-scale,1));
+          font-weight: 800;
+        }
+
+        .session-modal-progress strong {
+          color: #173d2b;
+          font-size: calc(10px * var(--app-font-scale,1));
+          font-weight: 950;
+        }
+
+        .session-modal-progress-track {
+          height: 5px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: #e6eeea;
+        }
+
+        .session-modal-progress-track i {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg,var(--app-color-0f766e,#0f766e),#c9a227);
+        }
+
+        .session-modal-progress button {
+          min-height: 34px;
+          padding: 0 10px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          border: 1px solid #ead9d4;
+          border-radius: 9px;
+          color: #9b3a2b;
+          background: #fff8f6;
+          font-size: calc(8px * var(--app-font-scale,1));
+          font-weight: 900;
+          cursor: pointer;
         }
 
         /* =============================================
@@ -8426,6 +11406,463 @@ function PageStyles() {
           .plan-suggestion-icon {
             width: 36px;
             height: 36px;
+          }
+        }
+
+        .quran-engine-banner {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 14px 16px;
+          border: 1px solid rgba(16, 86, 66, 0.16);
+          border-radius: 18px;
+          background:
+            radial-gradient(circle at top left, rgba(201, 166, 88, 0.12), transparent 34%),
+            linear-gradient(135deg, rgba(248, 252, 249, 0.98), rgba(255, 255, 255, 0.98));
+          margin-bottom: 14px;
+        }
+
+        .quran-engine-banner strong,
+        .quran-engine-banner span {
+          display: block;
+        }
+
+        .quran-engine-banner strong {
+          color: #123f33;
+          font-weight: 900;
+          margin-bottom: 4px;
+        }
+
+        .quran-engine-banner span {
+          color: #60736d;
+          font-size: 12px;
+          line-height: 1.7;
+        }
+
+        .side-policy-live-badge {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 10px;
+          padding: 9px 11px;
+          border-radius: 13px;
+          background: rgba(68, 101, 72, 0.08);
+          color: #426144;
+        }
+        .side-policy-live-badge small { margin-right: auto; color: #858f86; }
+        .side-policy-none-state {
+          display:flex;
+          align-items:flex-start;
+          gap:10px;
+          padding:14px;
+          border:1px dashed #d8dfd5;
+          border-radius:16px;
+          background:#fbfcfa;
+          color:#667168;
+        }
+        .side-policy-none-state strong { display:block; color:#354838; }
+        .side-policy-none-state span { display:block; margin-top:3px; font-size:12px; }
+
+        .planned-quran-task {
+          border: 1px solid rgba(18, 92, 70, 0.15);
+          border-radius: 17px;
+          padding: 13px 14px;
+          background:
+            radial-gradient(circle at top left, rgba(201,166,88,.11), transparent 38%),
+            linear-gradient(135deg, rgba(244,250,247,.96), rgba(255,255,255,.99));
+          box-shadow: 0 8px 24px rgba(25, 74, 60, 0.05);
+        }
+
+        .planned-quran-task-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .planned-quran-task-head span,
+        .planned-quran-task-head strong {
+          display: block;
+        }
+
+        .planned-quran-task-head > div:first-child > span {
+          color: #6d7f79;
+          font-size: 10px;
+          font-weight: 800;
+          margin-bottom: 4px;
+        }
+
+        .planned-quran-task-head > div:first-child > strong {
+          color: #123f33;
+          font-size: 14px;
+          font-weight: 950;
+          line-height: 1.7;
+        }
+
+        .planned-quran-speed {
+          flex: 0 0 auto;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 10px;
+          border-radius: 12px;
+          background: rgba(201,166,88,.12);
+          color: #806628;
+          font-size: 10px;
+          font-weight: 900;
+        }
+
+        .planned-quran-task-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 7px;
+          margin-top: 9px;
+        }
+
+        .planned-quran-task-meta span {
+          padding: 5px 8px;
+          border-radius: 9px;
+          background: rgba(20,122,94,.07);
+          color: #547168;
+          font-size: 9px;
+          font-weight: 850;
+        }
+
+        .completion-status-block {
+          margin-top: 12px;
+        }
+
+        .completion-status-heading {
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 8px;
+        }
+
+        .completion-status-heading span {
+          color: #315d50;
+          font-size: 11px;
+          font-weight: 950;
+        }
+
+        .completion-status-heading small {
+          color: #8a9893;
+          font-size: 9px;
+        }
+
+        .completion-status-options {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0,1fr));
+          gap: 8px;
+        }
+
+        .completion-status-btn {
+          min-height: 60px;
+          border: 1px solid #e1e9e6;
+          border-radius: 14px;
+          padding: 8px;
+          background: #fff;
+          color: #60736c;
+          font-family: inherit;
+          cursor: pointer;
+          transition: .18s ease;
+        }
+
+        .completion-status-btn strong,
+        .completion-status-btn span {
+          display: block;
+        }
+
+        .completion-status-btn strong {
+          font-size: 12px;
+          font-weight: 950;
+          margin-bottom: 3px;
+        }
+
+        .completion-status-btn span {
+          font-size: 8px;
+          line-height: 1.45;
+          opacity: .82;
+        }
+
+        .completion-status-btn:hover {
+          transform: translateY(-1px);
+          border-color: rgba(20,122,94,.28);
+        }
+
+        .completion-status-btn.active {
+          border-color: rgba(20,122,94,.34);
+          background: #edf8f3;
+          color: #12684f;
+          box-shadow: 0 7px 18px rgba(20,122,94,.08);
+        }
+
+        .completion-status-btn.under.active {
+          border-color: rgba(181,126,26,.28);
+          background: #fff9e9;
+          color: #87651d;
+        }
+
+        .completion-status-btn.over.active {
+          border-color: rgba(23,105,149,.24);
+          background: #eef8fc;
+          color: #236885;
+        }
+
+        .completion-status-btn.repeat.active {
+          border-color: rgba(154,68,68,.22);
+          background: #fff2f2;
+          color: #914747;
+        }
+
+        .actual-end-editor {
+          margin-top: 11px;
+          padding: 12px;
+          border: 1px dashed rgba(20,122,94,.28);
+          border-radius: 15px;
+          background: rgba(248,252,250,.92);
+        }
+
+        .actual-end-heading {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          margin-bottom: 10px;
+          color: #315d50;
+        }
+
+        .actual-end-heading strong,
+        .actual-end-heading span {
+          display: block;
+        }
+
+        .actual-end-heading strong {
+          font-size: 11px;
+          font-weight: 950;
+        }
+
+        .actual-end-heading span {
+          margin-top: 2px;
+          color: #7d8d87;
+          font-size: 9px;
+        }
+
+        .completion-repeat-note {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          margin-top: 10px;
+          padding: 9px 11px;
+          border-radius: 12px;
+          background: #fff5f5;
+          color: #8b4949;
+          font-size: 10px;
+          font-weight: 800;
+        }
+
+        .quran-range-editor {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+          gap: 10px;
+          align-items: end;
+        }
+
+        .quran-range-side {
+          border: 1px solid #e3ebe7;
+          border-radius: 16px;
+          padding: 12px;
+          background: #fbfdfc;
+        }
+
+        .quran-range-side-title {
+          display: block;
+          margin-bottom: 8px;
+          color: #3f6257;
+          font-size: 11px;
+          font-weight: 900;
+        }
+
+        .quran-range-fields {
+          display: grid;
+          grid-template-columns: minmax(0, 1.35fr) minmax(90px, .65fr);
+          gap: 8px;
+        }
+
+        .quran-range-arrow {
+          width: 34px;
+          height: 34px;
+          border-radius: 12px;
+          display: grid;
+          place-items: center;
+          color: #9a7b35;
+          background: rgba(201, 166, 88, 0.12);
+          margin-bottom: 20px;
+        }
+
+        .range-metric-preview {
+          margin-top: 10px;
+          border-radius: 15px;
+          border: 1px solid #e3ebe7;
+          min-height: 48px;
+        }
+
+        .range-metric-preview.empty,
+        .range-metric-preview.loading {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 11px 13px;
+          color: #72817c;
+          background: #fbfdfc;
+          font-size: 12px;
+        }
+
+        .range-metric-preview.ready {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+          gap: 8px;
+          padding: 10px;
+          background: linear-gradient(135deg, rgba(239, 248, 244, .9), rgba(255,255,255,.98));
+        }
+
+        .range-metric-preview.ready > div:not(.range-source-chip) {
+          padding: 7px 9px;
+          border-radius: 11px;
+          background: rgba(255,255,255,.88);
+        }
+
+        .range-metric-preview.ready span,
+        .range-metric-preview.ready strong {
+          display: block;
+        }
+
+        .range-metric-preview.ready span {
+          color: #71817b;
+          font-size: 10px;
+          margin-bottom: 3px;
+        }
+
+        .range-metric-preview.ready strong {
+          color: #163f34;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .range-source-chip {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          padding: 0 9px;
+          border-radius: 11px;
+          color: #7b632b;
+          background: rgba(201,166,88,.11);
+          font-size: 10px;
+          font-weight: 900;
+        }
+
+        .precision-warning {
+          display: flex;
+          align-items: flex-start;
+          gap: 6px;
+          margin-top: 8px;
+          color: #7f6427;
+          font-size: 11px;
+          line-height: 1.6;
+        }
+
+        .secondary-side-details {
+          border: 1px dashed #dbe6e1;
+          border-radius: 16px;
+          background: rgba(250,252,251,.75);
+          padding: 0 14px;
+          margin: 12px 0;
+        }
+
+        .secondary-side-details summary {
+          min-height: 46px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          color: #526b63;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .secondary-side-body {
+          padding: 0 0 14px;
+        }
+
+        .quran-range-record {
+          color: #173f34;
+          font-size: 12px;
+          font-weight: 900;
+          line-height: 1.65;
+        }
+
+        @media (max-width: 760px) {
+          .halaqa-session-card.launcher,
+          .halaqa-session-top {
+            align-items: stretch;
+            flex-direction: column;
+          }
+
+          .halaqa-session-actions,
+          .halaqa-session-launch-controls {
+            width: 100%;
+          }
+
+          .halaqa-session-launch-controls select,
+          .halaqa-session-launch-controls input,
+          .session-start-button,
+          .session-resume-button,
+          .session-absent-button {
+            flex: 1 1 150px;
+          }
+
+          .session-modal-progress {
+            grid-template-columns: 1fr;
+          }
+
+          .completion-status-options {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .completion-status-heading {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .planned-quran-task-head {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .planned-quran-speed {
+            align-self: flex-start;
+          }
+
+          .quran-range-editor {
+            grid-template-columns: 1fr;
+          }
+
+          .quran-range-arrow {
+            transform: rotate(-90deg);
+            margin: -2px auto;
+          }
+
+          .quran-range-fields {
+            grid-template-columns: 1fr 92px;
+          }
+
+          .range-metric-preview.ready {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .range-source-chip {
+            min-height: 38px;
+            justify-content: center;
           }
         }
       `}

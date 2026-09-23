@@ -532,7 +532,7 @@ function normalizeRecitationDays(value) {
   );
 }
 
-function countScheduledSessions(period, recitationDays) {
+function countScheduledSessions(period, recitationDays, holidayDates = []) {
   const days = normalizeRecitationDays(recitationDays);
 
   if (!period || days.length === 0) {
@@ -545,12 +545,21 @@ function countScheduledSessions(period, recitationDays) {
       .map((item) => item.jsDay)
   );
 
+  const excluded = holidayDates instanceof Set
+    ? holidayDates
+    : new Set((holidayDates || []).filter(Boolean));
+
   const cursor = parseLocalDate(period.start);
   const end = parseLocalDate(period.end);
   let count = 0;
 
   while (cursor <= end) {
-    if (allowed.has(cursor.getDay())) {
+    const dateText = getLocalDate(cursor);
+
+    if (
+      allowed.has(cursor.getDay()) &&
+      !excluded.has(dateText)
+    ) {
       count += 1;
     }
 
@@ -560,16 +569,23 @@ function countScheduledSessions(period, recitationDays) {
   return count;
 }
 
-function getScheduledElapsedPercent(period, recitationDays, plannedSessions) {
+function getScheduledElapsedPercent(
+  period,
+  recitationDays,
+  plannedSessions,
+  holidayDates = []
+) {
   if (!period) {
     return 0;
   }
 
   const total = Number(plannedSessions || 0) ||
-    countScheduledSessions(period, recitationDays);
+    countScheduledSessions(period, recitationDays, holidayDates);
 
   if (total <= 0) {
-    return getElapsedPercent(period);
+    return normalizeRecitationDays(recitationDays).length > 0
+      ? 0
+      : getElapsedPercent(period);
   }
 
   const todayText = getLocalDate();
@@ -584,7 +600,8 @@ function getScheduledElapsedPercent(period, recitationDays, plannedSessions) {
 
   const elapsed = countScheduledSessions(
     { start: period.start, end: todayText },
-    recitationDays
+    recitationDays,
+    holidayDates
   );
 
   return Math.min(
@@ -605,6 +622,10 @@ function recitationLessonFaces(record) {
     return 0;
   }
 
+  if (record?.lesson_faces_manual !== null && record?.lesson_faces_manual !== undefined) {
+    return Number(record.lesson_faces_manual || 0);
+  }
+
   const amount = Number(record?.lesson_amount_value || 0);
   const unit = record?.lesson_amount_unit;
 
@@ -612,11 +633,7 @@ function recitationLessonFaces(record) {
     return unit === "lines" ? amount / 15 : amount;
   }
 
-  return Number(
-    record?.lesson_faces_manual ??
-      record?.lesson_faces ??
-      0
-  );
+  return Number(record?.lesson_faces || 0);
 }
 
 function recitationReviewFaces(record) {
@@ -656,6 +673,24 @@ function amountToFaces(amount, unit) {
   }
 
   return roundFaces(number);
+}
+
+function hasCompletePlanRange(fromSurah, fromAyah, toSurah, toAyah) {
+  return Boolean(
+    String(fromSurah || "").trim() &&
+    Number(fromAyah || 0) > 0 &&
+    String(toSurah || "").trim() &&
+    Number(toAyah || 0) > 0
+  );
+}
+
+function hasAnyPlanRange(fromSurah, fromAyah, toSurah, toAyah) {
+  return Boolean(
+    String(fromSurah || "").trim() ||
+    Number(fromAyah || 0) > 0 ||
+    String(toSurah || "").trim() ||
+    Number(toAyah || 0) > 0
+  );
 }
 
 function monthlyTargetFaces(amount, unit, sessions) {
@@ -1313,6 +1348,21 @@ function createEmptyPlanData() {
 
     revision_target_faces:
       0,
+
+    side_lesson_policy_id:
+      null,
+
+    side_lesson_mode:
+      "none",
+
+    side_lesson_amount:
+      "",
+
+    side_lesson_unit:
+      "faces",
+
+    boundary_suggestion_mode:
+      "ayah_and_surah",
 
     notes:
       "",
@@ -2063,6 +2113,47 @@ export default function MonthlyPlan() {
         );
 
       /* ===========================================
+         سياسة جنب الدرس
+      =========================================== */
+
+      const { data: policyRows, error: policyError } = await supabase
+        .from("quran_student_policies")
+        .select(`
+          id, student_id, halaqa_id, teacher_id,
+          side_lesson_mode, side_lesson_amount, side_lesson_unit,
+          boundary_suggestion_mode, effective_from, effective_to, active
+        `)
+        .eq("halaqa_id", Number(selectedHalaqa))
+        .in("student_id", studentIds)
+        .eq("active", true);
+
+      if (policyError) throw policyError;
+
+      const policyMap = new Map(
+        (policyRows || []).map((policy) => [Number(policy.student_id), policy])
+      );
+
+      /* ===========================================
+         إجازات الحلقة خلال الشهر
+         تخصم فقط إذا صادفت يوم تسميع فعلي.
+      =========================================== */
+
+      const { data: holidayRows, error: holidayError } = await supabase
+        .from("attendance_holidays")
+        .select("holiday_date")
+        .eq("halaqa_id", Number(selectedHalaqa))
+        .gte("holiday_date", period.start)
+        .lte("holiday_date", period.end);
+
+      if (holidayError) throw holidayError;
+
+      const holidayDates = (holidayRows || [])
+        .map((item) => item.holiday_date)
+        .filter(Boolean);
+
+      const holidayDateSet = new Set(holidayDates);
+
+      /* ===========================================
          التسميع الفعلي
       =========================================== */
 
@@ -2312,6 +2403,9 @@ export default function MonthlyPlan() {
                   studentId
                 );
 
+              const policy =
+                policyMap.get(studentId) || null;
+
               const live =
                 recitationMap.get(
                   studentId
@@ -2388,20 +2482,35 @@ export default function MonthlyPlan() {
                   ? storedDays
                   : profileDays;
 
-              const calculatedSessions =
+              const scheduledSessionsBeforeHolidays =
                 countScheduledSessions(
                   period,
                   planDays
                 );
 
+              const effectiveScheduledSessions =
+                countScheduledSessions(
+                  period,
+                  planDays,
+                  holidayDateSet
+                );
+
+              const holidaySessions =
+                Math.max(
+                  scheduledSessionsBeforeHolidays - effectiveScheduledSessions,
+                  0
+                );
+
+              /*
+                إذا كانت أيام التسميع معروفة نعيد الحساب حيًا دائمًا،
+                حتى لو أضيفت الإجازة بعد إنشاء الخطة.
+                الخطط القديمة التي لا تحتوي أيامًا واضحة تبقى على
+                planned_sessions المخزن حفاظًا على التوافق.
+              */
               const plannedSessions =
-                Number(
-                  plan?.planned_sessions || 0
-                ) > 0
-                  ? Number(
-                      plan.planned_sessions
-                    )
-                  : calculatedSessions;
+                planDays.length > 0
+                  ? effectiveScheduledSessions
+                  : Number(plan?.planned_sessions || 0);
 
               const defaultMemTarget =
                 Number(
@@ -2505,6 +2614,15 @@ export default function MonthlyPlan() {
                 planned_sessions:
                   plannedSessions,
 
+                scheduled_sessions_before_holidays:
+                  scheduledSessionsBeforeHolidays,
+
+                holiday_sessions:
+                  holidaySessions,
+
+                holiday_dates:
+                  holidayDates,
+
                 memorization_daily_amount:
                   memDailyAmount,
 
@@ -2571,11 +2689,12 @@ export default function MonthlyPlan() {
 
                 memorization_target_faces:
                   Number(
-                    memDailyAmount !== "" &&
-                    Number(plannedSessions) > 0
-                      ? calculatedMemTarget
-                      : baseMemTarget ||
-                        0
+                    plan?.memorization_from_surah &&
+                    plan?.memorization_from_ayah &&
+                    plan?.memorization_to_surah &&
+                    plan?.memorization_to_ayah
+                      ? Number(plan?.memorization_target_faces || 0)
+                      : (baseMemTarget || calculatedMemTarget || 0)
                   ),
 
                 revision_from_surah:
@@ -2596,12 +2715,28 @@ export default function MonthlyPlan() {
 
                 revision_target_faces:
                   Number(
-                    revDailyAmount !== "" &&
-                    Number(plannedSessions) > 0
-                      ? calculatedRevTarget
-                      : baseRevTarget ||
-                        0
+                    plan?.revision_from_surah &&
+                    plan?.revision_from_ayah &&
+                    plan?.revision_to_surah &&
+                    plan?.revision_to_ayah
+                      ? Number(plan?.revision_target_faces || 0)
+                      : (baseRevTarget || calculatedRevTarget || 0)
                   ),
+
+                side_lesson_policy_id:
+                  policy?.id || null,
+
+                side_lesson_mode:
+                  policy?.side_lesson_mode || "none",
+
+                side_lesson_amount:
+                  policy?.side_lesson_amount ?? "",
+
+                side_lesson_unit:
+                  policy?.side_lesson_unit || "faces",
+
+                boundary_suggestion_mode:
+                  policy?.boundary_suggestion_mode || "ayah_and_surah",
 
                 notes:
                   plan?.notes ||
@@ -2708,6 +2843,64 @@ export default function MonthlyPlan() {
     }
   }
 
+  async function calculatePlanRange(fromSurah, fromAyah, toSurah, toAyah) {
+    if (!hasCompletePlanRange(fromSurah, fromAyah, toSurah, toAyah)) {
+      return null;
+    }
+
+    const { data, error } = await supabase.rpc("quran_range_metrics", {
+      p_from_surah: fromSurah,
+      p_from_ayah: Number(fromAyah),
+      p_to_surah: toSurah,
+      p_to_ayah: Number(toAyah),
+    });
+
+    if (error) throw error;
+    return Array.isArray(data) ? data[0] || null : data || null;
+  }
+
+  async function refreshRouteTarget(studentId, prefix, snapshot) {
+    try {
+      const metrics = await calculatePlanRange(
+        snapshot[`${prefix}_from_surah`],
+        snapshot[`${prefix}_from_ayah`],
+        snapshot[`${prefix}_to_surah`],
+        snapshot[`${prefix}_to_ayah`]
+      );
+
+      setRows((current) =>
+        current.map((row) => {
+          if (Number(row.student_id) !== Number(studentId)) return row;
+
+          return {
+            ...row,
+            [`${prefix}_target_faces`]: metrics ? Number(metrics.faces || 0) : 0,
+            [`${prefix}_target_lines`]: metrics ? Number(metrics.quran_lines || 0) : 0,
+            [`${prefix}_start_page`]: metrics?.start_page ?? null,
+            [`${prefix}_end_page`]: metrics?.end_page ?? null,
+            [`${prefix}_route_error`]: "",
+          };
+        })
+      );
+    } catch (error) {
+      console.error("PLAN QURAN RANGE:", error);
+
+      setRows((current) =>
+        current.map((row) => {
+          if (Number(row.student_id) !== Number(studentId)) return row;
+
+          return {
+            ...row,
+            [`${prefix}_route_error`]:
+              String(error?.message || "").includes("QURAN_RANGE_REVERSED")
+                ? "نهاية المسار تسبق بدايته"
+                : "تعذر حساب المسار من المصحف",
+          };
+        })
+      );
+    }
+  }
+
   /* =====================================================
      UPDATE ROW
   ===================================================== */
@@ -2717,93 +2910,49 @@ export default function MonthlyPlan() {
     field,
     value
   ) {
-    setRows(
-      (current) =>
-        current.map(
-          (row) => {
-            if (
-              Number(
-                row.student_id
-              ) !==
-              Number(
-                studentId
-              )
-            ) {
-              return row;
-            }
-
-            if (
-              isLockedPlan(
-                row
-              )
-            ) {
-              showToast(
-                "الخطة مقفلة حاليًا ولا يمكن تعديلها",
-                "info"
-              );
-
-              return row;
-            }
-
-            const next = {
-              ...row,
-              [field]: value,
-            };
-
-            if (
-              [
-                "memorization_daily_amount",
-                "memorization_daily_unit",
-              ].includes(field)
-            ) {
-              next.memorization_target_faces =
-                monthlyTargetFaces(
-                  next.memorization_daily_amount,
-                  next.memorization_daily_unit,
-                  next.planned_sessions
-                );
-            }
-
-            if (
-              [
-                "revision_daily_amount",
-                "revision_daily_unit",
-              ].includes(field)
-            ) {
-              next.revision_target_faces =
-                monthlyTargetFaces(
-                  next.revision_daily_amount,
-                  next.revision_daily_unit,
-                  next.planned_sessions
-                );
-            }
-
-            return {
-              ...next,
-
-              /*
-                أي تعديل مباشر
-                يجعل مصدر الخطة
-                فرديًا، إلا إذا
-                كان مجرد ملاحظات.
-              */
-
-              plan_source:
-                [
-                  "notes",
-                  "customization_reason",
-                ].includes(
-                  field
-                )
-                  ? row.plan_source
-                  : "individual",
-
-              dirty:
-                true,
-            };
-          }
-        )
+    const currentRow = rows.find(
+      (row) => Number(row.student_id) === Number(studentId)
     );
+
+    if (!currentRow) return;
+
+    if (isLockedPlan(currentRow)) {
+      showToast(
+        "الخطة مقفلة حاليًا ولا يمكن تعديلها",
+        "info"
+      );
+      return;
+    }
+
+    const nextSnapshot = {
+      ...currentRow,
+      [field]: value,
+    };
+
+    setRows((current) =>
+      current.map((row) => {
+        if (Number(row.student_id) !== Number(studentId)) {
+          return row;
+        }
+
+        return {
+          ...row,
+          [field]: value,
+          plan_source:
+            ["notes", "customization_reason"].includes(field)
+              ? row.plan_source
+              : "individual",
+          dirty: true,
+        };
+      })
+    );
+
+    const routeMatch = field.match(/^(memorization|revision)_(from_surah|from_ayah|to_surah|to_ayah)$/);
+
+    if (routeMatch) {
+      const prefix = routeMatch[1];
+      void refreshRouteTarget(studentId, prefix, nextSnapshot);
+    }
   }
 
   /* =====================================================
@@ -2884,31 +3033,89 @@ export default function MonthlyPlan() {
       const quranRequired = isQuranGoal(row.learning_goal);
       const nooraniaRequired = isNooraniaGoal(row.learning_goal);
 
-      const hasQuranPlan =
-        Number(row.memorization_target_faces || 0) > 0 ||
-        Number(row.revision_target_faces || 0) > 0;
+      const memAny = hasAnyPlanRange(
+        row.memorization_from_surah,
+        row.memorization_from_ayah,
+        row.memorization_to_surah,
+        row.memorization_to_ayah
+      );
 
-      const hasNooraniaPlan =
-        Number(row.noorania_lesson_daily_amount || 0) > 0 ||
-        Number(row.noorania_revision_daily_amount || 0) > 0;
+      const memComplete = hasCompletePlanRange(
+        row.memorization_from_surah,
+        row.memorization_from_ayah,
+        row.memorization_to_surah,
+        row.memorization_to_ayah
+      );
 
-      if (
-        quranRequired &&
-        !nooraniaRequired &&
-        !hasQuranPlan
-      ) {
+      const revAny = hasAnyPlanRange(
+        row.revision_from_surah,
+        row.revision_from_ayah,
+        row.revision_to_surah,
+        row.revision_to_ayah
+      );
+
+      const revComplete = hasCompletePlanRange(
+        row.revision_from_surah,
+        row.revision_from_ayah,
+        row.revision_to_surah,
+        row.revision_to_ayah
+      );
+
+      if (memAny && !memComplete) {
         showToast(
-          `حدد خطة القرآن للطالب ${row.student_name}`,
+          `أكمل مسار الحفظ من سورة/آية إلى سورة/آية للطالب ${row.student_name}`,
           "error"
         );
         return false;
       }
 
-      if (
-        nooraniaRequired &&
-        !quranRequired &&
-        !hasNooraniaPlan
-      ) {
+      if (revAny && !revComplete) {
+        showToast(
+          `أكمل مسار المراجعة من سورة/آية إلى سورة/آية للطالب ${row.student_name}`,
+          "error"
+        );
+        return false;
+      }
+
+      if (row.memorization_route_error || row.revision_route_error) {
+        showToast(
+          `صحح نطاق القرآن للطالب ${row.student_name} قبل الإرسال`,
+          "error"
+        );
+        return false;
+      }
+
+      if (memComplete && Number(row.memorization_daily_amount || 0) <= 0) {
+        showToast(
+          `حدد سرعة الحفظ اليومية للطالب ${row.student_name}`,
+          "error"
+        );
+        return false;
+      }
+
+      if (revComplete && Number(row.revision_daily_amount || 0) <= 0) {
+        showToast(
+          `حدد سرعة المراجعة اليومية للطالب ${row.student_name}`,
+          "error"
+        );
+        return false;
+      }
+
+      const hasQuranPlan = memComplete || revComplete;
+
+      const hasNooraniaPlan =
+        Number(row.noorania_lesson_daily_amount || 0) > 0 ||
+        Number(row.noorania_revision_daily_amount || 0) > 0;
+
+      if (quranRequired && !nooraniaRequired && !hasQuranPlan) {
+        showToast(
+          `حدد مسار القرآن للطالب ${row.student_name}`,
+          "error"
+        );
+        return false;
+      }
+
+      if (nooraniaRequired && !quranRequired && !hasNooraniaPlan) {
         showToast(
           `حدد خطة القاعدة للطالب ${row.student_name}`,
           "error"
@@ -2923,21 +3130,18 @@ export default function MonthlyPlan() {
         !hasNooraniaPlan
       ) {
         showToast(
-          `حدد خطة القرآن أو القاعدة للطالب ${row.student_name}`,
+          `حدد مسار القرآن أو خطة القاعدة للطالب ${row.student_name}`,
           "error"
         );
         return false;
       }
 
       const usesDailyPlan =
-        Number(row.memorization_daily_amount || 0) > 0 ||
-        Number(row.revision_daily_amount || 0) > 0 ||
+        (memComplete && Number(row.memorization_daily_amount || 0) > 0) ||
+        (revComplete && Number(row.revision_daily_amount || 0) > 0) ||
         hasNooraniaPlan;
 
-      if (
-        usesDailyPlan &&
-        Number(row.planned_sessions || 0) <= 0
-      ) {
+      if (usesDailyPlan && Number(row.planned_sessions || 0) <= 0) {
         showToast(
           `لا توجد أيام تسميع محددة للطالب ${row.student_name}. عدّل أيام التسميع من ملف الطالب أولًا.`,
           "error"
@@ -3116,6 +3320,66 @@ export default function MonthlyPlan() {
     };
   }
 
+  async function saveQuranStudentPolicy(row) {
+    if (!isQuranGoal(row.learning_goal)) return;
+
+    const mode = row.side_lesson_mode || "none";
+    const needsAmount = mode === "previous_amount";
+
+    if (needsAmount && (Number(row.side_lesson_amount || 0) <= 0 ||
+        !["lines", "faces"].includes(row.side_lesson_unit))) {
+      throw new Error(`حدد مقدار جنب الدرس ووحدته للطالب ${row.student_name}`);
+    }
+
+    const payload = {
+      student_id: Number(row.student_id),
+      halaqa_id: Number(selectedHalaqa),
+      teacher_id: Number(teacher.id),
+      side_lesson_mode: mode,
+      side_lesson_amount: needsAmount ? Number(row.side_lesson_amount) : null,
+      side_lesson_unit: needsAmount ? (row.side_lesson_unit || "faces") : null,
+      boundary_suggestion_mode: row.boundary_suggestion_mode || "ayah_and_surah",
+      active: true,
+      effective_to: null,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (row.side_lesson_policy_id) {
+      const { error } = await supabase
+        .from("quran_student_policies")
+        .update(payload)
+        .eq("id", Number(row.side_lesson_policy_id));
+      if (error) throw error;
+      return;
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from("quran_student_policies")
+      .select("id")
+      .eq("student_id", Number(row.student_id))
+      .eq("halaqa_id", Number(selectedHalaqa))
+      .eq("active", true)
+      .maybeSingle();
+    if (existingError) throw existingError;
+
+    if (existing?.id) {
+      const { error } = await supabase
+        .from("quran_student_policies")
+        .update(payload)
+        .eq("id", Number(existing.id));
+      if (error) throw error;
+      return;
+    }
+
+    const { error } = await supabase
+      .from("quran_student_policies")
+      .insert({
+        ...payload,
+        effective_from: period?.start || getLocalDate(),
+      });
+    if (error) throw error;
+  }
+
   /* =====================================================
      SAVE
   ===================================================== */
@@ -3218,6 +3482,7 @@ export default function MonthlyPlan() {
                 throw error;
               }
 
+              await saveQuranStudentPolicy(row);
               return;
             }
 
@@ -3239,6 +3504,8 @@ export default function MonthlyPlan() {
             if (error) {
               throw error;
             }
+
+            await saveQuranStudentPolicy(row);
           }
         )
       );
@@ -5046,7 +5313,8 @@ function StudentPlanCard({
   const scheduledExpected = getScheduledElapsedPercent(
     period,
     row.recitation_days_snapshot,
-    row.planned_sessions
+    row.planned_sessions,
+    row.holiday_dates
   );
 
   const mem = getPaceInfo({
@@ -5211,6 +5479,19 @@ function StudentPlanCard({
                     <span className="empty-days">لا توجد أيام تسميع محددة في ملف الطالب</span>
                   )}
                 </div>
+
+                <div className="holiday-session-summary">
+                  <span>
+                    الجلسات الفعلية للشهر: <strong>{row.planned_sessions || 0}</strong>
+                  </span>
+                  {Number(row.holiday_sessions || 0) > 0 && (
+                    <span className="holiday-deduction">
+                      خصم {row.holiday_sessions} {Number(row.holiday_sessions) === 1 ? "جلسة إجازة" : "جلسات إجازة"}
+                      {" • "}
+                      قبل الخصم {row.scheduled_sessions_before_holidays}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="smart-programs modal-programs">
@@ -5268,6 +5549,12 @@ function StudentPlanCard({
                         showPace={showPace}
                       />
                     </div>
+
+                    <SideLessonPolicyEditor
+                      row={row}
+                      locked={locked}
+                      onChange={onChange}
+                    />
                   </section>
                 )}
 
@@ -5370,6 +5657,13 @@ function PlanSection({
       ? Math.min(100, pace.percentage)
       : 0;
 
+  const routeComplete = hasCompletePlanRange(
+    fromSurah,
+    fromAyah,
+    toSurah,
+    toAyah
+  );
+
   return (
     <section className={`student-plan-section ${type} smart-plan-section`}>
       <div className="plan-section-title">
@@ -5385,106 +5679,16 @@ function PlanSection({
         )}
       </div>
 
-      <div className="daily-plan-editor">
-        <div className="daily-plan-input-block">
-          <label>المقدار اليومي</label>
-
-          <div className="daily-amount-control">
-            <input
-              type="number"
-              min="0"
-              step={dailyUnit === "lines" ? "1" : "0.25"}
-              disabled={locked}
-              value={dailyAmount ?? ""}
-              onChange={(event) =>
-                onChange(
-                  `${fieldPrefix}_daily_amount`,
-                  event.target.value === ""
-                    ? ""
-                    : Number(event.target.value)
-                )
-              }
-              placeholder={dailyUnit === "lines" ? "مثال: 3" : "مثال: 0.5"}
-            />
-
-            <div className="daily-unit-toggle">
-              <button
-                type="button"
-                disabled={locked}
-                className={dailyUnit === "lines" ? "active" : ""}
-                onClick={() => onChange(`${fieldPrefix}_daily_unit`, "lines")}
-              >
-                أسطر
-              </button>
-
-              <button
-                type="button"
-                disabled={locked}
-                className={dailyUnit === "faces" ? "active" : ""}
-                onClick={() => onChange(`${fieldPrefix}_daily_unit`, "faces")}
-              >
-                صفحات
-              </button>
-            </div>
-          </div>
-
-
-        </div>
-
-        <div className="monthly-target-card clean-result">
-          <span>الهدف الشهري</span>
-          <strong>{formatPagesAndLines(targetNumber)}</strong>
-        </div>
-      </div>
-
-      {showPace && (
-      <div className="plan-progress smart-plan-progress">
-        <div className="progress-heading">
+      <div className="route-first-card">
+        <div className="route-first-head">
           <div>
-            <span>المنجز</span>
-            <strong>
-              {formatPagesAndLines(achievedNumber)}
-            </strong>
+            <BookOpen size={15} />
+            <strong>المسار القرآني</strong>
           </div>
-
-          <div>
-            <span>المتبقي</span>
-            <strong>{formatPagesAndLines(remaining)}</strong>
-          </div>
-
-          <div>
-            <span>تحقيق الخطة</span>
-            <strong>{pace.percentage}%</strong>
-          </div>
+          <span>هو مصدر الهدف الحقيقي</span>
         </div>
 
-        <div className="progress-track">
-          <div
-            className={`progress-fill ${pace.className}`}
-            style={{ width: `${barWidth}%` }}
-          />
-        </div>
-
-        <div className="progress-foot">
-          <span>المتوقع حسب جلسات التسميع الفعلية: {pace.expected}%</span>
-          <span>
-            {formatFaces(automatic)} تلقائي
-            {Number(manual || 0) > 0
-              ? ` + ${formatFaces(manual)} يدوي`
-              : ""}
-          </span>
-        </div>
-      </div>
-
-      )}
-
-      <details className="advanced-route-details">
-        <summary>
-          <span>تفاصيل المسار القرآني — اختياري</span>
-          <ChevronDown size={14} />
-        </summary>
-
-        <div className="plan-range-grid">
+        <div className="plan-range-grid route-required-grid">
           <SurahField
             label="من سورة"
             value={fromSurah}
@@ -5525,7 +5729,184 @@ function PlanSection({
             }
           />
         </div>
-      </details>
+
+        <div className={`route-calculated-result ${routeComplete ? "ready" : "empty"}`}>
+          <ShieldCheck size={15} />
+          {routeComplete ? (
+            <>
+              <span>حجم المسار محسوب من المصحف:</span>
+              <strong>{formatPagesAndLines(targetNumber)}</strong>
+            </>
+          ) : (
+            <span>حدد البداية والنهاية ليحسب النظام حجم الخطة تلقائيًا.</span>
+          )}
+        </div>
+      </div>
+
+      <div className="daily-plan-editor speed-only-editor">
+        <div className="daily-plan-input-block">
+          <label>سرعة الجلسة</label>
+
+          <div className="daily-amount-control">
+            <input
+              type="number"
+              min="0"
+              step={dailyUnit === "lines" ? "1" : "0.25"}
+              disabled={locked || !routeComplete}
+              value={dailyAmount ?? ""}
+              onChange={(event) =>
+                onChange(
+                  `${fieldPrefix}_daily_amount`,
+                  event.target.value === ""
+                    ? ""
+                    : Number(event.target.value)
+                )
+              }
+              placeholder={dailyUnit === "lines" ? "مثال: 3" : "مثال: 1"}
+            />
+
+            <div className="daily-unit-toggle">
+              <button
+                type="button"
+                disabled={locked || !routeComplete}
+                className={dailyUnit === "lines" ? "active" : ""}
+                onClick={() => onChange(`${fieldPrefix}_daily_unit`, "lines")}
+              >
+                أسطر
+              </button>
+
+              <button
+                type="button"
+                disabled={locked || !routeComplete}
+                className={dailyUnit === "faces" ? "active" : ""}
+                onClick={() => onChange(`${fieldPrefix}_daily_unit`, "faces")}
+              >
+                أوجه
+              </button>
+            </div>
+          </div>
+
+          <small className="speed-helper">
+            السرعة تحدد مقدار كل جلسة فقط؛ لا تستخدم لحساب حجم الخطة الشهرية.
+          </small>
+        </div>
+
+        <div className="monthly-target-card clean-result route-target-card">
+          <span>حجم المسار</span>
+          <strong>{routeComplete ? formatPagesAndLines(targetNumber) : "—"}</strong>
+        </div>
+      </div>
+
+      {showPace && routeComplete && (
+        <div className="plan-progress smart-plan-progress">
+          <div className="progress-heading">
+            <div>
+              <span>المنجز</span>
+              <strong>{formatPagesAndLines(achievedNumber)}</strong>
+            </div>
+
+            <div>
+              <span>المتبقي</span>
+              <strong>{formatPagesAndLines(remaining)}</strong>
+            </div>
+
+            <div>
+              <span>تحقيق المسار</span>
+              <strong>{pace.percentage}%</strong>
+            </div>
+          </div>
+
+          <div className="progress-track">
+            <div
+              className={`progress-fill ${pace.className}`}
+              style={{ width: `${barWidth}%` }}
+            />
+          </div>
+
+          <div className="progress-foot">
+            <span>المتوقع حسب جلسات التسميع الفعلية: {pace.expected}%</span>
+            <span>
+              {formatFaces(automatic)} تلقائي
+              {Number(manual || 0) > 0
+                ? ` + ${formatFaces(manual)} يدوي`
+                : ""}
+            </span>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SideLessonPolicyEditor({ row, locked, onChange }) {
+  const modes = [
+    { value: "none", label: "بدون جنب درس", hint: "يظهر الدرس والمراجعة فقط" },
+    { value: "previous_amount", label: "مقدار سابق", hint: "يرجع قبل درس اليوم بالمقدار المحدد" },
+    { value: "previous_surah", label: "السورة السابقة", hint: "السورة السابقة كاملة تلقائيًا" },
+    { value: "from_surah_start", label: "من بداية السورة", hint: "من أول السورة إلى ما قبل درس اليوم" },
+  ];
+
+  return (
+    <section className="side-policy-card">
+      <div className="side-policy-head">
+        <div>
+          <Target size={17} />
+          <div>
+            <strong>سياسة جنب الدرس</strong>
+            <span>تحدد مرة واحدة ويولدها النظام تلقائيًا في كل جلسة</span>
+          </div>
+        </div>
+        <span className="side-policy-badge">لا يدخل في الحفظ الجديد</span>
+      </div>
+
+      <div className="side-policy-modes">
+        {modes.map((item) => (
+          <button
+            type="button"
+            key={item.value}
+            disabled={locked}
+            className={row.side_lesson_mode === item.value ? "active" : ""}
+            onClick={() => onChange("side_lesson_mode", item.value)}
+          >
+            <strong>{item.label}</strong>
+            <span>{item.hint}</span>
+          </button>
+        ))}
+      </div>
+
+      {row.side_lesson_mode === "previous_amount" && (
+        <div className="side-policy-amount">
+          <label>المقدار السابق</label>
+          <div className="daily-amount-control">
+            <input
+              type="number"
+              min="0.25"
+              step={row.side_lesson_unit === "lines" ? "1" : "0.25"}
+              disabled={locked}
+              value={row.side_lesson_amount ?? ""}
+              onChange={(event) =>
+                onChange("side_lesson_amount", event.target.value === "" ? "" : Number(event.target.value))
+              }
+              placeholder={row.side_lesson_unit === "lines" ? "مثال: 5" : "مثال: 1"}
+            />
+            <div className="daily-unit-toggle">
+              <button type="button" disabled={locked} className={row.side_lesson_unit === "lines" ? "active" : ""} onClick={() => onChange("side_lesson_unit", "lines")}>أسطر</button>
+              <button type="button" disabled={locked} className={row.side_lesson_unit === "faces" ? "active" : ""} onClick={() => onChange("side_lesson_unit", "faces")}>أوجه</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="side-policy-boundary">
+        <label>اقتراح الحد الطبيعي</label>
+        <select disabled={locked} value={row.boundary_suggestion_mode || "ayah_and_surah"} onChange={(event) => onChange("boundary_suggestion_mode", event.target.value)}>
+          <option value="ayah_and_surah">نهاية آية أو سورة</option>
+          <option value="ayah">نهاية آية</option>
+          <option value="surah">نهاية سورة</option>
+          <option value="none">بدون اقتراح</option>
+        </select>
+        <small>النظام يقترح فقط، والمعلم يقرر.</small>
+      </div>
     </section>
   );
 }
@@ -9331,7 +9712,10 @@ function MonthlyPlanStyles() {
         .plan-details-modal .progress-foot,
         .plan-details-modal .pace-badge { font-size: calc(9px * var(--app-font-scale,1)); }
         .plan-details-modal .progress-heading strong { font-size: calc(11px * var(--app-font-scale,1)); }
-        .plan-details-modal .smart-day-chips span { font-size: calc(10px * var(--app-font-scale,1)); }
+        .plan-details-modal .holiday-session-summary { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; font-size:10px; color:#607069; }
+        .holiday-session-summary strong { color:var(--app-color-173d2b,#173d2b); font-size:12px; }
+        .holiday-session-summary .holiday-deduction { color:#8a6a10; background:#fffaf0; border:1px solid rgba(201,162,39,.22); border-radius:999px; padding:4px 8px; }
+        .smart-day-chips span { font-size: calc(10px * var(--app-font-scale,1)); }
 
         @media (max-width: 700px) {
           .plan-grid { grid-template-columns: 1fr; }
@@ -9350,6 +9734,116 @@ function MonthlyPlanStyles() {
           .compact-badges { justify-content: flex-start; }
         }
 
+
+        .route-first-card {
+          border: 1px solid rgba(27, 92, 70, .14);
+          border-radius: 18px;
+          padding: 14px;
+          background:
+            radial-gradient(circle at top right, rgba(201,166,88,.09), transparent 32%),
+            linear-gradient(135deg, #fbfdfc, #ffffff);
+          margin-bottom: 12px;
+        }
+
+        .route-first-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 11px;
+        }
+
+        .route-first-head > div {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          color: #17483a;
+        }
+
+        .route-first-head strong {
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .route-first-head > span {
+          color: #85703d;
+          font-size: 10px;
+          font-weight: 800;
+        }
+
+        .route-required-grid {
+          margin-top: 0;
+        }
+
+        .route-calculated-result {
+          min-height: 42px;
+          margin-top: 10px;
+          border-radius: 13px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 9px 11px;
+          font-size: 11px;
+        }
+
+        .route-calculated-result.ready {
+          color: #1b5a47;
+          background: rgba(223, 242, 234, .7);
+          border: 1px solid rgba(27, 90, 71, .12);
+        }
+
+        .route-calculated-result.empty {
+          color: #728079;
+          background: #f8faf9;
+          border: 1px dashed #dce6e1;
+        }
+
+        .route-calculated-result strong {
+          color: #7b6127;
+          margin-inline-start: auto;
+          font-weight: 900;
+        }
+
+        .side-policy-card {
+          margin-top: 14px;
+          border: 1px solid rgba(164, 125, 44, 0.18);
+          border-radius: 22px;
+          padding: 18px;
+          background: radial-gradient(circle at top left, rgba(184,146,61,.08), transparent 34%), linear-gradient(180deg, rgba(255,255,255,.96), rgba(248,249,244,.96));
+        }
+        .side-policy-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+        .side-policy-head > div { display:flex; align-items:flex-start; gap:10px; }
+        .side-policy-head strong { display:block; color:#263a2b; }
+        .side-policy-head span { display:block; color:#768078; font-size:12px; margin-top:3px; }
+        .side-policy-badge { padding:7px 10px; border-radius:999px; background:rgba(66,97,68,.08); color:#426144 !important; white-space:nowrap; }
+        .side-policy-modes { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; }
+        .side-policy-modes button { border:1px solid #e1e5dd; border-radius:15px; background:#fff; padding:12px; text-align:right; cursor:pointer; transition:.18s ease; }
+        .side-policy-modes button:hover:not(:disabled) { transform:translateY(-2px); }
+        .side-policy-modes button.active { border-color:#557558; box-shadow:0 8px 24px rgba(54,81,57,.10); background:#f8fbf7; }
+        .side-policy-modes button strong { display:block; color:#2b3e2e; font-size:13px; }
+        .side-policy-modes button span { display:block; color:#858c85; font-size:11px; margin-top:4px; line-height:1.55; }
+        .side-policy-amount,.side-policy-boundary { margin-top:13px; }
+        .side-policy-amount > label,.side-policy-boundary > label { display:block; font-size:12px; color:#667068; margin-bottom:7px; }
+        .side-policy-boundary select { width:100%; min-height:42px; border:1px solid #dfe4dc; border-radius:12px; padding:0 12px; background:#fff; color:#314034; }
+        .side-policy-boundary small { display:block; margin-top:6px; color:#8a918b; }
+        @media (max-width:820px) { .side-policy-modes { grid-template-columns:repeat(2,minmax(0,1fr)); } .side-policy-head { align-items:flex-start; flex-direction:column; } }
+
+        .speed-only-editor {
+          align-items: stretch;
+        }
+
+        .speed-helper {
+          display: block;
+          margin-top: 7px;
+          color: #728079;
+          font-size: 10px;
+          line-height: 1.65;
+        }
+
+        .route-target-card {
+          border-color: rgba(201,166,88,.18);
+          background: rgba(201,166,88,.07);
+        }
       `}
     </style>
   );

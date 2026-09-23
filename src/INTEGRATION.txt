@@ -1,0 +1,29 @@
+Sadiq Central Analysis v2.6
+
+1. Replace these student pages with the files in src/pages/student:
+   - Notifications.jsx
+   - Recitations.jsx
+   - MonthlyPlan.jsx
+   - MonthlyAchievement.jsx
+
+2. Add:
+   src/pages/StudentCareCenter.jsx
+   src/pages/StudentCareCenter.css
+
+3. Add StudentCareCenter to both teacher and supervisor navigation/routes.
+   The same page works for both roles:
+   - Teacher: sees assigned halaqas and can record a confirmed care intervention.
+   - Supervisor: sees halaqas in supervised mosques but cannot approve educational intervention.
+
+Example route only (adapt to your router structure):
+  import StudentCareCenter from "./pages/StudentCareCenter";
+  <Route path="student-care" element={<StudentCareCenter />} />
+
+4. No environment variables or new npm packages are required.
+
+5. Recommended checks after copying:
+   npm run build
+   npm run lint
+
+Central rule:
+  النظام يقترح، والمعلم يقرر.
