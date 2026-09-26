@@ -67,6 +67,33 @@ export default function StudentOnboarding() {
     try {
       setLoading(true);
 
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, status, is_active")
+        .eq("auth_user_id", user.id)
+        .maybeSingle();
+
+      if (
+        profileError ||
+        !profile ||
+        profile.role !== "student" ||
+        profile.status !== "active" ||
+        profile.is_active === false
+      ) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
       const [
         assignmentResult,
         directoryResult,

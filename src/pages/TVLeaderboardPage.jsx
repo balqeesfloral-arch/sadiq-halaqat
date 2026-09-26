@@ -31,7 +31,7 @@ import "../styles/TVLeaderboardPage.css";
   غيّر الامتداد فقط إذا كانت زخارفك JPG / SVG.
   حسب ملفاتك الظاهرة في assets نستخدم Z-5 و Z-6.
 */
-import ornamentMain from "../assets/Z-5.png";
+const ornamentMain = "/patterns/Z-5.png";
 import ornamentCorner from "../assets/Z-6.png";
 
 const PAGE_DURATION = 25;

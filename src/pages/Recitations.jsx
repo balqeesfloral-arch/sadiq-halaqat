@@ -7,29 +7,7 @@ import { useToast } from "../components/Toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import AppSelect from "../components/AppSelect";
-import {
-  ArrowRight,
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  ChevronDown,
-  Clock3,
-  Edit3,
-  FileText,
-  GraduationCap,
-  Loader2,
-  MessageSquareText,
-  Plus,
-  RefreshCw,
-  Search,
-  Sparkles,
-  Target,
-  Trash2,
-  Trophy,
-  UserRound,
-  X,
-  XCircle,
-} from "lucide-react";
+import { ArrowRight, BookOpen, CalendarDays, CheckCircle2, ChevronDown, Clock3, Edit3, FileText, GraduationCap, Loader2, MessageSquareText, Plus, RefreshCw, Search, Sparkles, Target, Trash2, Trophy, UserRound, X } from "lucide-react";
 
 export default function RecitationsNew() {
   const navigate = useNavigate();
@@ -281,14 +259,6 @@ const [selectedDate, setSelectedDate] =
     setHalaqaName(
       halaqa?.name || ""
     );
-  }
-
-  function chooseStudent(student) {
-    setStudentId(String(student.id));
-    setStudentSearch(
-      student.full_name || ""
-    );
-    setShowStudentList(false);
   }
 
   
@@ -899,7 +869,7 @@ const [selectedDate, setSelectedDate] =
               </div>
             </div>
 
-            <button
+            <button type="button"
               className="ghost-button"
               onClick={() =>
                 navigate("/admin")
@@ -967,7 +937,7 @@ const [selectedDate, setSelectedDate] =
                 </div>
               </div>
 
-              <button
+              <button type="button"
                 onClick={clearForm}
               >
                 <X size={16} />
@@ -1439,7 +1409,7 @@ const [selectedDate, setSelectedDate] =
           {/* SAVE */}
 
           <div className="save-bar">
-            <button
+            <button type="button"
               className="save-button"
               onClick={
                 saveRecitation
@@ -1464,7 +1434,7 @@ const [selectedDate, setSelectedDate] =
                 : "حفظ التسميع"}
             </button>
 
-            <button
+            <button type="button"
               className="cancel-button"
               onClick={clearForm}
               disabled={loading}
@@ -1713,7 +1683,7 @@ const [selectedDate, setSelectedDate] =
 
                           <td>
                             <div className="row-actions">
-                              <button
+                              <button type="button"
                                 className="edit-action"
                                 onClick={() =>
                                   editRecord(
@@ -1732,7 +1702,7 @@ const [selectedDate, setSelectedDate] =
                                 تعديل
                               </button>
 
-                              <button
+                              <button type="button"
                                 className="delete-action"
                                 onClick={() =>
                                   deleteRecitation(
@@ -2092,22 +2062,6 @@ function getLocalDate() {
   ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
-}
-
-function formatDate(dateString) {
-  if (!dateString) return "-";
-
-  return new Date(
-    `${dateString}T00:00:00`
-  ).toLocaleDateString(
-    "ar-SA",
-    {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }
-  );
 }
 
 function formatShortDate(

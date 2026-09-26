@@ -13,10 +13,9 @@ export default function AboutSystem(){
  useEffect(()=>{load()},[]);
  const items=[[Users,"الطلاب",stats.students],[GraduationCap,"المعلمون",stats.teachers],[BookOpen,"الحلقات",stats.halaqat],[Landmark,"المساجد",stats.mosques]];
  return <div>
-  <section className="settings-panel-intro"><span className="settings-panel-intro__icon"><Info size={21}/></span><div><small>الصِّدّيق</small><h3>معلومات النظام</h3><p>ملخص مباشر مبني على البيانات الحالية، وليس أرقامًا ثابتة.</p></div><span className="real-badge">{healthy?<CheckCircle2 size={13}/>:<Database size={13}/>} {healthy?"قاعدة البيانات متصلة":"تحقق من الاتصال"}</span></section>
-  <section className="settings-real-card"><div className="settings-real-card__head"><div><Database size={17}/><span><strong>الإحصاءات الحالية</strong><small>تُقرأ مباشرة من Supabase</small></span></div><button className="btn-secondary" onClick={load}><RefreshCw size={13} className={loading?"settings-spin":""}/> تحديث</button></div>
+  <section className="settings-panel-intro"><span className="settings-panel-intro__icon"><Info size={21}/></span><div><small>الصِّدّيق</small><h3>معلومات النظام</h3><p>نظرة سريعة على البيانات الحالية.</p></div><span className="real-badge">{healthy?<CheckCircle2 size={13}/>:<Database size={13}/>} {healthy?"متصل":"تحقق من الاتصال"}</span></section>
+  <section className="settings-real-card"><div className="settings-real-card__head"><div><Database size={17}/><span><strong>الإحصاءات الحالية</strong><small>بيانات محدثة</small></span></div><button type="button" className="btn-secondary" onClick={load}><RefreshCw size={13} className={loading?"settings-spin":""}/> تحديث</button></div>
    <div className="system-stats-pro">{items.map(([Icon,label,value])=><div className="system-stat-pro" key={label}><Icon size={17}/><span>{label}</span><strong>{loading?"—":value}</strong></div>)}</div>
   </section>
-  <div className="general-settings-note"><Info size={17}/><div><strong>برنامج الصِّدّيق لإدارة حلقات القرآن الكريم</strong><span>الإصدار المعروض في هذه الصفحة لا يُفترض من الواجهة؛ اربطه لاحقًا بإصدار النشر عند تجهيز نظام الإصدارات.</span></div></div>
  </div>
 }

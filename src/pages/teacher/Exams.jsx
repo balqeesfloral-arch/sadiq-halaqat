@@ -7,35 +7,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import {
-  AlertTriangle,
-  Award,
-  BookOpenCheck,
-  Check,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  CircleGauge,
-  Clock3,
-  Eye,
-  FileCheck2,
-  GraduationCap,
-  ListChecks,
-  Loader2,
-  Minus,
-  Play,
-  Plus,
-  RefreshCw,
-  Save,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Target,
-  Trophy,
-  UserRound,
-  Users,
-  X,
-} from "lucide-react";
+import { AlertTriangle, Award, Check, CheckCircle2, ChevronLeft, ChevronRight, CircleGauge, Clock3, Eye, FileCheck2, GraduationCap, Loader2, Minus, Play, Plus, RefreshCw, Search, ShieldCheck, Trophy, UserRound, Users, X } from "lucide-react";
 
 import { supabase } from "../../lib/supabase";
 import { useToast } from "../../components/Toast";

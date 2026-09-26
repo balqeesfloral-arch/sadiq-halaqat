@@ -18,17 +18,6 @@ export default function ReportFilters({
   students = [],
 
 }) {
-  const inputStyle = {
-    width: "100%",
-    height: "50px",
-    border: "1px solid #E5E7EB",
-    borderRadius: "14px",
-    padding: "0 14px",
-    fontSize: "14px",
-    background: "#FFFFFF",
-    outline: "none",
-    boxSizing: "border-box",
-  };
 
   const labelStyle = {
     fontSize: "13px",

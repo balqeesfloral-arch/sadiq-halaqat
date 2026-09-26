@@ -2501,8 +2501,7 @@ export default function LandingPage() {
                     </div>
                   ) : (
                     <div className="landing-period-empty">
-                      نفّذ ملف SQL المرفق لعرض توزيع الحلقات
-                      حسب الفجر والظهر والعصر والمغرب والعشاء.
+                      لا تتوفر بيانات كافية لعرض توزيع الحلقات حاليًا.
                     </div>
                   )}
                 </div>

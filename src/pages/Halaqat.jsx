@@ -7,32 +7,7 @@ import {
   HALAQA_PERIODS,
 } from "../data/halaqaPeriods";
 
-import {
-  BookOpen,
-  Building2,
-  Users,
-  UserRound,
-  Plus,
-  Search,
-  Pencil,
-  Trash2,
-  Power,
-  GraduationCap,
-  ArrowRight,
-  X,
-  CheckCircle2,
-  CircleOff,
-  RefreshCw,
-  Loader2,
-  UsersRound,
-  ShieldCheck,
-  AlertTriangle,
-  SlidersHorizontal,
-  Activity,
-  Target,
-  ChevronLeft,
-  Clock3,
-} from "lucide-react";
+import { BookOpen, Building2, Users, Plus, Search, Pencil, Trash2, Power, GraduationCap, ArrowRight, X, CheckCircle2, CircleOff, RefreshCw, Loader2, UsersRound, ShieldCheck, AlertTriangle, SlidersHorizontal, Activity, Target, ChevronLeft, Clock3 } from "lucide-react";
 
 export default function Halaqat() {
   const navigate = useNavigate();
@@ -1083,7 +1058,6 @@ function getTeacherCount(halaqa) {
               </div>
 
               <div className="hq-modal-footer">
-                <div className="hq-save-note"><ShieldCheck size={14} /> سيتم حفظ بيانات الحلقة وربطها مباشرة بالنظام.</div>
                 <div className="hq-modal-actions">
                   <button type="button" className="hq-cancel" onClick={clearForm} disabled={loading}>إلغاء</button>
                   <button type="submit" className="hq-save" disabled={loading}>
@@ -1267,39 +1241,6 @@ function HalaqaCard({
 }
 
 // ==========================================
-// حقل النموذج
-// ==========================================
-
-function FormField({
-  label,
-  value,
-  onChange,
-  placeholder,
-  disabled,
-}) {
-  return (
-    <div>
-      <label style={labelStyle}>
-        {label}
-      </label>
-
-      <input
-        value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        placeholder={placeholder}
-        disabled={disabled}
-        style={{
-          ...inputStyle,
-          opacity: disabled ? 0.7 : 1,
-        }}
-      />
-    </div>
-  );
-}
-
-// ==========================================
 // Stat
 // ==========================================
 
@@ -1350,140 +1291,6 @@ function Field({ label, required = false, children }) {
       <label>{label}{required && <b>*</b>}</label>
       {children}
     </div>
-  );
-}
-
-// ==========================================
-// Mini Stat
-// ==========================================
-
-function MiniStat({
-  icon,
-  label,
-  value,
-}) {
-  return (
-    <div
-      style={{
-        background: "#fafafa",
-        borderRadius: "calc(11px * var(--app-radius-scale,1))",
-        padding: "calc(11px * var(--app-density,1))",
-        display: "flex",
-        alignItems: "center",
-        justifyContent:
-          "space-between",
-      }}
-    >
-      <span
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "calc(6px * var(--app-density,1))",
-          color: "#777",
-          fontSize: "calc(11px * var(--app-font-scale,1))",
-        }}
-      >
-        {icon}
-
-        {label}
-      </span>
-
-      <strong
-        style={{
-          color: "var(--app-color-173d2b,#173d2b)",
-          fontSize: "calc(13px * var(--app-font-scale,1))",
-        }}
-      >
-        {value}
-      </strong>
-    </div>
-  );
-}
-
-// ==========================================
-// Quick Button
-// ==========================================
-
-function QuickButton({
-  icon,
-  text,
-  onClick,
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "calc(7px * var(--app-density,1))",
-        padding: "calc(10px * var(--app-density,1))",
-        borderRadius: "calc(9px * var(--app-radius-scale,1))",
-        border:
-          "1px solid #dce5df",
-        background: "#f4f8f5",
-        color: "var(--app-color-0f5132,#0f5132)",
-        cursor: "pointer",
-        fontWeight: "700",
-        fontSize: "calc(11px * var(--app-font-scale,1))",
-      }}
-    >
-      {icon}
-
-      {text}
-    </button>
-  );
-}
-
-// ==========================================
-// Action Button
-// ==========================================
-
-function ActionButton({
-  icon,
-  text,
-  onClick,
-  danger = false,
-  disabled = false,
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "calc(5px * var(--app-density,1))",
-        padding: "calc(9px * var(--app-density,1)) calc(5px * var(--app-density,1))",
-        borderRadius: "calc(8px * var(--app-radius-scale,1))",
-        border: `1px solid ${
-          danger
-            ? "#f0d8d5"
-            : "#dfe3df"
-        }`,
-        background: danger
-          ? "#fff8f7"
-          : "#fff",
-        color: danger
-          ? "#b42318"
-          : "#555",
-        cursor: disabled
-          ? "not-allowed"
-          : "pointer",
-        opacity: disabled
-          ? 0.55
-          : 1,
-        fontSize: "calc(11px * var(--app-font-scale,1))",
-        fontWeight: "700",
-      }}
-    >
-      {icon}
-
-      {text}
-    </button>
   );
 }
 
@@ -1610,107 +1417,6 @@ function LoadingState() {
   );
 }
 
-// ==========================================
-// Styles
-// ==========================================
-
-const cardStyle = {
-  background: "#fff",
-  border:
-    "1px solid #e5e8e4",
-  borderRadius: "calc(18px * var(--app-radius-scale,1))",
-  padding: "calc(22px * var(--app-density,1))",
-  marginBottom: "22px",
-  boxShadow:
-    "0 4px 15px rgba(0,0,0,0.035)",
-};
-
-const pageTitleStyle = {
-  margin: 0,
-  color: "var(--app-color-173d2b,#173d2b)",
-  fontSize: "calc(28px * var(--app-font-scale,1))",
-  fontWeight: "800",
-};
-
-const pageIconStyle = {
-  width: "48px",
-  height: "48px",
-  borderRadius: "calc(14px * var(--app-radius-scale,1))",
-  background: "#eaf3ed",
-  color: "var(--app-color-0f5132,#0f5132)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const backButtonStyle = {
-  width: "43px",
-  height: "43px",
-  border:
-    "1px solid #e0e4df",
-  background: "#fff",
-  color: "var(--app-color-173d2b,#173d2b)",
-  borderRadius: "calc(11px * var(--app-radius-scale,1))",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const headerButtonStyle = {
-  border:
-    "1px solid #dfe4e0",
-  background: "#fff",
-  color: "var(--app-color-173d2b,#173d2b)",
-  borderRadius: "calc(10px * var(--app-radius-scale,1))",
-  padding: "calc(9px * var(--app-density,1)) calc(13px * var(--app-density,1))",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "calc(7px * var(--app-density,1))",
-  fontSize: "calc(12px * var(--app-font-scale,1))",
-  fontWeight: "700",
-  cursor: "pointer",
-};
-
-const countBadgeStyle = {
-  background: "#fff",
-  border:
-    "1px solid #e4e7e3",
-  borderRadius: "11px",
-  padding: "9px 13px",
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  color: "#707872",
-  fontSize: "12px",
-  fontWeight: "600",
-};
-
-const formIconStyle = {
-  width: "40px",
-  height: "40px",
-  borderRadius: "calc(11px * var(--app-radius-scale,1))",
-  background: "var(--app-color-edf5ef,#edf5ef)",
-  color: "var(--app-color-0f5132,#0f5132)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const sectionTitleStyle = {
-  margin: 0,
-  color: "var(--app-color-173d2b,#173d2b)",
-  fontSize: "calc(18px * var(--app-font-scale,1))",
-  fontWeight: "800",
-};
-
-const sectionSubtitleStyle = {
-  margin: "4px 0 0",
-  color: "#8a918d",
-  fontSize: "calc(11px * var(--app-font-scale,1))",
-};
-
 const labelStyle = {
   display: "block",
   marginBottom: "7px",
@@ -1731,64 +1437,4 @@ const inputStyle = {
   boxSizing: "border-box",
   background: "#fff",
   color: "#26332c",
-};
-
-const primaryButtonStyle = {
-  border: "none",
-  background: "var(--app-color-0f5132,#0f5132)",
-  color: "#fff",
-  borderRadius: "calc(10px * var(--app-radius-scale,1))",
-  padding: "calc(11px * var(--app-density,1)) calc(21px * var(--app-density,1))",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "calc(8px * var(--app-density,1))",
-  fontSize: "calc(13px * var(--app-font-scale,1))",
-  fontWeight: "700",
-  cursor: "pointer",
-};
-
-const secondaryButtonStyle = {
-  border:
-    "1px solid #dfe3df",
-  background: "#fff",
-  color: "#59625c",
-  borderRadius: "calc(10px * var(--app-radius-scale,1))",
-  padding: "calc(10px * var(--app-density,1)) calc(18px * var(--app-density,1))",
-  cursor: "pointer",
-  fontSize: "calc(13px * var(--app-font-scale,1))",
-  fontWeight: "700",
-};
-
-const cancelButtonStyle = {
-  border:
-    "1px solid #ddd",
-  background: "#fff",
-  color: "#666",
-  borderRadius: "calc(9px * var(--app-radius-scale,1))",
-  padding: "calc(8px * var(--app-density,1)) calc(13px * var(--app-density,1))",
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "calc(6px * var(--app-density,1))",
-  fontSize: "calc(12px * var(--app-font-scale,1))",
-  fontWeight: "600",
-};
-
-const clearSearchButtonStyle = {
-  position: "absolute",
-  left: "9px",
-  top: "50%",
-  transform:
-    "translateY(-50%)",
-  width: "30px",
-  height: "30px",
-  border: "none",
-  borderRadius: "calc(8px * var(--app-radius-scale,1))",
-  background: "#f1f3f1",
-  color: "#707872",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
 };

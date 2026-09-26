@@ -18,7 +18,7 @@ export default function StudentAttendance() {
   const [loading,setLoading] = useState(true);
   const [rows,setRows] = useState([]);
 
-  useEffect(()=>{load();},[profile?.id]);
+  
 
   async function load(){
     if(!profile?.id)return;
@@ -32,6 +32,8 @@ export default function StudentAttendance() {
     }catch(error){console.error("Student attendance:",error)}
     finally{setLoading(false)}
   }
+
+  useEffect(()=>{load();},[profile?.id]);
 
   const stats=useMemo(()=>{
     const present=rows.filter(r=>r.status==="present").length;

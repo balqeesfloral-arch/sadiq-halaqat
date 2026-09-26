@@ -1,17 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  BookOpen,
-  CalendarDays,
-  Check,
-  CircleUserRound,
-  GraduationCap,
-  LockKeyhole,
-  Pencil,
-  Save,
-  ShieldCheck,
-  UserRound,
-  X,
-} from "lucide-react";
+import { BookOpen, Check, CircleUserRound, GraduationCap, LockKeyhole, Pencil, Save, ShieldCheck, UserRound, X } from "lucide-react";
 
 import StudentPage from "../../components/student/StudentPage";
 import { useStudentPortal } from "../../context/StudentPortalContext";

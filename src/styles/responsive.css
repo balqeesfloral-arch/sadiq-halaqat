@@ -157,3 +157,107 @@ button {
     min-width: 620px;
   }
 }
+/* =========================================
+   حواجز استجابة عامة وآمنة
+   - لا تغيّر منطق الصفحات
+   - تمنع flex/grid children من توسيع الـ viewport
+========================================= */
+
+:where(
+  .admin-main-content,
+  .teacher-main-content,
+  .student-main-content,
+  .page-container,
+  main
+) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(
+  .admin-main-content,
+  .teacher-main-content,
+  .student-main-content,
+  .page-container,
+  main
+) > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.table-responsive,
+.tp-table-wrap,
+.exv2-table-wrap,
+.ai-table-wrap {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+pre,
+code {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media screen and (max-width: 768px) {
+  /* صفحة المنح والخصومات: الرأس يحتوي حقلاً بعرض أدنى ثابت على سطح المكتب */
+  .rewards-page-container > div:first-child {
+    flex-wrap: wrap !important;
+    gap: calc(12px * var(--app-density, 1)) !important;
+  }
+
+  .rewards-page-container > div:first-child > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .rewards-page-container > div:first-child > div:last-child {
+    width: 100% !important;
+  }
+
+  /* الصفحات القديمة ذات التنسيق الداخلي: تقليل الهوامش فقط بدون تغيير بنيتها */
+  .legacy-responsive-page {
+    padding: calc(12px * var(--app-density, 1)) !important;
+  }
+
+  .legacy-responsive-page > div {
+    width: 100%;
+    max-width: 100% !important;
+    min-width: 0;
+  }
+
+  .legacy-responsive-page h1 {
+    font-size: clamp(
+      calc(22px * var(--app-font-scale, 1)),
+      7vw,
+      calc(29px * var(--app-font-scale, 1))
+    ) !important;
+  }
+
+  /* نافذة تغيير كلمة المرور في الملف الشخصي */
+  .profile-password-backdrop {
+    padding: 12px !important;
+  }
+
+  .profile-password-modal {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  .profile-password-actions {
+    flex-wrap: wrap;
+  }
+
+  .profile-password-actions > button {
+    flex: 1 1 130px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .profile-password-head,
+  .profile-password-body,
+  .profile-password-actions {
+    padding-inline: calc(14px * var(--app-density, 1)) !important;
+  }
+}

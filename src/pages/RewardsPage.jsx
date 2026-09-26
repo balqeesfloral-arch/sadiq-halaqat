@@ -5,9 +5,6 @@ import {
   Gift,
   History,
   Settings2,
-  Trophy,
-  Users,
-  TrendingUp,
 } from "lucide-react";
 
 import RewardsStats from "../components/rewards/RewardsStats";
@@ -215,10 +212,7 @@ async (mosqueId = selectedMosque) => {
   }
 
   setRewardTypes(data || []);
-console.log(
-  "LOADED REWARD TYPES",
-  data
-);
+
 };
 
 const loadTransactions =
@@ -841,7 +835,7 @@ const tabs = [
 
 return (
 
-<div className="page-container">
+<div className="page-container rewards-page-container">
 
   {/* HEADER */}
 
@@ -931,39 +925,10 @@ return (
   {/* STATS */}
 
   <RewardsStats
-
-    stats={[
-
-      {
-        title:"إجمالي الطلاب",
-        value:
-          stats.totalStudents,
-        icon:Users
-      },
-
-      {
-        title:"إجمالي المنح",
-        value:
-          stats.totalRewards,
-        icon:Gift
-      },
-
-      {
-        title:"إجمالي الخصومات",
-        value:
-          stats.totalPenalties,
-        icon:TrendingUp
-      },
-
-      {
-        title:"صافي النقاط",
-        value:
-          stats.netPoints,
-        icon:Trophy
-      }
-
-    ]}
-
+    totalStudents={stats.totalStudents}
+    totalRewards={stats.totalRewards}
+    totalPenalties={stats.totalPenalties}
+    netPoints={stats.netPoints}
   />
 
   {/* FILTERS */}
@@ -1042,7 +1007,7 @@ return (
 
       return (
 
-        <button
+        <button type="button"
   key={tab.key}
   onClick={() =>
     setActiveTab(tab.key)

@@ -32,7 +32,7 @@ export default function GeneralSettings(){
     }catch(e){console.error(e);showToast("تعذر حفظ بيانات الحساب");}finally{setSaving(false)}
   }
   if(loading)return <div className="general-settings-state"><RefreshCw className="settings-spin" size={20}/><div><strong>جاري تحميل الحساب</strong><span>قراءة بيانات المدير من profiles</span></div></div>;
-  if(error)return <div className="general-settings-state"><AlertCircle size={20}/><div><strong>تعذر التحميل</strong><span>{error}</span></div><button className="btn-secondary" onClick={loadProfile}>إعادة المحاولة</button></div>;
+  if(error)return <div className="general-settings-state"><AlertCircle size={20}/><div><strong>تعذر التحميل</strong><span>{error}</span></div><button type="button" className="btn-secondary" onClick={loadProfile}>إعادة المحاولة</button></div>;
   return <div className="general-settings-pro">
     <section className="general-settings-overview">
       <span className="general-settings-overview__icon"><UserCog size={22}/></span>
@@ -49,6 +49,6 @@ export default function GeneralSettings(){
       </div>
     </section>
     <aside className="general-settings-note"><Info size={17}/><div><strong>إدارة المساجد منفصلة</strong><span>اسم المسجد وقسم رجال/نساء والعنوان لا توضع في إعدادات عامة؛ تُدار من صفحة المساجد.</span></div></aside>
-    <div className="general-settings-actions"><div className={`general-settings-change-state ${dirty?"dirty":""}`}>{dirty?"تغييرات غير محفوظة":"البيانات محفوظة"}</div><div className="general-settings-buttons"><button className="general-settings-reload" onClick={loadProfile}><RefreshCw size={14}/> تحديث</button><button className="general-settings-save" disabled={!dirty||saving} onClick={save}><Save size={14}/>{saving?"جاري الحفظ":"حفظ التغييرات"}</button></div></div>
+    <div className="general-settings-actions"><div className={`general-settings-change-state ${dirty?"dirty":""}`}>{dirty?"تغييرات غير محفوظة":"البيانات محفوظة"}</div><div className="general-settings-buttons"><button type="button" className="general-settings-reload" onClick={loadProfile}><RefreshCw size={14}/> تحديث</button><button type="button" className="general-settings-save" disabled={!dirty||saving} onClick={save}><Save size={14}/>{saving?"جاري الحفظ":"حفظ التغييرات"}</button></div></div>
   </div>
 }

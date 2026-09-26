@@ -1,10 +1,4 @@
-import {
-  Save,
-  BadgeCheck,
-  Printer,
-  FileSpreadsheet,
-  FileText
-} from "lucide-react";
+import { Save, BadgeCheck, Printer, FileSpreadsheet } from "lucide-react";
 
 export default function MonthlyHeader({
   onSave,
@@ -104,7 +98,7 @@ if (selectedMonth) {
   }}
 >
 
-  <button
+  <button type="button"
     onClick={onExportExcel}
     style={{
       border:"none",
@@ -125,7 +119,7 @@ if (selectedMonth) {
 
 
 
-  <button
+  <button type="button"
     onClick={onPrint}
     style={{
       border:"none",
@@ -144,7 +138,7 @@ if (selectedMonth) {
     طباعة
   </button>
 
-  <button
+  <button type="button"
     onClick={onApprove}
     style={{
       border:"none",
@@ -163,7 +157,7 @@ if (selectedMonth) {
     اعتماد
   </button>
 
-  <button
+  <button type="button"
     onClick={onSave}
     disabled={loading}
     style={{

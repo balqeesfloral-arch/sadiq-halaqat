@@ -157,26 +157,6 @@ function formatHijriDate(
   }
 }
 
-function formatShortDate(
-  dateString
-) {
-  try {
-    return new Intl.DateTimeFormat(
-      "ar-SA-u-ca-gregory",
-      {
-        day: "numeric",
-        month: "short",
-      }
-    ).format(
-      parseLocalDate(
-        dateString
-      )
-    );
-  } catch {
-    return dateString;
-  }
-}
-
 
 /* =========================================================
    أيام التسميع + تحويل الهجري

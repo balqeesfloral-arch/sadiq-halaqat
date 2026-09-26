@@ -73,7 +73,7 @@ const status =
           borderBottom:"1px solid #F1F5F9"
         }}
       >
-        <button
+        <button type="button"
   onClick={() =>
     onChange(
       row.id,
@@ -131,7 +131,7 @@ const status =
           borderBottom:"1px solid #F1F5F9"
         }}
       >
-      <button
+      <button type="button"
   onClick={() =>
     onChange(
       row.id,

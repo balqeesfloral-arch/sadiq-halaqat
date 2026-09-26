@@ -2,26 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
-import {
-  UserRound,
-  Mail,
-  Phone,
-  ShieldCheck,
-  CalendarDays,
-  Building2,
-  BookOpen,
-  GraduationCap,
-  Users,
-  Camera,
-  Save,
-  LockKeyhole,
-  Eye,
-  EyeOff,
-  X,
-  Sparkles,
-  CheckCircle2,
-  RefreshCw,
-} from "lucide-react";
+import { UserRound, Mail, Phone, ShieldCheck, CalendarDays, Building2, BookOpen, GraduationCap, Users, Camera, Save, LockKeyhole, Eye, EyeOff, X, CheckCircle2, RefreshCw } from "lucide-react";
 
 import PageHeader from "../components/PageHeader";
 import StatCard from "../components/StatCard";
@@ -57,9 +38,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  
 
   async function loadProfile() {
     setLoading(true);
@@ -150,6 +129,10 @@ export default function Profile() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+      loadProfile();
+    }, []);
 
   async function loadStats() {
     const [
@@ -873,7 +856,7 @@ export default function Profile() {
                     autoComplete="new-password" placeholder="أعد كتابة كلمة المرور"/>
                 </div>
               </label>
-              <div className="profile-password-hint"><ShieldCheck size={15}/><span>يتم التغيير مباشرة عبر Supabase Auth ولا يتم حفظ كلمة المرور داخل الملف الشخصي.</span></div>
+              <div className="profile-password-hint"><ShieldCheck size={15}/><span>غيّر كلمة المرور بأمان، ولن تظهر بعد حفظها.</span></div>
             </div>
 
             <div className="profile-password-actions">

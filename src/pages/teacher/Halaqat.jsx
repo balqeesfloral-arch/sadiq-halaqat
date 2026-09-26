@@ -6,26 +6,7 @@ import {
 
 import { useNavigate } from "react-router-dom";
 
-import {
-  BookOpen,
-  Building2,
-  Users,
-  Clock3,
-  Mic2,
-  TrendingUp,
-  Pencil,
-  Save,
-  X,
-  Search,
-  RefreshCw,
-  AlertTriangle,
-  CheckCircle2,
-  UserRoundCheck,
-  ChevronLeft,
-  Loader2,
-  Filter,
-  Gauge,
-} from "lucide-react";
+import { BookOpen, Building2, Users, Clock3, Mic2, TrendingUp, Pencil, Save, X, Search, RefreshCw, AlertTriangle, CheckCircle2, UserRoundCheck, ChevronLeft, Loader2 } from "lucide-react";
 
 import { supabase } from "../../lib/supabase";
 import { useToast } from "../../components/Toast";

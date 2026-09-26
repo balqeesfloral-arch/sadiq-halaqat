@@ -1,4 +1,11 @@
 User-agent: *
+Disallow: /admin
+Disallow: /teacher
+Disallow: /student
+Disallow: /system-admin
+Disallow: /supervisor
+Disallow: /login
+Disallow: /register
 Allow: /
 
 Sitemap: https://sadiq-halaqat.vercel.app/sitemap.xml

@@ -1,16 +1,56 @@
-# React + Vite
+# الصِّدّيق — منظومة إدارة حلقات تحفيظ القرآن الكريم
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+تطبيق ويب مبني بـ React + Vite لإدارة حلقات تحفيظ القرآن ومتابعة الطلاب والمعلمين والحضور والتسميع والخطط والإنجاز والتقارير.
 
-Currently, two official plugins are available:
+## التشغيل المحلي
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. انسخ ملف البيئة:
 
-## React Compiler
+```bash
+cp .env.example .env
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+على Windows يمكنك نسخ الملف يدويًا ثم تعبئة القيم المطلوبة.
 
-## Expanding the Oxlint configuration
+2. ثبّت الاعتمادات من ملف القفل:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```bash
+npm ci
+```
+
+3. شغّل بيئة التطوير:
+
+```bash
+npm run dev
+```
+
+## فحص النسخة قبل النشر
+
+```bash
+npm run check
+npm run audit:prod
+```
+
+يجب عدم رفع `node_modules` أو `dist` أو `.env` إلى Git.
+
+## متغيرات البيئة
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+> لا تضع أي مفتاح `service_role` أو مفتاح سري داخل تطبيق الواجهة الأمامية.
+
+## النشر
+
+المشروع مهيأ كتطبيق SPA على Vercel عبر `vercel.json`. بعد نجاح الاختبارات، يتم رفع المصدر فقط، ويتولى Vercel عملية البناء والنشر.
+
+## ملاحظات صيانة
+
+- ملفات الصفحات تُحمّل عند الحاجة لتقليل حجم التحميل الأولي.
+- ملفات البيئة الحقيقية مستبعدة من Git.
+- رؤوس حماية أساسية مضافة في إعدادات Vercel، مع Cache طويل لملفات Vite ذات الأسماء الممهورة بالـ hash.
+- بوابات المشرف والمعلم والطالب تحتوي حراسة دور على مستوى الواجهة، لكن الحماية النهائية للبيانات تعتمد كذلك على RLS/RPC في Supabase ويجب تدقيقها قبل الإطلاق العام.
+- لا تستخدم `npm audit fix --force` دون مراجعة أثر تحديث الاعتمادات واختبار الـ build والوظائف بعده.
+- لا تعدّل منطق الصلاحيات أو قاعدة البيانات بدون مراجعة RLS والسياسات بالتوازي.

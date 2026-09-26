@@ -114,14 +114,18 @@ function Toast({
       style={{
         position:
           "fixed",
-        top: "22px",
-        right: "22px",
+        top: "max(12px, env(safe-area-inset-top))",
+        right: "max(12px, env(safe-area-inset-right))",
         zIndex: 99999,
 
+        width:
+          "min(420px, calc(100vw - 24px))",
         minWidth:
-          "300px",
+          0,
         maxWidth:
           "420px",
+        boxSizing:
+          "border-box",
 
         background:
           "#fff",

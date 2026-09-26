@@ -8,7 +8,7 @@ export default function MonthlyGrid({
 
 }) {
 
-console.log(rows);
+
   return (
 
     <div

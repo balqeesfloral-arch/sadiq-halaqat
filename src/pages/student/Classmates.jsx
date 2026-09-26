@@ -11,7 +11,7 @@ export default function Classmates() {
   const [loading, setLoading] = useState(true);
   const [classmates, setClassmates] = useState([]);
 
-  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
+  
 
   async function load() {
     if (!halaqa?.id) { setLoading(false); return; }
@@ -73,6 +73,8 @@ export default function Classmates() {
       setLoading(false);
     }
   }
+
+  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
 
   const myRank = useMemo(
     () => classmates.findIndex((student) => Number(student.id) === Number(profile?.id)) + 1,

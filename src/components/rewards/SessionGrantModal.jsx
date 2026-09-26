@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Gift, Save, X } from "lucide-react";
+import { Gift, Save, X } from "lucide-react";
 
 import { supabase } from "../../lib/supabase";
 import ConfirmModal from "../ConfirmModal";

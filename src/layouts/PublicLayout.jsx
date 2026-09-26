@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  LogIn,
-  Menu,
-  X,
-  ChevronDown,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, LogIn, Menu, X, Sparkles } from "lucide-react";
 
 export default function PublicLayout() {
   const navigate = useNavigate();
@@ -888,35 +881,35 @@ export default function PublicLayout() {
 
           {/* Desktop navigation */}
           <nav className="public-nav">
-            <button
+            <button type="button"
               className="public-nav-button"
               onClick={() => goToSection("home")}
             >
               الرئيسية
             </button>
 
-            <button
+            <button type="button"
               className="public-nav-button"
               onClick={() => goToSection("stats")}
             >
               الإحصائيات
             </button>
 
-            <button
+            <button type="button"
               className="public-nav-button"
               onClick={() => goToSection("why-sadiq")}
             >
               لماذا الصديق
             </button>
 
-            <button
+            <button type="button"
               className="public-nav-button"
               onClick={() => goToSection("journey")}
             >
               رحلة الطالب
             </button>
 
-            <button
+            <button type="button"
               className="public-nav-button"
               onClick={() => goToSection("features")}
             >
@@ -962,21 +955,21 @@ export default function PublicLayout() {
 
       {mobileMenuOpen && (
         <div className="public-mobile-menu">
-          <button
+          <button type="button"
             onClick={() => goToSection("home")}
           >
             <span>الرئيسية</span>
             <ArrowLeft size={16} />
           </button>
 
-          <button
+          <button type="button"
             onClick={() => goToSection("stats")}
           >
             <span>الإحصائيات</span>
             <ArrowLeft size={16} />
           </button>
 
-          <button
+          <button type="button"
             onClick={() =>
               goToSection("why-sadiq")
             }
@@ -985,7 +978,7 @@ export default function PublicLayout() {
             <ArrowLeft size={16} />
           </button>
 
-          <button
+          <button type="button"
             onClick={() =>
               goToSection("journey")
             }
@@ -994,7 +987,7 @@ export default function PublicLayout() {
             <ArrowLeft size={16} />
           </button>
 
-          <button
+          <button type="button"
             onClick={() =>
               goToSection("features")
             }
@@ -1003,7 +996,7 @@ export default function PublicLayout() {
             <ArrowLeft size={16} />
           </button>
 
-          <button
+          <button type="button"
             onClick={() => navigate("/login")}
           >
             <span>تسجيل الدخول</span>

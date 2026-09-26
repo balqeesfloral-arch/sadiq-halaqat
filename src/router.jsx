@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   createBrowserRouter,
   Navigate,
@@ -5,85 +6,99 @@ import {
 
 import AdminLayout from "./components/AdminLayout";
 
-import Login from "./pages/Login";
-import SystemAdmin from "./pages/SystemAdmin";
-import AdminDashboard from "./pages/AdminDashboard";
-
-import Profile from "./pages/Profile";
-
-import Reports from "./pages/Reports";
-import RewardsPage from "./pages/RewardsPage";
-import Competitions from "./pages/Competitions";
-import Badges from "./pages/Badges";
-
-import Mosques from "./pages/Mosques";
-import Halaqat from "./pages/Halaqat";
-import Teachers from "./pages/Teachers";
-import Students from "./pages/Students";
-
-import HalaqaStudents from "./pages/HalaqaStudents";
-import HalaqaTeachers from "./pages/HalaqaTeachers";
-
-import Attendance from "./pages/Attendance";
-import Recitations from "./pages/Recitations";
-
-import Exams from "./pages/Exams";
-import MonthlyAchievement from "./pages/MonthlyAchievement";
-
-import TVLeaderboardPage from "./pages/TVLeaderboardPage";
-import SettingsPage from "./pages/SettingsPage";
-import JoinRequests from "./pages/JoinRequests";
-import AdminInvoices from "./pages/AdminInvoices";
-import Notifications from "./pages/Notifications";
-import InvoicePage from "./pages/InvoicePage";
-
+const Login = lazy(() => import("./pages/Login"));
+const SystemAdmin = lazy(() => import("./pages/SystemAdmin"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Reports = lazy(() => import("./pages/Reports"));
+const RewardsPage = lazy(() => import("./pages/RewardsPage"));
+const Competitions = lazy(() => import("./pages/Competitions"));
+const Badges = lazy(() => import("./pages/Badges"));
+const Mosques = lazy(() => import("./pages/Mosques"));
+const Halaqat = lazy(() => import("./pages/Halaqat"));
+const Teachers = lazy(() => import("./pages/Teachers"));
+const Students = lazy(() => import("./pages/Students"));
+const HalaqaStudents = lazy(() => import("./pages/HalaqaStudents"));
+const HalaqaTeachers = lazy(() => import("./pages/HalaqaTeachers"));
+const Attendance = lazy(() => import("./pages/Attendance"));
+const Recitations = lazy(() => import("./pages/Recitations"));
+const Exams = lazy(() => import("./pages/Exams"));
+const MonthlyAchievement = lazy(() => import("./pages/MonthlyAchievement"));
+const TVLeaderboardPage = lazy(() => import("./pages/TVLeaderboardPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const JoinRequests = lazy(() => import("./pages/JoinRequests"));
+const AdminInvoices = lazy(() => import("./pages/AdminInvoices"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const InvoicePage = lazy(() => import("./pages/InvoicePage"));
 /* =========================================================
    Teacher Portal
 ========================================================= */
 import TeacherLayout from "./layouts/TeacherLayout";
 
-import TeacherDashboard from "./pages/teacher/Dashboard";
-import TeacherStudents from "./pages/teacher/Students";
-import TeacherAttendance from "./pages/teacher/Attendance";
-import TeacherRecitations from "./pages/teacher/Recitations";
-import TeacherPoints from "./pages/teacher/Points";
-import TeacherMonthlyAchievement from "./pages/teacher/MonthlyAchievement";
-import TeacherExams from "./pages/teacher/Exams";
-import TeacherReports from "./pages/teacher/Reports";
-import TeacherProfile from "./pages/teacher/Profile";
-import TeacherSettings from "./pages/teacher/Settings";
-import TeacherHalaqat from "./pages/teacher/Halaqat";
-import TeacherMonthlyPlan from "./pages/teacher/MonthlyPlan";
-import TeacherStudentCare from "./pages/teacher/StudentCare";
-import TeacherRecords from "./pages/teacher/Records";
-import TeacherJoinRequests from "./pages/teacher/JoinRequests";
-
+const TeacherDashboard = lazy(() => import("./pages/teacher/Dashboard"));
+const TeacherStudents = lazy(() => import("./pages/teacher/Students"));
+const TeacherAttendance = lazy(() => import("./pages/teacher/Attendance"));
+const TeacherRecitations = lazy(() => import("./pages/teacher/Recitations"));
+const TeacherPoints = lazy(() => import("./pages/teacher/Points"));
+const TeacherMonthlyAchievement = lazy(() => import("./pages/teacher/MonthlyAchievement"));
+const TeacherExams = lazy(() => import("./pages/teacher/Exams"));
+const TeacherReports = lazy(() => import("./pages/teacher/Reports"));
+const TeacherProfile = lazy(() => import("./pages/teacher/Profile"));
+const TeacherSettings = lazy(() => import("./pages/teacher/Settings"));
+const TeacherHalaqat = lazy(() => import("./pages/teacher/Halaqat"));
+const TeacherMonthlyPlan = lazy(() => import("./pages/teacher/MonthlyPlan"));
+const TeacherStudentCare = lazy(() => import("./pages/teacher/StudentCare"));
+const TeacherRecords = lazy(() => import("./pages/teacher/Records"));
+const TeacherJoinRequests = lazy(() => import("./pages/teacher/JoinRequests"));
 /* =========================================================
    Student Portal
 ========================================================= */
 import StudentLayout from "./layouts/StudentLayout";
 
-import StudentDashboard from "./pages/student/Dashboard";
-import MyHalaqa from "./pages/student/MyHalaqa";
-import Classmates from "./pages/student/Classmates";
-import StudentRecitations from "./pages/student/Recitations";
-import StudentMonthlyPlan from "./pages/student/MonthlyPlan";
-import StudentMonthlyAchievement from "./pages/student/MonthlyAchievement";
-import StudentAttendance from "./pages/student/Attendance";
-import StudentPoints from "./pages/student/Points";
-import StudentExams from "./pages/student/Exams";
-import StudentNotifications from "./pages/student/Notifications";
-import StudentSettings from "./pages/student/Settings";
-import StudentProfile from "./pages/student/Profile";
-
+const StudentDashboard = lazy(() => import("./pages/student/Dashboard"));
+const MyHalaqa = lazy(() => import("./pages/student/MyHalaqa"));
+const Classmates = lazy(() => import("./pages/student/Classmates"));
+const StudentRecitations = lazy(() => import("./pages/student/Recitations"));
+const StudentMonthlyPlan = lazy(() => import("./pages/student/MonthlyPlan"));
+const StudentMonthlyAchievement = lazy(() => import("./pages/student/MonthlyAchievement"));
+const StudentAttendance = lazy(() => import("./pages/student/Attendance"));
+const StudentPoints = lazy(() => import("./pages/student/Points"));
+const StudentExams = lazy(() => import("./pages/student/Exams"));
+const StudentNotifications = lazy(() => import("./pages/student/Notifications"));
+const StudentSettings = lazy(() => import("./pages/student/Settings"));
+const StudentProfile = lazy(() => import("./pages/student/Profile"));
 /* =========================================================
    Public / Setup
 ========================================================= */
 import PublicLayout from "./layouts/PublicLayout";
-import LandingPage from "./pages/LandingPage";
-import Register from "./pages/Register";
-import StudentOnboarding from "./pages/student/Onboarding";
-import SupervisorSetup from "./pages/supervisor/SupervisorSetup";
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const Register = lazy(() => import("./pages/Register"));
+const StudentOnboarding = lazy(() => import("./pages/student/Onboarding"));
+const SupervisorSetup = lazy(() => import("./pages/supervisor/SupervisorSetup"));
+
+function renderLazy(Component) {
+  return (
+    <Suspense
+      fallback={
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            minHeight: "160px",
+            display: "grid",
+            placeItems: "center",
+            color: "#60736b",
+            fontWeight: 800,
+          }}
+        >
+          جارٍ تحميل الصفحة…
+        </div>
+      }
+    >
+      <Component />
+    </Suspense>
+  );
+}
 
 const router = createBrowserRouter([
   {
@@ -92,34 +107,34 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <LandingPage />,
+        element: renderLazy(LandingPage),
       },
     ],
   },
 
   {
     path: "/login",
-    element: <Login />,
+    element: renderLazy(Login),
   },
 
   {
     path: "/register",
-    element: <Register />,
+    element: renderLazy(Register),
   },
 
   {
     path: "/student/onboarding",
-    element: <StudentOnboarding />,
+    element: renderLazy(StudentOnboarding),
   },
 
   {
     path: "/system-admin",
-    element: <SystemAdmin />,
+    element: renderLazy(SystemAdmin),
   },
 
   {
     path: "/supervisor/setup",
-    element: <SupervisorSetup />,
+    element: renderLazy(SupervisorSetup),
   },
 
   {
@@ -129,112 +144,112 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <AdminDashboard />,
+        element: renderLazy(AdminDashboard),
       },
 
       {
         path: "profile",
-        element: <Profile />,
+        element: renderLazy(Profile),
       },
 
       {
         path: "notifications",
-        element: <Notifications />,
+        element: renderLazy(Notifications),
       },
 
       {
         path: "reports",
-        element: <Reports />,
+        element: renderLazy(Reports),
       },
 
       {
         path: "invoices",
-        element: <AdminInvoices />,
+        element: renderLazy(AdminInvoices),
       },
 
       {
         path: "invoices/:invoiceId",
-        element: <InvoicePage />,
+        element: renderLazy(InvoicePage),
       },
 
       {
         path: "points-transactions",
-        element: <RewardsPage />,
+        element: renderLazy(RewardsPage),
       },
 
       {
         path: "competitions",
-        element: <Competitions />,
+        element: renderLazy(Competitions),
       },
 
       {
         path: "badges",
-        element: <Badges />,
+        element: renderLazy(Badges),
       },
 
       {
         path: "mosques",
-        element: <Mosques />,
+        element: renderLazy(Mosques),
       },
 
       {
         path: "halaqat",
-        element: <Halaqat />,
+        element: renderLazy(Halaqat),
       },
 
       {
         path: "teachers",
-        element: <Teachers />,
+        element: renderLazy(Teachers),
       },
 
       {
         path: "join-requests",
-        element: <JoinRequests />,
+        element: renderLazy(JoinRequests),
       },
 
       {
         path: "students",
-        element: <Students />,
+        element: renderLazy(Students),
       },
 
       {
         path: "exams",
-        element: <Exams />,
+        element: renderLazy(Exams),
       },
 
       {
         path: "monthly-achievement",
-        element: <MonthlyAchievement />,
+        element: renderLazy(MonthlyAchievement),
       },
 
       {
         path: "tv-leaderboard",
-        element: <TVLeaderboardPage />,
+        element: renderLazy(TVLeaderboardPage),
       },
 
       {
         path: "settings",
-        element: <SettingsPage />,
+        element: renderLazy(SettingsPage),
       },
 
       {
         path: "halaqa-students/:id",
-        element: <HalaqaStudents />,
+        element: renderLazy(HalaqaStudents),
       },
 
       {
         path: "halaqa-teachers/:id",
-        element: <HalaqaTeachers />,
+        element: renderLazy(HalaqaTeachers),
       },
 
       {
         path: "attendance",
-        element: <Attendance />,
+        element: renderLazy(Attendance),
       },
 
       {
         path: "recitations",
-        element: <Recitations />,
+        element: renderLazy(Recitations),
       },
     ],
   },
@@ -246,77 +261,77 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <TeacherDashboard />,
+        element: renderLazy(TeacherDashboard),
       },
 
       {
         path: "students",
-        element: <TeacherStudents />,
+        element: renderLazy(TeacherStudents),
       },
 
       {
         path: "join-requests",
-        element: <TeacherJoinRequests />,
+        element: renderLazy(TeacherJoinRequests),
       },
 
       {
         path: "attendance",
-        element: <TeacherAttendance />,
+        element: renderLazy(TeacherAttendance),
       },
 
       {
         path: "recitations",
-        element: <TeacherRecitations />,
+        element: renderLazy(TeacherRecitations),
       },
 
       {
         path: "points",
-        element: <TeacherPoints />,
+        element: renderLazy(TeacherPoints),
       },
 
       {
         path: "halaqat",
-        element: <TeacherHalaqat />,
+        element: renderLazy(TeacherHalaqat),
       },
 
       {
         path: "monthly-plan",
-        element: <TeacherMonthlyPlan />,
+        element: renderLazy(TeacherMonthlyPlan),
       },
 
       {
         path: "monthly-achievement",
-        element: <TeacherMonthlyAchievement />,
+        element: renderLazy(TeacherMonthlyAchievement),
       },
 
       {
         path: "exams",
-        element: <TeacherExams />,
+        element: renderLazy(TeacherExams),
       },
 
       {
         path: "notifications",
-        element: <TeacherStudentCare />,
+        element: renderLazy(TeacherStudentCare),
       },
 
 {
   path: "records",
-  element: <TeacherRecords />,
+  element: renderLazy(TeacherRecords),
 },
 
       {
         path: "reports",
-        element: <TeacherReports />,
+        element: renderLazy(TeacherReports),
       },
 
       {
         path: "profile",
-        element: <TeacherProfile />,
+        element: renderLazy(TeacherProfile),
       },
 
       {
         path: "settings",
-        element: <TeacherSettings />,
+        element: renderLazy(TeacherSettings),
       },
     ],
   },
@@ -333,69 +348,69 @@ const router = createBrowserRouter([
 
       {
         path: "dashboard",
-        element: <StudentDashboard />,
+        element: renderLazy(StudentDashboard),
       },
 
       {
         path: "halaqa",
-        element: <MyHalaqa />,
+        element: renderLazy(MyHalaqa),
       },
 
       {
         path: "classmates",
-        element: <Classmates />,
+        element: renderLazy(Classmates),
       },
 
       {
         path: "recitations",
-        element: <StudentRecitations />,
+        element: renderLazy(StudentRecitations),
       },
 
       {
         path: "monthly-plan",
-        element: <StudentMonthlyPlan />,
+        element: renderLazy(StudentMonthlyPlan),
       },
 
       {
         path: "monthly-achievement",
-        element: <StudentMonthlyAchievement />,
+        element: renderLazy(StudentMonthlyAchievement),
       },
 
       {
         path: "attendance",
-        element: <StudentAttendance />,
+        element: renderLazy(StudentAttendance),
       },
 
       {
         path: "points",
-        element: <StudentPoints />,
+        element: renderLazy(StudentPoints),
       },
 
       {
         path: "exams",
-        element: <StudentExams />,
+        element: renderLazy(StudentExams),
       },
 
       {
         path: "notifications",
-        element: <StudentNotifications />,
+        element: renderLazy(StudentNotifications),
       },
 
       {
         path: "settings",
-        element: <StudentSettings />,
+        element: renderLazy(StudentSettings),
       },
 
       {
         path: "profile",
-        element: <StudentProfile />,
+        element: renderLazy(StudentProfile),
       },
     ],
   },
 
   {
     path: "*",
-    element: <Login />,
+    element: renderLazy(Login),
   },
 ]);
 

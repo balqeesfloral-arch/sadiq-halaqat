@@ -5,36 +5,7 @@ import {
   useState,
 } from "react";
 
-import {
-  Building2,
-  Search,
-  Plus,
-  RefreshCw,
-  Loader2,
-  PencilLine,
-  Power,
-  PowerOff,
-  X,
-  Save,
-  ShieldCheck,
-  Clock3,
-  CheckCircle2,
-  XCircle,
-  CircleAlert,
-  Users,
-  GraduationCap,
-  BookOpenCheck,
-  Sparkles,
-  Send,
-  FileText,
-  SlidersHorizontal,
-  MapPin,
-  Landmark,
-  ChevronLeft,
-  Ban,
-  RotateCcw,
-  Activity,
-} from "lucide-react";
+import { Building2, Search, Plus, RefreshCw, Loader2, PencilLine, Power, PowerOff, X, Save, ShieldCheck, Clock3, CheckCircle2, XCircle, CircleAlert, Users, GraduationCap, BookOpenCheck, Sparkles, Send, FileText, SlidersHorizontal, MapPin, Landmark, Ban, RotateCcw, Activity } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
 import { useToast } from "../components/Toast";

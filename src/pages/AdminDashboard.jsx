@@ -291,9 +291,7 @@ export default function AdminDashboard() {
       total: 0,
     });
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
+  
 
   async function loadDashboard() {
     try {
@@ -481,6 +479,10 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+      loadDashboard();
+    }, []);
 
   const todayHijri = formatHijri(
     new Date()

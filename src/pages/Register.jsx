@@ -499,8 +499,7 @@ export default function Register() {
                       </div>
 
                       <div className="register-pro-helper">
-                        استخدم 8 أحرف على الأقل. لا نضع كلمة المرور
-                        داخل جدول profiles نهائيًا.
+                        استخدم 8 أحرف على الأقل واختر كلمة مرور قوية.
                       </div>
                     </>
                   )}

@@ -3,23 +3,7 @@ import {
   useState,
 } from "react";
 
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  CalendarDays,
-  CircleHelp,
-  FileText,
-  Gift,
-  History,
-  MinusCircle,
-  Pencil,
-  Search,
-  Sparkles,
-  Trash2,
-  UserRound,
-  WalletCards,
-  X,
-} from "lucide-react";
+import { CalendarDays, FileText, Gift, History, MinusCircle, Pencil, Search, Sparkles, Trash2, UserRound, WalletCards, X } from "lucide-react";
 
 import ConfirmModal from "../ConfirmModal";
 

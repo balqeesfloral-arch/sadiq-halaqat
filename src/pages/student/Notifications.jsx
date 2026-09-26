@@ -57,7 +57,7 @@ export default function StudentNotifications() {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageStatus, setMessageStatus] = useState("");
 
-  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
+  
 
   async function load() {
     if (!profile?.id) return;
@@ -167,6 +167,8 @@ export default function StudentNotifications() {
     }
   }
 
+  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
+
   async function markRead(id) {
     const { error } = await supabase.from("student_notifications")
       .update({ read_at: new Date().toISOString() })
@@ -230,7 +232,7 @@ export default function StudentNotifications() {
     <StudentPage
       eyebrow="الصديق يتابع معك"
       title="الإشعارات"
-      description="رسائل مباشرة وتنبيهات تحليلية من المحرك المركزي، بنفس المؤشرات التي يراها المعلم والمشرف وبصياغة مناسبة لك."
+      description="رسائل وتنبيهات مهمة تساعدك على متابعة تقدمك."
       icon={BellRing}
     >
       <section className="student-metrics">

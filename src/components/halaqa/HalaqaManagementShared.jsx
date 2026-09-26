@@ -92,8 +92,15 @@ export function HalaqaDialog({ title, description, busy, onClose, children }) {
   const panel = useRef(null);
   const closeHandler = useRef(onClose);
   const isBusy = useRef(busy);
-  closeHandler.current = onClose;
-  isBusy.current = busy;
+
+  useEffect(() => {
+    closeHandler.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    isBusy.current = busy;
+  }, [busy]);
+
   useEffect(() => {
     const previous = document.activeElement;
     const overflow = document.body.style.overflow;

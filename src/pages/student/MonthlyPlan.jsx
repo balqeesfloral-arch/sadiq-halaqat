@@ -17,7 +17,7 @@ export default function StudentMonthlyPlan() {
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState(null);
 
-  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
+  
 
   async function load() {
     if (!profile?.id || !halaqa?.id) { setLoading(false); return; }
@@ -37,6 +37,8 @@ export default function StudentMonthlyPlan() {
       setLoading(false);
     }
   }
+
+  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
 
   const goal = profile?.learning_goal || "quran";
   const hasQuran = ["quran", "noorania_quran", "other", ""].includes(goal);

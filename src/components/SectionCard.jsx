@@ -53,7 +53,7 @@ export default function SectionCard({
             )}
           </div>
 
-          {action && action}
+          {action}
         </div>
       )}
 

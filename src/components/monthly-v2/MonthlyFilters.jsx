@@ -114,7 +114,7 @@ export default function MonthlyFilters({
   }))}
 />
 
-        <button
+        <button type="button"
           onClick={onLoad}
           style={{
             border:"none",

@@ -6,8 +6,7 @@ import {
   Copy,
 } from "lucide-react";
 
-import { showToast }
-from "../../components/Toast";
+
 
 export default function ReportToolbar({
   onPrint,
@@ -59,7 +58,7 @@ export default function ReportToolbar({
         marginBottom: "20px",
       }}
     >
-     <button
+     <button type="button"
   style={btnStyle}
   onClick={onPrint}
 >
@@ -67,7 +66,7 @@ export default function ReportToolbar({
   طباعة
 </button>
 
-     <button
+     <button type="button"
   style={btnStyle}
   onClick={onPDF}
 >
@@ -75,7 +74,7 @@ export default function ReportToolbar({
   PDF
 </button>
 
-<button
+<button type="button"
   style={btnStyle}
   onClick={onExcel}
 >
@@ -83,7 +82,7 @@ export default function ReportToolbar({
   Excel
 </button>
 
-      <button
+      <button type="button"
   style={btnStyle}
   onClick={onCSV}
 >
@@ -91,7 +90,7 @@ export default function ReportToolbar({
   CSV
 </button>
 
-<button
+<button type="button"
   style={btnStyle}
   onClick={onCopy}
 >

@@ -7,35 +7,7 @@ import {
   useState,
 } from "react";
 
-import {
-  BadgeCheck,
-  BookOpen,
-  CalendarDays,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CircleAlert,
-  FileSpreadsheet,
-  FileText,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  History,
-  Layers3,
-  Loader2,
-  MessageSquareText,
-  Printer,
-  RefreshCw,
-  Save,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Target,
-  Trophy,
-  UserRound,
-  Users,
-  X,
-} from "lucide-react";
+import { BadgeCheck, BookOpen, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, FileSpreadsheet, FileText, AlertTriangle, CheckCircle2, XCircle, History, Layers3, Loader2, MessageSquareText, Printer, RefreshCw, Save, Search, ShieldCheck, Sparkles, Target, UserRound, Users, X } from "lucide-react";
 
 import {
   supabase,
@@ -398,31 +370,6 @@ function getHijriMonthRange(
   );
 
   return result;
-}
-
-function formatHijriDate(
-  value
-) {
-  if (!value) {
-    return "—";
-  }
-
-  try {
-    return new Intl.DateTimeFormat(
-      "ar-SA-u-ca-islamic-umalqura",
-      {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }
-    ).format(
-      parseLocalDate(
-        value
-      )
-    );
-  } catch {
-    return value;
-  }
 }
 
 function formatHijriFullDate(
@@ -2904,6 +2851,12 @@ export default function MonthlyAchievement() {
       return;
     }
 
+    try {
+      printWindow.opener = null;
+    } catch {
+      // Browser-level opener isolation is best-effort only.
+    }
+
     const origin = window.location.origin;
     const selectedHalaqaData = halaqat.find(
       (item) => Number(item.id) === Number(selectedHalaqa)
@@ -3037,16 +2990,16 @@ export default function MonthlyAchievement() {
       </head>
       <body>
         <div class="page">
-          <img class="corner r" src="${origin}/patterns/Z-1.png" onerror="this.style.display='none'" />
-          <img class="corner l" src="${origin}/patterns/Z-3.png" onerror="this.style.display='none'" />
-          <img class="corner br" src="${origin}/patterns/Z-5.png" onerror="this.style.display='none'" />
-          <img class="corner bl" src="${origin}/patterns/Z-5.png" onerror="this.style.display='none'" />
-          <img class="watermark" src="${origin}/icon-512.png" onerror="this.style.display='none'" />
+          <img class="corner r" src="${origin}/patterns/Z-1.png" alt="" onerror="this.style.display='none'" />
+          <img class="corner l" src="${origin}/patterns/Z-3.png" alt="" onerror="this.style.display='none'" />
+          <img class="corner br" src="${origin}/patterns/Z-5.png" alt="" onerror="this.style.display='none'" />
+          <img class="corner bl" src="${origin}/patterns/Z-5.png" alt="" onerror="this.style.display='none'" />
+          <img class="watermark" src="${origin}/icon-512.png" alt="" onerror="this.style.display='none'" />
 
           <main class="report">
             <div class="top-line"></div>
             <header class="header">
-              <img class="header-logo" src="${origin}/icon-512.png" onerror="this.src='${origin}/logo.png'" />
+              <img class="header-logo" src="${origin}/icon-512.png" alt="شعار الصديق" onerror="this.src='${origin}/logo.png'" />
               <div class="title">
                 <h1>تقرير الإنجاز الشهري</h1>
                 <p>نظام الصديق لإدارة حلقات القرآن الكريم — قراءة ذكية للإنجاز والتعثر</p>
@@ -3088,7 +3041,7 @@ export default function MonthlyAchievement() {
                 تقرير تعليمي لمساندة المعلم في متابعة رحلة الطالب، لا لمجرد تسجيل الأرقام.
               </div>
               <div class="brand-sign">
-                <img src="${origin}/icon-512.png" onerror="this.style.display='none'" />
+                <img src="${origin}/icon-512.png" alt="شعار الصديق" onerror="this.style.display='none'" />
                 <span>الصديق • متابعةٌ تصنع فرقًا</span>
               </div>
             </footer>
@@ -3531,8 +3484,7 @@ export default function MonthlyAchievement() {
               >
                 <span>
                   الفترة الميلادية
-                  المستخدمة في
-                  قاعدة البيانات
+                  المقابلة
                 </span>
 
                 <strong>

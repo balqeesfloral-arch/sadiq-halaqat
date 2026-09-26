@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "check": "npm run lint && npm run build",
+    "audit:prod": "npm audit --omit=dev",
+    "preview": "vite preview",
+    "security:scan": "node scripts/security-scan.mjs",
+    "security:check": "npm run security:scan && npm run lint && npm run build && npm run security:dist",
+    "security:dist": "node scripts/security-dist-scan.mjs",
+    "security:full": "npm run security:check && npm run audit:prod"
   },
   "dependencies": {
     "@mui/x-date-pickers": "^9.13.0",
@@ -27,7 +33,7 @@
     "react-multi-date-picker": "^4.5.2",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",

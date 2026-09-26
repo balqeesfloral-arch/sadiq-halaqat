@@ -2028,10 +2028,8 @@ function PoliciesTab() {
       subtitle="نفصل بين تفضيلات المعلم وسياسات الجهة."
       badge="حوكمة"
     >
-      <InfoBox icon={ShieldCheck} title="الهيكل المستهدف">
-        عند بناء بوابة المشرف سنضيف وراثة واضحة:
-        <b> النظام ← المشرف ← المعلم ← الحلقة</b>.
-        بعض القيم يمكن للمشرف قفلها، والباقي يظل قابلًا لتخصيص المعلم.
+      <InfoBox icon={ShieldCheck} title="إدارة الصلاحيات">
+        بعض الإعدادات تحددها الجهة، والباقي قابل لتخصيص المعلم.
       </InfoBox>
 
       <div className="policy-list">
@@ -2052,7 +2050,7 @@ function AboutTab() {
     <SettingsSection
       icon={Info}
       title="حول الصديق"
-      subtitle="مركز الإعدادات الجديد هو المرجع الموحد لتجربة بوابة المعلم."
+      subtitle="إعدادات وتجربة بوابة المعلم."
       badge="2.0"
     >
       <div className="about-grid">
@@ -2073,13 +2071,13 @@ function AboutTab() {
         />
         <AboutCard
           icon={ShieldCheck}
-          title="قابل للحوكمة"
-          text="البنية جاهزة لاحقًا لسياسات المشرف والإدارة."
+          title="صلاحيات واضحة"
+          text="تظهر الخيارات المتاحة لك حسب صلاحيتك."
         />
         <AboutCard
           icon={LayoutDashboard}
-          title="مصدر موحد"
-          text="teacherPreferences.js سيكون المرجع لباقي صفحات المعلم."
+          title="تجربة موحدة"
+          text="تُطبق تفضيلاتك على صفحات بوابة المعلم."
         />
         <AboutCard
           icon={Monitor}

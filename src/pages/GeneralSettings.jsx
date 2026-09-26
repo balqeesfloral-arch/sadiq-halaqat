@@ -55,7 +55,7 @@ export default function GeneralSettings() {
       setAvailableKeys(keys);
     } catch (error) {
       console.error("General settings load:", error);
-      setLoadError("تعذر تحميل الإعدادات العامة من قاعدة البيانات.");
+      setLoadError("تعذر تحميل الإعدادات العامة.");
       showToast("فشل تحميل الإعدادات العامة");
     } finally {
       setLoading(false);
@@ -69,7 +69,7 @@ export default function GeneralSettings() {
     const missing = changed.filter(({ key }) => !availableKeys.has(key));
 
     if (missing.length) {
-      showToast(`الإعداد غير مهيأ في قاعدة البيانات: ${missing.map(x => x.label).join("، ")}`);
+      showToast(`هذا الإعداد غير متاح حاليًا: ${missing.map(x => x.label).join("، ")}`);
       return;
     }
 
@@ -105,7 +105,7 @@ export default function GeneralSettings() {
     return (
       <div className="general-settings-state">
         <RefreshCw size={20} className="settings-spin" />
-        <div><strong>جاري تحميل الإعدادات</strong><span>يتم جلب القيم الحالية من قاعدة البيانات</span></div>
+        <div><strong>جاري تحميل الإعدادات</strong><span>يرجى الانتظار قليلًا</span></div>
       </div>
     );
   }
@@ -127,9 +127,9 @@ export default function GeneralSettings() {
         <div>
           <span>الإعدادات الأساسية</span>
           <h3>بيانات المنصة والتواصل</h3>
-          <p>هذه القيم مرتبطة بجدول إعدادات النظام وتحفظ فعليًا في قاعدة البيانات.</p>
+          <p>بيانات أساسية للمنصة ووسائل التواصل.</p>
         </div>
-        <div className="general-settings-live"><CheckCircle2 size={15}/> مرتبط بالنظام</div>
+        <div className="general-settings-live"><CheckCircle2 size={15}/> محفوظ</div>
       </section>
 
       <section className="general-settings-section">

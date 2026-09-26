@@ -3,35 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useToast } from "../components/Toast";
 
-import {
-  UsersRound,
-  UserRound,
-  Search,
-  Plus,
-  Pencil,
-  Trash2,
-  ArrowRight,
-  CheckCircle2,
-  XCircle,
-  Phone,
-  BookOpen,
-  GraduationCap,
-  CalendarDays,
-  ShieldCheck,
-  Link2,
-  X,
-  Save,
-  RefreshCw,
-  UserCheck,
-  UserX,
-  AlertCircle,
-  Mail,
-  Hash,
-  Activity,
-  AlertTriangle,
-  UserPlus,
-  Eye,
-} from "lucide-react";
+import { UsersRound, UserRound, Search, Pencil, Trash2, ArrowRight, CheckCircle2, XCircle, Phone, BookOpen, GraduationCap, ShieldCheck, Link2, X, Save, RefreshCw, UserCheck, UserX, AlertCircle, Mail, Hash, Activity, AlertTriangle, UserPlus } from "lucide-react";
 
 export default function Teachers() {
   const navigate = useNavigate();
@@ -1524,11 +1496,6 @@ function editTeacher(teacher) {
             </div>
 
             <div className="teacher-modal-footer">
-              <div className="teacher-modal-footer-note">
-                <ShieldCheck size={16} />
-                سيتم حفظ الملف وربطه مباشرة ببيانات النظام.
-              </div>
-
               <div className="teacher-modal-actions">
                 <button
                   type="button"
@@ -4173,25 +4140,6 @@ const iconButtonStyle = {
     "calc(11px * var(--app-radius-scale,1))",
   cursor:
     "pointer",
-  display:
-    "flex",
-  alignItems:
-    "center",
-  justifyContent:
-    "center",
-};
-
-const sectionIconStyle = {
-  width:
-    "41px",
-  height:
-    "41px",
-  borderRadius:
-    "calc(12px * var(--app-radius-scale,1))",
-  background:
-    "var(--app-color-edf5ef,#edf5ef)",
-  color:
-    "var(--app-color-0f5132,#0f5132)",
   display:
     "flex",
   alignItems:

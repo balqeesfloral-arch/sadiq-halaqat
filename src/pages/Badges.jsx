@@ -3,29 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useToast } from "../components/Toast";
 
-import {
-  UsersRound,
-  UserRound,
-  Search,
-  Plus,
-  Pencil,
-  Trash2,
-  ArrowRight,
-  CheckCircle2,
-  XCircle,
-  Phone,
-  BookOpen,
-  GraduationCap,
-  CalendarDays,
-  ShieldCheck,
-  Link2,
-  X,
-  Save,
-  RefreshCw,
-  UserCheck,
-  UserX,
-  AlertCircle,
-} from "lucide-react";
+import { UsersRound, UserRound, Search, Plus, Pencil, Trash2, ArrowRight, CheckCircle2, XCircle, Phone, BookOpen, GraduationCap, ShieldCheck, Link2, X, Save, RefreshCw, UserCheck, UserX, AlertCircle } from "lucide-react";
 
 export default function Teachers() {
   const navigate = useNavigate();
@@ -681,6 +659,7 @@ export default function Teachers() {
   return (
     <div
       dir="rtl"
+      className="legacy-responsive-page"
       style={{
         minHeight: "100vh",
         background:

@@ -4,30 +4,7 @@ import {
   useState,
 } from "react";
 
-import {
-  Activity,
-  BookOpen,
-  Building2,
-  CalendarDays,
-  Camera,
-  CheckCircle2,
-  Clock3,
-  Eye,
-  EyeOff,
-  GraduationCap,
-  KeyRound,
-  Loader2,
-  LockKeyhole,
-  LogOut,
-  Mail,
-  Phone,
-  Save,
-  ShieldCheck,
-  Sparkles,
-  UserRound,
-  Users,
-  X,
-} from "lucide-react";
+import { Activity, BookOpen, Building2, CalendarDays, Camera, CheckCircle2, Eye, EyeOff, GraduationCap, KeyRound, Loader2, LockKeyhole, LogOut, Mail, Phone, Save, ShieldCheck, Sparkles, UserRound, Users, X } from "lucide-react";
 
 import {
   useNavigate,
@@ -1079,7 +1056,7 @@ export default function Profile() {
       !user?.email
     ) {
       showToast(
-        "هذا الحساب لا يحتوي على بريد Auth صالح لتغيير كلمة المرور من هذه الصفحة.",
+        "تعذر تغيير كلمة المرور لهذا الحساب من هذه الصفحة.",
         "error"
       );
 
@@ -1650,7 +1627,7 @@ export default function Profile() {
                 Mail
               }
               disabled
-              help="البريد مرتبط بحساب Supabase Auth."
+              help="البريد المستخدم لتسجيل الدخول."
             />
           </div>
 
@@ -1669,7 +1646,7 @@ export default function Profile() {
                 Camera
               }
               placeholder="https://..."
-              help="يمكننا لاحقًا استبدال الرابط برفع صورة مباشر إلى Supabase Storage."
+              help="ضع رابط الصورة الشخصية إذا رغبت في تحديثها."
             />
           </div>
 
@@ -1998,7 +1975,7 @@ export default function Profile() {
                   </h2>
 
                   <p>
-                    سيتم التحقق من كلمة المرور الحالية أولًا ثم حفظ الجديدة في Supabase Auth.
+                    سيتم التحقق من كلمة المرور الحالية قبل حفظ الجديدة.
                   </p>
                 </div>
               </div>
@@ -2141,7 +2118,7 @@ export default function Profile() {
                 />
 
                 <span>
-                  كلمة المرور لا تحفظ في جدول profiles، بل في نظام Supabase Auth فقط.
+                  لن تظهر كلمة المرور بعد حفظها.
                 </span>
               </div>
             </div>

@@ -1,40 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
-import {
-  Activity,
-  Archive,
-  BellRing,
-  BookOpen,
-  Building2,
-  Check,
-  CheckCircle2,
-  ChevronLeft,
-  CircleOff,
-  ClipboardList,
-  Copy,
-  GraduationCap,
-  KeyRound,
-  LayoutDashboard,
-  Link2,
-  Loader2,
-  LogOut,
-  Menu,
-  MessageCircle,
-  MoreHorizontal,
-  Phone,
-  Plus,
-  RefreshCw,
-  Search,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  UserCheck,
-  UserCog,
-  UserRoundCheck,
-  Users,
-  X,
-  XCircle,
-} from "lucide-react";
+import { Activity, Archive, BellRing, BookOpen, Building2, Check, CheckCircle2, ChevronLeft, CircleOff, ClipboardList, Copy, GraduationCap, KeyRound, LayoutDashboard, Link2, Loader2, LogOut, Menu, Fingerprint, Laptop, Trash2, MessageCircle, Phone, Plus, RefreshCw, Search, Settings, ShieldCheck, Sparkles, UserCheck, UserCog, UserRoundCheck, Users, X, XCircle } from "lucide-react";
 import "./SystemAdmin.css";
 
 const NAV_ITEMS = [
@@ -45,6 +11,7 @@ const NAV_ITEMS = [
   { id: "users", label: "المستخدمون", icon: Users },
   { id: "alerts", label: "مركز التنبيهات", icon: BellRing },
   { id: "audit", label: "سجل العمليات", icon: ClipboardList },
+  { id: "security", label: "خزنة المالك", icon: Fingerprint },
   { id: "settings", label: "إعدادات النظام", icon: Settings },
 ];
 
@@ -217,7 +184,10 @@ export default function SystemAdmin() {
     try {
       const { data: authData, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
-      if (!authData?.user) throw new Error("لم يتم العثور على جلسة دخول فعالة.");
+      if (!authData?.user) {
+        window.location.replace("/login");
+        return;
+      }
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -226,8 +196,14 @@ export default function SystemAdmin() {
         .maybeSingle();
 
       if (profileError) throw profileError;
-      if (!profile || profile.role !== "admin") {
-        throw new Error("SYSTEM_ADMIN_REQUIRED");
+      if (
+        !profile ||
+        profile.role !== "admin" ||
+        profile.status !== "active" ||
+        profile.is_active === false
+      ) {
+        window.location.replace("/login");
+        return;
       }
 
       setAdminProfile(profile);
@@ -365,28 +341,6 @@ export default function SystemAdmin() {
   const attentionCount =
     alerts.length + openSupportRequests.length;
 
-  async function testActivateSubscription() {
-    const confirmed = window.confirm(
-      "سيتم تحويل اشتراك مسجد التقوى رقم 5 من الفترة التجريبية إلى اشتراك نشط إداريًا لمدة شهر حسب الخطة، مع فترة سماح 7 أيام بعد نهاية الفترة. هذا اختبار إداري وليس إثبات دفع مالي. هل تريد المتابعة؟"
-    );
-    if (!confirmed) return;
-
-    try {
-      const { data, error } = await supabase.rpc("admin_activate_subscription", {
-        p_mosque_id: 5,
-        p_reason: "اختبار End-to-End للتفعيل الإداري للاشتراك",
-      });
-
-      if (error) throw error;
-
-      console.log("SUBSCRIPTION ACTIVATION SUCCESS:", data);
-      notify(`نجح تفعيل الاشتراك إداريًا${data != null ? ` — Subscription ID: ${data}` : ""}.`);
-    } catch (error) {
-      console.error("SUBSCRIPTION ACTIVATION ERROR:", error);
-      notify(getErrorMessage(error), "error");
-    }
-  }
-
   async function signOut() {
     await supabase.auth.signOut();
     window.location.assign("/login");
@@ -409,7 +363,7 @@ export default function SystemAdmin() {
           <div className="sa-fatal-icon"><ShieldCheck /></div>
           <h1>تعذر فتح مركز مدير النظام</h1>
           <p>{pageError}</p>
-          <button onClick={() => loadEverything()}><RefreshCw /> إعادة المحاولة</button>
+          <button type="button" onClick={() => loadEverything()}><RefreshCw /> إعادة المحاولة</button>
         </div>
       </div>
     );
@@ -431,7 +385,7 @@ export default function SystemAdmin() {
             <strong>الصِّديق</strong>
             <span>مركز مدير النظام</span>
           </div>
-          <button className="sa-mobile-close" onClick={() => setMobileOpen(false)} aria-label="إغلاق القائمة">
+          <button type="button" className="sa-mobile-close" onClick={() => setMobileOpen(false)} aria-label="إغلاق القائمة">
             <X />
           </button>
         </div>
@@ -450,7 +404,7 @@ export default function SystemAdmin() {
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <button type="button"
                 key={item.id}
                 className={`sa-nav-item ${activeView === item.id ? "is-active" : ""}`}
                 onClick={() => goTo(item.id)}
@@ -471,17 +425,17 @@ export default function SystemAdmin() {
             <ShieldCheck />
             <div>
               <strong>إدارة محمية</strong>
-              <span>العمليات الحساسة تمر عبر صلاحيات قاعدة البيانات.</span>
+              <span>العمليات الحساسة محمية بصلاحيات إضافية.</span>
             </div>
           </div>
-          <button className="sa-signout" onClick={signOut}><LogOut /> تسجيل الخروج</button>
+          <button type="button" className="sa-signout" onClick={signOut}><LogOut /> تسجيل الخروج</button>
         </div>
       </aside>
 
       <main className="sa-main">
         <header className="sa-topbar">
           <div className="sa-topbar-start">
-            <button className="sa-menu-btn" onClick={() => setMobileOpen(true)}><Menu /></button>
+            <button type="button" className="sa-menu-btn" onClick={() => setMobileOpen(true)}><Menu /></button>
             <div>
               <span className="sa-topbar-eyebrow"><Sparkles /> إدارة عليا للنظام</span>
               <h1>{NAV_ITEMS.find((item) => item.id === activeView)?.label}</h1>
@@ -489,19 +443,11 @@ export default function SystemAdmin() {
           </div>
 
           <div className="sa-topbar-actions">
-            <button
-              className="sa-btn sa-btn-secondary"
-              type="button"
-              onClick={testActivateSubscription}
-              title="اختبار التفعيل الإداري لاشتراك مسجد التقوى رقم 5"
-            >
-              <ShieldCheck /> اختبار تفعيل الاشتراك
-            </button>
             <div className="sa-date-block">
               <strong>{formatGregorianToday()}</strong>
               <span>{formatHijriToday()}</span>
             </div>
-            <button
+            <button type="button"
               className="sa-icon-button"
               onClick={() => loadEverything({ silent: true })}
               disabled={refreshing}
@@ -509,7 +455,7 @@ export default function SystemAdmin() {
             >
               <RefreshCw className={refreshing ? "sa-spin" : ""} />
             </button>
-            <button className="sa-alert-button" onClick={() => goTo("alerts")}>
+            <button type="button" className="sa-alert-button" onClick={() => goTo("alerts")}>
               <BellRing />
               {attentionCount > 0 && <span>{attentionCount > 99 ? "99+" : attentionCount}</span>}
             </button>
@@ -575,6 +521,8 @@ export default function SystemAdmin() {
           )}
 
           {activeView === "audit" && <AuditView logs={auditLogs} />}
+
+          {activeView === "security" && <OwnerSecurityView notify={notify} />}
 
           {activeView === "settings" && <SettingsView />}
         </div>
@@ -663,8 +611,8 @@ function DashboardView({ dashboard, mosques, supervisors, invites, alerts, audit
             وأدر دعوات المشرفين والعمليات الحساسة من مكان واحد واضح.
           </p>
           <div className="sa-hero-actions">
-            <button className="sa-btn sa-btn-gold" onClick={() => goTo("mosques")}><Building2 /> إدارة المساجد</button>
-            <button className="sa-btn sa-btn-ghost-light" onClick={() => goTo("supervisors")}><Link2 /> إدارة الربط</button>
+            <button type="button" className="sa-btn sa-btn-gold" onClick={() => goTo("mosques")}><Building2 /> إدارة المساجد</button>
+            <button type="button" className="sa-btn sa-btn-ghost-light" onClick={() => goTo("supervisors")}><Link2 /> إدارة الربط</button>
           </div>
         </div>
 
@@ -695,7 +643,7 @@ function DashboardView({ dashboard, mosques, supervisors, invites, alerts, audit
             eyebrow="المتابعة الفورية"
             title="يحتاج إلى انتباهك"
             description="الحالات التي تستحق إجراءً إداريًا الآن."
-            action={<button className="sa-text-button" onClick={() => goTo("alerts")}>عرض الكل <ChevronLeft /></button>}
+            action={<button type="button" className="sa-text-button" onClick={() => goTo("alerts")}>عرض الكل <ChevronLeft /></button>}
           />
 
           <div className="sa-attention-list">
@@ -750,7 +698,7 @@ function DashboardView({ dashboard, mosques, supervisors, invites, alerts, audit
             eyebrow="الشفافية الإدارية"
             title="آخر العمليات"
             description="أحدث التغييرات الحساسة المسجلة."
-            action={<button className="sa-text-button" onClick={() => goTo("audit")}>سجل العمليات <ChevronLeft /></button>}
+            action={<button type="button" className="sa-text-button" onClick={() => goTo("audit")}>سجل العمليات <ChevronLeft /></button>}
           />
           <div className="sa-activity-list">
             {auditLogs.length === 0 ? (
@@ -767,7 +715,7 @@ function DashboardView({ dashboard, mosques, supervisors, invites, alerts, audit
 
 function KpiCard({ label, value, meta, icon: Icon, accent, onClick }) {
   return (
-    <button className={`sa-kpi-card sa-accent-${accent}`} onClick={onClick} disabled={!onClick}>
+    <button type="button" className={`sa-kpi-card sa-accent-${accent}`} onClick={onClick} disabled={!onClick}>
       <span className="sa-kpi-icon"><Icon /></span>
       <div className="sa-kpi-copy">
         <span>{label}</span>
@@ -792,7 +740,7 @@ function StatusBar({ label, value, total, tone }) {
 
 function QuickAction({ icon: Icon, title, text, onClick }) {
   return (
-    <button className="sa-quick-action" onClick={onClick}>
+    <button type="button" className="sa-quick-action" onClick={onClick}>
       <span><Icon /></span>
       <div><strong>{title}</strong><small>{text}</small></div>
       <ChevronLeft />
@@ -921,7 +869,7 @@ function MosquesView({ mosques, notify, reload }) {
         description="أنشئ أقسام الرجال والنساء كسجلات مستقلة، ثم فعّل أو عطّل أو أرشف كل قسم دون حذف تاريخه."
         icon={Building2}
         action={
-          <button className="sa-btn sa-btn-primary" onClick={openCreate}>
+          <button type="button" className="sa-btn sa-btn-primary" onClick={openCreate}>
             <Plus /> إنشاء مسجد
           </button>
         }
@@ -986,7 +934,7 @@ function MosquesView({ mosques, notify, reload }) {
                 { id: "inactive", label: "معطل" },
                 { id: "archived", label: "مؤرشف" },
               ].map((item) => (
-                <button
+                <button type="button"
                   key={item.id}
                   className={filter === item.id ? "is-active" : ""}
                   onClick={() => setFilter(item.id)}
@@ -1051,7 +999,7 @@ function MosquesView({ mosques, notify, reload }) {
                   <td>
                     <div className="sa-row-actions">
                       {mosque.mosque_status !== "active" && (
-                        <button
+                        <button type="button"
                           className="sa-action-success"
                           title="إعادة تفعيل المسجد"
                           onClick={() => requestStatus(mosque, "active")}
@@ -1060,7 +1008,7 @@ function MosquesView({ mosques, notify, reload }) {
                         </button>
                       )}
                       {mosque.mosque_status === "active" && (
-                        <button
+                        <button type="button"
                           className="sa-action-warning"
                           title="تعطيل المسجد مع الاحتفاظ ببياناته"
                           onClick={() => requestStatus(mosque, "inactive")}
@@ -1069,7 +1017,7 @@ function MosquesView({ mosques, notify, reload }) {
                         </button>
                       )}
                       {mosque.mosque_status !== "archived" && (
-                        <button
+                        <button type="button"
                           className="sa-action-neutral"
                           title="أرشفة المسجد مع حفظ السجل التاريخي"
                           onClick={() => requestStatus(mosque, "archived")}
@@ -1314,9 +1262,9 @@ function SupervisorsView({ supervisors, mosques, notify, reload }) {
   return (
     <div className="sa-view-stack">
       <SectionHero
-        eyebrow="Many-to-Many"
+        eyebrow="الربط المرن"
         title="المشرفون والربط"
-        description="المشرف يستطيع إدارة أكثر من مسجد، والمسجد يستطيع أن يكون عليه أكثر من مشرف — بدون قيود وهمية."
+        description="يمكن ربط المشرف بأكثر من مسجد، وربط المسجد بأكثر من مشرف."
         icon={ShieldCheck}
       />
 
@@ -1360,7 +1308,7 @@ function SupervisorsView({ supervisors, mosques, notify, reload }) {
                 )}
               </div>
 
-              <button className="sa-manage-link-btn" onClick={() => openRelations(supervisor)}><Link2 /> إدارة المساجد المرتبطة</button>
+              <button type="button" className="sa-manage-link-btn" onClick={() => openRelations(supervisor)}><Link2 /> إدارة المساجد المرتبطة</button>
             </article>
           ))}
         </div>
@@ -1479,7 +1427,7 @@ function InvitesView({ invites, mosques, notify, reload }) {
         title="دعوات المشرفين"
         description="أنشئ رمزًا لمرة واحدة، اربطه بمسجد قائم أو امنح المشرف صلاحية تأسيس مسجد جديد، ثم شاركه مباشرة."
         icon={KeyRound}
-        action={<button className="sa-btn sa-btn-primary" onClick={() => { setCreateOpen(true); setCreatedInvite(null); }}><KeyRound /> إنشاء دعوة مشرف</button>}
+        action={<button type="button" className="sa-btn sa-btn-primary" onClick={() => { setCreateOpen(true); setCreatedInvite(null); }}><KeyRound /> إنشاء دعوة مشرف</button>}
       />
 
       <div className="sa-summary-strip">
@@ -1498,9 +1446,9 @@ function InvitesView({ invites, mosques, notify, reload }) {
               <div className="sa-invite-code"><KeyRound /><div><strong>{invite.code}</strong><span>{invite.allow_create_mosque ? "مؤسس مسجد جديد" : invite.mosque_name ? `مرتبط بـ ${invite.mosque_name}` : "حساب مشرف بدون ربط أولي"}</span></div></div>
               <div className="sa-invite-data"><span>الحالة<StatusPill type="invite" value={invite.invite_status} /></span><span>الإنشاء<strong>{formatDate(invite.created_at)}</strong></span><span>الانتهاء<strong>{formatDate(invite.expires_at)}</strong></span>{invite.used_by_name && <span>استخدمها<strong>{invite.used_by_name}</strong></span>}</div>
               <div className="sa-invite-actions">
-                <button onClick={() => copyInvite(invite.code, invite.expires_at)}><Copy /> نسخ الرسالة</button>
-                <button onClick={() => shareWhatsApp(invite.code, invite.expires_at)}><MessageCircle /> واتساب</button>
-                {invite.invite_status === "active" && <button className="danger" onClick={() => setCancelModal({ invite, reason: "" })}><XCircle /> إلغاء</button>}
+                <button type="button" onClick={() => copyInvite(invite.code, invite.expires_at)}><Copy /> نسخ الرسالة</button>
+                <button type="button" onClick={() => shareWhatsApp(invite.code, invite.expires_at)}><MessageCircle /> واتساب</button>
+                {invite.invite_status === "active" && <button type="button" className="danger" onClick={() => setCancelModal({ invite, reason: "" })}><XCircle /> إلغاء</button>}
               </div>
             </article>
           ))}
@@ -1543,10 +1491,10 @@ function InvitesView({ invites, mosques, notify, reload }) {
               <strong>{createdInvite.invite_code}</strong>
               <small>صالحة حتى {formatDate(createdInvite.expires_at)}</small>
               <div className="sa-created-actions">
-                <button className="sa-btn sa-btn-primary" onClick={() => copyInvite(createdInvite.invite_code, createdInvite.expires_at)}><Copy /> نسخ الرسالة</button>
-                <button className="sa-btn sa-btn-secondary" onClick={() => shareWhatsApp(createdInvite.invite_code, createdInvite.expires_at)}><MessageCircle /> مشاركة واتساب</button>
+                <button type="button" className="sa-btn sa-btn-primary" onClick={() => copyInvite(createdInvite.invite_code, createdInvite.expires_at)}><Copy /> نسخ الرسالة</button>
+                <button type="button" className="sa-btn sa-btn-secondary" onClick={() => shareWhatsApp(createdInvite.invite_code, createdInvite.expires_at)}><MessageCircle /> مشاركة واتساب</button>
               </div>
-              <button className="sa-text-button sa-center-text-button" onClick={() => setCreateOpen(false)}>إغلاق</button>
+              <button type="button" className="sa-text-button sa-center-text-button" onClick={() => setCreateOpen(false)}>إغلاق</button>
             </div>
           )}
         </Modal>
@@ -1642,7 +1590,7 @@ function UsersView({ users, notify, reload, currentAdminId }) {
                     <td><code className="sa-user-code">{user.user_number || "—"}</code></td>
                     <td><StatusPill type="account" value={active ? "active" : "inactive"} /></td>
                     <td>{formatDate(user.created_at, false)}</td>
-                    <td>{isSelf ? <span className="sa-self-label"><ShieldCheck /> حسابك الحالي</span> : <button className={active ? "sa-action-warning" : "sa-action-success"} onClick={() => setToggleModal({ user, targetActive: !active, reason: "" })}>{active ? <><CircleOff /> تعطيل</> : <><CheckCircle2 /> تفعيل</>}</button>}</td>
+                    <td>{isSelf ? <span className="sa-self-label"><ShieldCheck /> حسابك الحالي</span> : <button type="button" className={active ? "sa-action-warning" : "sa-action-success"} onClick={() => setToggleModal({ user, targetActive: !active, reason: "" })}>{active ? <><CircleOff /> تعطيل</> : <><CheckCircle2 /> تفعيل</>}</button>}</td>
                   </tr>
                 );
               })}
@@ -1866,7 +1814,7 @@ function AlertsView({ alerts, supportRequests, goTo, notify, reload }) {
       </section>
 
       <div className="sa-alert-footer">
-        <button className="sa-btn sa-btn-secondary" onClick={() => goTo("dashboard")}>
+        <button type="button" className="sa-btn sa-btn-secondary" onClick={() => goTo("dashboard")}>
           <LayoutDashboard />
           العودة للوحة القيادة
         </button>
@@ -1915,17 +1863,190 @@ function AuditRow({ log, compact = false }) {
   );
 }
 
+function OwnerSecurityView({ notify }) {
+  const [loadingSecurity, setLoadingSecurity] = useState(true);
+  const [registering, setRegistering] = useState(false);
+  const [passkeys, setPasskeys] = useState([]);
+  const [aal, setAal] = useState({ currentLevel: "unknown", nextLevel: "unknown" });
+  const [securityError, setSecurityError] = useState("");
+
+  const webauthnSupported =
+    typeof window !== "undefined" &&
+    Boolean(window.PublicKeyCredential && navigator.credentials);
+
+  useEffect(() => {
+    loadOwnerSecurity();
+  }, []);
+
+  async function loadOwnerSecurity() {
+    setLoadingSecurity(true);
+    setSecurityError("");
+
+    try {
+      const [{ data: passkeyRows, error: passkeyError }, { data: aalData, error: aalError }] =
+        await Promise.all([
+          supabase.auth.passkey.list(),
+          supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        ]);
+
+      if (passkeyError && passkeyError.code !== "passkey_disabled") throw passkeyError;
+      if (aalError) throw aalError;
+
+      setPasskeys(Array.isArray(passkeyRows) ? passkeyRows : passkeyRows?.passkeys || []);
+      setAal({
+        currentLevel: aalData?.currentLevel || "aal1",
+        nextLevel: aalData?.nextLevel || aalData?.currentLevel || "aal1",
+      });
+
+      if (passkeyError?.code === "passkey_disabled") {
+        setSecurityError(
+          "دخول البصمة غير مفعّل بعد. فعّله من إعدادات الأمان ثم عد لتسجيل بصمة المالك."
+        );
+      }
+    } catch (error) {
+      console.error("Owner security load error:", error);
+      setSecurityError("تعذر تحميل حالة الحماية.");
+    } finally {
+      setLoadingSecurity(false);
+    }
+  }
+
+  async function registerOwnerPasskey() {
+    if (!webauthnSupported || registering) return;
+    setRegistering(true);
+    setSecurityError("");
+
+    try {
+      const { error } = await supabase.auth.registerPasskey();
+      if (error) {
+        if (error.code === "passkey_disabled") {
+          throw new Error("فعّل دخول البصمة أولًا من إعدادات الأمان.");
+        }
+        throw error;
+      }
+      notify("تم تسجيل مفتاح مرور للمالك بنجاح.", "success");
+      await loadOwnerSecurity();
+    } catch (error) {
+      console.error("Owner passkey registration error:", error);
+      setSecurityError("تعذر تسجيل بصمة المالك.");
+    } finally {
+      setRegistering(false);
+    }
+  }
+
+  async function deleteOwnerPasskey(passkeyId) {
+    if (!passkeyId) return;
+    try {
+      const { error } = await supabase.auth.passkey.delete({ passkeyId });
+      if (error) throw error;
+      notify("تم إلغاء مفتاح المرور.", "success");
+      await loadOwnerSecurity();
+    } catch (error) {
+      console.error("Owner passkey delete error:", error);
+      setSecurityError("تعذر إلغاء وسيلة الدخول.");
+    }
+  }
+
+  return (
+    <div className="sa-view-stack">
+      <SectionHero
+        eyebrow="حماية المالك"
+        title="خزنة المالك"
+        description="حماية قوية باستخدام بصمة الجهاز أو Face ID أو Windows Hello أو مفتاح أمني."
+        icon={Fingerprint}
+        action={
+          <button
+            type="button"
+            className="sa-primary-btn"
+            onClick={registerOwnerPasskey}
+            disabled={!webauthnSupported || registering}
+          >
+            {registering ? <Loader2 className="sa-spin" /> : <Fingerprint />}
+            تسجيل بصمة
+          </button>
+        }
+      />
+
+      {securityError && <div className="sa-callout warning">{securityError}</div>}
+
+      <div className="sa-owner-security-grid">
+        <article className="sa-owner-security-card">
+          <span className="sa-owner-security-icon"><Fingerprint /></span>
+          <div>
+            <small>دعم الجهاز</small>
+            <strong>{webauthnSupported ? "جاهز للاستخدام" : "غير مدعوم"}</strong>
+            <p>{webauthnSupported ? "يمكن استخدام بصمة أو وجه أو رمز الجهاز أو مفتاح أمني." : "استخدم متصفحًا حديثًا وجهازًا يدعم تسجيل الدخول الآمن."}</p>
+          </div>
+        </article>
+        <article className="sa-owner-security-card">
+          <span className="sa-owner-security-icon"><ShieldCheck /></span>
+          <div>
+            <small>مستوى الجلسة</small>
+            <strong>{aal.currentLevel === "aal2" ? "تحقق ثنائي" : "تحقق أساسي"}</strong>
+            <p>يوضح مستوى حماية جلسة المالك الحالية.</p>
+          </div>
+        </article>
+        <article className="sa-owner-security-card">
+          <span className="sa-owner-security-icon"><KeyRound /></span>
+          <div>
+            <small>الحاجز النهائي</small>
+            <strong>حماية متعددة الطبقات</strong>
+            <p>تُراجع صلاحيات العمليات الحساسة قبل تنفيذها.</p>
+          </div>
+        </article>
+      </div>
+
+      <section className="sa-panel">
+        <PanelHeader
+          eyebrow="المفاتيح المسجلة"
+          title="أجهزة المالك الموثوقة"
+          description="راجع الأجهزة ووسائل الدخول الموثوقة المرتبطة بحساب المالك."
+          action={
+            <button type="button" className="sa-ghost-btn" onClick={loadOwnerSecurity} disabled={loadingSecurity}>
+              <RefreshCw className={loadingSecurity ? "sa-spin" : ""} /> تحديث
+            </button>
+          }
+        />
+        {loadingSecurity ? (
+          <div className="sa-owner-security-loading"><Loader2 className="sa-spin" /> جارٍ التحقق…</div>
+        ) : passkeys.length ? (
+          <div className="sa-owner-passkeys">
+            {passkeys.map((item) => (
+              <div className="sa-owner-passkey" key={item.id}>
+                <span><Laptop /></span>
+                <div>
+                  <strong>{item.friendly_name || item.friendlyName || "مفتاح مرور"}</strong>
+                  <small>أضيف {formatDate(item.created_at || item.createdAt, false)}{item.last_used_at ? ` • آخر استخدام ${formatDate(item.last_used_at, false)}` : ""}</small>
+                </div>
+                <button type="button" onClick={() => deleteOwnerPasskey(item.id)} title="إلغاء هذا المفتاح">
+                  <Trash2 />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Fingerprint} title="لا توجد بصمة مسجلة بعد" description="سجّل الجهاز الأساسي، ويفضل إضافة جهاز احتياطي موثوق." compact />
+        )}
+      </section>
+
+      <div className="sa-callout info">
+        قبل فرض البصمة على الحساب، سجّل وسيلتي دخول موثوقتين على الأقل لتجنب فقدان الوصول.
+      </div>
+    </div>
+  );
+}
+
 function SettingsView() {
   return (
     <div className="sa-view-stack">
-      <SectionHero eyebrow="سياسات الإدارة" title="إعدادات النظام" description="واجهة السياسات العامة ستتوسع لاحقًا بدون خلطها بإعدادات المسجد أو المشرف." icon={Settings} />
+      <SectionHero eyebrow="سياسات الإدارة" title="إعدادات النظام" description="إدارة السياسات العامة للنظام." icon={Settings} />
       <div className="sa-settings-grid">
         <article className="sa-setting-card"><span><KeyRound /></span><div><strong>سياسة دعوات المشرفين</strong><p>الحالي: رمز لمرة واحدة، بمدة صلاحية من 1 إلى 90 يومًا، ويمكن ربطه بمسجد أو جعله دعوة تأسيس.</p></div><em>مفعّل</em></article>
-        <article className="sa-setting-card"><span><ShieldCheck /></span><div><strong>العمليات الحساسة</strong><p>الربط والتعطيل والدعوات لا تعتمد على الواجهة فقط، بل تتحقق من صلاحية مدير النظام داخل قاعدة البيانات.</p></div><em>محمي</em></article>
+        <article className="sa-setting-card"><span><ShieldCheck /></span><div><strong>العمليات الحساسة</strong><p>الربط والتعطيل والدعوات تخضع لصلاحيات مدير النظام.</p></div><em>محمي</em></article>
         <article className="sa-setting-card"><span><Building2 /></span><div><strong>دورة حياة المسجد</strong><p>نشط، معطل، مؤرشف. لا يتم حذف البيانات التاريخية عند التعطيل أو الأرشفة.</p></div><em>معتمد</em></article>
-        <article className="sa-setting-card"><span><Link2 /></span><div><strong>علاقة المشرف بالمسجد</strong><p>Many-to-Many: مشرف واحد لعدة مساجد، ومسجد واحد لعدة مشرفين.</p></div><em>معتمد</em></article>
+        <article className="sa-setting-card"><span><Link2 /></span><div><strong>علاقة المشرف بالمسجد</strong><p>يمكن ربط المشرف بعدة مساجد وربط المسجد بعدة مشرفين.</p></div><em>معتمد</em></article>
       </div>
-      <div className="sa-callout info">لن نضيف إعدادات وهمية لا ترتبط بجداول فعلية. أي إعداد جديد سندخله لاحقًا بعد تحديد أثره وصلاحياته بوضوح.</div>
+      <div className="sa-callout info">تظهر هنا الإعدادات العامة المؤثرة على إدارة النظام.</div>
     </div>
   );
 }
@@ -1971,7 +2092,7 @@ function AlertRow({ alert }) {
     <div className={`sa-alert-row severity-${alert.severity}`}>
       <span className="sa-alert-icon"><Icon /></span>
       <div><strong>{alert.title}</strong><p>{alert.description}</p></div>
-      {alert.action && <button onClick={alert.action}>{alert.actionLabel}<ChevronLeft /></button>}
+      {alert.action && <button type="button" onClick={alert.action}>{alert.actionLabel}<ChevronLeft /></button>}
     </div>
   );
 }
@@ -1988,7 +2109,7 @@ function Modal({ title, subtitle, children, onClose, wide = false }) {
   return (
     <div className="sa-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className={`sa-modal ${wide ? "is-wide" : ""}`}>
-        <div className="sa-modal-head"><div><span>مدير النظام</span><h3>{title}</h3>{subtitle && <p>{subtitle}</p>}</div><button onClick={onClose}><X /></button></div>
+        <div className="sa-modal-head"><div><span>مدير النظام</span><h3>{title}</h3>{subtitle && <p>{subtitle}</p>}</div><button type="button" onClick={onClose}><X /></button></div>
         <div className="sa-modal-body">{children}</div>
       </div>
     </div>
@@ -1998,8 +2119,8 @@ function Modal({ title, subtitle, children, onClose, wide = false }) {
 function ModalActions({ onCancel, onConfirm, saving, confirmLabel, danger = false }) {
   return (
     <div className="sa-modal-actions">
-      <button className="sa-btn sa-btn-secondary" onClick={onCancel} disabled={saving}>إلغاء</button>
-      <button className={`sa-btn ${danger ? "sa-btn-danger" : "sa-btn-primary"}`} onClick={onConfirm} disabled={saving}>{saving ? <><Loader2 className="sa-spin" /> جارٍ الحفظ…</> : confirmLabel}</button>
+      <button type="button" className="sa-btn sa-btn-secondary" onClick={onCancel} disabled={saving}>إلغاء</button>
+      <button type="button" className={`sa-btn ${danger ? "sa-btn-danger" : "sa-btn-primary"}`} onClick={onConfirm} disabled={saving}>{saving ? <><Loader2 className="sa-spin" /> جارٍ الحفظ…</> : confirmLabel}</button>
     </div>
   );
 }

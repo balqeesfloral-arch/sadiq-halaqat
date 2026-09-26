@@ -4,35 +4,7 @@ import {
   useState,
 } from "react";
 
-import {
-  AlertTriangle,
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  ChevronDown,
-  CircleSlash,
-  Clock3,
-  Edit3,
-  GraduationCap,
-  Hash,
-  Home,
-  Loader2,
-  MapPin,
-  Phone,
-  Plus,
-  RotateCcw,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-  UserCheck,
-  UserRound,
-  Users,
-  UserX,
-  VenusAndMars,
-  Video,
-  X,
-} from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarDays, CheckCircle2, ChevronDown, CircleSlash, Edit3, GraduationCap, Hash, Home, Loader2, MapPin, Phone, Plus, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, UserCheck, UserRound, Users, UserX, VenusAndMars, X } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
 import ConfirmModal from "../components/ConfirmModal";
@@ -216,20 +188,6 @@ function getLabel(options, value, fallback = "غير محدد") {
     options.find((item) => item.value === value)?.label ||
     fallback
   );
-}
-
-function formatDays(days) {
-  if (!Array.isArray(days) || days.length === 0) {
-    return "لم تحدد أيام التسميع";
-  }
-
-  return days
-    .map(
-      (day) =>
-        DAYS.find((item) => item.value === day)?.label ||
-        day
-    )
-    .join(" • ");
 }
 
 function getAttendanceRate(student) {
@@ -1528,7 +1486,7 @@ export default function Students() {
         title="حذف الطالب نهائيًا"
         message={
           deleteTarget
-            ? `هل تريد حذف الطالب "${deleteTarget.full_name}" نهائيًا؟\n\nسيتم حذف بياناته من الجداول المرتبطة المعروفة. إذا كان الطالب مرتبطًا ببيانات إضافية فستوقف قاعدة البيانات العملية لحماية البيانات.`
+            ? `هل تريد حذف الطالب "${deleteTarget.full_name}" نهائيًا؟\n\nسيتم حذف بياناته من الجداول المرتبطة المعروفة. إذا كان الطالب مرتبطًا بسجلات أخرى فقد يتعذر الحذف لحماية سجله.`
             : ""
         }
         onConfirm={() =>

@@ -17,9 +17,7 @@ export default function PointsSettings() {
     discipline_points: 3,
   });
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
+  
 
   async function loadSettings() {
     try {
@@ -58,6 +56,10 @@ export default function PointsSettings() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+      loadSettings();
+    }, []);
 
   async function saveAll() {
     try {
@@ -167,7 +169,7 @@ export default function PointsSettings() {
       </div>
 
       <div className="settings-actions">
-        <button
+        <button type="button"
           className="save-btn"
           onClick={saveAll}
           disabled={saving}

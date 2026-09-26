@@ -70,20 +70,11 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  console.log(
-    "FORM HALAQAT =",
-    form.halaqa_ids
-  );
+  
 
-  console.log(
-    "FORM TEACHERS =",
-    form.teacher_ids
-  );
+  
 
-  console.log(
-    "FORM STUDENTS =",
-    form.student_ids
-  );
+  
 
 }, [form]);
 
@@ -91,20 +82,11 @@ useEffect(() => {
 
   if (!exam) return;
 
-console.log(
-  "EXAM HALAQAT INSIDE MODAL =",
-  exam.exam_halaqat
-);
 
-console.log(
-  "EXAM TEACHERS INSIDE MODAL =",
-  exam.exam_teachers
-);
 
-console.log(
-  "EXAM STUDENTS INSIDE MODAL =",
-  exam.exam_students
-);
+
+
+
 
   setForm({
 
@@ -190,22 +172,13 @@ const {data,error}=await supabase
 .select("*");
 
 
-console.log("EXAM TYPES:",data,error);
-console.log("EDIT EXAM =", exam);
-console.log(
-  "EDIT MODE =",
-  !!exam
-);
 
-console.log(
-  "HALAQAT =",
-  form.halaqa_ids
-);
 
-console.log(
-  "TEACHERS =",
-  form.teacher_ids
-);
+
+
+
+
+
 
 setTypes(data || []);
 
@@ -228,11 +201,7 @@ const mosqueResult =
     )
     .order("name");
 
-console.log(
-"MOSQUES:",
-mosqueResult.data,
-mosqueResult.error
-);
+
 
 
 setMosques(
@@ -470,7 +439,7 @@ if (exam) {
 }
 
 if (error) {
-  console.log("SUPABASE ERROR =", error);
+  
   throw error;
 }
 
@@ -482,12 +451,12 @@ const uniqueTeachers = [
   ...new Set(form.teacher_ids)
 ];
 
-console.log("FINAL HALAQAT =", uniqueHalaqat);
-console.log("FINAL TEACHERS =", uniqueTeachers);
 
-console.log("EDIT MODE =", !!exam);
-console.log("HALAQAT =", form.halaqa_ids);
-console.log("TEACHERS =", form.teacher_ids);
+
+
+
+
+
 
 if (exam) {
 
@@ -501,33 +470,27 @@ if (exam) {
   .delete()
   .eq("exam_id", savedExam.id);
 
-console.log("DELETE TEACHERS", delTeachers);
+
 
   const delHalaqat = await supabase
   .from("exam_halaqat")
   .delete()
   .eq("exam_id", savedExam.id);
 
-console.log("DELETE HALAQAT", delHalaqat);
+
 const checkHalaqat = await supabase
   .from("exam_halaqat")
   .select("*")
   .eq("exam_id", savedExam.id);
 
-console.log(
-  "AFTER DELETE HALAQAT",
-  checkHalaqat.data
-);
+
 
 const checkTeachers = await supabase
   .from("exam_teachers")
   .select("*")
   .eq("exam_id", savedExam.id);
 
-console.log(
-  "AFTER DELETE TEACHERS",
-  checkTeachers.data
-);
+
 
   await supabase
     .from("exam_results")
@@ -537,15 +500,9 @@ console.log(
 }
 
 
-console.log(
-  "FINAL HALAQAT =",
-  form.halaqa_ids
-);
 
-console.log(
-  "FINAL TEACHERS =",
-  form.teacher_ids
-);
+
+
 
 
 // إنشاء نتائج الطلاب
@@ -603,15 +560,9 @@ if (form.student_ids?.length) {
     )
     .select();
 
-  console.log(
-    "EXAM STUDENTS DATA =",
-    data
-  );
+  
 
-  console.log(
-    "EXAM STUDENTS ERROR =",
-    error
-  );
+  
 
 
 }// ربط الحلقات بالاختبار
@@ -626,10 +577,7 @@ if (form.halaqa_ids?.length) {
 }))
   );
 
-console.log(
-  "INSERT HALAQAT ERROR",
-  insertHalaqat.error
-);
+
 
 }
 
@@ -644,10 +592,7 @@ const insertTeachers = await supabase
 }))
   );
 
-console.log(
-  "INSERT TEACHERS ERROR",
-  insertTeachers.error
-);
+
 
 }
 
@@ -754,7 +699,7 @@ alignItems:"center"
 </h2>
 
 
-<button
+<button type="button"
 
 onClick={onClose}
 
@@ -1024,7 +969,7 @@ exam_date:v
 
  
 
-<button
+<button type="button"
 
 onClick={save}
 
@@ -1111,84 +1056,6 @@ marginTop:6
 }}
 
 />
-
-</div>
-
-)
-
-}
-
-
-
-
-
-
-function Select({
-label,
-options,
-value,
-onChange
-}){
-
-
-return (
-
-<div style={{marginBottom:15}}>
-
-<label>{label}</label>
-
-
-<select
-
-value={value}
-
-onChange={e=>onChange(e.target.value)}
-
-style={{
-
-width:"100%",
-
-padding:"calc(12px * var(--app-density,1))",
-
-borderRadius:"calc(12px * var(--app-radius-scale,1))",
-
-border:"1px solid #E2E8F0",
-
-marginTop:6
-
-}}
-
->
-
-
-<option value="">
-اختر
-</option>
-
-
-{
-
-options.map(o=>(
-
-<option
-
-key={o.id}
-
-value={o.id}
-
->
-
-{o.name}
-
-</option>
-
-))
-
-}
-
-
-</select>
-
 
 </div>
 

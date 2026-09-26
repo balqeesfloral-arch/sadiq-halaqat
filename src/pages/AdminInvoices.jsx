@@ -1,10 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  AlertTriangle, CalendarDays, CheckCircle2, ChevronLeft, Clock3,
-  FileText, Filter, Landmark, Loader2, ReceiptText, RefreshCw,
-  Search, WalletCards, XCircle
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronLeft, Clock3, FileText, Loader2, ReceiptText, RefreshCw, Search, WalletCards } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 const STATUS = {
@@ -135,7 +131,7 @@ export default function AdminInvoices() {
           <h1 className="ai-title">الفواتير</h1>
           <div className="ai-sub">متابعة فواتير اشتراكات المساجد وسجل حالاتها المالية.</div>
         </div>
-        <button className="ai-refresh" onClick={loadInvoices} disabled={loading}>
+        <button type="button" className="ai-refresh" onClick={loadInvoices} disabled={loading}>
           <RefreshCw size={15} className={loading ? "spin" : ""}/> تحديث
         </button>
       </header>
@@ -194,7 +190,7 @@ export default function AdminInvoices() {
                     <td className="ai-num">{money(r.total_amount, r.currency)}</td>
                     <td className="ai-num">{money(r.balance_due, r.currency)}</td>
                     <td><span className={`ai-badge ${st.cls}`}>{st.label}</span></td>
-                    <td><button className="ai-open" title="عرض الفاتورة" onClick={() => navigate(`/admin/invoices/${r.id}`)}><ChevronLeft size={16}/></button></td>
+                    <td><button type="button" className="ai-open" title="عرض الفاتورة" onClick={() => navigate(`/admin/invoices/${r.id}`)}><ChevronLeft size={16}/></button></td>
                   </tr>
                 })}
               </tbody>

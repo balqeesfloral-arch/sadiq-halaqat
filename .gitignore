@@ -22,3 +22,28 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Security-sensitive local files
+.vercel
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Repository hygiene / generated artifacts
+src/**/*.zip
+src/**/*.bak
+src/**/*.backup
+src/**/*.old
+.security-local/
+
+# Public directory must contain deployable assets only
+public/README*
+public/*snippet*

@@ -134,3 +134,119 @@ button.primary,
 .dialog-content {
   border-radius: var(--app-radius);
 }
+
+/* SADIQ_A4_GLOBAL_LOADER_START */
+/*
+  Global loading identity only.
+  Uses the existing public/patterns/a4.png asset.
+  No page logic, data flow, Supabase calls, or component behavior is changed.
+*/
+:root {
+  --sadiq-a4-loader-image: url("/patterns/a4.png");
+}
+
+/* Lucide Loader2 / LoaderCircle used across pages and action buttons. */
+svg.lucide-loader-circle,
+svg.lucide-loader-2,
+svg.lucide-loader {
+  color: transparent !important;
+  stroke: transparent !important;
+  fill: transparent !important;
+  border: 0 !important;
+  background-image: var(--sadiq-a4-loader-image) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  transform-origin: center !important;
+  transform: none !important;
+  animation:
+    sadiqA4LoaderRotate 2.65s linear infinite,
+    sadiqA4LoaderPulse 1.45s ease-in-out infinite !important;
+}
+
+/* Refresh icons that are intentionally spinning because a page is loading/refetching. */
+svg.lucide-refresh-cw[class*="spin"],
+.landing-refresh-button.is-loading svg.lucide-refresh-cw {
+  color: transparent !important;
+  stroke: transparent !important;
+  fill: transparent !important;
+  border: 0 !important;
+  background-image: var(--sadiq-a4-loader-image) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  transform-origin: center !important;
+  transform: none !important;
+  animation:
+    sadiqA4LoaderRotate 2.65s linear infinite,
+    sadiqA4LoaderPulse 1.45s ease-in-out infinite !important;
+}
+
+/* Existing full-page ornate loader: keep its layout, replace only the visual mark. */
+.ornate-loader__svg {
+  color: transparent !important;
+  stroke: transparent !important;
+  fill: transparent !important;
+  background-image: var(--sadiq-a4-loader-image) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  transform-origin: center !important;
+  transform: none !important;
+  animation:
+    sadiqA4LoaderRotate 2.65s linear infinite,
+    sadiqA4LoaderPulse 1.45s ease-in-out infinite !important;
+}
+
+.ornate-loader__svg > * {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Legacy non-SVG loading circles that still exist in a few screens. */
+.tv-loader,
+span[style*="confirmSpin"] {
+  border: 0 !important;
+  background-color: transparent !important;
+  background-image: var(--sadiq-a4-loader-image) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  transform-origin: center !important;
+  transform: none !important;
+  animation:
+    sadiqA4LoaderRotate 2.65s linear infinite,
+    sadiqA4LoaderPulse 1.45s ease-in-out infinite !important;
+}
+
+@keyframes sadiqA4LoaderRotate {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+@keyframes sadiqA4LoaderPulse {
+  0%, 100% {
+    scale: .86;
+    opacity: .82;
+    filter: drop-shadow(0 4px 8px rgba(15, 81, 50, .08));
+  }
+  50% {
+    scale: 1.10;
+    opacity: 1;
+    filter: drop-shadow(0 7px 14px rgba(180, 137, 45, .18));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  svg.lucide-loader-circle,
+  svg.lucide-loader-2,
+  svg.lucide-loader,
+  svg.lucide-refresh-cw[class*="spin"],
+  .landing-refresh-button.is-loading svg.lucide-refresh-cw,
+  .ornate-loader__svg,
+  .tv-loader,
+  span[style*="confirmSpin"] {
+    animation: sadiqA4LoaderPulse 1.8s ease-in-out infinite !important;
+  }
+}
+/* SADIQ_A4_GLOBAL_LOADER_END */

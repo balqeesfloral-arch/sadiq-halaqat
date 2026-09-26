@@ -5,27 +5,7 @@ import {
   useState,
 } from "react";
 
-import {
-  Archive,
-  ArchiveRestore,
-  BookOpenCheck,
-  CalendarCheck,
-  CalendarRange,
-  CheckCircle2,
-  ChevronDown,
-  Database,
-  FileClock,
-  Filter,
-  GraduationCap,
-  History,
-  RefreshCw,
-  Search,
-  ShieldAlert,
-  Sparkles,
-  Trash2,
-  Trophy,
-  UserRound,
-} from "lucide-react";
+import { Archive, ArchiveRestore, BookOpenCheck, CalendarCheck, CalendarRange, CheckCircle2, Database, FileClock, Filter, GraduationCap, History, RefreshCw, Search, ShieldAlert, Sparkles, Trash2, Trophy, UserRound } from "lucide-react";
 
 import { supabase } from "../../lib/supabase";
 import { useToast } from "../../components/Toast";
@@ -664,7 +644,7 @@ export default function Records() {
 
     const confirmed = window.confirm(
       `سيتم أرشفة ${rows.length} سجل من النتائج الظاهرة حاليًا.\n\n` +
-      `الأرشفة لا تحذف البيانات من Supabase، ويمكن استعادتها لاحقًا.\n\n` +
+      `الأرشفة تحتفظ بالسجلات ويمكن استعادتها لاحقًا.\n\n` +
       `هل تريد المتابعة؟`
     );
 
@@ -720,7 +700,7 @@ export default function Records() {
     if (!confirmed) return;
 
     const finalConfirm = window.confirm(
-      `تأكيد أخير:\nسيتم حذف ${filtered.length} سجل نهائيًا من قاعدة البيانات.\n\nاضغط موافق للحذف النهائي.`
+      `تأكيد أخير:\nسيتم حذف ${filtered.length} سجل نهائيًا.\n\nاضغط موافق للحذف النهائي.`
     );
 
     if (!finalConfirm) return;
@@ -816,8 +796,8 @@ export default function Records() {
         <div>
           <strong>مهم بخصوص المساحة</strong>
           <span>
-            الأرشفة لا تقلل مساحة قاعدة البيانات؛ هي تحتفظ بالسجل وتخفيه من
-            العرض النشط هنا. الحذف النهائي هو الذي يزيل السجل من الجدول.
+            الأرشفة تخفي السجل من العرض النشط ويمكن استعادته لاحقًا.
+            أما الحذف النهائي فلا يمكن التراجع عنه.
           </span>
         </div>
       </section>

@@ -4,16 +4,7 @@ import {
   useState,
 } from "react";
 
-import {
-  Award,
-  BadgeMinus,
-  CheckCircle2,
-  Loader2,
-  Plus,
-  ShieldCheck,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { Award, BadgeMinus, Loader2, Plus, ShieldCheck, Sparkles, X } from "lucide-react";
 
 import {
   supabase,

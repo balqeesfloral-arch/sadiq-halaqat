@@ -187,7 +187,6 @@ export default function MonthlyTransactionsTab({
               {filteredSessions.map((session) => {
                 const grant = session.category === "grant";
                 const recitation = session.category === "recitation";
-                const deduction = !grant && !recitation;
 
                 const sessionLabel = grant
                   ? "منح"

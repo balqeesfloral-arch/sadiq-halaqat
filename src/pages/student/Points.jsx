@@ -12,7 +12,7 @@ export default function StudentPoints() {
   const [ranking,setRanking]=useState([]);
   const [transactions,setTransactions]=useState([]);
 
-  useEffect(()=>{load();},[profile?.id,mosque?.id]);
+  
 
   async function load(){
     if(!profile?.id)return;
@@ -49,6 +49,8 @@ export default function StudentPoints() {
     }catch(error){console.error("Student points:",error)}
     finally{setLoading(false)}
   }
+
+  useEffect(()=>{load();},[profile?.id,mosque?.id]);
 
   const myRank=useMemo(
     ()=>ranking.findIndex(s=>Number(s.id)===Number(profile?.id))+1,

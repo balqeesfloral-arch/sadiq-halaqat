@@ -1,12 +1,7 @@
 // src/pages/Exams.jsx
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  AlertTriangle, Award, BookOpenCheck, CalendarDays, Check, CheckCircle2,
-  CircleGauge, Clock3, Edit3, Eye, FileCheck2, GraduationCap, Landmark,
-  ListChecks, Loader2, Plus, Search, Send, ShieldCheck, Sparkles, Trash2,
-  UserPlus, Users, X,
-} from "lucide-react";
+import { AlertTriangle, Award, BookOpenCheck, CalendarDays, Check, CheckCircle2, CircleGauge, Edit3, Eye, FileCheck2, GraduationCap, Landmark, ListChecks, Loader2, Plus, Search, Send, ShieldCheck, Sparkles, Trash2, UserPlus, Users, X } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
 import { useToast } from "../components/Toast";
@@ -73,7 +68,7 @@ export default function Exams(){
 
       showToast(
         error.message==="Could not find the function public.supervisor_exam_scope_v2 without parameters in the schema cache"
-          ? "شغّل ملف SQL المحدث الخاص بالاختبارات أولًا"
+          ? "تعذر تجهيز الاختبارات حاليًا. تواصل مع مدير النظام"
           : error.message||"تعذر تحميل الاختبارات",
         "error"
       );
@@ -183,7 +178,7 @@ export default function Exams(){
             </div>
           )}
         </div>
-        <button className="exv2-primary" onClick={()=>setShowCreate(true)}><Plus size={16}/>إنشاء اختبار جديد</button>
+        <button type="button" className="exv2-primary" onClick={()=>setShowCreate(true)}><Plus size={16}/>إنشاء اختبار جديد</button>
       </section>
 
       <section className="exv2-stats">
@@ -227,9 +222,9 @@ function ExamCard({exam,onView,onProgress,onDelete}){
     </div>
     <div className="exv2-progress"><div className="exv2-progress-head"><span>تقدم النتائج</span><strong>{exam.results_count||0} / {exam.total_students||0}</strong></div><div className="exv2-track"><div className="exv2-fill" style={{width:`${exam.progress_percent||0}%`}}/></div></div>
     <div className="exv2-card-actions">
-      <button className="view" onClick={onView}><Eye size={14}/>عرض وإدارة</button>
-      <button className="progress" onClick={onProgress}><CircleGauge size={14}/>التقدم</button>
-      <button className="delete" onClick={onDelete}><Trash2 size={13}/>حذف</button>
+      <button type="button" className="view" onClick={onView}><Eye size={14}/>عرض وإدارة</button>
+      <button type="button" className="progress" onClick={onProgress}><CircleGauge size={14}/>التقدم</button>
+      <button type="button" className="delete" onClick={onDelete}><Trash2 size={13}/>حذف</button>
     </div>
   </article>;
 }
@@ -252,26 +247,25 @@ function CreateExamWizard({mosques,onClose,onCreated}){
     }
   },[mosques.length]);
 
-  useEffect(()=>{
-    if(!mosqueId)return;
-    loadHalaqat();
-  },[mosqueId]);
+  
 
   const selectedHalaqatKey=useMemo(
     ()=>selectedHalaqat.slice().sort((a,b)=>a-b).join(","),
     [selectedHalaqat]
   );
 
-  useEffect(()=>{
-    if(!selectedHalaqatKey)return;
-    loadPeople();
-  },[selectedHalaqatKey]);
+  
 
   async function loadHalaqat(){
     const {data,error}=await supabase.from("halaqat").select("id,name,mosque_id,status,halaqa_period").eq("mosque_id",Number(mosqueId)).order("name");
     if(error)return showToast("تعذر تحميل الحلقات","error");
     setHalaqat(data||[]);
   }
+
+  useEffect(()=>{
+      if(!mosqueId)return;
+      loadHalaqat();
+    },[mosqueId]);
   async function loadPeople(){
     const selectedIds=selectedHalaqat.map(Number);
 
@@ -350,6 +344,11 @@ function CreateExamWizard({mosques,onClose,onCreated}){
     );
   }
 
+  useEffect(()=>{
+      if(!selectedHalaqatKey)return;
+      loadPeople();
+    },[selectedHalaqatKey]);
+
   function toggle(id,setter){setter(c=>c.includes(Number(id))?c.filter(x=>x!==Number(id)):[...c,Number(id)]);}
   function validate(){
     if(step===0&&!title.trim()){showToast("اكتب اسم الاختبار","error");return false;}
@@ -425,12 +424,12 @@ function CreateExamWizard({mosques,onClose,onCreated}){
     {step===2&&<>
       <section className="exv2-section"><Title icon={Users}>المعلمون المختبرون</Title>{!teachers.length?<SmallEmpty text="لا يوجد معلمون ضمن الحلقات المحددة"/>:<div className="exv2-choice-grid">{teachers.map(t=><Choice key={t.id} active={selectedTeachers.includes(Number(t.id))} title={t.full_name} subtitle={t.user_number||"معلم"} onClick={()=>toggle(t.id,setSelectedTeachers)}/>)}</div>}</section>
       <section className="exv2-section"><Title icon={Users}>الطلاب</Title>
-        {!!students.length&&<div style={{display:"flex",gap:"calc(6px * var(--app-density,1))",marginBottom:8}}><button className="exv2-secondary" onClick={()=>setSelectedStudents(students.map(s=>Number(s.id)))}>تحديد الجميع</button><button className="exv2-secondary" onClick={()=>setSelectedStudents([])}>إلغاء الجميع</button></div>}
+        {!!students.length&&<div style={{display:"flex",gap:"calc(6px * var(--app-density,1))",marginBottom:8}}><button type="button" className="exv2-secondary" onClick={()=>setSelectedStudents(students.map(s=>Number(s.id)))}>تحديد الجميع</button><button type="button" className="exv2-secondary" onClick={()=>setSelectedStudents([])}>إلغاء الجميع</button></div>}
         {!students.length?<SmallEmpty text="لا يوجد طلاب نشطون"/>:<div className="exv2-choice-grid">{students.map(s=><Choice key={s.id} active={selectedStudents.includes(Number(s.id))} title={s.full_name} subtitle={s.user_number||"طالب"} onClick={()=>toggle(s.id,setSelectedStudents)}/>)}</div>}
       </section>
     </>}
 
-    {step===3&&<section className="exv2-section"><Title icon={CalendarDays}>المدة بالتاريخ الهجري</Title><div className="exv2-form-grid"><HijriDate label="من" value={fromHijri} onChange={setFromHijri}/><HijriDate label="إلى" value={toHijri} onChange={setToHijri}/></div><Info good icon={CheckCircle2}>يظهر التاريخ هجريًا للمشرف ويحفظ ميلاديًا في Supabase.</Info></section>}
+    {step===3&&<section className="exv2-section"><Title icon={CalendarDays}>المدة بالتاريخ الهجري</Title><div className="exv2-form-grid"><HijriDate label="من" value={fromHijri} onChange={setFromHijri}/><HijriDate label="إلى" value={toHijri} onChange={setToHijri}/></div><Info good icon={CheckCircle2}>سيظهر التاريخ هجريًا أثناء الاستخدام.</Info></section>}
 
     {step===4&&<section className="exv2-section"><Title icon={CheckCircle2}>المراجعة النهائية</Title><div className="exv2-review">
       <Review label="الاختبار" value={title}/><Review label="المسجد" value={mosques.find(m=>Number(m.id)===Number(mosqueId))?.name||"—"}/><Review label="الحلقات" value={`${selectedHalaqat.length} حلقة`}/>
@@ -439,8 +438,8 @@ function CreateExamWizard({mosques,onClose,onCreated}){
     </div><Info icon={AlertTriangle}>سيُنشأ الاختبار كمسودة. بعد ذلك حدد أجزاء كل طالب والمختبر المسؤول عنه قبل الاعتماد.</Info></section>}
 
     <div className="exv2-modal-foot">
-      <button className="exv2-secondary" onClick={()=>step===0?onClose():setStep(step-1)}>{step===0?"إلغاء":"السابق"}</button>
-      {step<4?<button className="exv2-primary exv2-next-btn" onClick={()=>{if(validate())setStep(step+1)}}>التالي</button>:<button className="exv2-primary" disabled={saving} onClick={create}>{saving?<Loader2 className="exv2-spin" size={14}/>:<Check size={14}/>}إنشاء كمسودة</button>}
+      <button type="button" className="exv2-secondary" onClick={()=>step===0?onClose():setStep(step-1)}>{step===0?"إلغاء":"السابق"}</button>
+      {step<4?<button type="button" className="exv2-primary exv2-next-btn" onClick={()=>{if(validate())setStep(step+1)}}>التالي</button>:<button type="button" className="exv2-primary" disabled={saving} onClick={create}>{saving?<Loader2 className="exv2-spin" size={14}/>:<Check size={14}/>}إنشاء كمسودة</button>}
     </div>
   </Modal>;
 }
@@ -455,7 +454,7 @@ function ExamDetailsModal({exam,onClose,onUpdated}){
   const [partsStudent,setPartsStudent]=useState(null),[addStudents,setAddStudents]=useState(false);
   const [busy,setBusy]=useState(false);
 
-  useEffect(()=>{load();},[exam.id]);
+  
 
   async function load(){
     setLoading(true);
@@ -514,6 +513,8 @@ function ExamDetailsModal({exam,onClose,onUpdated}){
     }
   }
 
+  useEffect(()=>{load();},[exam.id]);
+
   const readiness=useMemo(()=>{
     const rows=data?.students||[];
     const missingParts=rows.filter(s=>!s.parts.length).length;
@@ -570,7 +571,7 @@ function ExamDetailsModal({exam,onClose,onUpdated}){
   return <>
     <Modal title="إدارة الاختبار" subtitle="البيانات، الطلاب، الأجزاء والأسئلة" icon={GraduationCap} onClose={onClose} large>
       <div className="exv2-card" style={{marginBottom:10}}><div className="exv2-card-top"><div><h3>{title}</h3><p>{exam.mosques?.name||"مسجد"} • {questionsCount} أسئلة • {formatHijri(exam.start_date||exam.exam_date)}</p></div><span className={`exv2-status ${EXAM_STATUS_META[status]?.tone||"neutral"}`}>{EXAM_STATUS_META[status]?.label||"مسودة"}</span></div></div>
-      <div className="exv2-tabs">{[["overview","البيانات"],["students","الطلاب والأسئلة"],["progress","التقدم"]].map(([k,l])=><button key={k} className={`exv2-tab ${tab===k?"active":""}`} onClick={()=>setTab(k)}>{l}</button>)}</div>
+      <div className="exv2-tabs">{[["overview","البيانات"],["students","الطلاب والأسئلة"],["progress","التقدم"]].map(([k,l])=><button type="button" key={k} className={`exv2-tab ${tab===k?"active":""}`} onClick={()=>setTab(k)}>{l}</button>)}</div>
 
       {tab==="overview"&&<>
         <section className="exv2-section">
@@ -583,14 +584,14 @@ function ExamDetailsModal({exam,onClose,onUpdated}){
             <HijriDate label="إلى" value={toHijri} onChange={setToHijri} disabled={status!=="draft"}/>
             <Field label="الحلقات"><input className="exv2-input" value={data?.halaqat?.map(x=>x.name).join("، ")||"—"} disabled/></Field>
           </div>
-          {status==="draft"&&<div style={{display:"flex",justifyContent:"flex-end",marginTop:10}}><button className="exv2-primary" onClick={saveSettings} disabled={busy}><Check size={14}/>حفظ التعديلات</button></div>}
+          {status==="draft"&&<div style={{display:"flex",justifyContent:"flex-end",marginTop:10}}><button type="button" className="exv2-primary" onClick={saveSettings} disabled={busy}><Check size={14}/>حفظ التعديلات</button></div>}
         </section>
       </>}
 
       {tab==="students"&&<section className="exv2-section">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"calc(8px * var(--app-density,1))",flexWrap:"wrap"}}>
           <Title icon={ListChecks}>إعداد الطلاب</Title>
-          {status==="draft"&&<div style={{display:"flex",gap:"calc(6px * var(--app-density,1))",flexWrap:"wrap"}}><button className="exv2-secondary" onClick={autoDistribute}><Users size={14}/>توزيع المختبرين</button><button className="exv2-secondary" onClick={()=>setAddStudents(true)}><UserPlus size={14}/>إضافة طلاب</button><button className="exv2-primary" disabled={!readiness.ready||busy} onClick={approve}><Send size={15}/>اعتماد ورفع للمعلمين</button></div>}
+          {status==="draft"&&<div style={{display:"flex",gap:"calc(6px * var(--app-density,1))",flexWrap:"wrap"}}><button type="button" className="exv2-secondary" onClick={autoDistribute}><Users size={14}/>توزيع المختبرين</button><button type="button" className="exv2-secondary" onClick={()=>setAddStudents(true)}><UserPlus size={14}/>إضافة طلاب</button><button type="button" className="exv2-primary" disabled={!readiness.ready||busy} onClick={approve}><Send size={15}/>اعتماد ورفع للمعلمين</button></div>}
         </div>
         <Info good={readiness.ready} icon={readiness.ready?CheckCircle2:AlertTriangle}>{readiness.ready?"الاختبار جاهز للاعتماد والرفع للمعلمين.":`ناقص: ${readiness.missingParts} بدون أجزاء، ${readiness.unassigned} بدون مختبر.`}</Info>
         <div className="exv2-table-wrap" style={{marginTop:10}}><table className="exv2-table"><thead><tr><th>الطالب</th><th>المختبر</th><th>الأجزاء</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody>
@@ -601,7 +602,7 @@ function ExamDetailsModal({exam,onClose,onUpdated}){
               <td><select className="exv2-select" value={st.assigned_teacher_id||""} onChange={e=>assignTeacher(st.student_id,e.target.value)} disabled={status!=="draft"}><option value="">اختر المختبر</option>{(data?.teachers||[]).map(t=><option key={t.id} value={t.id}>{t.full_name}</option>)}</select></td>
               <td><div className="exv2-parts">{st.parts.length?st.parts.map(p=><span className="exv2-chip" key={p}>ج{p}</span>):<span style={{color:"#a54037"}}>لم تحدد</span>}</div></td>
               <td><span className={`exv2-status ${ready?"success":"warning"}`}>{ready?"جاهز":"ناقص"}</span></td>
-              <td><div className="exv2-row-actions"><button className="parts" disabled={status!=="draft"} onClick={()=>setPartsStudent(st)}><BookOpenCheck size={13}/>الأجزاء</button><button className="remove" disabled={status!=="draft"} onClick={()=>removeStudent(st.student_id)}><Trash2 size={12}/>حذف</button></div></td>
+              <td><div className="exv2-row-actions"><button type="button" className="parts" disabled={status!=="draft"} onClick={()=>setPartsStudent(st)}><BookOpenCheck size={13}/>الأجزاء</button><button type="button" className="remove" disabled={status!=="draft"} onClick={()=>removeStudent(st.student_id)}><Trash2 size={12}/>حذف</button></div></td>
             </tr>;
           })}
         </tbody></table></div>
@@ -668,8 +669,8 @@ function PartsModal({exam,student,onClose,onSaved}){
     }catch(error){showToast(error.message||"تعذر حفظ الأجزاء","error");}finally{setSaving(false);}
   }
   return <Modal title={`أجزاء ${student.student_name}`} subtitle="نطاق الأسئلة من أصل 30 جزء" icon={BookOpenCheck} onClose={onClose}>
-    <section className="exv2-section"><div className="exv2-juz-grid">{Array.from({length:30},(_,i)=>i+1).map(p=><button key={p} className={`exv2-juz ${selected.includes(p)?"active":""}`} onClick={()=>setSelected(c=>c.includes(p)?c.filter(x=>x!==p):[...c,p].sort((a,b)=>a-b))}>{p}</button>)}</div></section>
-    <div className="exv2-modal-foot"><button className="exv2-secondary" onClick={onClose}>إلغاء</button><button className="exv2-primary" disabled={saving} onClick={save}><Check size={14}/>حفظ الأجزاء</button></div>
+    <section className="exv2-section"><div className="exv2-juz-grid">{Array.from({length:30},(_,i)=>i+1).map(p=><button type="button" key={p} className={`exv2-juz ${selected.includes(p)?"active":""}`} onClick={()=>setSelected(c=>c.includes(p)?c.filter(x=>x!==p):[...c,p].sort((a,b)=>a-b))}>{p}</button>)}</div></section>
+    <div className="exv2-modal-foot"><button type="button" className="exv2-secondary" onClick={onClose}>إلغاء</button><button type="button" className="exv2-primary" disabled={saving} onClick={save}><Check size={14}/>حفظ الأجزاء</button></div>
   </Modal>;
 }
 
@@ -677,7 +678,7 @@ function PartsModal({exam,student,onClose,onSaved}){
 function AddStudentsModal({exam,existing,onClose,onSaved}){
   const {showToast}=useToast();
   const [rows,setRows]=useState([]),[selected,setSelected]=useState([]),[search,setSearch]=useState(""),[loading,setLoading]=useState(true);
-  useEffect(()=>{load();},[]);
+  
   async function load(){
     try{
       const {data:links,error}=await supabase.from("exam_halaqat").select("halaqa_id").eq("exam_id",exam.id);if(error)throw error;
@@ -687,6 +688,8 @@ function AddStudentsModal({exam,existing,onClose,onSaved}){
       setRows(Array.from(new Map((data||[]).filter(x=>x.profiles&&!exists.has(Number(x.student_id))&&x.profiles.status==="active"&&x.profiles.is_active!==false).map(x=>[Number(x.student_id),x.profiles])).values()));
     }catch(error){showToast(error.message||"تعذر تحميل الطلاب","error");}finally{setLoading(false);}
   }
+
+  useEffect(()=>{load();},[]);
   const filtered=useMemo(()=>{const q=search.trim().toLowerCase();return !q?rows:rows.filter(x=>[x.full_name,x.user_number].join(" ").toLowerCase().includes(q));},[rows,search]);
   async function save(){
     if(!selected.length)return showToast("اختر طالبًا واحدًا على الأقل","error");
@@ -698,14 +701,14 @@ function AddStudentsModal({exam,existing,onClose,onSaved}){
     <section className="exv2-section"><div className="exv2-search" style={{marginBottom:9}}><Search size={15}/><input className="exv2-input" value={search} onChange={e=>setSearch(e.target.value)} placeholder="ابحث عن الطالب"/></div>
       {loading?<SmallEmpty text="جارٍ التحميل…"/>:!filtered.length?<SmallEmpty text="لا يوجد طلاب إضافيون"/>:<div className="exv2-choice-grid">{filtered.map(s=><Choice key={s.id} active={selected.includes(Number(s.id))} title={s.full_name} subtitle={s.user_number||"طالب"} onClick={()=>setSelected(c=>c.includes(Number(s.id))?c.filter(x=>x!==Number(s.id)):[...c,Number(s.id)])}/>)}</div>}
     </section>
-    <div className="exv2-modal-foot"><button className="exv2-secondary" onClick={onClose}>إلغاء</button><button className="exv2-primary" disabled={!selected.length} onClick={save}><Plus size={14}/>إضافة {selected.length||""}</button></div>
+    <div className="exv2-modal-foot"><button type="button" className="exv2-secondary" onClick={onClose}>إلغاء</button><button type="button" className="exv2-primary" disabled={!selected.length} onClick={save}><Plus size={14}/>إضافة {selected.length||""}</button></div>
   </Modal>;
 }
 
 /* ========================= PROGRESS ========================= */
 function ExamProgressModal({exam,onClose}){
   const [loading,setLoading]=useState(true),[data,setData]=useState(null);
-  useEffect(()=>{load();},[exam.id]);
+  
   async function load(){
     try{
       const [s,a,r,t]=await Promise.all([
@@ -718,6 +721,8 @@ function ExamProgressModal({exam,onClose}){
       setData({students:s.data||[],attempts:a.data||[],results:r.data||[],teachers:t.data||[]});
     }finally{setLoading(false);}
   }
+
+  useEffect(()=>{load();},[exam.id]);
   return <Modal title={`تقدم: ${exam.title}`} subtitle="متابعة التنفيذ والنتائج" icon={CircleGauge} onClose={onClose}>{loading?<div className="exv2-loading"><Loader2 className="exv2-spin" size={24}/>جارٍ الحساب…</div>:<ProgressContent data={data} exam={exam}/>}</Modal>;
 }
 function ProgressContent({data,exam,onFinalized}){
@@ -778,7 +783,7 @@ function Modal({title,subtitle,icon:Icon,onClose,children,large=false}){
             <div className="exv2-modal-title-icon"><Icon size={18}/></div>
             <div><strong>{title}</strong><span>{subtitle}</span></div>
           </div>
-          <button className="exv2-close" onClick={onClose} aria-label="إغلاق">
+          <button type="button" className="exv2-close" onClick={onClose} aria-label="إغلاق">
             <X size={17}/>
           </button>
         </header>
@@ -809,4 +814,4 @@ function HijriDate({label,value,onChange,disabled=false}){
     <select className="exv2-select" value={value.year} disabled={disabled} onChange={e=>onChange({...value,year:Number(e.target.value)})}>{years.map(y=><option key={y} value={y}>{y} هـ</option>)}</select>
   </div></Field>;
 }
-function ConfirmDeleteExam({exam,onCancel,onConfirm}){return <Modal title="حذف الاختبار نهائيًا" subtitle={exam.title} icon={Trash2} onClose={onCancel}><Info icon={AlertTriangle}>سيتم حذف الاختبار نهائيًا مع جميع بياناته المرتبطة: الطلاب، المختبرون، الحلقات، الأجزاء، الأسئلة، المحاولات، الدرجات، النتائج والشهادات. لا يمكن التراجع عن هذا الإجراء.</Info><div className="exv2-modal-foot"><button className="exv2-secondary" onClick={onCancel}>إلغاء</button><button className="exv2-danger" onClick={onConfirm}><Trash2 size={14}/>حذف نهائي بكل البيانات</button></div></Modal>}
+function ConfirmDeleteExam({exam,onCancel,onConfirm}){return <Modal title="حذف الاختبار نهائيًا" subtitle={exam.title} icon={Trash2} onClose={onCancel}><Info icon={AlertTriangle}>سيتم حذف الاختبار نهائيًا مع جميع بياناته المرتبطة: الطلاب، المختبرون، الحلقات، الأجزاء، الأسئلة، المحاولات، الدرجات، النتائج والشهادات. لا يمكن التراجع عن هذا الإجراء.</Info><div className="exv2-modal-foot"><button type="button" className="exv2-secondary" onClick={onCancel}>إلغاء</button><button type="button" className="exv2-danger" onClick={onConfirm}><Trash2 size={14}/>حذف نهائي بكل البيانات</button></div></Modal>}

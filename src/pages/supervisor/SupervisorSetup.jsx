@@ -54,6 +54,23 @@ export default function SupervisorSetup() {
           return;
         }
 
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("role, status, is_active")
+          .eq("auth_user_id", authData.user.id)
+          .maybeSingle();
+
+        if (
+          profileError ||
+          !profile ||
+          profile.role !== "supervisor" ||
+          profile.status !== "active" ||
+          profile.is_active === false
+        ) {
+          navigate("/login", { replace: true });
+          return;
+        }
+
         const {
           data,
           error,
@@ -347,9 +364,7 @@ export default function SupervisorSetup() {
               <div className="supervisor-setup-notice">
                 <ShieldCheck />
                 <span>
-                  إنشاء المسجد هنا لا يعتمد على زر في الواجهة
-                  فقط؛ قاعدة البيانات نفسها تتحقق أن حسابك
-                  مؤهل لإنشاء المسجد.
+                  سيتم التحقق من صلاحية حسابك لإنشاء المسجد قبل الحفظ.
                 </span>
               </div>
 

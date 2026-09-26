@@ -6,39 +6,7 @@ import {
   useState,
 } from "react";
 
-import {
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  CircleAlert,
-  ChevronDown,
-  ChevronLeft,
-  Clock3,
-  Edit3,
-  FileText,
-  GraduationCap,
-  Layers3,
-  Loader2,
-  MessageSquareText,
-  Plus,
-  Play,
-  RefreshCw,
-  Search,
-  Sparkles,
-  Target,
-  Trash2,
-  Trophy,
-  UserRound,
-  UserX,
-  X,
-  BookMarked,
-  Hash,
-  Save,
-  LibraryBig,
-  History,
-  ShieldCheck,
-  Building2,
-} from "lucide-react";
+import { BookOpen, CalendarDays, CheckCircle2, CircleAlert, ChevronDown, ChevronLeft, Clock3, Edit3, FileText, GraduationCap, Layers3, Loader2, MessageSquareText, Plus, Play, RefreshCw, Search, Sparkles, Target, Trash2, Trophy, UserX, X, BookMarked, Hash, Save, LibraryBig, History, ShieldCheck, Building2 } from "lucide-react";
 
 import {
   supabase,
@@ -1541,6 +1509,33 @@ export default function Recitations() {
           return;
         }
 
+        const {
+          data: activeIntervention,
+          error: interventionError,
+        } = await supabase
+          .from("student_learning_interventions")
+          .select(`
+            id,
+            intervention_type,
+            status,
+            confirmed_reason,
+            trigger_summary,
+            start_date,
+            end_date,
+            lesson_override_amount,
+            lesson_override_unit,
+            review_daily_amount,
+            review_daily_unit
+          `)
+          .eq("student_id", Number(commonForm.student_id))
+          .eq("halaqa_id", Number(commonForm.halaqa_id))
+          .eq("status", "active")
+          .lte("start_date", commonForm.recitation_date)
+          .or(`end_date.is.null,end_date.gte.${commonForm.recitation_date}`)
+          .maybeSingle();
+
+        if (interventionError) throw interventionError;
+
         const student = profiles.find(
           (item) => Number(item.id) === Number(commonForm.student_id)
         );
@@ -1569,17 +1564,55 @@ export default function Recitations() {
           plannedSessions
         );
 
-        const memorizationAmount =
+        const baseMemorizationAmount =
           plan.memorization_daily_amount ?? memFallback.amount;
 
-        const memorizationUnit =
+        const baseMemorizationUnit =
           plan.memorization_daily_unit || memFallback.unit || "lines";
 
-        const revisionAmount =
+        const baseRevisionAmount =
           plan.revision_daily_amount ?? revFallback.amount;
 
-        const revisionUnit =
+        const baseRevisionUnit =
           plan.revision_daily_unit || revFallback.unit || "faces";
+
+        const interventionType =
+          activeIntervention?.intervention_type || null;
+
+        const lessonSuppressed =
+          interventionType === "stabilization_full" ||
+          interventionType === "pause";
+
+        const memorizationAmount =
+          interventionType === "stabilization_partial"
+            ? Number(activeIntervention?.lesson_override_amount || 0)
+            : baseMemorizationAmount;
+
+        const memorizationUnit =
+          interventionType === "stabilization_partial"
+            ? (activeIntervention?.lesson_override_unit || baseMemorizationUnit)
+            : baseMemorizationUnit;
+
+        const revisionAmount =
+          interventionType === "pause"
+            ? null
+            : (
+                activeIntervention?.review_daily_amount ??
+                baseRevisionAmount
+              );
+
+        const revisionUnit =
+          interventionType === "pause"
+            ? baseRevisionUnit
+            : (
+                activeIntervention?.review_daily_unit ||
+                baseRevisionUnit
+              );
+
+        const reviewSegmentType =
+          interventionType === "stabilization_full"
+            ? "stabilization_review"
+            : "revision";
 
         const { data: history, error: historyError } = await supabase
           .from("recitations")
@@ -1661,42 +1694,46 @@ export default function Recitations() {
         let generatedLesson = null;
         let generatedReview = null;
 
-        try {
-          generatedLesson = await generateRange({
-            startSurah: lessonStart.surah,
-            startAyah: lessonStart.ayah,
-            amount: memorizationAmount,
-            unit: memorizationUnit,
-            limitSurah: plan.memorization_to_surah,
-            limitAyah: plan.memorization_to_ayah,
-          });
-        } catch (generationError) {
-          if (!String(generationError?.message || "").includes("QURAN_LIMIT_BEFORE_START")) {
-            throw generationError;
+        if (!lessonSuppressed) {
+          try {
+            generatedLesson = await generateRange({
+              startSurah: lessonStart.surah,
+              startAyah: lessonStart.ayah,
+              amount: memorizationAmount,
+              unit: memorizationUnit,
+              limitSurah: plan.memorization_to_surah,
+              limitAyah: plan.memorization_to_ayah,
+            });
+          } catch (generationError) {
+            if (!String(generationError?.message || "").includes("QURAN_LIMIT_BEFORE_START")) {
+              throw generationError;
+            }
           }
         }
 
-        try {
-          generatedReview = await generateRange({
-            startSurah: reviewStart.surah,
-            startAyah: reviewStart.ayah,
-            amount: revisionAmount,
-            unit: revisionUnit,
-            limitSurah: plan.revision_to_surah,
-            limitAyah: plan.revision_to_ayah,
-          });
-        } catch (generationError) {
-          if (String(generationError?.message || "").includes("QURAN_LIMIT_BEFORE_START")) {
+        if (interventionType !== "pause") {
+          try {
             generatedReview = await generateRange({
-              startSurah: plan.revision_from_surah,
-              startAyah: plan.revision_from_ayah,
+              startSurah: reviewStart.surah,
+              startAyah: reviewStart.ayah,
               amount: revisionAmount,
               unit: revisionUnit,
               limitSurah: plan.revision_to_surah,
               limitAyah: plan.revision_to_ayah,
             });
-          } else {
-            throw generationError;
+          } catch (generationError) {
+            if (String(generationError?.message || "").includes("QURAN_LIMIT_BEFORE_START")) {
+              generatedReview = await generateRange({
+                startSurah: plan.revision_from_surah,
+                startAyah: plan.revision_from_ayah,
+                amount: revisionAmount,
+                unit: revisionUnit,
+                limitSurah: plan.revision_to_surah,
+                limitAyah: plan.revision_to_ayah,
+              });
+            } else {
+              throw generationError;
+            }
           }
         }
 
@@ -1728,12 +1765,43 @@ export default function Recitations() {
           generatedLesson,
           generatedSideLesson,
           generatedReview,
+          activeIntervention: activeIntervention || null,
+          interventionType,
+          lessonSuppressed,
+          reviewSegmentType,
         });
 
         setCompletionModes(createCompletionModes());
   
         setQuranForm((current) => {
           const next = { ...current };
+
+          if (lessonSuppressed) {
+            next.from_surah = "";
+            next.from_ayah = "";
+            next.to_surah = "";
+            next.to_ayah = "";
+            next.lesson_evaluation = "";
+            next.lesson_amount_value = "";
+            next.lesson_amount_type = "";
+          }
+
+          if (lessonSuppressed) {
+            next.next_surah = "";
+            next.next_from_ayah = "";
+            next.next_to_surah = "";
+            next.next_to_ayah = "";
+            next.next_evaluation = "";
+          }
+
+          if (interventionType === "pause") {
+            next.review_surah = "";
+            next.review_from_ayah = "";
+            next.review_to_surah = "";
+            next.review_to_ayah = "";
+            next.review_evaluation = "";
+            next.review_faces = "";
+          }
 
           if (generatedLesson) {
             next.from_surah = generatedLesson.start_surah_name;
@@ -3509,6 +3577,8 @@ export default function Recitations() {
     unit,
     planEndSurah,
     planEndAyah,
+    interventionId = null,
+    source = "generated",
   }) {
     if (
       !planSuggestion?.id ||
@@ -3571,7 +3641,8 @@ export default function Recitations() {
         ? Number(recitationRecord.teacher_id)
         : teacher?.id || null,
       monthly_plan_id: Number(planSuggestion.id),
-      intervention_id: null,
+      intervention_id:
+        interventionId ? Number(interventionId) : null,
       generated_from_recitation_id:
         Number(recitationRecord.id),
       assignment_date:
@@ -3587,7 +3658,7 @@ export default function Recitations() {
       end_ayah_id: Number(endPosition.ayah_id),
       target_amount: Number(amount),
       target_unit: unit,
-      source: "generated",
+      source,
       status: "planned",
       generated_reason:
         completionStatus === "repeat"
@@ -3642,7 +3713,10 @@ export default function Recitations() {
         ? Number(recitationRecord.teacher_id)
         : teacher?.id || null,
       monthly_plan_id: Number(planSuggestion.id),
-      intervention_id: null,
+      intervention_id:
+        planSuggestion?.activeIntervention?.id
+          ? Number(planSuggestion.activeIntervention.id)
+          : null,
       generated_from_recitation_id: Number(recitationRecord.id),
       assignment_date: lessonAssignment.assignment_date,
       segment_type: "side_lesson",
@@ -3656,7 +3730,7 @@ export default function Recitations() {
       target_unit:
         sideRange.side_lesson_unit ||
         (sideRange.faces ? "faces" : null),
-      source: "generated",
+      source: planSuggestion?.activeIntervention ? "intervention" : "generated",
       status: "planned",
       generated_reason: `جنب درس تلقائي حسب السياسة: ${sideRange.side_lesson_mode}`,
       _range: sideRange,
@@ -3796,7 +3870,8 @@ export default function Recitations() {
 
         buildRecitationSegment({
           recitationRecord,
-          segmentType: "revision",
+          segmentType:
+            planSuggestion?.reviewSegmentType || "revision",
           sequenceNo: 1,
           actualRange: {
             fromSurah: recitationRecord.review_surah,
@@ -3879,6 +3954,12 @@ export default function Recitations() {
               planSuggestion.memorization_to_surah,
             planEndAyah:
               planSuggestion.memorization_to_ayah,
+            interventionId:
+              planSuggestion?.activeIntervention?.id || null,
+            source:
+              planSuggestion?.activeIntervention
+                ? "intervention"
+                : "generated",
           })
         : null;
 
@@ -3886,7 +3967,8 @@ export default function Recitations() {
       reviewCompletion
         ? await buildNextAssignment({
             recitationRecord,
-            segmentType: "revision",
+            segmentType:
+              planSuggestion?.reviewSegmentType || "revision",
             sequenceNo: 1,
             generatedRange: generatedReview,
             actualEndSurah:
@@ -3903,6 +3985,12 @@ export default function Recitations() {
               planSuggestion.revision_to_surah,
             planEndAyah:
               planSuggestion.revision_to_ayah,
+            interventionId:
+              planSuggestion?.activeIntervention?.id || null,
+            source:
+              planSuggestion?.activeIntervention
+                ? "intervention"
+                : "generated",
           })
         : null;
 
@@ -3936,7 +4024,8 @@ export default function Recitations() {
 
       generatedReview && reviewCompletion
         ? {
-            segment_type: "revision",
+            segment_type:
+              planSuggestion?.reviewSegmentType || "revision",
             sequence_no: 1,
           }
         : null,
@@ -3971,7 +4060,7 @@ export default function Recitations() {
             "sequence_no",
             target.sequence_no
           )
-          .eq("source", "generated")
+          .in("source", ["generated", "intervention"])
           .eq("status", "planned")
           .neq(
             "generated_from_recitation_id",
@@ -5173,8 +5262,7 @@ export default function Recitations() {
           size={14}
         />
 
-        التسميع اليومي الآن أخف: اختر الطالب، المقدار، التقييم والمراجعة فقط.
-        جنب الدرس باقٍ كما هو، والسجلات القديمة محفوظة في قاعدة البيانات.
+        اختر الطالب والمقدار والتقييم والمراجعة، وأكمل التسميع بسهولة.
       </div>
 
       {/* =================================================
@@ -5918,7 +6006,11 @@ export default function Recitations() {
                       </div>
 
                       <div className="plan-suggestion-copy">
-                        <span>المطلوب اليوم تولّد من الخطة تلقائيًا</span>
+                        <span>
+                          {planSuggestion.activeIntervention
+                            ? `قرار عناية نشط: ${formatInterventionType(planSuggestion.interventionType)}`
+                            : "المطلوب اليوم تولّد من الخطة تلقائيًا"}
+                        </span>
 
                         <strong>
                           {planSuggestion.generatedLesson
@@ -5933,10 +6025,25 @@ export default function Recitations() {
                         </strong>
 
                         <small>
-                          {planSuggestion.scheduledToday
-                            ? "اليوم من أيام التسميع. يمكنك تعديل النهاية الفعلية فقط إذا زاد الطالب أو نقص."
-                            : "هذه جلسة إضافية خارج الأيام المجدولة؛ النطاق المقترح ما زال مبنيًا على آخر تقدم فعلي للطالب."}
+                          {planSuggestion.interventionType === "pause"
+                            ? "الإيقاف المؤقت معتمد من المعلم؛ لا يولّد النظام أي مطلوب قرآني حتى إنهاء التدخل."
+                            : planSuggestion.interventionType === "stabilization_full"
+                              ? "الحفظ الجديد موقوف مؤقتًا، والمطلوب الحالي مخصص للمراجعة والتثبيت."
+                              : planSuggestion.interventionType === "stabilization_partial"
+                                ? `الحفظ مستمر بمقدار مخفّض معتمد: ${planSuggestion.memorizationAmount} ${planSuggestion.memorizationUnit === "lines" ? "سطر" : "وجه"}.`
+                                : planSuggestion.scheduledToday
+                                  ? "اليوم من أيام التسميع. يمكنك تعديل النهاية الفعلية فقط إذا زاد الطالب أو نقص."
+                                  : "هذه جلسة إضافية خارج الأيام المجدولة؛ النطاق المقترح ما زال مبنيًا على آخر تقدم فعلي للطالب."}
                         </small>
+
+                        {planSuggestion.activeIntervention?.confirmed_reason && (
+                          <div className="precision-warning">
+                            <ShieldCheck size={14} />
+                            <span>
+                              سبب التدخل المؤكد: {planSuggestion.activeIntervention.confirmed_reason}
+                            </span>
+                          </div>
+                        )}
 
                         {(planSuggestion.generatedLesson?.precision_label === "ayah_boundary_shared_line" ||
                           planSuggestion.generatedSideLesson?.precision_label === "ayah_boundary_shared_line" ||
@@ -5962,7 +6069,23 @@ export default function Recitations() {
                         : "النطاق الفعلي الذي سمعه الطالب — الحساب يتم تلقائيًا من المصحف"
                     }
                   >
-                    {planSuggestion?.generatedLesson && !editing ? (
+                    {planSuggestion?.lessonSuppressed && !editing ? (
+                      <div className="side-policy-none-state">
+                        <ShieldCheck size={16} />
+                        <div>
+                          <strong>
+                            {planSuggestion.interventionType === "pause"
+                              ? "الحفظ موقوف بقرار المعلم"
+                              : "لا يوجد حفظ جديد أثناء التثبيت الكامل"}
+                          </strong>
+                          <span>
+                            {planSuggestion.interventionType === "pause"
+                              ? "لن يولّد النظام درسًا جديدًا حتى إنهاء التدخل."
+                              : "تركّز هذه المرحلة على تثبيت المحفوظ والمراجعة."}
+                          </span>
+                        </div>
+                      </div>
+                    ) : planSuggestion?.generatedLesson && !editing ? (
                       <>
                         <PlannedQuranTask
                           title="المطلوب"
@@ -6019,23 +6142,27 @@ export default function Recitations() {
                       />
                     )}
 
-                    <RangeMetricPreview
-                      metrics={rangeMetrics.lesson}
-                      loading={rangeMetricsLoading}
-                      emptyText="اختر نطاق الدرس ليحسب النظام الإنجاز تلقائيًا."
-                    />
+                    {(!planSuggestion?.lessonSuppressed || editing) && (
+                      <>
+                        <RangeMetricPreview
+                          metrics={rangeMetrics.lesson}
+                          loading={rangeMetricsLoading}
+                          emptyText="اختر نطاق الدرس ليحسب النظام الإنجاز تلقائيًا."
+                        />
 
-                    <EvaluationSelector
-                      label="تقييم الدرس"
-                      value={quranForm.lesson_evaluation}
-                      onChange={(value) =>
-                        setTrackEvaluation(
-                          "lesson",
-                          "lesson_evaluation",
-                          value
-                        )
-                      }
-                    />
+                        <EvaluationSelector
+                          label="تقييم الدرس"
+                          value={quranForm.lesson_evaluation}
+                          onChange={(value) =>
+                            setTrackEvaluation(
+                              "lesson",
+                              "lesson_evaluation",
+                              value
+                            )
+                          }
+                        />
+                      </>
+                    )}
                   </FormSection>
 
                   <FormSection
@@ -6043,7 +6170,19 @@ export default function Recitations() {
                     title="جنب الدرس"
                     subtitle="يولد تلقائيًا من سياسة الطالب ويبقى مستقلًا عن الحفظ الجديد"
                   >
-                    {planSuggestion?.generatedSideLesson?.start_surah_name && !editing ? (
+                    {planSuggestion?.lessonSuppressed && !editing ? (
+                      <div className="side-policy-none-state">
+                        <ShieldCheck size={16} />
+                        <div>
+                          <strong>جنب الدرس متوقف في هذه المرحلة</strong>
+                          <span>
+                            {planSuggestion.interventionType === "pause"
+                              ? "الإيقاف المؤقت يوقف جميع المطلوبات القرآنية."
+                              : "التثبيت الكامل يركّز على المراجعة ولا يولّد جنب درس جديدًا."}
+                          </span>
+                        </div>
+                      </div>
+                    ) : planSuggestion?.generatedSideLesson?.start_surah_name && !editing ? (
                       <>
                         <div className="side-policy-live-badge">
                           <ShieldCheck size={15} />
@@ -6106,30 +6245,35 @@ export default function Recitations() {
                       />
                     )}
 
-                    <RangeMetricPreview
-                      metrics={rangeMetrics.side1}
-                      loading={rangeMetricsLoading}
-                      emptyText="لا يوجد نطاق جنب درس في هذه الجلسة."
-                    />
+                    {(!planSuggestion?.lessonSuppressed || editing) && (
+                      <>
+                        <RangeMetricPreview
+                          metrics={rangeMetrics.side1}
+                          loading={rangeMetricsLoading}
+                          emptyText="لا يوجد نطاق جنب درس في هذه الجلسة."
+                        />
 
-                    {hasCompleteQuranRange(
-                      quranForm.next_surah,
-                      quranForm.next_from_ayah,
-                      quranForm.next_to_surah,
-                      quranForm.next_to_ayah
-                    ) && (
-                      <EvaluationSelector
-                        label="تقييم جنب الدرس"
-                        value={quranForm.next_evaluation}
-                        onChange={(value) =>
-                          planSuggestion?.generatedSideLesson?.start_surah_name && !editing
-                            ? setTrackEvaluation("side1", "next_evaluation", value)
-                            : setQuran("next_evaluation", value)
-                        }
-                      />
+                        {hasCompleteQuranRange(
+                          quranForm.next_surah,
+                          quranForm.next_from_ayah,
+                          quranForm.next_to_surah,
+                          quranForm.next_to_ayah
+                        ) && (
+                          <EvaluationSelector
+                            label="تقييم جنب الدرس"
+                            value={quranForm.next_evaluation}
+                            onChange={(value) =>
+                              planSuggestion?.generatedSideLesson?.start_surah_name && !editing
+                                ? setTrackEvaluation("side1", "next_evaluation", value)
+                                : setQuran("next_evaluation", value)
+                            }
+                          />
+                        )}
+                      </>
                     )}
                   </FormSection>
 
+                  {(!planSuggestion?.lessonSuppressed || editing) && (
                   <details className="secondary-side-details">
                     <summary>
                       <Plus size={15} />
@@ -6161,6 +6305,7 @@ export default function Recitations() {
                       />
                     </div>
                   </details>
+                  )}
 
                   <FormSection
                     icon={<RefreshCw size={17} />}
@@ -6171,10 +6316,22 @@ export default function Recitations() {
                         : "من موضع إلى موضع — لا يوجد إدخال يدوي لعدد الأوجه"
                     }
                   >
-                    {planSuggestion?.generatedReview && !editing ? (
+                    {planSuggestion?.interventionType === "pause" && !editing ? (
+                      <div className="side-policy-none-state">
+                        <ShieldCheck size={16} />
+                        <div>
+                          <strong>المراجعة موقوفة مؤقتًا بقرار المعلم</strong>
+                          <span>عند إنهاء التدخل يعود النظام لتوليد المطلوب من آخر موضع فعلي آمن.</span>
+                        </div>
+                      </div>
+                    ) : planSuggestion?.generatedReview && !editing ? (
                       <>
                         <PlannedQuranTask
-                          title="المراجعة المطلوبة"
+                          title={
+                            planSuggestion.reviewSegmentType === "stabilization_review"
+                              ? "مراجعة التثبيت المطلوبة"
+                              : "المراجعة المطلوبة"
+                          }
                           assignment={planSuggestion.generatedReview}
                           amount={planSuggestion.revisionAmount}
                           unit={planSuggestion.revisionUnit}
@@ -6228,23 +6385,31 @@ export default function Recitations() {
                       />
                     )}
 
-                    <RangeMetricPreview
-                      metrics={rangeMetrics.review}
-                      loading={rangeMetricsLoading}
-                      emptyText="اختر نطاق المراجعة وسيحسب النظام الأوجه تلقائيًا."
-                    />
+                    {(planSuggestion?.interventionType !== "pause" || editing) && (
+                      <>
+                        <RangeMetricPreview
+                          metrics={rangeMetrics.review}
+                          loading={rangeMetricsLoading}
+                          emptyText="اختر نطاق المراجعة وسيحسب النظام الأوجه تلقائيًا."
+                        />
 
-                    <EvaluationSelector
-                      label="تقييم المراجعة"
-                      value={quranForm.review_evaluation}
-                      onChange={(value) =>
-                        setTrackEvaluation(
-                          "review",
-                          "review_evaluation",
-                          value
-                        )
-                      }
-                    />
+                        <EvaluationSelector
+                          label={
+                            planSuggestion?.reviewSegmentType === "stabilization_review"
+                              ? "تقييم مراجعة التثبيت"
+                              : "تقييم المراجعة"
+                          }
+                          value={quranForm.review_evaluation}
+                          onChange={(value) =>
+                            setTrackEvaluation(
+                              "review",
+                              "review_evaluation",
+                              value
+                            )
+                          }
+                        />
+                      </>
+                    )}
                   </FormSection>
                 </>
               )}
@@ -7329,62 +7494,15 @@ function NumberField({
 }
 
 /* =========================================================
-   Lesson Amount — free input
-========================================================= */
-
-function LessonAmountField({
-  value,
-  unit,
-  onValueChange,
-  onUnitChange,
-}) {
-  return (
-    <div className="lesson-free-field">
-      <label className="field-label">
-        مقدار الدرس
-      </label>
-
-      <div className="lesson-free-control">
-        <input
-          type="number"
-          min="0"
-          step={unit === "lines" ? "1" : "0.25"}
-          value={value}
-          onChange={(event) =>
-            onValueChange(event.target.value)
-          }
-          placeholder={unit === "lines" ? "مثال: 3" : "مثال: 1.5"}
-        />
-
-        <div className="lesson-unit-switch">
-          <button
-            type="button"
-            className={unit === "lines" ? "active" : ""}
-            onClick={() => onUnitChange("lines")}
-          >
-            أسطر
-          </button>
-
-          <button
-            type="button"
-            className={unit === "faces" ? "active" : ""}
-            onClick={() => onUnitChange("faces")}
-          >
-            صفحات
-          </button>
-        </div>
-      </div>
-
-      <small className="lesson-free-hint">
-        اكتب أي مقدار بحرية — مثال: 4 أسطر أو 1.5 صفحة.
-      </small>
-    </div>
-  );
-}
-
-/* =========================================================
    Quran Smart Task
 ========================================================= */
+
+function formatInterventionType(type) {
+  if (type === "stabilization_partial") return "تثبيت جزئي";
+  if (type === "stabilization_full") return "تثبيت كامل";
+  if (type === "pause") return "إيقاف مؤقت";
+  return "تدخل تربوي";
+}
 
 function formatSideLessonMode(mode) {
   switch (mode) {
@@ -7736,122 +7854,6 @@ function DateField({
 }
 
 /* =========================================================
-   Quran Range
-========================================================= */
-
-function QuranRange({
-  prefix,
-  form,
-  setValue,
-}) {
-  const fromSurahKey =
-    prefix
-      ? `${prefix}_surah`
-      : "from_surah";
-
-  const fromAyahKey =
-    prefix
-      ? `${prefix}_from_ayah`
-      : "from_ayah";
-
-  const toSurahKey =
-    prefix
-      ? `${prefix}_to_surah`
-      : "to_surah";
-
-  const toAyahKey =
-    prefix
-      ? `${prefix}_to_ayah`
-      : "to_ayah";
-
-  return (
-    <div
-      className="quran-range"
-    >
-      <QuranSelect
-        label="من سورة"
-        value={
-          form[
-            fromSurahKey
-          ]
-        }
-        onChange={(
-          value
-        ) =>
-          setValue(
-            fromSurahKey,
-            value
-          )
-        }
-      />
-
-      <NumberField
-        label="من آية"
-        value={
-          form[
-            fromAyahKey
-          ]
-        }
-        onChange={(
-          value
-        ) =>
-          setValue(
-            fromAyahKey,
-            value
-          )
-        }
-        min="1"
-        step="1"
-        placeholder="رقم الآية"
-      />
-
-      <div
-        className="range-divider"
-      >
-        ←
-      </div>
-
-      <QuranSelect
-        label="إلى سورة"
-        value={
-          form[
-            toSurahKey
-          ]
-        }
-        onChange={(
-          value
-        ) =>
-          setValue(
-            toSurahKey,
-            value
-          )
-        }
-      />
-
-      <NumberField
-        label="إلى آية"
-        value={
-          form[
-            toAyahKey
-          ]
-        }
-        onChange={(
-          value
-        ) =>
-          setValue(
-            toAyahKey,
-            value
-          )
-        }
-        min="1"
-        step="1"
-        placeholder="رقم الآية"
-      />
-    </div>
-  );
-}
-
-/* =========================================================
    Quran Select
 ========================================================= */
 
@@ -7980,51 +7982,6 @@ function EvaluationSelector({
         )}
       </div>
     </div>
-  );
-}
-
-/* =========================================================
-   Quran Text
-========================================================= */
-
-function QuranText({
-  from,
-  fromAyah,
-  to,
-  toAyah,
-}) {
-  if (!from && !to) {
-    return (
-      <span
-        className="muted"
-      >
-        غير مسجل
-      </span>
-    );
-  }
-
-  return (
-    <span
-      className="quran-text"
-    >
-      {from || "—"}
-
-      {fromAyah
-        ? ` (${fromAyah})`
-        : ""}
-
-      <span
-        className="quran-arrow"
-      >
-        ←
-      </span>
-
-      {to || "—"}
-
-      {toAyah
-        ? ` (${toAyah})`
-        : ""}
-    </span>
   );
 }
 
@@ -8274,34 +8231,6 @@ function roundFaces(value) {
   return Math.round((Number(value || 0) + Number.EPSILON) * 10000) / 10000;
 }
 
-function amountToFaces(amount, unit) {
-  const number = Number(amount || 0);
-
-  if (!Number.isFinite(number) || number <= 0) {
-    return 0;
-  }
-
-  return unit === "lines"
-    ? roundFaces(number / 15)
-    : roundFaces(number);
-}
-
-function legacyTypeForFreeAmount(amount, unit) {
-  const value = Number(amount || 0);
-
-  if (unit === "lines" && value === 3) {
-    return "three_lines";
-  }
-
-  if (unit === "faces") {
-    if (value === 0.5) return "half_page";
-    if (value === 1) return "one_page";
-    if (value === 2) return "two_pages";
-  }
-
-  return "";
-}
-
 function legacyLessonAmount(type) {
   const item = LESSON_AMOUNTS.find((entry) => entry.value === type);
 
@@ -8492,19 +8421,6 @@ function getEvaluationClass(
   }
 
   return "neutral";
-}
-
-function getLessonAmountLabel(
-  value
-) {
-  return (
-    LESSON_AMOUNTS.find(
-      (item) =>
-        item.value ===
-        value
-    )?.label ||
-    "مقدار الدرس"
-  );
 }
 
 function formatFaces(

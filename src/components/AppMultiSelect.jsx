@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Check, X } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 
 export default function AppMultiSelect({
   label,

@@ -91,6 +91,7 @@ function StudentShell() {
   const {
     loading,
     error,
+    accessDenied,
     profile,
     halaqa,
     mosque,
@@ -104,6 +105,12 @@ function StudentShell() {
     () => currentPageTitle(location.pathname),
     [location.pathname]
   );
+
+  useEffect(() => {
+    if (!loading && accessDenied) {
+      navigate("/login", { replace: true });
+    }
+  }, [accessDenied, loading, navigate]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -133,6 +140,19 @@ function StudentShell() {
     "--student-font-scale": fontScale(preferences.fontSize),
     "--student-motion": preferences.motion ? "1" : "0",
   };
+
+  if (loading || accessDenied) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="student-fatal-state"
+        style={{ minHeight: "100dvh", display: "grid", placeItems: "center" }}
+      >
+        جارٍ التحقق من صلاحية الدخول…
+      </div>
+    );
+  }
 
   return (
     <div

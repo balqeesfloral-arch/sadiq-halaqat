@@ -4,34 +4,7 @@ import {
   useState,
 } from "react";
 
-import {
-  AlertTriangle,
-  BadgeCheck,
-  BellRing,
-  BookOpen,
-  CalendarCheck,
-  CheckCircle2,
-  ChevronDown,
-  Clock3,
-  HeartHandshake,
-  History,
-  Inbox,
-  Layers3,
-  Loader2,
-  Mail,
-  MessageCircle,
-  MessageSquareText,
-  RefreshCw,
-  RotateCcw,
-  Search,
-  Send,
-  ShieldCheck,
-  Sparkles,
-  Target,
-  UserRound,
-  Users,
-  X,
-} from "lucide-react";
+import { AlertTriangle, BadgeCheck, BellRing, BookOpen, CalendarCheck, CheckCircle2, ChevronDown, Clock3, HeartHandshake, History, Inbox, Loader2, Mail, MessageCircle, MessageSquareText, RefreshCw, RotateCcw, Search, Send, ShieldCheck, Sparkles, Target, UserRound, X } from "lucide-react";
 
 import {
   supabase,
@@ -283,23 +256,6 @@ function formatHijriDate(value) {
   try {
     return new Intl.DateTimeFormat(
       "ar-SA-u-ca-islamic-umalqura",
-      {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }
-    ).format(parseLocalDate(value));
-  } catch {
-    return value;
-  }
-}
-
-function formatGregorianDate(value) {
-  if (!value) return "—";
-
-  try {
-    return new Intl.DateTimeFormat(
-      "ar-SA-u-ca-gregory",
       {
         year: "numeric",
         month: "long",

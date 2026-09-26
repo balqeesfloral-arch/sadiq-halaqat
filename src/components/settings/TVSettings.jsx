@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Tv, Timer, Users, Trophy, Quote, Save, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Tv, Timer, Users, Trophy, Save, RefreshCw, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { showToast } from "../../components/Toast";
 
@@ -11,7 +11,7 @@ export default function TVSettings(){
  async function load(){try{setLoading(true);const {data,error}=await supabase.from("system_settings").select("setting_key,setting_value").in("setting_key",Object.keys(DEFAULTS));if(error)throw error;const n={...DEFAULTS};(data||[]).forEach(x=>n[x.setting_key]=String(x.setting_value??DEFAULTS[x.setting_key]));setForm(n);setSaved(n)}catch(e){console.error(e);showToast("تعذر تحميل إعدادات شاشة العرض")}finally{setLoading(false)}}
  async function save(){try{setSaving(true);for(const [key,value] of Object.entries(form)){const {error}=await supabase.from("system_settings").upsert({setting_key:key,setting_value:String(value)},{onConflict:"setting_key"});if(error)throw error}setSaved(form);showToast("تم حفظ إعدادات شاشة العرض")}catch(e){console.error(e);showToast("تعذر حفظ إعدادات شاشة العرض")}finally{setSaving(false)}}
  const set=(k,v)=>setForm(p=>({...p,[k]:v}));
- if(loading)return <div className="general-settings-state"><RefreshCw className="settings-spin" size={20}/><div><strong>جاري تحميل شاشة العرض</strong><span>قراءة الإعدادات من قاعدة البيانات</span></div></div>;
+ if(loading)return <div className="general-settings-state"><RefreshCw className="settings-spin" size={20}/><div><strong>جاري تحميل شاشة العرض</strong><span>يرجى الانتظار قليلًا</span></div></div>;
  return <div>
   <section className="settings-panel-intro"><span className="settings-panel-intro__icon"><Tv size={21}/></span><div><small>لوحة الشرف</small><h3>إعدادات شاشة العرض</h3><p>تتحكم هذه القيم مباشرة في التنقل والتقسيم والعناصر الظاهرة في شاشة التلفزيون.</p></div><span className="real-badge"><CheckCircle2 size={13}/> مرتبط بالشاشة</span></section>
   <section className="settings-real-card"><div className="settings-real-card__head"><div><Timer size={17}/><span><strong>التنقل وتقسيم الطلاب</strong><small>مدة كل صفحة وعدد الطلاب في الصفحات</small></span></div></div>
@@ -22,9 +22,9 @@ export default function TVSettings(){
    </div>
   </section>
   <section className="settings-real-card"><div className="settings-real-card__head"><div><Trophy size={17}/><span><strong>عناصر العرض</strong><small>إظهار أو إخفاء مكونات الشاشة</small></span></div></div>
-   <div className="settings-switch-row"><div><strong>منصة الثلاثة الأوائل</strong><small>إظهار منصة التتويج في الصفحة الأولى</small></div><button className={`settings-switch ${form.tv_show_podium==="true"?"on":""}`} onClick={()=>set("tv_show_podium",form.tv_show_podium==="true"?"false":"true")}><i/></button></div>
-   <div className="settings-switch-row"><div><strong>العبارات التحفيزية</strong><small>عرض العبارات المحفوظة في شاشة العرض</small></div><button className={`settings-switch ${form.tv_show_quotes==="true"?"on":""}`} onClick={()=>set("tv_show_quotes",form.tv_show_quotes==="true"?"false":"true")}><i/></button></div>
+   <div className="settings-switch-row"><div><strong>منصة الثلاثة الأوائل</strong><small>إظهار منصة التتويج في الصفحة الأولى</small></div><button type="button" className={`settings-switch ${form.tv_show_podium==="true"?"on":""}`} onClick={()=>set("tv_show_podium",form.tv_show_podium==="true"?"false":"true")}><i/></button></div>
+   <div className="settings-switch-row"><div><strong>العبارات التحفيزية</strong><small>عرض العبارات المحفوظة في شاشة العرض</small></div><button type="button" className={`settings-switch ${form.tv_show_quotes==="true"?"on":""}`} onClick={()=>set("tv_show_quotes",form.tv_show_quotes==="true"?"false":"true")}><i/></button></div>
   </section>
-  <div className="settings-actions-pro"><button className="btn-secondary" onClick={load}><RefreshCw size={14}/> تحديث</button><button className="btn-primary" disabled={!dirty||saving} onClick={save}><Save size={14}/>{saving?"جاري الحفظ":"حفظ إعدادات الشاشة"}</button></div>
+  <div className="settings-actions-pro"><button type="button" className="btn-secondary" onClick={load}><RefreshCw size={14}/> تحديث</button><button type="button" className="btn-primary" disabled={!dirty||saving} onClick={save}><Save size={14}/>{saving?"جاري الحفظ":"حفظ إعدادات الشاشة"}</button></div>
  </div>
 }

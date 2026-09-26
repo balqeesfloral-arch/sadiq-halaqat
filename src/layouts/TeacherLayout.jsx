@@ -256,7 +256,10 @@ export default function TeacherLayout() {
 
       const {
         data: { user },
+        error: authError,
       } = await supabase.auth.getUser();
+
+      if (authError) throw authError;
 
       if (!user) {
         navigate("/login", { replace: true });
@@ -265,13 +268,18 @@ export default function TeacherLayout() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, user_number, role, status")
+        .select("id, full_name, user_number, role, status, is_active")
         .eq("auth_user_id", user.id)
         .single();
 
       if (profileError) throw profileError;
 
-      if (!profile || profile.role !== "teacher") {
+      if (
+        !profile ||
+        profile.role !== "teacher" ||
+        profile.status !== "active" ||
+        profile.is_active === false
+      ) {
         navigate("/login", { replace: true });
         return;
       }
@@ -290,6 +298,8 @@ export default function TeacherLayout() {
       }
     } catch (error) {
       console.error("Teacher layout context error:", error);
+      setTeacher(null);
+      navigate("/login", { replace: true });
     } finally {
       setLoadingProfile(false);
     }
@@ -305,6 +315,25 @@ export default function TeacherLayout() {
 
     event.preventDefault();
     navigate("/teacher");
+  }
+
+  if (!teacher) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        style={{
+          minHeight: "100dvh",
+          display: "grid",
+          placeItems: "center",
+          background: "#f6f8f7",
+          color: "#48635a",
+          fontWeight: 800,
+        }}
+      >
+        جارٍ التحقق من صلاحية الدخول…
+      </div>
+    );
   }
 
   return (

@@ -74,8 +74,8 @@ export default function InvoicePage(){
     `}</style>
 
     <div className="iv-toolbar">
-      <button className="iv-btn" onClick={()=>navigate("/admin/invoices")}><ArrowRight size={15}/><span>الفواتير</span></button>
-      <div className="iv-tools"><button className="iv-btn primary" onClick={()=>window.print()}><Printer size={15}/><span>طباعة / حفظ PDF</span></button></div>
+      <button type="button" className="iv-btn" onClick={()=>navigate("/admin/invoices")}><ArrowRight size={15}/><span>الفواتير</span></button>
+      <div className="iv-tools"><button type="button" className="iv-btn primary" onClick={()=>window.print()}><Printer size={15}/><span>طباعة / حفظ PDF</span></button></div>
     </div>
 
     <main className="iv-paper">
@@ -141,6 +141,6 @@ export default function InvoicePage(){
 
 function State({icon:Icon=FileText,title,text,action}){
   return <div dir="rtl" style={{minHeight:"60vh",display:"grid",placeItems:"center",fontFamily:"inherit"}}>
-    <div style={{textAlign:"center",maxWidth:420,padding:30}}>{Icon&&<Icon size={30}/>}<h2>{title}</h2><p style={{color:"#6b7770",fontSize:13}}>{text}</p>{action&&<button onClick={action} style={{marginTop:10,padding:"10px 18px",border:0,borderRadius:10,background:"#153f31",color:"#fff",cursor:"pointer"}}>العودة للفواتير</button>}</div>
+    <div style={{textAlign:"center",maxWidth:420,padding:30}}>{Icon&&<Icon size={30}/>}<h2>{title}</h2><p style={{color:"#6b7770",fontSize:13}}>{text}</p>{action&&<button type="button" onClick={action} style={{marginTop:10,padding:"10px 18px",border:0,borderRadius:10,background:"#153f31",color:"#fff",cursor:"pointer"}}>العودة للفواتير</button>}</div>
   </div>
 }

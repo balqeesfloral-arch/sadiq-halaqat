@@ -1,16 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  BookOpen,
-  CalendarClock,
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
-  RefreshCw,
-  Sparkles,
-  Star,
-  Target,
-  UserRoundSearch,
-} from "lucide-react";
+import { BookOpen, CalendarClock, CalendarDays, Clock3, RefreshCw, Sparkles, Star, Target, UserRoundSearch } from "lucide-react";
 import StudentPage from "../../components/student/StudentPage";
 import { useStudentPortal } from "../../context/StudentPortalContext";
 import { supabase } from "../../lib/supabase";
@@ -73,7 +62,7 @@ export default function MyRecitations() {
   const [assignments, setAssignments] = useState([]);
   const [ayahMap, setAyahMap] = useState(new Map());
 
-  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
+  
 
   async function load() {
     if (!profile?.id) return;
@@ -165,6 +154,8 @@ export default function MyRecitations() {
       setLoading(false);
     }
   }
+
+  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
 
   const totalPoints = records.reduce((sum, row) => sum + Number(row.points || 0), 0);
   const nextDate = assignments[0]?.assignment_date || null;

@@ -350,7 +350,7 @@ if (!teacherExam) {
   </p>
 </div>
 
-          <button
+          <button type="button"
             onClick={onClose}
             style={{
               border:"none",
@@ -586,7 +586,7 @@ borderTop:"1px solid #E2E8F0"
           }}
         >
 
-          <button
+          <button type="button"
             onClick={
               saveResults
             }
@@ -612,7 +612,7 @@ borderTop:"1px solid #E2E8F0"
 
           </button>
 
-          <button
+          <button type="button"
             onClick={
               approveResults
             }

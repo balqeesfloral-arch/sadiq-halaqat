@@ -3,35 +3,11 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
-import {
-  BadgeCheck,
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CircleAlert,
-  Copy,
-  History,
-  Layers3,
-  Loader2,
-  MessageSquareText,
-  RefreshCw,
-  Save,
-  Search,
-  Send,
-  ShieldCheck,
-  Sparkles,
-  Target,
-  Undo2,
-  UserRound,
-  Users,
-  X,
-} from "lucide-react";
+import { BadgeCheck, BookOpen, CalendarDays, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Copy, Layers3, Loader2, MessageSquareText, RefreshCw, Save, Search, Send, ShieldCheck, Sparkles, Target, Undo2, UserRound, Users, X } from "lucide-react";
 
 import {
   supabase,
@@ -366,34 +342,6 @@ function formatGregorianDate(
   }
 }
 
-function formatHijriDate(
-  value
-) {
-  if (!value) {
-    return "—";
-  }
-
-  try {
-    return new Intl.DateTimeFormat(
-      "ar-SA-u-ca-islamic-umalqura",
-      {
-        year:
-          "numeric",
-
-        month:
-          "long",
-
-        day:
-          "numeric",
-      }
-    ).format(
-      parseLocalDate(value)
-    );
-  } catch {
-    return value;
-  }
-}
-
 function roundFaces(
   value
 ) {
@@ -644,37 +592,6 @@ function recitationReviewFaces(record) {
   return Number(record?.review_faces || 0);
 }
 
-function nooraniaAcceptedFaces(record, kind) {
-  const evaluation =
-    kind === "lesson"
-      ? record?.lesson_evaluation
-      : record?.revision_evaluation;
-
-  if (!acceptedEvaluation(evaluation)) {
-    return 0;
-  }
-
-  return Number(
-    kind === "lesson"
-      ? record?.lesson_faces || 0
-      : record?.revision_faces || 0
-  );
-}
-
-function amountToFaces(amount, unit) {
-  const number = Number(amount || 0);
-
-  if (!Number.isFinite(number) || number <= 0) {
-    return 0;
-  }
-
-  if (unit === "lines") {
-    return roundFaces(number / 15);
-  }
-
-  return roundFaces(number);
-}
-
 function hasCompletePlanRange(fromSurah, fromAyah, toSurah, toAyah) {
   return Boolean(
     String(fromSurah || "").trim() &&
@@ -706,6 +623,445 @@ function monthlyTargetFaces(amount, unit, sessions) {
   }
 
   return roundFaces(number * count);
+}
+
+
+function normalizePlanDirection(value) {
+  return value === "backward"
+    ? "backward"
+    : "forward";
+}
+
+function hasPlanStart(surah, ayah) {
+  return Boolean(
+    String(surah || "").trim() &&
+    Number(ayah || 0) > 0
+  );
+}
+
+function totalDailyPlanAmount(amount, sessions) {
+  const daily = Number(amount || 0);
+  const count = Number(sessions || 0);
+
+  if (!Number.isFinite(daily) || daily <= 0 || count <= 0) {
+    return 0;
+  }
+
+  return Math.round((daily * count + Number.EPSILON) * 100) / 100;
+}
+
+function firstRpcRow(data) {
+  return Array.isArray(data)
+    ? data[0] || null
+    : data || null;
+}
+
+async function generateAutomaticQuranRange({
+  direction,
+  startSurah,
+  startAyah,
+  dailyAmount,
+  dailyUnit,
+  sessions,
+}) {
+  const normalizedDirection = normalizePlanDirection(direction);
+  const targetAmount = totalDailyPlanAmount(dailyAmount, sessions);
+
+  if (
+    !hasPlanStart(startSurah, startAyah) ||
+    targetAmount <= 0 ||
+    !["lines", "faces"].includes(dailyUnit)
+  ) {
+    return null;
+  }
+
+  if (normalizedDirection === "backward") {
+    /*
+      الاتجاه العكسي هنا يعني عكس ترتيب السور فقط.
+      داخل كل سورة تبقى القراءة طبيعية من أول آية إلى آخر آية:
+      الناس 1..6 -> الفلق 1..5 -> الإخلاص 1..4 ...
+    */
+    const { data, error } = await supabase.rpc(
+      "quran_generate_reverse_surah_assignment",
+      {
+        p_start_surah: startSurah,
+        p_start_ayah: Number(startAyah),
+        p_target_amount: targetAmount,
+        p_target_unit: dailyUnit,
+      }
+    );
+
+    if (error) throw error;
+
+    const generated = firstRpcRow(data);
+    if (!generated) return null;
+
+    return {
+      from_surah: startSurah,
+      from_ayah: Number(startAyah),
+      to_surah: generated.end_surah_name,
+      to_ayah: Number(generated.end_ayah),
+      target_faces: Number(generated.faces || 0),
+      target_lines: Number(generated.quran_lines || 0),
+      start_page: generated.start_page ?? null,
+      end_page: generated.end_page ?? null,
+      precision_label: generated.precision_label || "",
+      requested_amount: targetAmount,
+    };
+  }
+
+  const { data, error } = await supabase.rpc(
+    "quran_generate_assignment",
+    {
+      p_start_surah: startSurah,
+      p_start_ayah: Number(startAyah),
+      p_target_amount: targetAmount,
+      p_target_unit: dailyUnit,
+      p_limit_surah: null,
+      p_limit_ayah: null,
+    }
+  );
+
+  if (error) throw error;
+
+  const generated = firstRpcRow(data);
+  if (!generated) return null;
+
+  return {
+    from_surah: startSurah,
+    from_ayah: Number(startAyah),
+    to_surah: generated.end_surah_name,
+    to_ayah: Number(generated.end_ayah),
+    target_faces: Number(generated.faces || 0),
+    target_lines: Number(generated.quran_lines || 0),
+    start_page: generated.start_page ?? null,
+    end_page: generated.end_page ?? null,
+    precision_label: generated.precision_label || "",
+    requested_amount: targetAmount,
+  };
+}
+
+async function getQuranPositionInfo(surah, ayah) {
+  if (!hasPlanStart(surah, ayah)) return null;
+
+  const { data, error } = await supabase.rpc(
+    "quran_position_info",
+    {
+      p_surah: surah,
+      p_ayah: Number(ayah),
+    }
+  );
+
+  if (error) throw error;
+  return firstRpcRow(data);
+}
+
+async function pickDirectionalEndpoint(first, second, direction) {
+  const candidates = [first, second].filter(
+    (item) => hasPlanStart(item?.surah, item?.ayah)
+  );
+
+  if (!candidates.length) return null;
+  if (candidates.length === 1) return candidates[0];
+
+  const infos = await Promise.all(
+    candidates.map(async (item) => ({
+      item,
+      info: await getQuranPositionInfo(item.surah, item.ayah),
+    }))
+  );
+
+  const valid = infos.filter(
+    (entry) => Number(entry.info?.source_id || 0) > 0
+  );
+
+  if (!valid.length) return candidates[candidates.length - 1];
+
+  if (normalizePlanDirection(direction) === "backward") {
+    /*
+      ترتيب المسار: السور تنازليًا، والآيات داخل السورة تصاعديًا.
+      لذلك "الأبعد" في المسار هو السورة ذات الرقم الأصغر،
+      أو الآية ذات الرقم الأكبر عندما تكون السورة نفسها.
+    */
+    valid.sort((a, b) => {
+      const aSurah = Number(a.info?.surah_no || 0);
+      const bSurah = Number(b.info?.surah_no || 0);
+
+      if (aSurah !== bSurah) {
+        return bSurah - aSurah;
+      }
+
+      return Number(a.info?.ayah || 0) - Number(b.info?.ayah || 0);
+    });
+
+    return valid[valid.length - 1].item;
+  }
+
+  valid.sort((a, b) =>
+    Number(a.info.source_id) - Number(b.info.source_id)
+  );
+
+  return valid[valid.length - 1].item;
+}
+
+async function moveOneAyahFrom(position, direction) {
+  if (!hasPlanStart(position?.surah, position?.ayah)) {
+    return null;
+  }
+
+  const rpcName = normalizePlanDirection(direction) === "backward"
+    ? "quran_next_reverse_surah_position"
+    : "quran_next_ayah";
+
+  const { data, error } = await supabase.rpc(rpcName, {
+    p_surah: position.surah,
+    p_ayah: Number(position.ayah),
+  });
+
+  if (error) throw error;
+
+  const moved = firstRpcRow(data);
+
+  if (!moved) {
+    return position;
+  }
+
+  return {
+    surah: moved.surah_name,
+    ayah: Number(moved.ayah),
+  };
+}
+
+async function resolveContinuationStart({
+  records,
+  type,
+  direction,
+  fallbackSurah,
+  fallbackAyah,
+}) {
+  const sorted = [...(records || [])].sort((a, b) => {
+    const dateCompare = String(b.recitation_date || "").localeCompare(
+      String(a.recitation_date || "")
+    );
+
+    if (dateCompare !== 0) return dateCompare;
+    return Number(b.id || 0) - Number(a.id || 0);
+  });
+
+  for (const record of sorted) {
+    const evaluation = type === "memorization"
+      ? record.lesson_evaluation
+      : record.review_evaluation;
+
+    if (!acceptedEvaluation(evaluation)) continue;
+
+    const first = type === "memorization"
+      ? {
+          surah: record.from_surah,
+          ayah: record.from_ayah,
+        }
+      : {
+          surah: record.review_surah,
+          ayah: record.review_from_ayah,
+        };
+
+    const second = type === "memorization"
+      ? {
+          surah: record.to_surah,
+          ayah: record.to_ayah,
+        }
+      : {
+          surah: record.review_to_surah || record.review_surah,
+          ayah: record.review_to_ayah,
+        };
+
+    if (
+      !hasPlanStart(first.surah, first.ayah) &&
+      !hasPlanStart(second.surah, second.ayah)
+    ) {
+      continue;
+    }
+
+    const actualEnd = await pickDirectionalEndpoint(
+      first,
+      second,
+      direction
+    );
+
+    if (actualEnd) {
+      return moveOneAyahFrom(actualEnd, direction);
+    }
+  }
+
+  if (hasPlanStart(fallbackSurah, fallbackAyah)) {
+    return moveOneAyahFrom(
+      {
+        surah: fallbackSurah,
+        ayah: Number(fallbackAyah),
+      },
+      direction
+    );
+  }
+
+  return null;
+}
+
+async function applyAutomaticRangeToSnapshot(row, prefix) {
+  const autoField = `${prefix}_auto_range`;
+  const directionField = `${prefix}_direction`;
+  const fromSurahField = `${prefix}_from_surah`;
+  const fromAyahField = `${prefix}_from_ayah`;
+  const toSurahField = `${prefix}_to_surah`;
+  const toAyahField = `${prefix}_to_ayah`;
+  const amountField = `${prefix}_daily_amount`;
+  const unitField = `${prefix}_daily_unit`;
+  const targetField = `${prefix}_target_faces`;
+
+  if (!row?.[autoField]) return row;
+
+  const generated = await generateAutomaticQuranRange({
+    direction: row?.[directionField],
+    startSurah: row?.[fromSurahField],
+    startAyah: row?.[fromAyahField],
+    dailyAmount: row?.[amountField],
+    dailyUnit: row?.[unitField],
+    sessions: row?.planned_sessions,
+  });
+
+  if (!generated) {
+    return {
+      ...row,
+      [toSurahField]: "",
+      [toAyahField]: "",
+      [targetField]: 0,
+      [`${prefix}_target_lines`]: 0,
+      [`${prefix}_start_page`]: null,
+      [`${prefix}_end_page`]: null,
+      [`${prefix}_route_error`]: "",
+    };
+  }
+
+  return {
+    ...row,
+    [toSurahField]: generated.to_surah || "",
+    [toAyahField]: generated.to_ayah || "",
+    [targetField]: roundFaces(generated.target_faces || 0),
+    [`${prefix}_target_lines`]: Number(generated.target_lines || 0),
+    [`${prefix}_start_page`]: generated.start_page ?? null,
+    [`${prefix}_end_page`]: generated.end_page ?? null,
+    [`${prefix}_precision_label`]: generated.precision_label || "",
+    [`${prefix}_route_error`]: "",
+  };
+}
+
+async function buildNextMonthPlanSnapshot({
+  row,
+  previousPlan,
+  previousRecitations,
+}) {
+  if (!previousPlan) return row;
+
+  const memorizationDirection = normalizePlanDirection(
+    previousPlan.memorization_direction
+  );
+  const revisionDirection = normalizePlanDirection(
+    previousPlan.revision_direction
+  );
+
+  const [memorizationStart, revisionStart] = await Promise.all([
+    resolveContinuationStart({
+      records: previousRecitations,
+      type: "memorization",
+      direction: memorizationDirection,
+      fallbackSurah: previousPlan.memorization_to_surah,
+      fallbackAyah: previousPlan.memorization_to_ayah,
+    }),
+    resolveContinuationStart({
+      records: previousRecitations,
+      type: "revision",
+      direction: revisionDirection,
+      fallbackSurah: previousPlan.revision_to_surah,
+      fallbackAyah: previousPlan.revision_to_ayah,
+    }),
+  ]);
+
+  const oldSessions = Number(previousPlan.planned_sessions || 0);
+
+  const oldMemDaily =
+    previousPlan.memorization_daily_amount ??
+    inferDailyPlan(
+      previousPlan.memorization_target_faces,
+      oldSessions
+    ).amount;
+
+  const oldMemUnit =
+    previousPlan.memorization_daily_unit ||
+    inferDailyPlan(
+      previousPlan.memorization_target_faces,
+      oldSessions
+    ).unit ||
+    "lines";
+
+  const oldRevDaily =
+    previousPlan.revision_daily_amount ??
+    inferDailyPlan(
+      previousPlan.revision_target_faces,
+      oldSessions
+    ).amount;
+
+  const oldRevUnit =
+    previousPlan.revision_daily_unit ||
+    inferDailyPlan(
+      previousPlan.revision_target_faces,
+      oldSessions
+    ).unit ||
+    "faces";
+
+  let next = {
+    ...row,
+
+    memorization_direction: memorizationDirection,
+    memorization_auto_range: true,
+    memorization_from_surah: memorizationStart?.surah || "",
+    memorization_from_ayah: memorizationStart?.ayah || "",
+    memorization_to_surah: "",
+    memorization_to_ayah: "",
+    memorization_daily_amount: oldMemDaily,
+    memorization_daily_unit: oldMemUnit,
+    memorization_target_faces: 0,
+
+    revision_direction: revisionDirection,
+    revision_auto_range: true,
+    revision_from_surah: revisionStart?.surah || "",
+    revision_from_ayah: revisionStart?.ayah || "",
+    revision_to_surah: "",
+    revision_to_ayah: "",
+    revision_daily_amount: oldRevDaily,
+    revision_daily_unit: oldRevUnit,
+    revision_target_faces: 0,
+
+    noorania_lesson_daily_amount:
+      previousPlan.noorania_lesson_daily_amount ?? "",
+    noorania_lesson_daily_unit:
+      previousPlan.noorania_lesson_daily_unit || "lesson",
+    noorania_revision_daily_amount:
+      previousPlan.noorania_revision_daily_amount ?? "",
+    noorania_revision_daily_unit:
+      previousPlan.noorania_revision_daily_unit || "faces",
+
+    recitation_days_snapshot: row.recitation_days,
+    notes: "",
+    customization_reason: "",
+    plan_source: "copied_previous",
+    status: "draft",
+    auto_continued_from_previous: true,
+    dirty: true,
+  };
+
+  next = await applyAutomaticRangeToSnapshot(next, "memorization");
+  next = await applyAutomaticRangeToSnapshot(next, "revision");
+
+  return next;
 }
 
 function inferDailyPlan(targetFaces, sessions) {
@@ -775,20 +1131,6 @@ function formatPagesAndLines(faces) {
   }
 
   return pageText || lineText || "0";
-}
-
-function formatDailyAmount(amount, unit) {
-  const number = Number(amount || 0);
-
-  if (!number) {
-    return "غير محدد";
-  }
-
-  if (unit === "lines") {
-    return `${formatFaces(number / 15)} وجه • ${number} سطر`;
-  }
-
-  return `${formatFaces(number)} وجه`;
 }
 
 function isQuranGoal(goal) {
@@ -1307,6 +1649,18 @@ function createEmptyPlanData() {
     planned_sessions:
       0,
 
+    memorization_direction:
+      "forward",
+
+    memorization_auto_range:
+      true,
+
+    revision_direction:
+      "forward",
+
+    revision_auto_range:
+      true,
+
     noorania_lesson_daily_amount:
       "",
 
@@ -1481,6 +1835,22 @@ export default function MonthlyPlan() {
     createEmptyPlanData()
   );
 
+  const [
+    autoSaving,
+    setAutoSaving,
+  ] = useState(false);
+
+  const [
+    lastAutoSavedAt,
+    setLastAutoSavedAt,
+  ] = useState(null);
+
+  const routeRequestRef =
+    useRef(new Map());
+
+  const routeTimerRef =
+    useRef(new Map());
+
   /* =====================================================
      Period
   ===================================================== */
@@ -1542,6 +1912,27 @@ export default function MonthlyPlan() {
       [rows]
     );
 
+  const hasPendingRouteGeneration =
+    useMemo(
+      () =>
+        rows.some(
+          (row) =>
+            row.memorization_generating ||
+            row.revision_generating
+        ),
+      [rows]
+    );
+
+  useEffect(() => {
+    return () => {
+      routeTimerRef.current.forEach((timer) =>
+        clearTimeout(timer)
+      );
+
+      routeTimerRef.current.clear();
+    };
+  }, []);
+
   useEffect(() => {
     if (
       !hasUnsavedChanges
@@ -1570,6 +1961,54 @@ export default function MonthlyPlan() {
     };
   }, [
     hasUnsavedChanges,
+  ]);
+
+  useEffect(() => {
+    if (
+      !hasUnsavedChanges ||
+      hasPendingRouteGeneration ||
+      loading ||
+      saving ||
+      autoSaving ||
+      submitting ||
+      withdrawing ||
+      copying
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setAutoSaving(true);
+
+      try {
+        const saved = await saveAll({
+          silent: true,
+          reload: false,
+          controlLoading: false,
+        });
+
+        if (saved) {
+          setLastAutoSavedAt(new Date());
+        }
+      } finally {
+        setAutoSaving(false);
+      }
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [
+    rows,
+    hasUnsavedChanges,
+    hasPendingRouteGeneration,
+    loading,
+    saving,
+    autoSaving,
+    submitting,
+    withdrawing,
+    copying,
+    selectedHalaqa,
+    hijriYear,
+    hijriMonth,
   ]);
 
   function confirmDiscard() {
@@ -2113,6 +2552,82 @@ export default function MonthlyPlan() {
         );
 
       /* ===========================================
+         الشهر السابق للاستمرار التلقائي
+      =========================================== */
+
+      const previousMonth =
+        getPreviousHijriMonth(
+          hijriYear,
+          hijriMonth
+        );
+
+      const previousPeriod =
+        getHijriMonthRange(
+          previousMonth.year,
+          previousMonth.month
+        );
+
+      let {
+        data: previousPlans,
+        error: previousPlansError,
+      } = await supabase
+        .from("monthly_plans")
+        .select("*")
+        .eq("halaqa_id", Number(selectedHalaqa))
+        .eq("plan_month", previousPeriod.start)
+        .in("student_id", studentIds);
+
+      if (previousPlansError) throw previousPlansError;
+
+      if (!previousPlans?.length) {
+        const fallbackPrevious = await supabase
+          .from("monthly_plans")
+          .select("*")
+          .eq("halaqa_id", Number(selectedHalaqa))
+          .eq("hijri_year", previousMonth.year)
+          .eq("hijri_month", previousMonth.month)
+          .in("student_id", studentIds);
+
+        if (fallbackPrevious.error) throw fallbackPrevious.error;
+        previousPlans = fallbackPrevious.data || [];
+      }
+
+      const {
+        data: previousRecitations,
+        error: previousRecitationsError,
+      } = await supabase
+        .from("recitations")
+        .select(`
+          id, student_id, recitation_date,
+          from_surah, from_ayah, to_surah, to_ayah, lesson_evaluation,
+          review_surah, review_from_ayah, review_to_surah, review_to_ayah, review_evaluation
+        `)
+        .eq("halaqa_id", Number(selectedHalaqa))
+        .in("student_id", studentIds)
+        .gte("recitation_date", previousPeriod.start)
+        .lte("recitation_date", previousPeriod.end)
+        .order("recitation_date", { ascending: false })
+        .order("id", { ascending: false });
+
+      if (previousRecitationsError) throw previousRecitationsError;
+
+      const previousPlanMap = new Map(
+        (previousPlans || []).map((plan) => [
+          Number(plan.student_id),
+          plan,
+        ])
+      );
+
+      const previousRecitationMap = new Map();
+
+      (previousRecitations || []).forEach((record) => {
+        const studentId = Number(record.student_id);
+        const list = previousRecitationMap.get(studentId) || [];
+        list.push(record);
+        previousRecitationMap.set(studentId, list);
+      });
+
+      /* ===========================================
          سياسة جنب الدرس
       =========================================== */
 
@@ -2623,6 +3138,33 @@ export default function MonthlyPlan() {
                 holiday_dates:
                   holidayDates,
 
+                stored_planned_sessions:
+                  Number(plan?.planned_sessions || 0),
+
+                memorization_direction:
+                  normalizePlanDirection(plan?.memorization_direction),
+
+                memorization_auto_range:
+                  plan?.memorization_auto_range ?? (plan ? false : true),
+
+                revision_direction:
+                  normalizePlanDirection(plan?.revision_direction),
+
+                revision_auto_range:
+                  plan?.revision_auto_range ?? (plan ? false : true),
+
+                memorization_generating:
+                  false,
+
+                revision_generating:
+                  false,
+
+                memorization_route_error:
+                  "",
+
+                revision_route_error:
+                  "",
+
                 memorization_daily_amount:
                   memDailyAmount,
 
@@ -2823,9 +3365,97 @@ export default function MonthlyPlan() {
               )
           );
 
-      setRows(
-        result
+      const selectedIsCurrentMonth =
+        Number(hijriYear) === Number(CURRENT_HIJRI.year) &&
+        Number(hijriMonth) === Number(CURRENT_HIJRI.month);
+
+      const smartRows = await Promise.all(
+        result.map(async (row) => {
+          const currentPlan = planMap.get(Number(row.student_id)) || null;
+
+          if (currentPlan) {
+            // مجرد فتح شهر تاريخي لا يجب أن يعيد حساب الخطة أو يحفظها تلقائيًا.
+            if (!selectedIsCurrentMonth) {
+              return row;
+            }
+            const sessionsChanged =
+              Number(currentPlan.planned_sessions || 0) !==
+              Number(row.planned_sessions || 0);
+
+            let next = { ...row };
+            let changed = false;
+
+            if (
+              next.memorization_auto_range &&
+              (sessionsChanged ||
+                !hasCompletePlanRange(
+                  next.memorization_from_surah,
+                  next.memorization_from_ayah,
+                  next.memorization_to_surah,
+                  next.memorization_to_ayah
+                ))
+            ) {
+              const regenerated = await applyAutomaticRangeToSnapshot(
+                next,
+                "memorization"
+              );
+
+              changed =
+                regenerated.memorization_to_surah !== next.memorization_to_surah ||
+                Number(regenerated.memorization_to_ayah || 0) !== Number(next.memorization_to_ayah || 0) ||
+                Number(regenerated.memorization_target_faces || 0) !== Number(next.memorization_target_faces || 0);
+
+              next = regenerated;
+            }
+
+            if (
+              next.revision_auto_range &&
+              (sessionsChanged ||
+                !hasCompletePlanRange(
+                  next.revision_from_surah,
+                  next.revision_from_ayah,
+                  next.revision_to_surah,
+                  next.revision_to_ayah
+                ))
+            ) {
+              const regenerated = await applyAutomaticRangeToSnapshot(
+                next,
+                "revision"
+              );
+
+              changed =
+                changed ||
+                regenerated.revision_to_surah !== next.revision_to_surah ||
+                Number(regenerated.revision_to_ayah || 0) !== Number(next.revision_to_ayah || 0) ||
+                Number(regenerated.revision_target_faces || 0) !== Number(next.revision_target_faces || 0);
+
+              next = regenerated;
+            }
+
+            return changed
+              ? { ...next, dirty: true }
+              : next;
+          }
+
+          // الاستمرار التلقائي من الشهر السابق يحدث للشهر الحالي فقط.
+          // الأشهر التاريخية تبقى للعرض أو للتوليد اليدوي المقصود.
+          if (!selectedIsCurrentMonth) return row;
+
+          const previousPlan =
+            previousPlanMap.get(Number(row.student_id)) || null;
+
+          if (!previousPlan) return row;
+
+          return buildNextMonthPlanSnapshot({
+            row,
+            previousPlan,
+            previousRecitations:
+              previousRecitationMap.get(Number(row.student_id)) || [],
+          });
+        })
       );
+
+      setRows(smartRows);
 
     } catch (error) {
       console.error(
@@ -2843,12 +3473,23 @@ export default function MonthlyPlan() {
     }
   }
 
-  async function calculatePlanRange(fromSurah, fromAyah, toSurah, toAyah) {
+  async function calculatePlanRange(
+    fromSurah,
+    fromAyah,
+    toSurah,
+    toAyah,
+    direction = "forward"
+  ) {
     if (!hasCompletePlanRange(fromSurah, fromAyah, toSurah, toAyah)) {
       return null;
     }
 
-    const { data, error } = await supabase.rpc("quran_range_metrics", {
+    const backward = normalizePlanDirection(direction) === "backward";
+    const rpcName = backward
+      ? "quran_reverse_surah_range_metrics"
+      : "quran_range_metrics";
+
+    const { data, error } = await supabase.rpc(rpcName, {
       p_from_surah: fromSurah,
       p_from_ayah: Number(fromAyah),
       p_to_surah: toSurah,
@@ -2865,7 +3506,8 @@ export default function MonthlyPlan() {
         snapshot[`${prefix}_from_surah`],
         snapshot[`${prefix}_from_ayah`],
         snapshot[`${prefix}_to_surah`],
-        snapshot[`${prefix}_to_ayah`]
+        snapshot[`${prefix}_to_ayah`],
+        snapshot[`${prefix}_direction`]
       );
 
       setRows((current) =>
@@ -2892,13 +3534,105 @@ export default function MonthlyPlan() {
           return {
             ...row,
             [`${prefix}_route_error`]:
-              String(error?.message || "").includes("QURAN_RANGE_REVERSED")
-                ? "نهاية المسار تسبق بدايته"
+              /QURAN_RANGE_REVERSED|QURAN_REVERSE_SURAH_RANGE_INVALID/.test(
+                String(error?.message || "")
+              )
+                ? "نهاية المسار لا توافق اتجاه السير المحدد"
                 : "تعذر حساب المسار من المصحف",
           };
         })
       );
     }
+  }
+
+
+  async function regenerateAutoRoute(studentId, prefix, snapshot) {
+    const requestKey = `${studentId}-${prefix}`;
+    const requestToken = Number(routeRequestRef.current.get(requestKey) || 0) + 1;
+
+    routeRequestRef.current.set(requestKey, requestToken);
+
+    setRows((current) =>
+      current.map((row) =>
+        Number(row.student_id) === Number(studentId)
+          ? {
+              ...row,
+              [`${prefix}_generating`]: true,
+              [`${prefix}_route_error`]: "",
+            }
+          : row
+      )
+    );
+
+    try {
+      const next = await applyAutomaticRangeToSnapshot(
+        {
+          ...snapshot,
+          [`${prefix}_auto_range`]: true,
+        },
+        prefix
+      );
+
+      if (routeRequestRef.current.get(requestKey) !== requestToken) {
+        return;
+      }
+
+      setRows((current) =>
+        current.map((row) => {
+          if (Number(row.student_id) !== Number(studentId)) return row;
+
+          return {
+            ...row,
+            [`${prefix}_to_surah`]: next[`${prefix}_to_surah`] || "",
+            [`${prefix}_to_ayah`]: next[`${prefix}_to_ayah`] || "",
+            [`${prefix}_target_faces`]: Number(next[`${prefix}_target_faces`] || 0),
+            [`${prefix}_target_lines`]: Number(next[`${prefix}_target_lines`] || 0),
+            [`${prefix}_start_page`]: next[`${prefix}_start_page`] ?? null,
+            [`${prefix}_end_page`]: next[`${prefix}_end_page`] ?? null,
+            [`${prefix}_precision_label`]: next[`${prefix}_precision_label`] || "",
+            [`${prefix}_auto_range`]: true,
+            [`${prefix}_generating`]: false,
+            [`${prefix}_route_error`]: "",
+            dirty: true,
+          };
+        })
+      );
+    } catch (error) {
+      if (routeRequestRef.current.get(requestKey) !== requestToken) {
+        return;
+      }
+
+      console.error("AUTO PLAN QURAN RANGE:", error);
+
+      setRows((current) =>
+        current.map((row) => {
+          if (Number(row.student_id) !== Number(studentId)) return row;
+
+          return {
+            ...row,
+            [`${prefix}_generating`]: false,
+            [`${prefix}_route_error`]:
+              String(error?.message || "").includes("QURAN_RANGE_REVERSED")
+                ? "اتجاه المسار لا يطابق نقطة البداية"
+                : "تعذر حساب نهاية الخطة تلقائيًا",
+          };
+        })
+      );
+    }
+  }
+
+  function scheduleAutoRoute(studentId, prefix, snapshot) {
+    const key = `${studentId}-${prefix}`;
+    const oldTimer = routeTimerRef.current.get(key);
+
+    if (oldTimer) clearTimeout(oldTimer);
+
+    const timer = setTimeout(() => {
+      routeTimerRef.current.delete(key);
+      void regenerateAutoRoute(studentId, prefix, snapshot);
+    }, 320);
+
+    routeTimerRef.current.set(key, timer);
   }
 
   /* =====================================================
@@ -2924,10 +3658,31 @@ export default function MonthlyPlan() {
       return;
     }
 
+    const routeField = field.match(
+      /^(memorization|revision)_(from_surah|from_ayah|to_surah|to_ayah|daily_amount|daily_unit|direction|auto_range)$/
+    );
+
+    const prefix = routeField?.[1] || null;
+    const part = routeField?.[2] || null;
+
     const nextSnapshot = {
       ...currentRow,
       [field]: value,
+      dirty: true,
     };
+
+    if (prefix && ["to_surah", "to_ayah"].includes(part)) {
+      nextSnapshot[`${prefix}_auto_range`] = false;
+    }
+
+    if (prefix && part === "direction") {
+      nextSnapshot[`${prefix}_direction`] = normalizePlanDirection(value);
+      nextSnapshot[`${prefix}_auto_range`] = true;
+    }
+
+    if (prefix && part === "auto_range") {
+      nextSnapshot[`${prefix}_auto_range`] = Boolean(value);
+    }
 
     setRows((current) =>
       current.map((row) => {
@@ -2936,21 +3691,25 @@ export default function MonthlyPlan() {
         }
 
         return {
-          ...row,
-          [field]: value,
+          ...nextSnapshot,
           plan_source:
             ["notes", "customization_reason"].includes(field)
               ? row.plan_source
               : "individual",
-          dirty: true,
         };
       })
     );
 
-    const routeMatch = field.match(/^(memorization|revision)_(from_surah|from_ayah|to_surah|to_ayah)$/);
+    if (!prefix) return;
 
-    if (routeMatch) {
-      const prefix = routeMatch[1];
+    const autoEnabled = Boolean(nextSnapshot[`${prefix}_auto_range`]);
+
+    if (autoEnabled) {
+      scheduleAutoRoute(studentId, prefix, nextSnapshot);
+      return;
+    }
+
+    if (["from_surah", "from_ayah", "to_surah", "to_ayah", "direction"].includes(part)) {
       void refreshRouteTarget(studentId, prefix, nextSnapshot);
     }
   }
@@ -3025,6 +3784,14 @@ export default function MonthlyPlan() {
   ===================================================== */
 
   function validateForSubmit() {
+    if (hasPendingRouteGeneration) {
+      showToast(
+        "انتظر لحظات حتى يكتمل حساب نهاية الخطة تلقائيًا",
+        "info"
+      );
+      return false;
+    }
+
     if (!validateNumbers()) {
       return false;
     }
@@ -3228,6 +3995,26 @@ export default function MonthlyPlan() {
       planned_sessions:
         Number(
           row.planned_sessions || 0
+        ),
+
+      memorization_direction:
+        normalizePlanDirection(
+          row.memorization_direction
+        ),
+
+      memorization_auto_range:
+        Boolean(
+          row.memorization_auto_range
+        ),
+
+      revision_direction:
+        normalizePlanDirection(
+          row.revision_direction
+        ),
+
+      revision_auto_range:
+        Boolean(
+          row.revision_auto_range
         ),
 
       noorania_lesson_daily_amount:
@@ -3783,315 +4570,121 @@ export default function MonthlyPlan() {
   ===================================================== */
 
   async function copyPreviousMonth() {
-    if (
-      !selectedHalaqa
-    ) {
-      return;
-    }
+    if (!selectedHalaqa || !period) return;
 
-    if (
-      !confirmDiscard()
-    ) {
-      return;
-    }
+    if (!confirmDiscard()) return;
 
-    const previous =
-      getPreviousHijriMonth(
-        hijriYear,
-        hijriMonth
-      );
+    const previous = getPreviousHijriMonth(
+      hijriYear,
+      hijriMonth
+    );
 
-    const previousPeriod =
-      getHijriMonthRange(
-        previous.year,
-        previous.month
-      );
+    const previousPeriod = getHijriMonthRange(
+      previous.year,
+      previous.month
+    );
 
-    const confirmed =
-      window.confirm(
-        `نسخ خطط ${
-          HIJRI_MONTHS[
-            previous.month - 1
-          ]
-        } ${previous.year} هـ إلى ${
-          HIJRI_MONTHS[
-            hijriMonth - 1
-          ]
-        } ${hijriYear} هـ؟\n\nسيتم نسخ النطاقات والأهداف للطلاب الموجودين في الشهر الحالي.`
-      );
+    const confirmed = window.confirm(
+      `إعادة توليد خطة ${HIJRI_MONTHS[hijriMonth - 1]} ${hijriYear} هـ من آخر موضع فعلي في ${HIJRI_MONTHS[previous.month - 1]} ${previous.year} هـ؟\n\nسيحافظ النظام على المقدار اليومي والاتجاه، ويحسب النهاية الجديدة حسب أيام التسميع الفعلية بعد خصم الإجازات.`
+    );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     setCopying(true);
 
     try {
-      let {
-        data:
-          previousPlans,
-        error,
-      } =
-        await supabase
-          .from(
-            "monthly_plans"
-          )
+      let { data: previousPlans, error } = await supabase
+        .from("monthly_plans")
+        .select("*")
+        .eq("halaqa_id", Number(selectedHalaqa))
+        .eq("plan_month", previousPeriod.start);
+
+      if (error) throw error;
+
+      if (!previousPlans?.length) {
+        const fallback = await supabase
+          .from("monthly_plans")
           .select("*")
-          .eq(
-            "halaqa_id",
-            Number(
-              selectedHalaqa
-            )
-          )
-          .eq(
-            "plan_month",
-            previousPeriod.start
-          );
+          .eq("halaqa_id", Number(selectedHalaqa))
+          .eq("hijri_year", previous.year)
+          .eq("hijri_month", previous.month);
 
-      if (error) {
-        throw error;
+        if (fallback.error) throw fallback.error;
+        previousPlans = fallback.data || [];
       }
 
-      /*
-        fallback بالهجري
-      */
-
-      if (
-        !previousPlans ||
-        previousPlans.length ===
-          0
-      ) {
-        const result =
-          await supabase
-            .from(
-              "monthly_plans"
-            )
-            .select("*")
-            .eq(
-              "halaqa_id",
-              Number(
-                selectedHalaqa
-              )
-            )
-            .eq(
-              "hijri_year",
-              previous.year
-            )
-            .eq(
-              "hijri_month",
-              previous.month
-            );
-
-        if (
-          result.error
-        ) {
-          throw result.error;
-        }
-
-        previousPlans =
-          result.data ||
-          [];
-      }
-
-      if (
-        previousPlans.length ===
-        0
-      ) {
+      if (!previousPlans.length) {
         showToast(
           "لا توجد خطة محفوظة للشهر السابق",
           "info"
         );
-
         return;
       }
 
-      const previousMap =
-        new Map(
-          previousPlans.map(
-            (plan) => [
-              Number(
-                plan.student_id
-              ),
-              plan,
-            ]
-          )
-        );
+      const studentIds = rows.map((row) => Number(row.student_id));
+
+      const { data: previousRecitations, error: recitationsError } = await supabase
+        .from("recitations")
+        .select(`
+          id, student_id, recitation_date,
+          from_surah, from_ayah, to_surah, to_ayah, lesson_evaluation,
+          review_surah, review_from_ayah, review_to_surah, review_to_ayah, review_evaluation
+        `)
+        .eq("halaqa_id", Number(selectedHalaqa))
+        .in("student_id", studentIds)
+        .gte("recitation_date", previousPeriod.start)
+        .lte("recitation_date", previousPeriod.end)
+        .order("recitation_date", { ascending: false })
+        .order("id", { ascending: false });
+
+      if (recitationsError) throw recitationsError;
+
+      const previousMap = new Map(
+        previousPlans.map((plan) => [
+          Number(plan.student_id),
+          plan,
+        ])
+      );
+
+      const recitationMap = new Map();
+      (previousRecitations || []).forEach((record) => {
+        const studentId = Number(record.student_id);
+        const list = recitationMap.get(studentId) || [];
+        list.push(record);
+        recitationMap.set(studentId, list);
+      });
 
       let copiedCount = 0;
 
-      setRows(
-        (current) =>
-          current.map(
-            (row) => {
-              if (
-                isLockedPlan(
-                  row
-                )
-              ) {
-                return row;
-              }
+      const nextRows = await Promise.all(
+        rows.map(async (row) => {
+          if (isLockedPlan(row)) return row;
 
-              const old =
-                previousMap.get(
-                  Number(
-                    row.student_id
-                  )
-                );
+          const previousPlan = previousMap.get(Number(row.student_id));
+          if (!previousPlan) return row;
 
-              if (!old) {
-                return row;
-              }
+          copiedCount += 1;
 
-              copiedCount += 1;
-
-              const oldSessions =
-                Number(old.planned_sessions || 0);
-
-              const oldMemDaily =
-                old.memorization_daily_amount ??
-                inferDailyPlan(
-                  old.memorization_target_faces,
-                  oldSessions
-                ).amount;
-
-              const oldMemUnit =
-                old.memorization_daily_unit ||
-                inferDailyPlan(
-                  old.memorization_target_faces,
-                  oldSessions
-                ).unit ||
-                "lines";
-
-              const oldRevDaily =
-                old.revision_daily_amount ??
-                inferDailyPlan(
-                  old.revision_target_faces,
-                  oldSessions
-                ).amount;
-
-              const oldRevUnit =
-                old.revision_daily_unit ||
-                inferDailyPlan(
-                  old.revision_target_faces,
-                  oldSessions
-                ).unit ||
-                "faces";
-
-              return {
-                ...row,
-
-                memorization_from_surah:
-                  old.memorization_from_surah ||
-                  "",
-
-                memorization_from_ayah:
-                  old.memorization_from_ayah ??
-                  "",
-
-                memorization_to_surah:
-                  old.memorization_to_surah ||
-                  "",
-
-                memorization_to_ayah:
-                  old.memorization_to_ayah ??
-                  "",
-
-                memorization_daily_amount:
-                  oldMemDaily,
-
-                memorization_daily_unit:
-                  oldMemUnit,
-
-                memorization_target_faces:
-                  monthlyTargetFaces(
-                    oldMemDaily,
-                    oldMemUnit,
-                    row.planned_sessions
-                  ),
-
-                revision_from_surah:
-                  old.revision_from_surah ||
-                  "",
-
-                revision_from_ayah:
-                  old.revision_from_ayah ??
-                  "",
-
-                revision_to_surah:
-                  old.revision_to_surah ||
-                  "",
-
-                revision_to_ayah:
-                  old.revision_to_ayah ??
-                  "",
-
-                revision_daily_amount:
-                  oldRevDaily,
-
-                revision_daily_unit:
-                  oldRevUnit,
-
-                revision_target_faces:
-                  monthlyTargetFaces(
-                    oldRevDaily,
-                    oldRevUnit,
-                    row.planned_sessions
-                  ),
-
-                noorania_lesson_daily_amount:
-                  old.noorania_lesson_daily_amount ?? "",
-
-                noorania_lesson_daily_unit:
-                  old.noorania_lesson_daily_unit || "lesson",
-
-                noorania_revision_daily_amount:
-                  old.noorania_revision_daily_amount ?? "",
-
-                noorania_revision_daily_unit:
-                  old.noorania_revision_daily_unit || "faces",
-
-                recitation_days_snapshot:
-                  row.recitation_days,
-
-                /*
-                  لا ننسخ ملاحظات الشهر
-                  لأنها قد تكون خاصة
-                  بالشهر السابق.
-                */
-
-                notes:
-                  "",
-
-                customization_reason:
-                  "",
-
-                plan_source:
-                  "copied_previous",
-
-                status:
-                  "draft",
-
-                dirty:
-                  true,
-              };
-            }
-          )
+          return buildNextMonthPlanSnapshot({
+            row,
+            previousPlan,
+            previousRecitations:
+              recitationMap.get(Number(row.student_id)) || [],
+          });
+        })
       );
 
+      setRows(nextRows);
+
       showToast(
-        `تم نسخ خطط ${copiedCount} طالب`,
+        `تم توليد خطط ${copiedCount} طالب من آخر موضع فعلي`,
         "success"
       );
-
     } catch (error) {
-      console.error(
-        "COPY PREVIOUS PLAN:",
-        error
-      );
+      console.error("SMART PREVIOUS PLAN:", error);
 
       showToast(
-        error.message ||
-          "تعذر نسخ الشهر السابق",
+        error.message || "تعذر توليد الخطة من الشهر السابق",
         "error"
       );
     } finally {
@@ -4103,7 +4696,7 @@ export default function MonthlyPlan() {
      APPLY HALAQA TEMPLATE
   ===================================================== */
 
-  function applyHalaqaTemplate() {
+  async function applyHalaqaTemplate() {
     const hasQuran =
       Number(template.memorization_daily_amount || 0) > 0 ||
       Number(template.revision_daily_amount || 0) > 0;
@@ -4121,71 +4714,76 @@ export default function MonthlyPlan() {
     }
 
     const confirmed = window.confirm(
-      "سيتم تطبيق المقادير اليومية على جميع الطلاب القابلين للتعديل، مع حساب الهدف الشهري لكل طالب حسب أيام تسميعه الفعلية."
+      "سيتم تطبيق المقادير اليومية على جميع الطلاب القابلين للتعديل، ثم يعاد حساب نهاية الخطة تلقائيًا لكل طالب لديه نقطة بداية حسب أيام تسميعه الفعلية بعد خصم الإجازات."
     );
 
-    if (!confirmed) {
-      return;
+    if (!confirmed) return;
+
+    setLoading(true);
+
+    try {
+      const nextRows = await Promise.all(
+        rows.map(async (row) => {
+          if (isLockedPlan(row)) return row;
+
+          const quranStudent = isQuranGoal(row.learning_goal);
+          const nooraniaStudent = isNooraniaGoal(row.learning_goal);
+
+          let next = {
+            ...row,
+            memorization_daily_amount:
+              quranStudent ? template.memorization_daily_amount : "",
+            memorization_daily_unit:
+              quranStudent ? template.memorization_daily_unit : "lines",
+            revision_daily_amount:
+              quranStudent ? template.revision_daily_amount : "",
+            revision_daily_unit:
+              quranStudent ? template.revision_daily_unit : "faces",
+            memorization_auto_range:
+              quranStudent ? true : row.memorization_auto_range,
+            revision_auto_range:
+              quranStudent ? true : row.revision_auto_range,
+            noorania_lesson_daily_amount:
+              nooraniaStudent ? template.noorania_lesson_daily_amount : "",
+            noorania_lesson_daily_unit:
+              nooraniaStudent ? template.noorania_lesson_daily_unit : "lesson",
+            noorania_revision_daily_amount:
+              nooraniaStudent ? template.noorania_revision_daily_amount : "",
+            noorania_revision_daily_unit:
+              nooraniaStudent ? template.noorania_revision_daily_unit : "faces",
+            recitation_days_snapshot: row.recitation_days,
+            notes: template.notes || row.notes,
+            customization_reason: "",
+            plan_source: "halaqa_template",
+            status: "draft",
+            dirty: true,
+          };
+
+          if (quranStudent) {
+            next = await applyAutomaticRangeToSnapshot(next, "memorization");
+            next = await applyAutomaticRangeToSnapshot(next, "revision");
+          }
+
+          return next;
+        })
+      );
+
+      setRows(nextRows);
+      setTemplateOpen(false);
+
+      showToast(
+        "تم تطبيق الخطة الذكية وإعادة حساب النهايات تلقائيًا",
+        "success"
+      );
+    } catch (error) {
+      console.error("APPLY SMART HALAQA TEMPLATE:", error);
+      showToast(
+        error.message || "تعذر تطبيق الخطة الموحدة",
+        "error"
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setRows((current) =>
-      current.map((row) => {
-        if (isLockedPlan(row)) {
-          return row;
-        }
-
-        const quranStudent = isQuranGoal(row.learning_goal);
-        const nooraniaStudent = isNooraniaGoal(row.learning_goal);
-
-        const next = {
-          ...row,
-          memorization_daily_amount:
-            quranStudent ? template.memorization_daily_amount : "",
-          memorization_daily_unit:
-            quranStudent ? template.memorization_daily_unit : "lines",
-          revision_daily_amount:
-            quranStudent ? template.revision_daily_amount : "",
-          revision_daily_unit:
-            quranStudent ? template.revision_daily_unit : "faces",
-          noorania_lesson_daily_amount:
-            nooraniaStudent ? template.noorania_lesson_daily_amount : "",
-          noorania_lesson_daily_unit:
-            nooraniaStudent ? template.noorania_lesson_daily_unit : "lesson",
-          noorania_revision_daily_amount:
-            nooraniaStudent ? template.noorania_revision_daily_amount : "",
-          noorania_revision_daily_unit:
-            nooraniaStudent ? template.noorania_revision_daily_unit : "faces",
-          recitation_days_snapshot:
-            row.recitation_days,
-          notes:
-            template.notes || row.notes,
-          customization_reason: "",
-          plan_source: "halaqa_template",
-          status: "draft",
-          dirty: true,
-        };
-
-        next.memorization_target_faces = monthlyTargetFaces(
-          next.memorization_daily_amount,
-          next.memorization_daily_unit,
-          row.planned_sessions
-        );
-
-        next.revision_target_faces = monthlyTargetFaces(
-          next.revision_daily_amount,
-          next.revision_daily_unit,
-          row.planned_sessions
-        );
-
-        return next;
-      })
-    );
-
-    setTemplateOpen(false);
-    showToast(
-      "تم تطبيق الخطة الذكية على طلاب الحلقة",
-      "success"
-    );
   }
 
   /* =====================================================
@@ -4558,7 +5156,7 @@ export default function MonthlyPlan() {
             </h1>
 
             <p>
-              حدّد المقدار اليومي لكل طالب، وسيعرض الصديق الهدف الشهري النهائي تلقائيًا.
+              حدّد نقطة البداية والمقدار اليومي والاتجاه مرة واحدة؛ والصديق يحسب نهاية الحفظ والمراجعة تلقائيًا حسب الجلسات الفعلية بعد خصم الإجازات.
             </p>
           </div>
         </div>
@@ -4590,7 +5188,7 @@ export default function MonthlyPlan() {
               )}
 
               <span>
-                نسخ الشهر السابق
+                توليد من الشهر السابق
               </span>
             </button>
           )}
@@ -4620,6 +5218,21 @@ export default function MonthlyPlan() {
             </span>
           </button>
 
+          <div className={`autosave-chip ${autoSaving ? "saving" : ""}`}>
+            {autoSaving ? (
+              <Loader2 size={14} className="spin" />
+            ) : (
+              <Save size={14} />
+            )}
+            <span>
+              {autoSaving
+                ? "حفظ تلقائي..."
+                : lastAutoSavedAt
+                  ? "تم الحفظ تلقائيًا"
+                  : "الحفظ التلقائي مفعّل"}
+            </span>
+          </div>
+
           <button
             type="button"
             className="hero-btn save"
@@ -4628,7 +5241,9 @@ export default function MonthlyPlan() {
             }
             disabled={
               saving ||
-              loading
+              autoSaving ||
+              loading ||
+              hasPendingRouteGeneration
             }
           >
             {saving ? (
@@ -4643,7 +5258,7 @@ export default function MonthlyPlan() {
             )}
 
             <span>
-              حفظ
+              حفظ الآن
             </span>
           </button>
 
@@ -4655,6 +5270,8 @@ export default function MonthlyPlan() {
             }
             disabled={
               submitting ||
+              autoSaving ||
+              hasPendingRouteGeneration ||
               loading ||
               rows.length ===
                 0
@@ -4718,8 +5335,11 @@ export default function MonthlyPlan() {
             size={14}
           />
 
-          توجد تعديلات غير
-          محفوظة في الخطة الشهرية.
+          {hasPendingRouteGeneration
+            ? "جارٍ حساب نهاية الخطة من المصحف..."
+            : autoSaving
+              ? "جارٍ حفظ التعديلات تلقائيًا..."
+              : "تم رصد تعديلات وستُحفظ تلقائيًا خلال لحظات."}
 
           <button
             type="button"
@@ -5524,6 +6144,10 @@ function StudentPlanCard({
                         dailyAmount={row.memorization_daily_amount}
                         dailyUnit={row.memorization_daily_unit}
                         plannedSessions={row.planned_sessions}
+                        direction={row.memorization_direction}
+                        autoRange={row.memorization_auto_range}
+                        generating={row.memorization_generating}
+                        routeError={row.memorization_route_error}
                         showPace={showPace}
                       />
 
@@ -5546,6 +6170,10 @@ function StudentPlanCard({
                         dailyAmount={row.revision_daily_amount}
                         dailyUnit={row.revision_daily_unit}
                         plannedSessions={row.planned_sessions}
+                        direction={row.revision_direction}
+                        autoRange={row.revision_auto_range}
+                        generating={row.revision_generating}
+                        routeError={row.revision_route_error}
                         showPace={showPace}
                       />
                     </div>
@@ -5642,6 +6270,10 @@ function PlanSection({
   dailyAmount,
   dailyUnit,
   plannedSessions,
+  direction = "forward",
+  autoRange = true,
+  generating = false,
+  routeError = "",
   showPace = true,
 }) {
   const targetNumber = Number(target || 0);
@@ -5664,6 +6296,16 @@ function PlanSection({
     toAyah
   );
 
+  const startComplete = hasPlanStart(
+    fromSurah,
+    fromAyah
+  );
+
+  const totalRequested = totalDailyPlanAmount(
+    dailyAmount,
+    plannedSessions
+  );
+
   return (
     <section className={`student-plan-section ${type} smart-plan-section`}>
       <div className="plan-section-title">
@@ -5683,9 +6325,36 @@ function PlanSection({
         <div className="route-first-head">
           <div>
             <BookOpen size={15} />
-            <strong>المسار القرآني</strong>
+            <strong>المسار القرآني الذكي</strong>
           </div>
-          <span>هو مصدر الهدف الحقيقي</span>
+          <span>{autoRange ? "النهاية تُحسب تلقائيًا" : "النهاية معدلة يدويًا"}</span>
+        </div>
+
+        <div className="route-direction-panel">
+          <div className="route-direction-label">
+            <span>اتجاه السير</span>
+            <small>في اتجاه الناس نعكس ترتيب السور فقط، أما الآيات فتبقى من أول السورة إلى آخرها.</small>
+          </div>
+
+          <div className="route-direction-toggle">
+            <button
+              type="button"
+              disabled={locked}
+              className={normalizePlanDirection(direction) === "forward" ? "active" : ""}
+              onClick={() => onChange(`${fieldPrefix}_direction`, "forward")}
+            >
+              من البقرة وما بعدها
+            </button>
+
+            <button
+              type="button"
+              disabled={locked}
+              className={normalizePlanDirection(direction) === "backward" ? "active" : ""}
+              onClick={() => onChange(`${fieldPrefix}_direction`, "backward")}
+            >
+              من الناس وما قبلها
+            </button>
+          </div>
         </div>
 
         <div className="plan-range-grid route-required-grid">
@@ -5710,18 +6379,18 @@ function PlanSection({
           />
 
           <SurahField
-            label="إلى سورة"
+            label={autoRange ? "إلى سورة — تلقائي" : "إلى سورة — يدوي"}
             value={toSurah}
-            disabled={locked}
+            disabled={locked || autoRange}
             onChange={(value) =>
               onChange(`${fieldPrefix}_to_surah`, value)
             }
           />
 
           <NumberField
-            label="إلى آية"
+            label={autoRange ? "إلى آية — تلقائي" : "إلى آية — يدوي"}
             value={toAyah}
-            disabled={locked}
+            disabled={locked || autoRange}
             min="1"
             step="1"
             onChange={(value) =>
@@ -5730,15 +6399,51 @@ function PlanSection({
           />
         </div>
 
+        <div className="auto-range-switch-row">
+          <button
+            type="button"
+            className={autoRange ? "auto-range-switch active" : "auto-range-switch"}
+            disabled={locked}
+            onClick={() => onChange(`${fieldPrefix}_auto_range`, !autoRange)}
+          >
+            <Sparkles size={14} />
+            {autoRange ? "الحساب التلقائي مفعّل" : "تفعيل الحساب التلقائي"}
+          </button>
+
+          {!autoRange && (
+            <span className="manual-range-note">
+              عدّل النهاية يدويًا، أو أعد تشغيل الحساب التلقائي في أي وقت.
+            </span>
+          )}
+        </div>
+
         <div className={`route-calculated-result ${routeComplete ? "ready" : "empty"}`}>
-          <ShieldCheck size={15} />
-          {routeComplete ? (
+          {generating ? (
             <>
-              <span>حجم المسار محسوب من المصحف:</span>
+              <Loader2 size={15} className="spin" />
+              <span>جارٍ حساب نهاية الخطة من المصحف...</span>
+            </>
+          ) : routeError ? (
+            <>
+              <CircleAlert size={15} />
+              <span>{routeError}</span>
+            </>
+          ) : routeComplete ? (
+            <>
+              <ShieldCheck size={15} />
+              <span>
+                {autoRange ? "النهاية المحسوبة:" : "حجم المسار اليدوي:"}
+              </span>
               <strong>{formatPagesAndLines(targetNumber)}</strong>
             </>
+          ) : !startComplete ? (
+            <span>ابدأ باختيار السورة والآية فقط.</span>
+          ) : Number(dailyAmount || 0) <= 0 ? (
+            <span>حدد مقدار التسميع اليومي ليحسب الصديق نهاية الشهر.</span>
+          ) : Number(plannedSessions || 0) <= 0 ? (
+            <span>لا توجد جلسات فعلية في هذا الشهر بعد خصم الإجازات.</span>
           ) : (
-            <span>حدد البداية والنهاية ليحسب النظام حجم الخطة تلقائيًا.</span>
+            <span>سيتم حساب نهاية الخطة تلقائيًا.</span>
           )}
         </div>
       </div>
@@ -5752,7 +6457,7 @@ function PlanSection({
               type="number"
               min="0"
               step={dailyUnit === "lines" ? "1" : "0.25"}
-              disabled={locked || !routeComplete}
+              disabled={locked || !startComplete}
               value={dailyAmount ?? ""}
               onChange={(event) =>
                 onChange(
@@ -5768,7 +6473,7 @@ function PlanSection({
             <div className="daily-unit-toggle">
               <button
                 type="button"
-                disabled={locked || !routeComplete}
+                disabled={locked || !startComplete}
                 className={dailyUnit === "lines" ? "active" : ""}
                 onClick={() => onChange(`${fieldPrefix}_daily_unit`, "lines")}
               >
@@ -5777,22 +6482,24 @@ function PlanSection({
 
               <button
                 type="button"
-                disabled={locked || !routeComplete}
+                disabled={locked || !startComplete}
                 className={dailyUnit === "faces" ? "active" : ""}
                 onClick={() => onChange(`${fieldPrefix}_daily_unit`, "faces")}
               >
-                أوجه
+                صفحات
               </button>
             </div>
           </div>
 
           <small className="speed-helper">
-            السرعة تحدد مقدار كل جلسة فقط؛ لا تستخدم لحساب حجم الخطة الشهرية.
+            {autoRange
+              ? `الصديق يضرب المقدار في ${plannedSessions || 0} جلسة فعلية${totalRequested > 0 ? ` = ${formatFaces(totalRequested)} ${dailyUnit === "lines" ? "سطر" : "صفحة"}` : ""} ثم يحدد آخر آية تلقائيًا.`
+              : "الحساب التلقائي متوقف؛ النهاية التي أدخلتها يدويًا هي المعتمدة."}
           </small>
         </div>
 
         <div className="monthly-target-card clean-result route-target-card">
-          <span>حجم المسار</span>
+          <span>{autoRange ? "هدف الشهر التلقائي" : "حجم المسار"}</span>
           <strong>{routeComplete ? formatPagesAndLines(targetNumber) : "—"}</strong>
         </div>
       </div>
@@ -9843,6 +10550,113 @@ function MonthlyPlanStyles() {
         .route-target-card {
           border-color: rgba(201,166,88,.18);
           background: rgba(201,166,88,.07);
+        }
+
+        .route-direction-panel {
+          display: grid;
+          grid-template-columns: minmax(130px,.45fr) minmax(0,1fr);
+          gap: 10px;
+          align-items: center;
+          margin-bottom: 12px;
+          padding: 10px;
+          border: 1px solid #e7ece9;
+          border-radius: 14px;
+          background: #f9fbfa;
+        }
+        .route-direction-label span {
+          display: block;
+          color: #31584d;
+          font-size: 11px;
+          font-weight: 900;
+        }
+        .route-direction-label small {
+          display: block;
+          margin-top: 3px;
+          color: #87938e;
+          font-size: 9px;
+        }
+        .route-direction-toggle {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+        }
+        .route-direction-toggle button {
+          min-height: 38px;
+          padding: 7px 9px;
+          border: 1px solid #dfe7e3;
+          border-radius: 11px;
+          background: #fff;
+          color: #64756e;
+          font-family: inherit;
+          font-size: 10px;
+          font-weight: 850;
+          cursor: pointer;
+        }
+        .route-direction-toggle button.active {
+          border-color: rgba(20,91,72,.28);
+          background: #eaf5f0;
+          color: #145b48;
+          box-shadow: inset 0 0 0 1px rgba(20,91,72,.05);
+        }
+        .route-direction-toggle button:disabled { opacity: .55; cursor: not-allowed; }
+
+        .auto-range-switch-row {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          flex-wrap: wrap;
+          margin-top: 10px;
+        }
+        .auto-range-switch {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 34px;
+          padding: 0 10px;
+          border: 1px solid #dfe7e3;
+          border-radius: 999px;
+          background: #fff;
+          color: #65766f;
+          font-family: inherit;
+          font-size: 10px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+        .auto-range-switch.active {
+          border-color: rgba(176,137,47,.24);
+          background: #fff9e9;
+          color: #80631e;
+        }
+        .manual-range-note {
+          color: #7f8a85;
+          font-size: 9px;
+          line-height: 1.5;
+        }
+
+        .autosave-chip {
+          min-height: 38px;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 0 10px;
+          border: 1px solid rgba(25,103,79,.13);
+          border-radius: 12px;
+          background: rgba(236,247,242,.85);
+          color: #24634f;
+          font-size: 10px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+        .autosave-chip.saving {
+          border-color: rgba(176,137,47,.18);
+          background: #fff9e9;
+          color: #836720;
+        }
+
+        @media (max-width: 700px) {
+          .route-direction-panel { grid-template-columns: 1fr; }
+          .route-direction-toggle { grid-template-columns: 1fr; }
+          .autosave-chip { width: 100%; justify-content: center; }
         }
       `}
     </style>

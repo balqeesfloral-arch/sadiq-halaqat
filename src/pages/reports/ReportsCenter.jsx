@@ -277,6 +277,12 @@ export default function ReportsCenter({ mode: requestedMode }) {
       return;
     }
 
+    try {
+      win.opener = null;
+    } catch {
+      // Browser-level opener isolation is best-effort only.
+    }
+
     win.document.write(`
       <!doctype html>
       <html lang="ar" dir="rtl">
@@ -308,7 +314,7 @@ export default function ReportsCenter({ mode: requestedMode }) {
                 window.print();
               }, 250);
             });
-          <\/script>
+          </script>
         </body>
       </html>
     `);

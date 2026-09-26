@@ -28,7 +28,7 @@ export default function SettingsSidebar({
           ICONS[tab.key] || Settings;
 
         return (
-          <button
+          <button type="button"
             key={tab.key}
             className={`settings-tab ${
               activeTab === tab.key

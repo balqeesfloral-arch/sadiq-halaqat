@@ -29,7 +29,7 @@ async function call(name, params) {
     if (key) throw new Error(MESSAGES[key]);
     if (error.code === "42501") throw new Error(MESSAGES.HM_WRITE_DENIED);
     if (error.code === "PGRST202" || error.code === "42883") {
-      throw new Error("تحديث إدارة الحلقات غير مُثبّت في قاعدة البيانات. تواصل مع مدير النظام.");
+      throw new Error("ميزة إدارة الحلقات تحتاج تحديثًا. تواصل مع مدير النظام.");
     }
     if (error.code === "23505") throw new Error("هذا الربط موجود بالفعل. حدّث الصفحة.");
     throw new Error("تعذر إتمام العملية. تحقق من الاتصال ثم أعد المحاولة.");

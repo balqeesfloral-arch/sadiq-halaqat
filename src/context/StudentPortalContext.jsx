@@ -13,6 +13,7 @@ const StudentPortalContext = createContext(null);
 export function StudentPortalProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [accessDenied, setAccessDenied] = useState(false);
   const [profile, setProfile] = useState(null);
   const [assignment, setAssignment] = useState(null);
   const [halaqa, setHalaqa] = useState(null);
@@ -24,6 +25,7 @@ export function StudentPortalProvider({ children }) {
     try {
       setLoading(true);
       setError("");
+      setAccessDenied(false);
 
       const {
         data: { user },
@@ -31,16 +33,32 @@ export function StudentPortalProvider({ children }) {
       } = await supabase.auth.getUser();
 
       if (authError) throw authError;
-      if (!user) throw new Error("AUTH_REQUIRED");
+
+      if (!user) {
+        setAccessDenied(true);
+        setProfile(null);
+        return;
+      }
 
       const { data: student, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("auth_user_id", user.id)
         .eq("role", "student")
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
+
+      if (
+        !student ||
+        student.status !== "active" ||
+        student.is_active === false
+      ) {
+        setAccessDenied(true);
+        setProfile(null);
+        return;
+      }
+
       setProfile(student);
 
       const { data: studentAssignment, error: assignmentError } =
@@ -159,6 +177,7 @@ export function StudentPortalProvider({ children }) {
     () => ({
       loading,
       error,
+      accessDenied,
       profile,
       assignment,
       halaqa,
@@ -171,6 +190,7 @@ export function StudentPortalProvider({ children }) {
     [
       loading,
       error,
+      accessDenied,
       profile,
       assignment,
       halaqa,

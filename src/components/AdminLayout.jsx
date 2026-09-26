@@ -9,35 +9,10 @@ import {
   NavLink,
   Outlet,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 
-import {
-  BarChart3,
-  Bell,
-  BookOpen,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardCheck,
-  FileCheck,
-  Gift,
-  GraduationCap,
-  LayoutDashboard,
-  Landmark,
-  LogOut,
-  Menu,
-  Mic2,
-  ReceiptText,
-  Search,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  Trophy,
-  Tv,
-  UserCircle,
-  Users,
-  X,
-} from "lucide-react";
+import { BarChart3, Bell, BookOpen, CalendarDays, ChevronLeft, ChevronRight, ClipboardCheck, FileCheck, Gift, GraduationCap, LayoutDashboard, Landmark, LogOut, Menu, ReceiptText, Search, Settings, ShieldCheck, Trophy, Tv, UserCircle, Users, X } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
 import ResponsiveContainer from "./ResponsiveContainer";
@@ -250,6 +225,9 @@ export default function AdminLayout() {
   const location =
     useLocation();
 
+  const navigate =
+    useNavigate();
+
   const searchRef =
     useRef(null);
 
@@ -299,6 +277,12 @@ export default function AdminLayout() {
     setProfile,
   ] =
     useState(null);
+
+  const [
+    accessChecking,
+    setAccessChecking,
+  ] =
+    useState(true);
 
   const [
     now,
@@ -496,6 +480,9 @@ export default function AdminLayout() {
           authData?.user;
 
         if (!user) {
+          if (alive) {
+            navigate("/login", { replace: true });
+          }
           return;
         }
 
@@ -506,7 +493,7 @@ export default function AdminLayout() {
           await supabase
             .from("profiles")
             .select(
-              "id, full_name, display_name, role"
+              "id, full_name, display_name, role, status, is_active"
             )
             .eq(
               "auth_user_id",
@@ -518,16 +505,35 @@ export default function AdminLayout() {
           throw error;
         }
 
+        const allowed =
+          data &&
+          ["supervisor", "admin"].includes(data.role) &&
+          data.status === "active" &&
+          data.is_active !== false;
+
+        if (!allowed) {
+          if (alive) {
+            navigate("/login", { replace: true });
+          }
+          return;
+        }
+
         if (alive) {
-          setProfile(
-            data || null
-          );
+          setProfile(data);
         }
       } catch (error) {
         console.error(
           "LOAD SUPERVISOR PROFILE:",
           error
         );
+
+        if (alive) {
+          navigate("/login", { replace: true });
+        }
+      } finally {
+        if (alive) {
+          setAccessChecking(false);
+        }
       }
     }
 
@@ -536,7 +542,7 @@ export default function AdminLayout() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [navigate]);
 
   /* =====================================================
      Notification badge
@@ -1036,6 +1042,25 @@ export default function AdminLayout() {
       </div>
     </div>
   );
+
+  if (accessChecking || !profile) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        style={{
+          minHeight: "100dvh",
+          display: "grid",
+          placeItems: "center",
+          background: "#f6f8f7",
+          color: "#48635a",
+          fontWeight: 800,
+        }}
+      >
+        جارٍ التحقق من صلاحية الدخول…
+      </div>
+    );
+  }
 
   return (
     <div

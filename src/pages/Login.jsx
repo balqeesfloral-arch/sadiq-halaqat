@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useToast } from "../components/Toast";
@@ -7,6 +7,7 @@ import {
   BookOpenCheck,
   Eye,
   EyeOff,
+  Fingerprint,
   GraduationCap,
   House,
   Loader2,
@@ -28,6 +29,19 @@ const DUAS = [
   "﴿رَبِّ اشْرَحْ لِي صَدْرِي ۝ وَيَسِّرْ لِي أَمْرِي﴾",
   "اللهم اجعل القرآن ربيع قلوبنا ونور صدورنا.",
 ];
+function sanitizeQuickAccount(account) {
+  if (!account || !["staff", "student"].includes(account.mode)) return null;
+
+  const identifierValue = String(account.identifier || "").trim();
+  if (!identifierValue) return null;
+
+  return {
+    mode: account.mode,
+    identifier: identifierValue,
+    label: String(account.label || identifierValue),
+    role: account.role || (account.mode === "student" ? "student" : ""),
+  };
+}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -44,9 +58,8 @@ export default function Login() {
   const [rememberLogin, setRememberLogin] = useState(true);
   const [quickAccounts, setQuickAccounts] = useState([]);
 
-  const dua = useMemo(
-    () => DUAS[Math.floor(Math.random() * DUAS.length)],
-    []
+  const [dua] = useState(
+    () => DUAS[Math.floor(Math.random() * DUAS.length)]
   );
 
   useEffect(() => {
@@ -61,12 +74,31 @@ export default function Login() {
         } else if (parsed.mode === "student" && parsed.identifier) {
           setLoginMode("student");
           setIdentifier(parsed.identifier);
-          setStudentNumber(parsed.studentNumber || "");
         }
+
+        // Remove any credentials saved by older releases.
+        localStorage.setItem(
+          "sadiq_remember_login",
+          JSON.stringify({
+            enabled: parsed.enabled !== false,
+            mode: parsed.mode,
+            identifier: parsed.identifier || "",
+          })
+        );
       }
 
       const accounts = JSON.parse(localStorage.getItem("sadiq_quick_accounts") || "[]");
-      if (Array.isArray(accounts)) setQuickAccounts(accounts.slice(0, 4));
+      if (Array.isArray(accounts)) {
+        const safeAccounts = accounts
+          .map(sanitizeQuickAccount)
+          .filter(Boolean)
+          .slice(0, 4);
+
+        // Passwords and student numbers are authentication credentials and must
+        // never remain in localStorage. This also migrates older installations.
+        localStorage.setItem("sadiq_quick_accounts", JSON.stringify(safeAccounts));
+        setQuickAccounts(safeAccounts);
+      }
     } catch (error) {
       console.warn("Could not read saved login preferences:", error);
     }
@@ -83,14 +115,19 @@ export default function Login() {
         enabled: true,
         mode: account.mode,
         identifier: account.identifier,
-        studentNumber: account.studentNumber || "",
       }));
 
+      const safeAccount = sanitizeQuickAccount(account);
+      if (!safeAccount) return;
+
       const existing = JSON.parse(localStorage.getItem("sadiq_quick_accounts") || "[]");
+      const safeExisting = Array.isArray(existing)
+        ? existing.map(sanitizeQuickAccount).filter(Boolean)
+        : [];
       const next = [
-        account,
-        ...(Array.isArray(existing) ? existing : []).filter(
-          (item) => !(item.mode === account.mode && item.identifier === account.identifier)
+        safeAccount,
+        ...safeExisting.filter(
+          (item) => !(item.mode === safeAccount.mode && item.identifier === safeAccount.identifier)
         ),
       ].slice(0, 4);
       localStorage.setItem("sadiq_quick_accounts", JSON.stringify(next));
@@ -100,33 +137,18 @@ export default function Login() {
     }
   }
 
-  async function chooseQuickAccount(account) {
+  function chooseQuickAccount(account) {
     if (loading) return;
 
     setLoginMode(account.mode);
     setIdentifier(account.identifier || "");
-    setStudentNumber(account.studentNumber || "");
-    setPassword(account.password || "");
-    setErrorMessage("");
-
-    if (account.mode === "staff" && !account.password) {
-      setErrorMessage("هذا الحساب محفوظ من إصدار سابق. أدخل كلمة المرور مرة واحدة ليتم تفعيل الدخول السريع.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      if (account.mode === "staff") {
-        await handleStaffLogin(account.identifier, account.password);
-      } else {
-        await handleStudentLogin(account.identifier, account.studentNumber);
-      }
-    } catch (error) {
-      console.error("Quick login error:", error);
-      setErrorMessage(error?.message || "تعذر تسجيل الدخول السريع.");
-    } finally {
-      setLoading(false);
-    }
+    setStudentNumber("");
+    setPassword("");
+    setErrorMessage(
+      account.mode === "staff"
+        ? "أدخل كلمة المرور لإكمال تسجيل الدخول بأمان."
+        : "أدخل رقم الطالب لإكمال تسجيل الدخول بأمان."
+    );
   }
 
   function removeQuickAccount(event, account) {
@@ -150,7 +172,7 @@ export default function Login() {
   async function loadProfile(authUserId) {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, role, user_number, full_name, phone, status, auth_user_id")
+      .select("id, role, user_number, full_name, phone, status, is_active, auth_user_id")
       .eq("auth_user_id", authUserId)
       .maybeSingle();
 
@@ -182,7 +204,7 @@ export default function Login() {
       throw new Error("الحساب غير مرتبط بملف مستخدم داخل نظام الصديق.");
     }
 
-    if (profile.status !== "active") {
+    if (profile.status !== "active" || profile.is_active === false) {
       await supabase.auth.signOut();
       throw new Error("هذا الحساب غير نشط حاليًا.");
     }
@@ -190,6 +212,11 @@ export default function Login() {
     if (profile.role === "student") {
       await supabase.auth.signOut();
       throw new Error("هذا حساب طالب. استخدم خيار «دخول الطالب».");
+    }
+
+    if (!["admin", "supervisor", "teacher"].includes(profile.role)) {
+      await supabase.auth.signOut();
+      throw new Error("هذا الحساب لا يملك دورًا صالحًا لتسجيل الدخول.");
     }
 
     let destination = getDestination(profile.role);
@@ -244,7 +271,6 @@ export default function Login() {
     rememberSuccessfulLogin({
       mode: "staff",
       identifier: email,
-      password: loginPassword,
       label: profile.full_name || email,
       role: profile.role,
     });
@@ -260,6 +286,90 @@ export default function Login() {
         from: location.pathname,
       },
     });
+  }
+
+  async function handlePasskeyLogin() {
+    if (loading) return;
+
+    setErrorMessage("");
+    setLoading(true);
+
+    try {
+      if (!window.PublicKeyCredential) {
+        throw new Error("هذا الجهاز أو المتصفح لا يدعم مفاتيح المرور (Passkeys). استخدم كلمة المرور مؤقتًا.");
+      }
+
+      const { data, error } = await supabase.auth.signInWithPasskey();
+
+      if (error) {
+        if (error?.code === "passkey_disabled") {
+          throw new Error("دخول البصمة غير مفعّل بعد. فعّله من إعدادات الأمان ثم سجّل بصمة المالك.");
+        }
+        if (error?.code === "webauthn_challenge_expired") {
+          throw new Error("انتهت مهلة التحقق بالبصمة. حاول مرة أخرى.");
+        }
+        throw new Error(error?.message || "تعذر التحقق بالبصمة أو مفتاح المرور.");
+      }
+
+      const authUser = data?.user;
+      if (!authUser) throw new Error("تعذر التحقق من الحساب المرتبط بمفتاح المرور.");
+
+      const profile = await loadProfile(authUser.id);
+      if (!profile) {
+        await supabase.auth.signOut();
+        throw new Error("الحساب غير مرتبط بملف مستخدم داخل نظام الصديق.");
+      }
+
+      if (profile.status !== "active" || profile.is_active === false) {
+        await supabase.auth.signOut();
+        throw new Error("هذا الحساب غير نشط حاليًا.");
+      }
+
+      if (!['admin', 'supervisor', 'teacher'].includes(profile.role)) {
+        await supabase.auth.signOut();
+        throw new Error("مفتاح المرور هذا غير مصرح له بدخول بوابة الإدارة.");
+      }
+
+      let destination = getDestination(profile.role);
+
+      if (profile.role === "supervisor") {
+        const { data: onboardingRows, error: onboardingError } =
+          await supabase.rpc("get_my_supervisor_onboarding");
+
+        if (onboardingError) {
+          await supabase.auth.signOut();
+          throw new Error("تعذر التحقق من إعداد حساب المشرف.");
+        }
+
+        const onboarding = Array.isArray(onboardingRows) ? onboardingRows[0] : null;
+        if (!onboarding) {
+          await supabase.auth.signOut();
+          throw new Error("تعذر تحديد حالة ربط حساب المشرف بالمسجد.");
+        }
+
+        if (onboarding.has_mosque) destination = "/admin";
+        else if (onboarding.needs_setup && onboarding.can_create_mosque) destination = "/supervisor/setup";
+        else {
+          await supabase.auth.signOut();
+          throw new Error("حساب المشرف غير مرتبط بمسجد ولا يملك صلاحية إنشاء مسجد.");
+        }
+      }
+
+      rememberSuccessfulLogin({
+        mode: "staff",
+        identifier: authUser.email || profile.user_number || "passkey",
+        label: profile.full_name || "حساب محمي",
+        role: profile.role,
+      });
+
+      showToast(`تم التحقق الآمن. مرحبًا بك ${profile.full_name}`, "success");
+      navigate(destination, { replace: true });
+    } catch (error) {
+      console.error("Passkey login error:", error);
+      setErrorMessage(error?.message || "تعذر تسجيل الدخول بالبصمة.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleStudentLogin(nameOverride, studentNumberOverride) {
@@ -289,15 +399,9 @@ export default function Login() {
     if (error?.context) {
       const responseText = await error.context.clone().text();
 
-      console.log(
-        "student-login status:",
-        error.context.status
-      );
+      
 
-      console.log(
-        "student-login response:",
-        responseText
-      );
+      
 
       try {
         const parsed = JSON.parse(responseText);
@@ -342,7 +446,6 @@ export default function Login() {
     rememberSuccessfulLogin({
       mode: "student",
       identifier: fullName,
-      studentNumber: userNumber,
       label: data?.profile?.full_name || fullName,
       role: "student",
     });
@@ -501,7 +604,7 @@ export default function Login() {
                     </span>
                     <span className="login-quick-copy">
                       <strong>{account.label || account.identifier}</strong>
-                      <small>{account.mode === "student" ? `طالب • ${account.studentNumber || ""}` : account.identifier}</small>
+                      <small>{account.mode === "student" ? "طالب" : account.identifier}</small>
                     </span>
                     <span className="login-quick-check"><CheckCircle2 size={16}/></span>
                     <span
@@ -571,8 +674,8 @@ export default function Login() {
               />
               <span className="login-remember-toggle"><i /></span>
               <span className="login-remember-copy">
-                <strong>حفظ تسجيل الدخول</strong>
-                <small>يحفظ بيانات الدخول على هذا الجهاز لتفعيل الدخول المباشر من «الوصول السريع».</small>
+                <strong>تذكّر الحساب</strong>
+                <small>يحفظ الاسم أو البريد فقط. كلمة المرور ورقم الطالب لا يتم حفظهما على الجهاز.</small>
               </span>
             </label>
 
@@ -586,6 +689,21 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          {loginMode === "staff" && (
+            <button
+              type="button"
+              className="login-passkey-button"
+              onClick={handlePasskeyLogin}
+              disabled={loading}
+            >
+              <Fingerprint />
+              <span>
+                <strong>الدخول بالبصمة / Passkey</strong>
+                <small>Face ID • Touch ID • Windows Hello • مفتاح أمني</small>
+              </span>
+            </button>
+          )}
 
           {loginMode === "staff" && (
             <button

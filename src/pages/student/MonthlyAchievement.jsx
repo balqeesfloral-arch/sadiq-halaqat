@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, CheckCircle2, Flag, Layers3, Route, Sparkles, Target } from "lucide-react";
+import { BookOpen, Flag, Layers3, Route, Sparkles, Target } from "lucide-react";
 import StudentPage from "../../components/student/StudentPage";
 import { useStudentPortal } from "../../context/StudentPortalContext";
 import { supabase } from "../../lib/supabase";
@@ -29,7 +29,7 @@ export default function StudentMonthlyAchievement() {
     period: null,
   });
 
-  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
+  
 
   async function load() {
     if (!profile?.id || !halaqa?.id) { setLoading(false); return; }
@@ -125,6 +125,8 @@ export default function StudentMonthlyAchievement() {
     }
   }
 
+  useEffect(() => { load(); }, [profile?.id, halaqa?.id]);
+
   const summary = useMemo(() => {
     const memTarget = Number(data.plan?.memorization_target_faces || 0);
     const revTarget = Number(data.plan?.revision_target_faces || 0);
@@ -185,7 +187,7 @@ export default function StudentMonthlyAchievement() {
                 <div>
                   <span>حالتك الآن</span>
                   <h3>{summary.completed ? "أحسنت! حققت الخطة" : summary.journeyMessage}</h3>
-                  <p>تم تسجيل {data.recitations} جلسة هذا الشهر، منها {data.segmentSessions} جلسة مرتبطة بالمحرك الجديد.</p>
+                  <p>تم تسجيل {data.recitations} جلسة هذا الشهر.</p>
                 </div>
               </div>
               <span className="student-soft-badge">{summary.completed ? "منجز" : "مستمر"}</span>

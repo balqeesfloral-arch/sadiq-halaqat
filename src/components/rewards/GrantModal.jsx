@@ -4,24 +4,7 @@ import {
   useState,
 } from "react";
 
-import {
-  Award,
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  Coins,
-  FileText,
-  Gift,
-  Loader2,
-  PlusCircle,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Star,
-  Trophy,
-  UserRound,
-  X,
-} from "lucide-react";
+import { Award, BookOpen, CalendarDays, CheckCircle2, Coins, FileText, Gift, Loader2, PlusCircle, Search, Sparkles, Star, Trophy, UserRound, X } from "lucide-react";
 
 import {
   supabase,

@@ -3,20 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useToast } from "../components/Toast";
 
-import {
-  Users,
-  BookOpen,
-  UserRound,
-  Plus,
-  Trash2,
-  ArrowRight,
-  Search,
-  RefreshCw,
-  Link2,
-  CheckCircle2,
-  X,
-  ShieldCheck,
-} from "lucide-react";
+import { Users, BookOpen, UserRound, Plus, Trash2, ArrowRight, Search, RefreshCw, Link2, X, ShieldCheck } from "lucide-react";
 
 export default function TeacherAssignments() {
   const navigate = useNavigate();

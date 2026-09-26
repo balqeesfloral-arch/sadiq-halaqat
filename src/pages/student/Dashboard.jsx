@@ -58,9 +58,7 @@ export default function StudentDashboard() {
     revDone: 0,
   });
 
-  useEffect(() => {
-    load();
-  }, [profile?.id, halaqa?.id]);
+  
 
   async function load() {
     if (!profile?.id) return;
@@ -152,6 +150,10 @@ export default function StudentDashboard() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+      load();
+    }, [profile?.id, halaqa?.id]);
 
   const summary = useMemo(() => {
     const memTarget = Number(data.plan?.memorization_target_faces || 0);

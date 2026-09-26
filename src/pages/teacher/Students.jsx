@@ -1,37 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  Archive,
-  BookOpen,
-  Building2,
-  CalendarDays,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  ClipboardCopy,
-  Clock3,
-  Edit3,
-  Eye,
-  GraduationCap,
-  Home,
-  Loader2,
-  MapPin,
-  Phone,
-  Plus,
-  RefreshCw,
-  RotateCcw,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-  UserCheck,
-  UserRound,
-  Users,
-  UserX,
-  VenusAndMars,
-  Video,
-  X,
-} from "lucide-react";
+import { AlertTriangle, Archive, BookOpen, Building2, CalendarDays, Check, CheckCircle2, ChevronDown, ClipboardCopy, Edit3, Eye, GraduationCap, Loader2, Plus, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, UserCheck, UserRound, Users, UserX, X } from "lucide-react";
 
 import { supabase } from "../../lib/supabase";
 import { showToast } from "../../components/Toast";
