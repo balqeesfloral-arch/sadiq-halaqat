@@ -63,6 +63,10 @@ const HALAQA_PERIODS = {
   after_isha: "بعد العشاء",
 };
 
+function normalizeQuranPlanDirection(value) {
+  return value === "backward" ? "backward" : "forward";
+}
+
 /* =========================================================
    Initial Forms
 ========================================================= */
@@ -1431,6 +1435,7 @@ export default function Recitations() {
       unit,
       limitSurah,
       limitAyah,
+      direction = "forward",
     }) {
       if (
         !startSurah ||
@@ -1442,22 +1447,129 @@ export default function Recitations() {
         return null;
       }
 
-      return rpcOne("quran_generate_assignment", {
-        p_start_surah: startSurah,
-        p_start_ayah: Number(startAyah),
-        p_target_amount: Number(amount),
-        p_target_unit: unit || "lines",
-        p_limit_surah: limitSurah,
-        p_limit_ayah: Number(limitAyah),
+      const normalizedDirection =
+        normalizeQuranPlanDirection(direction);
+
+      const rpcName =
+        normalizedDirection === "backward"
+          ? "quran_generate_reverse_bounded_assignment_v1"
+          : "quran_generate_assignment";
+
+      try {
+        return await rpcOne(rpcName, {
+          p_start_surah: startSurah,
+          p_start_ayah: Number(startAyah),
+          p_target_amount: Number(amount),
+          p_target_unit: unit || "lines",
+          p_limit_surah: limitSurah,
+          p_limit_ayah: Number(limitAyah),
+        });
+      } catch (error) {
+        const message = String(error?.message || "");
+
+        if (
+          message.includes("QURAN_LIMIT_BEFORE_START") ||
+          message.includes("QURAN_REVERSE_LIMIT_NOT_AFTER_ROUTE_START")
+        ) {
+          return null;
+        }
+
+        throw error;
+      }
+    }
+
+    async function nextPosition(
+      surahName,
+      ayahNumber,
+      direction = "forward"
+    ) {
+      if (!surahName || !ayahNumber) return null;
+
+      const rpcName =
+        normalizeQuranPlanDirection(direction) === "backward"
+          ? "quran_next_reverse_surah_position"
+          : "quran_next_ayah";
+
+      return rpcOne(rpcName, {
+        p_surah: surahName,
+        p_ayah: Number(ayahNumber),
       });
     }
 
-    async function nextPosition(surahName, ayahNumber) {
-      if (!surahName || !ayahNumber) return null;
+    async function getRevisionCycleBounds(plan) {
+      if (
+        !plan?.revision_auto_range ||
+        !plan?.memorization_from_surah
+      ) {
+        return null;
+      }
 
-      return rpcOne("quran_next_ayah", {
-        p_surah: surahName,
-        p_ayah: Number(ayahNumber),
+      const bounds = await rpcOne(
+        "quran_revision_cycle_bounds",
+        {
+          p_lesson_surah: plan.memorization_from_surah,
+          p_direction: normalizeQuranPlanDirection(
+            plan.revision_direction
+          ),
+        }
+      );
+
+      if (!bounds) return null;
+
+      return {
+        startSurah: bounds.cycle_start_surah_name,
+        startAyah: Number(bounds.cycle_start_ayah),
+        endSurah: bounds.cycle_end_surah_name,
+        endAyah: Number(bounds.cycle_end_ayah),
+      };
+    }
+
+    async function generateReviewRange({
+      plan,
+      startSurah,
+      startAyah,
+      amount,
+      unit,
+      cycleBounds,
+    }) {
+      if (
+        !startSurah ||
+        !startAyah ||
+        Number(amount || 0) <= 0
+      ) {
+        return null;
+      }
+
+      if (cycleBounds) {
+        const normalizedStart =
+          await normalizeQuranPositionToCycle({
+            surah: startSurah,
+            ayah: startAyah,
+            direction: plan?.revision_direction,
+            cycleBounds,
+          });
+
+        return generateRange({
+          startSurah:
+            normalizedStart?.surah || cycleBounds.startSurah,
+          startAyah:
+            normalizedStart?.ayah || cycleBounds.startAyah,
+          amount,
+          unit,
+          limitSurah: cycleBounds.endSurah,
+          limitAyah: cycleBounds.endAyah,
+          direction: plan?.revision_direction,
+        });
+      }
+
+      return generateRange({
+        startSurah,
+        startAyah,
+        amount,
+        unit,
+        limitSurah: plan?.revision_to_surah,
+        limitAyah: plan?.revision_to_ayah,
+        direction: plan?.revision_direction,
       });
     }
 
@@ -1478,6 +1590,10 @@ export default function Recitations() {
             memorization_daily_unit,
             revision_daily_amount,
             revision_daily_unit,
+            memorization_direction,
+            memorization_auto_range,
+            revision_direction,
+            revision_auto_range,
             memorization_from_surah,
             memorization_from_ayah,
             memorization_to_surah,
@@ -1661,7 +1777,8 @@ export default function Recitations() {
         if (previousLesson) {
           const next = await nextPosition(
             previousLesson.to_surah,
-            previousLesson.to_ayah
+            previousLesson.to_ayah,
+            plan.memorization_direction
           );
 
           if (next) {
@@ -1672,16 +1789,32 @@ export default function Recitations() {
           }
         }
 
+        const revisionCycleBounds =
+          await getRevisionCycleBounds(plan);
+
         let reviewStart = {
           surah: plan.revision_from_surah,
           ayah: plan.revision_from_ayah,
         };
 
         if (previousReview) {
-          const next = await nextPosition(
-            previousReview.review_to_surah,
-            previousReview.review_to_ayah
-          );
+          const reachedCycleEnd =
+            revisionCycleBounds &&
+            String(previousReview.review_to_surah || "").trim() ===
+              String(revisionCycleBounds.endSurah || "").trim() &&
+            Number(previousReview.review_to_ayah || 0) ===
+              Number(revisionCycleBounds.endAyah || 0);
+
+          const next = reachedCycleEnd
+            ? {
+                surah_name: revisionCycleBounds.startSurah,
+                ayah: Number(revisionCycleBounds.startAyah),
+              }
+            : await nextPosition(
+                previousReview.review_to_surah,
+                previousReview.review_to_ayah,
+                plan.revision_direction
+              );
 
           if (next) {
             reviewStart = {
@@ -1703,6 +1836,7 @@ export default function Recitations() {
               unit: memorizationUnit,
               limitSurah: plan.memorization_to_surah,
               limitAyah: plan.memorization_to_ayah,
+              direction: plan.memorization_direction,
             });
           } catch (generationError) {
             if (!String(generationError?.message || "").includes("QURAN_LIMIT_BEFORE_START")) {
@@ -1712,29 +1846,14 @@ export default function Recitations() {
         }
 
         if (interventionType !== "pause") {
-          try {
-            generatedReview = await generateRange({
-              startSurah: reviewStart.surah,
-              startAyah: reviewStart.ayah,
-              amount: revisionAmount,
-              unit: revisionUnit,
-              limitSurah: plan.revision_to_surah,
-              limitAyah: plan.revision_to_ayah,
-            });
-          } catch (generationError) {
-            if (String(generationError?.message || "").includes("QURAN_LIMIT_BEFORE_START")) {
-              generatedReview = await generateRange({
-                startSurah: plan.revision_from_surah,
-                startAyah: plan.revision_from_ayah,
-                amount: revisionAmount,
-                unit: revisionUnit,
-                limitSurah: plan.revision_to_surah,
-                limitAyah: plan.revision_to_ayah,
-              });
-            } else {
-              throw generationError;
-            }
-          }
+          generatedReview = await generateReviewRange({
+            plan,
+            startSurah: reviewStart.surah,
+            startAyah: reviewStart.ayah,
+            amount: revisionAmount,
+            unit: revisionUnit,
+            cycleBounds: revisionCycleBounds,
+          });
         }
 
         let generatedSideLesson = null;
@@ -1769,6 +1888,7 @@ export default function Recitations() {
           interventionType,
           lessonSuppressed,
           reviewSegmentType,
+          revisionCycleBounds,
         });
 
         setCompletionModes(createCompletionModes());
@@ -3201,6 +3321,86 @@ export default function Recitations() {
       : data || null;
   }
 
+  async function normalizeQuranPositionToCycle({
+    surah,
+    ayah,
+    direction = "forward",
+    cycleBounds = null,
+  }) {
+    if (
+      !surah ||
+      !ayah ||
+      !cycleBounds?.startSurah ||
+      !cycleBounds?.startAyah ||
+      !cycleBounds?.endSurah ||
+      !cycleBounds?.endAyah
+    ) {
+      return surah && ayah
+        ? { surah, ayah: Number(ayah) }
+        : null;
+    }
+
+    const [position, cycleStart, cycleEnd] =
+      await Promise.all([
+        getQuranPositionInfo(surah, ayah),
+        getQuranPositionInfo(
+          cycleBounds.startSurah,
+          cycleBounds.startAyah
+        ),
+        getQuranPositionInfo(
+          cycleBounds.endSurah,
+          cycleBounds.endAyah
+        ),
+      ]);
+
+    if (!position || !cycleStart || !cycleEnd) {
+      return {
+        surah: cycleBounds.startSurah,
+        ayah: Number(cycleBounds.startAyah),
+      };
+    }
+
+    const normalizedDirection =
+      normalizeQuranPlanDirection(direction);
+
+    const inCycle =
+      normalizedDirection === "backward"
+        ? (
+            Number(position.surah_no) <=
+              Number(cycleStart.surah_no) &&
+            Number(position.surah_no) >=
+              Number(cycleEnd.surah_no) &&
+            (
+              Number(position.surah_no) !==
+                Number(cycleStart.surah_no) ||
+              Number(position.ayah) >=
+                Number(cycleStart.ayah)
+            ) &&
+            (
+              Number(position.surah_no) !==
+                Number(cycleEnd.surah_no) ||
+              Number(position.ayah) <=
+                Number(cycleEnd.ayah)
+            )
+          )
+        : (
+            Number(position.source_id) >=
+              Number(cycleStart.source_id) &&
+            Number(position.source_id) <=
+              Number(cycleEnd.source_id)
+          );
+
+    return inCycle
+      ? {
+          surah: position.surah_name,
+          ayah: Number(position.ayah),
+        }
+      : {
+          surah: cycleBounds.startSurah,
+          ayah: Number(cycleBounds.startAyah),
+        };
+  }
+
   async function getQuranRangeMetrics(
     fromSurah,
     fromAyah,
@@ -3216,8 +3416,24 @@ export default function Recitations() {
       return null;
     }
 
+    const [startInfo, endInfo] =
+      await Promise.all([
+        getQuranPositionInfo(fromSurah, fromAyah),
+        getQuranPositionInfo(toSurah, toAyah),
+      ]);
+
+    if (!startInfo || !endInfo) {
+      return null;
+    }
+
+    const rpcName =
+      Number(startInfo.source_id) >
+      Number(endInfo.source_id)
+        ? "quran_reverse_surah_range_metrics"
+        : "quran_range_metrics";
+
     const { data, error } = await supabase.rpc(
-      "quran_range_metrics",
+      rpcName,
       {
         p_from_surah: fromSurah,
         p_from_ayah: Number(fromAyah),
@@ -3237,14 +3453,20 @@ export default function Recitations() {
 
   async function getNextQuranPosition(
     surah,
-    ayah
+    ayah,
+    direction = "forward"
   ) {
     if (!surah || !ayah) {
       return null;
     }
 
+    const rpcName =
+      normalizeQuranPlanDirection(direction) === "backward"
+        ? "quran_next_reverse_surah_position"
+        : "quran_next_ayah";
+
     const { data, error } = await supabase.rpc(
-      "quran_next_ayah",
+      rpcName,
       {
         p_surah: surah,
         p_ayah: Number(ayah),
@@ -3314,6 +3536,7 @@ export default function Recitations() {
     unit,
     limitSurah,
     limitAyah,
+    direction = "forward",
   }) {
     if (
       !startSurah ||
@@ -3325,8 +3548,13 @@ export default function Recitations() {
       return null;
     }
 
+    const rpcName =
+      normalizeQuranPlanDirection(direction) === "backward"
+        ? "quran_generate_reverse_bounded_assignment_v1"
+        : "quran_generate_assignment";
+
     const { data, error } = await supabase.rpc(
-      "quran_generate_assignment",
+      rpcName,
       {
         p_start_surah: startSurah,
         p_start_ayah: Number(startAyah),
@@ -3338,10 +3566,11 @@ export default function Recitations() {
     );
 
     if (error) {
+      const message = String(error.message || "");
+
       if (
-        String(error.message || "").includes(
-          "QURAN_LIMIT_BEFORE_START"
-        )
+        message.includes("QURAN_LIMIT_BEFORE_START") ||
+        message.includes("QURAN_REVERSE_LIMIT_NOT_AFTER_ROUTE_START")
       ) {
         return null;
       }
@@ -3360,6 +3589,7 @@ export default function Recitations() {
     actualEndSurah,
     actualEndAyah,
     evaluation,
+    direction = "forward",
   }) {
     if (!generated) {
       return evaluation === "إعادة"
@@ -3396,21 +3626,45 @@ export default function Recitations() {
       );
     }
 
-    if (
-      Number(actualEnd.source_id) <
-      Number(plannedStart.source_id)
-    ) {
+    const normalizedDirection =
+      normalizeQuranPlanDirection(direction);
+
+    const compareRoute = (left, right) => {
+      if (normalizedDirection === "backward") {
+        const leftSurah = Number(left.surah_no || 0);
+        const rightSurah = Number(right.surah_no || 0);
+
+        if (leftSurah !== rightSurah) {
+          return leftSurah > rightSurah ? -1 : 1;
+        }
+
+        const leftAyah = Number(left.ayah || 0);
+        const rightAyah = Number(right.ayah || 0);
+
+        if (leftAyah === rightAyah) return 0;
+        return leftAyah < rightAyah ? -1 : 1;
+      }
+
+      const leftSource = Number(left.source_id || 0);
+      const rightSource = Number(right.source_id || 0);
+
+      if (leftSource === rightSource) return 0;
+      return leftSource < rightSource ? -1 : 1;
+    };
+
+    if (compareRoute(actualEnd, plannedStart) < 0) {
       throw new Error(
         "النهاية الفعلية لا يمكن أن تكون قبل بداية المطلوب"
       );
     }
 
+    const actualVsPlannedEnd =
+      compareRoute(actualEnd, plannedEnd);
+
     const derived =
-      Number(actualEnd.source_id) ===
-      Number(plannedEnd.source_id)
+      actualVsPlannedEnd === 0
         ? "exact"
-        : Number(actualEnd.source_id) <
-            Number(plannedEnd.source_id)
+        : actualVsPlannedEnd < 0
           ? "under"
           : "over";
 
@@ -3577,6 +3831,8 @@ export default function Recitations() {
     unit,
     planEndSurah,
     planEndAyah,
+    direction = "forward",
+    cycleBounds = null,
     interventionId = null,
     source = "generated",
   }) {
@@ -3593,13 +3849,45 @@ export default function Recitations() {
     if (completionStatus === "repeat") {
       nextRange = generatedRange;
     } else {
-      const nextStart = await getNextQuranPosition(
-        actualEndSurah,
-        actualEndAyah
-      );
+      const reachedCycleEnd =
+        cycleBounds &&
+        String(actualEndSurah || "").trim() ===
+          String(cycleBounds.endSurah || "").trim() &&
+        Number(actualEndAyah || 0) ===
+          Number(cycleBounds.endAyah || 0);
+
+      let nextStart = reachedCycleEnd
+        ? {
+            surah_name: cycleBounds.startSurah,
+            ayah: Number(cycleBounds.startAyah),
+          }
+        : await getNextQuranPosition(
+            actualEndSurah,
+            actualEndAyah,
+            direction
+          );
 
       if (!nextStart) {
         return null;
+      }
+
+      if (cycleBounds) {
+        const normalizedCycleStart =
+          await normalizeQuranPositionToCycle({
+            surah: nextStart.surah_name,
+            ayah: nextStart.ayah,
+            direction,
+            cycleBounds,
+          });
+
+        nextStart = {
+          surah_name:
+            normalizedCycleStart?.surah ||
+            cycleBounds.startSurah,
+          ayah:
+            normalizedCycleStart?.ayah ||
+            Number(cycleBounds.startAyah),
+        };
       }
 
       nextRange = await generateQuranAssignmentRange({
@@ -3607,8 +3895,11 @@ export default function Recitations() {
         startAyah: nextStart.ayah,
         amount,
         unit,
-        limitSurah: planEndSurah,
-        limitAyah: planEndAyah,
+        limitSurah:
+          cycleBounds?.endSurah || planEndSurah,
+        limitAyah:
+          cycleBounds?.endAyah || planEndAyah,
+        direction,
       });
     }
 
@@ -3762,6 +4053,7 @@ export default function Recitations() {
             actualEndSurah: recitationRecord.to_surah,
             actualEndAyah: recitationRecord.to_ayah,
             evaluation: recitationRecord.lesson_evaluation,
+            direction: planSuggestion?.memorization_direction,
           })
         : null;
 
@@ -3794,6 +4086,7 @@ export default function Recitations() {
             actualEndSurah: recitationRecord.review_to_surah,
             actualEndAyah: recitationRecord.review_to_ayah,
             evaluation: recitationRecord.review_evaluation,
+            direction: planSuggestion?.revision_direction,
           })
         : null;
 
@@ -3954,6 +4247,8 @@ export default function Recitations() {
               planSuggestion.memorization_to_surah,
             planEndAyah:
               planSuggestion.memorization_to_ayah,
+            direction:
+              planSuggestion.memorization_direction,
             interventionId:
               planSuggestion?.activeIntervention?.id || null,
             source:
@@ -3985,6 +4280,10 @@ export default function Recitations() {
               planSuggestion.revision_to_surah,
             planEndAyah:
               planSuggestion.revision_to_ayah,
+            direction:
+              planSuggestion.revision_direction,
+            cycleBounds:
+              planSuggestion.revisionCycleBounds || null,
             interventionId:
               planSuggestion?.activeIntervention?.id || null,
             source:
@@ -4276,6 +4575,8 @@ export default function Recitations() {
             quranForm.to_ayah,
           evaluation:
             quranForm.lesson_evaluation,
+          direction:
+            planSuggestion?.memorization_direction,
         });
       }
 
@@ -4306,6 +4607,8 @@ export default function Recitations() {
             quranForm.review_to_ayah,
           evaluation:
             quranForm.review_evaluation,
+          direction:
+            planSuggestion?.revision_direction,
         });
       }
     } catch (completionError) {
