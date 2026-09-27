@@ -10,6 +10,7 @@ import { ConfirmProvider } from "./context/ConfirmContext";
 
 import "./index.css";
 import "./styles/responsive.css";
+import "./styles/SadiqOrnamentsPro.css";
 import { applyAppAppearance } from "./lib/appearance";
 
 applyAppAppearance();

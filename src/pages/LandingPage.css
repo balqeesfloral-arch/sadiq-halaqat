@@ -2811,3 +2811,141 @@
     transition: none !important;
   }
 }
+
+
+
+/* SADIQ A2 ORNAMENT v1.6 */
+.landing-assistant-head-ornament {
+  width: 248px;
+  height: 248px;
+  left: -80px;
+  top: -86px;
+  opacity: 0.18;
+  color: transparent !important;
+  background-image: url("/patterns/a2.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 4px 14px rgba(255, 255, 255, 0.06));
+  animation: landingAssistantA2Rotate 40s linear infinite;
+  transform-origin: center;
+}
+
+.landing-assistant-head-ornament svg {
+  display: none !important;
+}
+
+.landing-assistant-close {
+  display: none !important;
+}
+
+@keyframes landingAssistantA2Rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 620px) {
+  .landing-assistant-head-ornament {
+    width: 212px;
+    height: 212px;
+    left: -67px;
+    top: -74px;
+    opacity: 0.17;
+  }
+}
+/* END SADIQ A2 ORNAMENT v1.6 */
+
+/* SADIQ PREMIUM HELP BUTTON v1.7 */
+
+/*
+ * Premium single-layer help button.
+ * No nested circle, no chat bubble, no sparkle badge.
+ * CSS-only: application logic and JSX stay untouched.
+ */
+.landing-assistant-launch[aria-expanded="false"] {
+  width: 58px;
+  height: 58px;
+  min-height: 58px;
+  border: 1px solid rgba(225, 196, 111, 0.62);
+  border-radius: 19px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 28% 19%, rgba(255, 244, 205, 0.13), transparent 33%),
+    linear-gradient(145deg, #063832 0%, #0a4941 58%, #0e554b 100%);
+  box-shadow:
+    0 16px 34px rgba(3, 38, 34, 0.24),
+    0 3px 9px rgba(3, 38, 34, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.landing-assistant-launch[aria-expanded="false"]:hover {
+  transform: translateY(-2px) scale(1.035);
+  border-color: rgba(235, 211, 139, 0.82);
+  box-shadow:
+    0 20px 42px rgba(3, 38, 34, 0.29),
+    0 5px 12px rgba(3, 38, 34, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.landing-assistant-launch[aria-expanded="false"] > svg,
+.landing-assistant-launch[aria-expanded="false"] > i,
+.landing-assistant-launch[aria-expanded="false"] .landing-assistant-launch-spark {
+  display: none !important;
+}
+
+.landing-assistant-launch[aria-expanded="false"]::before {
+  content: "";
+  position: relative;
+  z-index: 2;
+  width: 27px;
+  height: 27px;
+  display: block;
+  background: linear-gradient(180deg, #fffdf7 0%, #f7efd9 62%, #e3c56c 100%);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Cpath d='M9.3 10.05C9.52 7.6 11.4 6 14 6c2.75 0 4.83 1.62 4.83 4.08 0 1.82-.92 2.98-2.82 4.14-1.58.97-2.12 1.7-2.12 3.2v.5' fill='none' stroke='black' stroke-width='2.15' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='13.9' cy='22' r='1.35' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Cpath d='M9.3 10.05C9.52 7.6 11.4 6 14 6c2.75 0 4.83 1.62 4.83 4.08 0 1.82-.92 2.98-2.82 4.14-1.58.97-2.12 1.7-2.12 3.2v.5' fill='none' stroke='black' stroke-width='2.15' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='13.9' cy='22' r='1.35' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.16));
+}
+
+.landing-assistant-launch[aria-expanded="false"]::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+.landing-assistant-rosette.is-launch-ring {
+  opacity: 0.68;
+}
+
+@media (max-width: 620px) {
+  .landing-assistant-launch[aria-expanded="false"] {
+    width: 54px;
+    height: 54px;
+    min-height: 54px;
+    border-radius: 17px;
+  }
+
+  .landing-assistant-launch[aria-expanded="false"]::before {
+    width: 25px;
+    height: 25px;
+  }
+
+  .landing-assistant-launch[aria-expanded="false"]::after {
+    inset: 5px;
+    border-radius: 12px;
+  }
+}
+
+/* END SADIQ PREMIUM HELP BUTTON v1.7 */
+

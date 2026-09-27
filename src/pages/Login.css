@@ -437,3 +437,678 @@
 .login-passkey-button > span { display: grid; gap: 2px; text-align: right; }
 .login-passkey-button strong { font-size: 13px; font-weight: 950; }
 .login-passkey-button small { font-size: 10px; color: #72817b; font-weight: 700; }
+
+/* SADIQ LOGIN PAGE PRO MAX v2 */
+
+/* =========================================================
+   LOGIN PAGE PRO MAX
+   Visual-only override.
+   No auth logic, queries, RPCs, routes, handlers, or JSX changed.
+   ========================================================= */
+
+.login-pro-page {
+  --login-emerald-950: #042a26;
+  --login-emerald-900: #06372f;
+  --login-emerald-800: #0a4b40;
+  --login-emerald-700: #0f5f50;
+  --login-gold-700: #a77a22;
+  --login-gold-500: #caa64c;
+  --login-gold-300: #ead58b;
+  --login-ivory: #fbfaf5;
+  --login-paper: #f4f0e6;
+
+  min-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: clamp(18px, 3vw, 42px) !important;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(207, 170, 76, .14), transparent 28%),
+    radial-gradient(circle at 88% 88%, rgba(9, 78, 67, .13), transparent 30%),
+    linear-gradient(135deg, #f5f1e7 0%, #fbfaf5 44%, #edf4ef 100%) !important;
+}
+
+.login-pro-page::before {
+  content: "" !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  opacity: .055 !important;
+  background-image: url("/patterns/login-pro-a5.png") !important;
+  background-repeat: repeat !important;
+  background-size: 430px auto !important;
+  background-position: center !important;
+  mix-blend-mode: multiply !important;
+}
+
+.login-pro-page::after {
+  content: "" !important;
+  position: fixed !important;
+  inset: clamp(10px, 1.4vw, 20px) !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  border: 1px solid rgba(177, 132, 38, .25) !important;
+  border-radius: clamp(22px, 2.4vw, 34px) !important;
+  box-shadow:
+    inset 0 0 0 4px rgba(255,255,255,.48),
+    inset 0 0 0 5px rgba(10,75,64,.055) !important;
+}
+
+.login-pro-shell {
+  position: relative !important;
+  z-index: 3 !important;
+  width: min(1180px, 100%) !important;
+  min-height: min(760px, calc(100dvh - 64px)) !important;
+  grid-template-columns: minmax(0, .93fr) minmax(455px, 1.07fr) !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(177, 132, 38, .30) !important;
+  border-radius: clamp(28px, 3vw, 40px) !important;
+  background: rgba(255,255,255,.965) !important;
+  box-shadow:
+    0 42px 110px rgba(4, 42, 38, .18),
+    0 10px 34px rgba(4, 42, 38, .09),
+    inset 0 0 0 1px rgba(255,255,255,.82) !important;
+  backdrop-filter: blur(24px) saturate(1.06) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.06) !important;
+}
+
+.login-pro-shell::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 7px !important;
+  z-index: 8 !important;
+  pointer-events: none !important;
+  border: 1px solid rgba(211, 174, 82, .15) !important;
+  border-radius: calc(clamp(28px, 3vw, 40px) - 7px) !important;
+}
+
+.login-pro-shell::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 13px !important;
+  z-index: 8 !important;
+  pointer-events: none !important;
+  border-radius: calc(clamp(28px, 3vw, 40px) - 13px) !important;
+  box-shadow: inset 0 0 0 1px rgba(8, 67, 57, .035) !important;
+}
+
+.login-pro-showcase {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(233, 209, 132, .16), transparent 31%),
+    radial-gradient(circle at 88% 76%, rgba(30, 115, 95, .18), transparent 34%),
+    linear-gradient(150deg, #032925 0%, #073a32 44%, #0b5145 100%) !important;
+}
+
+.login-pro-showcase::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  opacity: .095 !important;
+  background-image: url("/patterns/login-pro-a5.png") !important;
+  background-repeat: repeat !important;
+  background-size: 360px auto !important;
+  mix-blend-mode: screen !important;
+}
+
+.login-pro-showcase::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 1 !important;
+  left: -96px !important;
+  bottom: -118px !important;
+  width: clamp(350px, 36vw, 520px) !important;
+  height: clamp(350px, 36vw, 520px) !important;
+  pointer-events: none !important;
+  opacity: .23 !important;
+  background-image: url("/patterns/login-pro-a4.png") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  filter:
+    saturate(.92)
+    contrast(1.04)
+    drop-shadow(0 22px 38px rgba(0,0,0,.10)) !important;
+  animation: loginProMaxHeroFloat 18s ease-in-out infinite alternate !important;
+}
+
+.login-pro-showcase-inner {
+  position: relative !important;
+  z-index: 4 !important;
+  padding:
+    clamp(48px, 5vw, 74px)
+    clamp(38px, 4.4vw, 64px) !important;
+}
+
+.login-pro-logo-box {
+  position: relative !important;
+  z-index: 3 !important;
+  width: 92px !important;
+  height: 92px !important;
+  margin-bottom: 34px !important;
+  overflow: visible !important;
+  border: 1px solid rgba(227, 203, 128, .32) !important;
+  border-radius: 28px !important;
+  background: rgba(255,255,255,.965) !important;
+  box-shadow:
+    0 18px 48px rgba(0,0,0,.20),
+    inset 0 0 0 4px rgba(6,55,47,.035) !important;
+}
+
+.login-pro-logo-box::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  inset: -35px !important;
+  pointer-events: none !important;
+  opacity: .62 !important;
+  background-image: url("/patterns/login-pro-a2.png") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  filter:
+    sepia(.35)
+    saturate(.82)
+    brightness(1.12)
+    drop-shadow(0 8px 20px rgba(0,0,0,.10)) !important;
+  animation: loginProMaxMedallionSpin 54s linear infinite !important;
+}
+
+.login-pro-logo-box img {
+  width: 70px !important;
+  height: 70px !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.login-pro-kicker {
+  color: #ead68d !important;
+  letter-spacing: .01em !important;
+}
+
+.login-pro-showcase h1 {
+  max-width: 510px !important;
+  margin-top: 18px !important;
+  font-size: clamp(
+    calc(43px * var(--app-font-scale,1)),
+    4.7vw,
+    calc(66px * var(--app-font-scale,1))
+  ) !important;
+  letter-spacing: -1.5px !important;
+  text-shadow: 0 3px 20px rgba(0,0,0,.12) !important;
+}
+
+.login-pro-showcase h1 span {
+  color: rgba(255,255,255,.83) !important;
+  font-size: clamp(
+    calc(20px * var(--app-font-scale,1)),
+    2.2vw,
+    calc(30px * var(--app-font-scale,1))
+  ) !important;
+}
+
+.login-pro-showcase p {
+  max-width: 530px !important;
+  color: rgba(255,255,255,.68) !important;
+}
+
+.login-pro-features {
+  max-width: 520px !important;
+}
+
+.login-pro-features div {
+  position: relative !important;
+  min-height: 43px !important;
+  padding: 0 13px !important;
+  border: 1px solid rgba(255,255,255,.075) !important;
+  border-radius: 13px !important;
+  background: rgba(255,255,255,.035) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+.login-pro-features svg {
+  color: #e9d386 !important;
+}
+
+.login-pro-dua {
+  position: relative !important;
+  max-width: 530px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(232, 210, 139, .20) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.025)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+
+.login-pro-dua::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 6px !important;
+  pointer-events: none !important;
+  border: 1px solid rgba(229, 205, 129, .09) !important;
+  border-radius: 16px !important;
+}
+
+.login-pro-card {
+  position: relative !important;
+  z-index: 2 !important;
+  overflow: hidden !important;
+  padding:
+    clamp(38px, 4vw, 58px)
+    clamp(32px, 4.2vw, 60px) !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(205, 170, 82, .08), transparent 31%),
+    linear-gradient(180deg, rgba(255,255,255,.99), rgba(251,250,246,.97)) !important;
+}
+
+.login-pro-card::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  right: -98px !important;
+  bottom: -86px !important;
+  width: 330px !important;
+  height: 360px !important;
+  pointer-events: none !important;
+  opacity: .040 !important;
+  background-image: url("/patterns/login-pro-z5.png") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+}
+
+.login-pro-card > * {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.login-pro-heading {
+  padding-bottom: 19px !important;
+  border-bottom: 1px solid rgba(10,75,64,.075) !important;
+}
+
+.login-pro-heading::after {
+  content: "" !important;
+  display: block !important;
+  width: 74px !important;
+  height: 2px !important;
+  margin-top: 17px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, #a77a22, #e4ca79, transparent) !important;
+}
+
+.login-pro-eyebrow {
+  color: #815f1d !important;
+}
+
+.login-pro-heading h2 {
+  margin-top: 9px !important;
+  font-size: clamp(
+    calc(28px * var(--app-font-scale,1)),
+    2.4vw,
+    calc(34px * var(--app-font-scale,1))
+  ) !important;
+  letter-spacing: -.4px !important;
+}
+
+.login-pro-switch {
+  gap: 8px !important;
+  margin: 21px 0 !important;
+  padding: 6px !important;
+  border: 1px solid rgba(9,79,67,.075) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, #f1f5f2, #edf2ee) !important;
+  box-shadow: inset 0 1px 3px rgba(7,53,46,.035) !important;
+}
+
+.login-pro-switch button {
+  min-height: 70px !important;
+  border-radius: 15px !important;
+}
+
+.login-pro-switch button.active {
+  border-color: rgba(229,203,126,.22) !important;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(237,213,143,.13), transparent 30%),
+    linear-gradient(135deg, #06372f, #0d5b4d) !important;
+  box-shadow:
+    0 13px 29px rgba(5,62,52,.20),
+    inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+
+.login-quick-access {
+  border: 1px solid rgba(10,75,64,.085) !important;
+  border-radius: 19px !important;
+  background:
+    linear-gradient(135deg, rgba(249,251,249,.98), rgba(255,252,243,.95)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.78) !important;
+}
+
+.login-quick-account {
+  border-color: rgba(10,75,64,.10) !important;
+  border-radius: 13px !important;
+  box-shadow: 0 5px 14px rgba(7,56,48,.035) !important;
+}
+
+.login-pro-form {
+  gap: 15px !important;
+}
+
+.login-pro-field label {
+  color: #38534b !important;
+}
+
+.login-pro-input-wrap input {
+  height: 54px !important;
+  border: 1px solid rgba(9,74,63,.14) !important;
+  border-radius: 15px !important;
+  background: rgba(255,255,255,.94) !important;
+  box-shadow:
+    0 7px 17px rgba(6,52,45,.035),
+    inset 0 1px 0 rgba(255,255,255,.82) !important;
+}
+
+.login-pro-input-wrap input:hover {
+  border-color: rgba(167,122,34,.28) !important;
+}
+
+.login-pro-input-wrap input:focus {
+  border-color: rgba(167,122,34,.58) !important;
+  box-shadow:
+    0 0 0 4px rgba(202,166,76,.10),
+    0 9px 22px rgba(6,52,45,.05) !important;
+}
+
+.login-pro-input-icon {
+  color: #846a30 !important;
+}
+
+.login-pro-eye {
+  color: #6b8179 !important;
+}
+
+.login-remember-row {
+  border: 1px solid rgba(9,74,63,.095) !important;
+  border-radius: 15px !important;
+  background:
+    linear-gradient(135deg, #fafcfb, #faf8f1) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.86) !important;
+}
+
+.login-remember-row::after {
+  width: 3px !important;
+  top: 9px !important;
+  bottom: 9px !important;
+  background: linear-gradient(#d9b75e, #0d5a4d) !important;
+  opacity: .58 !important;
+}
+
+.login-pro-primary {
+  position: relative !important;
+  overflow: hidden !important;
+  min-height: 56px !important;
+  border: 1px solid rgba(230,204,128,.23) !important;
+  border-radius: 15px !important;
+  background:
+    radial-gradient(circle at 16% 10%, rgba(240,216,147,.14), transparent 29%),
+    linear-gradient(135deg, #052f2a 0%, #0b5044 55%, #0f6454 100%) !important;
+  box-shadow:
+    0 15px 32px rgba(5,61,52,.22),
+    inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+
+.login-pro-primary::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(
+      110deg,
+      transparent 0 33%,
+      rgba(255,255,255,.09) 47%,
+      transparent 61%
+    ) !important;
+  transform: translateX(-115%) !important;
+  transition: transform .65s ease !important;
+}
+
+.login-pro-primary:hover:not(:disabled)::before {
+  transform: translateX(115%) !important;
+}
+
+.login-pro-register {
+  border: 1px solid rgba(167,122,34,.12) !important;
+  border-radius: 20px !important;
+  background:
+    linear-gradient(135deg, #f8faf8, #fdf9ee) !important;
+}
+
+.login-pro-register button {
+  border-color: rgba(167,122,34,.18) !important;
+  color: #80601e !important;
+  box-shadow: 0 6px 16px rgba(6,52,45,.035) !important;
+}
+
+.login-pro-security {
+  border-top-color: rgba(9,74,63,.075) !important;
+}
+
+.login-pro-home {
+  width: 46px !important;
+  height: 46px !important;
+  border: 1px solid rgba(167,122,34,.20) !important;
+  border-radius: 15px !important;
+  color: #0a5145 !important;
+  background: rgba(255,255,255,.90) !important;
+  box-shadow:
+    0 11px 28px rgba(5,53,45,.08),
+    inset 0 0 0 3px rgba(202,166,76,.035) !important;
+}
+
+.login-pro-geometry {
+  display: block !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+}
+
+.login-pro-geometry svg {
+  display: none !important;
+}
+
+.login-pro-geometry-top {
+  width: clamp(210px, 21vw, 340px) !important;
+  height: clamp(210px, 21vw, 340px) !important;
+  top: clamp(-92px, -5vw, -50px) !important;
+  left: clamp(-78px, -4vw, -42px) !important;
+  opacity: .075 !important;
+  transform: rotate(7deg) !important;
+  background-image: url("/patterns/login-pro-z5.png") !important;
+  filter: none !important;
+}
+
+.login-pro-geometry-bottom {
+  width: clamp(170px, 16vw, 255px) !important;
+  height: clamp(170px, 16vw, 255px) !important;
+  right: clamp(-42px, -2vw, -16px) !important;
+  bottom: clamp(-56px, -3vw, -24px) !important;
+  opacity: .060 !important;
+  transform: rotate(-9deg) !important;
+  background-image: url("/patterns/login-pro-a2.png") !important;
+  filter: sepia(.25) saturate(.75) brightness(1.05) !important;
+}
+
+@keyframes loginProMaxHeroFloat {
+  0% {
+    transform: rotate(-3deg) translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: rotate(3deg) translate3d(10px, -12px, 0) scale(1.025);
+  }
+}
+
+@keyframes loginProMaxMedallionSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 980px) {
+  .login-pro-shell {
+    grid-template-columns: 1fr !important;
+    width: min(610px, 100%) !important;
+    min-height: auto !important;
+  }
+
+  .login-pro-showcase {
+    display: none !important;
+  }
+
+  .login-pro-card {
+    padding:
+      clamp(34px, 6vw, 54px)
+      clamp(24px, 6vw, 48px) !important;
+  }
+
+  .login-pro-mobile-brand {
+    position: relative !important;
+    display: flex !important;
+    padding-bottom: 18px !important;
+    border-bottom: 1px solid rgba(9,74,63,.075) !important;
+  }
+
+  .login-pro-mobile-brand::after {
+    content: "" !important;
+    position: absolute !important;
+    left: -25px !important;
+    top: -35px !important;
+    width: 145px !important;
+    height: 145px !important;
+    z-index: -1 !important;
+    opacity: .065 !important;
+    background-image: url("/patterns/login-pro-a2.png") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+  }
+
+  .login-pro-card::before {
+    width: 270px !important;
+    height: 300px !important;
+    right: -110px !important;
+    bottom: -90px !important;
+    opacity: .030 !important;
+  }
+
+  .login-pro-geometry-top {
+    width: 170px !important;
+    height: 170px !important;
+    top: -42px !important;
+    left: -40px !important;
+    opacity: .055 !important;
+  }
+
+  .login-pro-geometry-bottom {
+    display: none !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .login-pro-page {
+    padding: 10px !important;
+    align-items: start !important;
+  }
+
+  .login-pro-page::after {
+    inset: 6px !important;
+    border-radius: 22px !important;
+    opacity: .70 !important;
+  }
+
+  .login-pro-shell {
+    width: 100% !important;
+    margin-top: 8px !important;
+    border-radius: 25px !important;
+  }
+
+  .login-pro-shell::before {
+    inset: 5px !important;
+    border-radius: 20px !important;
+  }
+
+  .login-pro-shell::after {
+    display: none !important;
+  }
+
+  .login-pro-card {
+    padding: 30px 19px 24px !important;
+  }
+
+  .login-pro-mobile-brand {
+    margin-bottom: 21px !important;
+  }
+
+  .login-pro-mobile-brand img {
+    width: 54px !important;
+    height: 54px !important;
+  }
+
+  .login-pro-switch {
+    grid-template-columns: 1fr !important;
+  }
+
+  .login-pro-switch button {
+    min-height: 62px !important;
+  }
+
+  .login-quick-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .login-pro-input-wrap input {
+    height: 52px !important;
+  }
+
+  .login-pro-register {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .login-pro-register button {
+    justify-content: center !important;
+  }
+
+  .login-pro-home {
+    top: 15px !important;
+    right: 15px !important;
+    width: 41px !important;
+    height: 41px !important;
+  }
+
+  .login-pro-geometry-top {
+    width: 125px !important;
+    height: 125px !important;
+    top: -26px !important;
+    left: -28px !important;
+    opacity: .04 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-pro-showcase::after,
+  .login-pro-logo-box::before {
+    animation: none !important;
+  }
+
+  .login-pro-primary::before {
+    transition: none !important;
+  }
+}
+
+/* END SADIQ LOGIN PAGE PRO MAX v2 */
+

@@ -1464,7 +1464,33 @@ function LandingAssistant() {
           className="landing-assistant-launch"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
-          aria-label={open ? "إغلاق المساعد" : "فتح المساعد"}
+          aria-label={open ? (
+            <X size={22} />
+          ) : (
+            <svg
+              className="landing-assistant-question-icon"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                d="M12 3.35c-5.06 0-9.16 3.52-9.16 7.88 0 2.42 1.25 4.57 3.27 6.02l-.78 3.25 3.73-1.5c.93.23 1.92.35 2.94.35 5.06 0 9.16-3.52 9.16-7.88S17.06 3.35 12 3.35Z"
+                stroke="currentColor"
+                strokeWidth="1.55"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M9.36 9.19c.13-1.42 1.2-2.33 2.69-2.33 1.57 0 2.74.91 2.74 2.29 0 1.03-.52 1.68-1.59 2.33-.95.57-1.3 1.01-1.3 1.94v.18"
+                stroke="currentColor"
+                strokeWidth="1.55"
+                strokeLinecap="round"
+              />
+              <circle cx="11.9" cy="16.7" r=".9" fill="currentColor" />
+            </svg>
+          )}
           title={open ? "إغلاق" : "المساعدة"}
         >
           {open ? <X size={22} /> : <MessageCircle size={24} />}
