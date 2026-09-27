@@ -77,11 +77,11 @@ export default function StudentOnboarding() {
         return;
       }
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role, status, is_active")
-        .eq("auth_user_id", user.id)
-        .maybeSingle();
+      const { data: profileRows, error: profileError } = await supabase.rpc(
+        "student_my_profile_v1"
+      );
+
+      const profile = profileRows?.[0] || null;
 
       if (
         profileError ||

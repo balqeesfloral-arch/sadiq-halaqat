@@ -26,26 +26,13 @@ export default function StudentPoints() {
 
       if(!mosque?.id){setRanking([]);return}
 
-      const {data:halaqatRows,error:halaqatError}=await supabase.from("halaqat")
-        .select("id").eq("mosque_id",mosque.id).neq("status","archived");
-      if(halaqatError)throw halaqatError;
+      const {data:rankingRows,error:rankingError}=await supabase.rpc(
+        "student_mosque_points_ranking_v1",
+        {p_limit:10}
+      );
+      if(rankingError)throw rankingError;
 
-      const halaqaIds=(halaqatRows||[]).map(r=>r.id);
-      if(!halaqaIds.length){setRanking([]);return}
-
-      const {data:links,error:linksError}=await supabase.from("student_halaqat")
-        .select("student_id").in("halaqa_id",halaqaIds).eq("is_current",true);
-      if(linksError)throw linksError;
-
-      const ids=[...new Set((links||[]).map(r=>r.student_id))];
-      if(!ids.length){setRanking([]);return}
-
-      const {data:profiles,error:profilesError}=await supabase.from("profiles")
-        .select("id, full_name, total_points, status").in("id",ids).eq("role","student");
-      if(profilesError)throw profilesError;
-
-      setRanking((profiles||[]).filter(s=>s.status!=="archived")
-        .sort((a,b)=>Number(b.total_points||0)-Number(a.total_points||0)).slice(0,10));
+      setRanking(rankingRows||[]);
     }catch(error){console.error("Student points:",error)}
     finally{setLoading(false)}
   }

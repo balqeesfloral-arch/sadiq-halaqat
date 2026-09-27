@@ -19,49 +19,47 @@ export default function Classmates() {
     try {
       setLoading(true);
 
-      const { data: links, error: linksError } = await supabase
-        .from("student_halaqat").select("student_id")
-        .eq("halaqa_id", halaqa.id).eq("is_current", true);
-      if (linksError) throw linksError;
-
-      const ids = [...new Set((links || []).map((item) => Number(item.student_id)).filter(Boolean))];
-      if (!ids.length) { setClassmates([]); return; }
-
       const hijri = getHijriParts();
-      const [profilesResult, plansResult, progressResult] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, total_points, status").in("id", ids).eq("role", "student"),
-        supabase.from("monthly_plans")
-          .select("student_id, memorization_target_faces, revision_target_faces")
-          .eq("halaqa_id", halaqa.id).eq("hijri_year", hijri.year).eq("hijri_month", hijri.month).in("student_id", ids),
-        supabase.from("monthly_progress")
-          .select("student_id, final_memorization_faces, final_revision_faces, auto_memorization_faces, auto_revision_faces, manual_memorization_faces, manual_revision_faces")
-          .eq("halaqa_id", halaqa.id).eq("hijri_year", hijri.year).eq("hijri_month", hijri.month).in("student_id", ids),
-      ]);
+      const { data: rows, error: classmatesError } = await supabase.rpc(
+        "student_classmates_summary_v1",
+        {
+          p_hijri_year: hijri.year,
+          p_hijri_month: hijri.month,
+        }
+      );
 
-      if (profilesResult.error) throw profilesResult.error;
+      if (classmatesError) throw classmatesError;
 
-      const planMap = new Map((plansResult.data || []).map((row) => [Number(row.student_id), row]));
-      const progressMap = new Map((progressResult.data || []).map((row) => [Number(row.student_id), row]));
-
-      const result = (profilesResult.data || [])
-        .filter((student) => student.status !== "archived")
+      const result = (rows || [])
         .map((student) => {
-          const plan = planMap.get(Number(student.id));
-          const progress = progressMap.get(Number(student.id));
+          const memDone = Number(
+            student.final_memorization_faces ??
+              (Number(student.auto_memorization_faces || 0) +
+                Number(student.manual_memorization_faces || 0))
+          );
+          const revDone = Number(
+            student.final_revision_faces ??
+              (Number(student.auto_revision_faces || 0) +
+                Number(student.manual_revision_faces || 0))
+          );
+          const memTarget = Number(student.memorization_target_faces || 0);
+          const revTarget = Number(student.revision_target_faces || 0);
 
-          const memDone = Number(progress?.final_memorization_faces ?? (Number(progress?.auto_memorization_faces || 0) + Number(progress?.manual_memorization_faces || 0)));
-          const revDone = Number(progress?.final_revision_faces ?? (Number(progress?.auto_revision_faces || 0) + Number(progress?.manual_revision_faces || 0)));
-          const memTarget = Number(plan?.memorization_target_faces || 0);
-          const revTarget = Number(plan?.revision_target_faces || 0);
-
-          const memPercent = memTarget ? clampPercent((memDone / memTarget) * 100) : 0;
-          const revPercent = revTarget ? clampPercent((revDone / revTarget) * 100) : 0;
-          const parts = [memTarget ? memPercent : null, revTarget ? revPercent : null].filter((v) => v !== null);
+          const memPercent = memTarget
+            ? clampPercent((memDone / memTarget) * 100)
+            : 0;
+          const revPercent = revTarget
+            ? clampPercent((revDone / revTarget) * 100)
+            : 0;
+          const parts = [memTarget ? memPercent : null, revTarget ? revPercent : null]
+            .filter((value) => value !== null);
 
           return {
             ...student,
             memDone,
-            progressPercent: parts.length ? Math.round(parts.reduce((a,b)=>a+b,0)/parts.length) : 0,
+            progressPercent: parts.length
+              ? Math.round(parts.reduce((sum, value) => sum + value, 0) / parts.length)
+              : 0,
           };
         })
         .sort((a, b) => Number(b.total_points || 0) - Number(a.total_points || 0));

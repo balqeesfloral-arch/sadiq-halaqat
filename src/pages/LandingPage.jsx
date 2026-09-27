@@ -53,6 +53,29 @@ import {
   UsersRound,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+
+/* SADIQ_PUBLIC_RPC_SESSION_RETRY_V1 */
+async function publicRpcWithSessionRetry(rpcName, params) {
+  let result = await supabase.rpc(rpcName, params);
+
+  if (result?.error?.code !== "PGRST303") {
+    return result;
+  }
+
+  try {
+    const { error: refreshError } =
+      await supabase.auth.refreshSession();
+
+    if (refreshError) {
+      return result;
+    }
+  } catch {
+    return result;
+  }
+
+  return supabase.rpc(rpcName, params);
+}
+
 import "./LandingPage.css";
 
 const EMPTY_STATS = {
@@ -1832,8 +1855,7 @@ export default function LandingPage() {
       const rpcMosqueId =
         nextMosqueId === "all" ? null : Number(nextMosqueId);
 
-      const { data, error } = await supabase.rpc(
-        "get_public_mosque_insights",
+      const { data, error } = await publicRpcWithSessionRetry("get_public_mosque_insights",
         {
           p_mosque_id: rpcMosqueId,
         }
@@ -1864,8 +1886,7 @@ export default function LandingPage() {
       setStatsError("");
 
       try {
-        const statsResult = await supabase.rpc(
-          "get_public_mosque_stats",
+        const statsResult = await publicRpcWithSessionRetry("get_public_mosque_stats",
           { p_mosque_id: null }
         );
 
@@ -1873,8 +1894,7 @@ export default function LandingPage() {
 
         let directoryRows = [];
 
-        const directoryResult = await supabase.rpc(
-          "get_public_mosque_directory"
+        const directoryResult = await publicRpcWithSessionRetry("get_public_mosque_directory"
         );
 
         if (!directoryResult.error) {
@@ -1882,8 +1902,7 @@ export default function LandingPage() {
             ? directoryResult.data
             : [];
         } else {
-          const legacyResult = await supabase.rpc(
-            "get_public_mosques"
+          const legacyResult = await publicRpcWithSessionRetry("get_public_mosques"
           );
 
           if (legacyResult.error) throw legacyResult.error;
@@ -1959,8 +1978,7 @@ export default function LandingPage() {
       const rpcMosqueId =
         nextMosqueId === "all" ? null : Number(nextMosqueId);
 
-      const { data, error } = await supabase.rpc(
-        "get_public_mosque_stats",
+      const { data, error } = await publicRpcWithSessionRetry("get_public_mosque_stats",
         {
           p_mosque_id: rpcMosqueId,
         }

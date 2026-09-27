@@ -741,6 +741,120 @@ async function generateAutomaticQuranRange({
   };
 }
 
+
+async function getRevisionCycleBounds({
+  lessonSurah,
+  direction,
+}) {
+  if (!String(lessonSurah || "").trim()) return null;
+
+  const { data, error } = await supabase.rpc(
+    "quran_revision_cycle_bounds",
+    {
+      p_lesson_surah: lessonSurah,
+      p_direction: normalizePlanDirection(direction),
+    }
+  );
+
+  if (error) throw error;
+
+  const bounds = firstRpcRow(data);
+  if (!bounds) return null;
+
+  return {
+    startSurah: bounds.cycle_start_surah_name,
+    startAyah: Number(bounds.cycle_start_ayah),
+    endSurah: bounds.cycle_end_surah_name,
+    endAyah: Number(bounds.cycle_end_ayah),
+  };
+}
+
+async function generateAutomaticRevisionRange({
+  row,
+  direction,
+  startSurah,
+  startAyah,
+  dailyAmount,
+  dailyUnit,
+  sessions,
+}) {
+  const targetAmount = totalDailyPlanAmount(
+    dailyAmount,
+    sessions
+  );
+
+  if (
+    !hasPlanStart(startSurah, startAyah) ||
+    targetAmount <= 0 ||
+    !["lines", "faces"].includes(dailyUnit)
+  ) {
+    return null;
+  }
+
+  const cycleBounds = await getRevisionCycleBounds({
+    lessonSurah: row?.memorization_from_surah,
+    direction,
+  });
+
+  if (!cycleBounds) {
+    return generateAutomaticQuranRange({
+      direction,
+      startSurah,
+      startAyah,
+      dailyAmount,
+      dailyUnit,
+      sessions,
+    });
+  }
+
+  const { data, error } = await supabase.rpc(
+    "quran_generate_cyclic_assignment",
+    {
+      p_start_surah: startSurah,
+      p_start_ayah: Number(startAyah),
+      p_cycle_start_surah: cycleBounds.startSurah,
+      p_cycle_start_ayah: cycleBounds.startAyah,
+      p_cycle_end_surah: cycleBounds.endSurah,
+      p_cycle_end_ayah: cycleBounds.endAyah,
+      p_direction: normalizePlanDirection(direction),
+      p_target_amount: targetAmount,
+      p_target_unit: dailyUnit,
+    }
+  );
+
+  if (error) throw error;
+
+  const generated = firstRpcRow(data);
+  if (!generated) return null;
+
+  const normalizedStartSurah =
+    generated.start_surah_name || startSurah;
+  const normalizedStartAyah =
+    Number(generated.start_ayah || startAyah);
+
+  return {
+    from_surah: normalizedStartSurah,
+    from_ayah: normalizedStartAyah,
+    to_surah: generated.end_surah_name,
+    to_ayah: Number(generated.end_ayah),
+    target_faces: Number(generated.faces || 0),
+    target_lines: Number(generated.quran_lines || 0),
+    start_page: generated.start_page ?? null,
+    end_page: generated.end_page ?? null,
+    precision_label: generated.precision_label || "",
+    requested_amount: targetAmount,
+    cycle_start_surah: generated.cycle_start_surah_name || cycleBounds.startSurah,
+    cycle_start_ayah: Number(generated.cycle_start_ayah || cycleBounds.startAyah),
+    cycle_end_surah: generated.cycle_end_surah_name || cycleBounds.endSurah,
+    cycle_end_ayah: Number(generated.cycle_end_ayah || cycleBounds.endAyah),
+    cycle_faces: Number(generated.cycle_faces || 0),
+    cycle_lines: Number(generated.cycle_lines || 0),
+    completed_full_cycles: Number(generated.completed_full_cycles || 0),
+    wrap_count: Number(generated.wrap_count || 0),
+    cycle_equivalent: Number(generated.cycle_equivalent || 0),
+  };
+}
+
 async function getQuranPositionInfo(surah, ayah) {
   if (!hasPlanStart(surah, ayah)) return null;
 
@@ -804,9 +918,36 @@ async function pickDirectionalEndpoint(first, second, direction) {
   return valid[valid.length - 1].item;
 }
 
-async function moveOneAyahFrom(position, direction) {
+function sameQuranPosition(first, second) {
+  return Boolean(
+    first &&
+    second &&
+    String(first.surah || "").trim() === String(second.surah || "").trim() &&
+    Number(first.ayah || 0) === Number(second.ayah || 0)
+  );
+}
+
+async function moveOneAyahFrom(position, direction, cycleBounds = null) {
   if (!hasPlanStart(position?.surah, position?.ayah)) {
     return null;
+  }
+
+  const cycleStart = cycleBounds
+    ? {
+        surah: cycleBounds.startSurah,
+        ayah: Number(cycleBounds.startAyah),
+      }
+    : null;
+
+  const cycleEnd = cycleBounds
+    ? {
+        surah: cycleBounds.endSurah,
+        ayah: Number(cycleBounds.endAyah),
+      }
+    : null;
+
+  if (cycleStart && cycleEnd && sameQuranPosition(position, cycleEnd)) {
+    return cycleStart;
   }
 
   const rpcName = normalizePlanDirection(direction) === "backward"
@@ -823,7 +964,7 @@ async function moveOneAyahFrom(position, direction) {
   const moved = firstRpcRow(data);
 
   if (!moved) {
-    return position;
+    return cycleStart || position;
   }
 
   return {
@@ -838,6 +979,7 @@ async function resolveContinuationStart({
   direction,
   fallbackSurah,
   fallbackAyah,
+  cycleBounds = null,
 }) {
   const sorted = [...(records || [])].sort((a, b) => {
     const dateCompare = String(b.recitation_date || "").localeCompare(
@@ -889,7 +1031,7 @@ async function resolveContinuationStart({
     );
 
     if (actualEnd) {
-      return moveOneAyahFrom(actualEnd, direction);
+      return moveOneAyahFrom(actualEnd, direction, cycleBounds);
     }
   }
 
@@ -899,7 +1041,8 @@ async function resolveContinuationStart({
         surah: fallbackSurah,
         ayah: Number(fallbackAyah),
       },
-      direction
+      direction,
+      cycleBounds
     );
   }
 
@@ -919,14 +1062,24 @@ async function applyAutomaticRangeToSnapshot(row, prefix) {
 
   if (!row?.[autoField]) return row;
 
-  const generated = await generateAutomaticQuranRange({
-    direction: row?.[directionField],
-    startSurah: row?.[fromSurahField],
-    startAyah: row?.[fromAyahField],
-    dailyAmount: row?.[amountField],
-    dailyUnit: row?.[unitField],
-    sessions: row?.planned_sessions,
-  });
+  const generated = prefix === "revision"
+    ? await generateAutomaticRevisionRange({
+        row,
+        direction: row?.[directionField],
+        startSurah: row?.[fromSurahField],
+        startAyah: row?.[fromAyahField],
+        dailyAmount: row?.[amountField],
+        dailyUnit: row?.[unitField],
+        sessions: row?.planned_sessions,
+      })
+    : await generateAutomaticQuranRange({
+        direction: row?.[directionField],
+        startSurah: row?.[fromSurahField],
+        startAyah: row?.[fromAyahField],
+        dailyAmount: row?.[amountField],
+        dailyUnit: row?.[unitField],
+        sessions: row?.planned_sessions,
+      });
 
   if (!generated) {
     return {
@@ -938,6 +1091,19 @@ async function applyAutomaticRangeToSnapshot(row, prefix) {
       [`${prefix}_start_page`]: null,
       [`${prefix}_end_page`]: null,
       [`${prefix}_route_error`]: "",
+      ...(prefix === "revision"
+        ? {
+            revision_cycle_start_surah: "",
+            revision_cycle_start_ayah: null,
+            revision_cycle_end_surah: "",
+            revision_cycle_end_ayah: null,
+            revision_cycle_faces: 0,
+            revision_cycle_lines: 0,
+            revision_cycle_full_count: 0,
+            revision_cycle_wrap_count: 0,
+            revision_cycle_equivalent: 0,
+          }
+        : {}),
     };
   }
 
@@ -951,6 +1117,19 @@ async function applyAutomaticRangeToSnapshot(row, prefix) {
     [`${prefix}_end_page`]: generated.end_page ?? null,
     [`${prefix}_precision_label`]: generated.precision_label || "",
     [`${prefix}_route_error`]: "",
+    ...(prefix === "revision"
+      ? {
+          revision_cycle_start_surah: generated.cycle_start_surah || "",
+          revision_cycle_start_ayah: Number(generated.cycle_start_ayah || 0) || null,
+          revision_cycle_end_surah: generated.cycle_end_surah || "",
+          revision_cycle_end_ayah: Number(generated.cycle_end_ayah || 0) || null,
+          revision_cycle_faces: Number(generated.cycle_faces || 0),
+          revision_cycle_lines: Number(generated.cycle_lines || 0),
+          revision_cycle_full_count: Number(generated.completed_full_cycles || 0),
+          revision_cycle_wrap_count: Number(generated.wrap_count || 0),
+          revision_cycle_equivalent: Number(generated.cycle_equivalent || 0),
+        }
+      : {}),
   };
 }
 
@@ -968,22 +1147,30 @@ async function buildNextMonthPlanSnapshot({
     previousPlan.revision_direction
   );
 
-  const [memorizationStart, revisionStart] = await Promise.all([
-    resolveContinuationStart({
-      records: previousRecitations,
-      type: "memorization",
-      direction: memorizationDirection,
-      fallbackSurah: previousPlan.memorization_to_surah,
-      fallbackAyah: previousPlan.memorization_to_ayah,
-    }),
-    resolveContinuationStart({
-      records: previousRecitations,
-      type: "revision",
-      direction: revisionDirection,
-      fallbackSurah: previousPlan.revision_to_surah,
-      fallbackAyah: previousPlan.revision_to_ayah,
-    }),
-  ]);
+  const memorizationStart = await resolveContinuationStart({
+    records: previousRecitations,
+    type: "memorization",
+    direction: memorizationDirection,
+    fallbackSurah: previousPlan.memorization_to_surah,
+    fallbackAyah: previousPlan.memorization_to_ayah,
+  });
+
+  const revisionCycleBounds = await getRevisionCycleBounds({
+    lessonSurah:
+      memorizationStart?.surah ||
+      previousPlan.memorization_from_surah ||
+      previousPlan.memorization_to_surah,
+    direction: revisionDirection,
+  });
+
+  const revisionStart = await resolveContinuationStart({
+    records: previousRecitations,
+    type: "revision",
+    direction: revisionDirection,
+    fallbackSurah: previousPlan.revision_to_surah,
+    fallbackAyah: previousPlan.revision_to_ayah,
+    cycleBounds: revisionCycleBounds,
+  });
 
   const oldSessions = Number(previousPlan.planned_sessions || 0);
 
@@ -3165,6 +3352,33 @@ export default function MonthlyPlan() {
                 revision_route_error:
                   "",
 
+                revision_cycle_start_surah:
+                  "",
+
+                revision_cycle_start_ayah:
+                  null,
+
+                revision_cycle_end_surah:
+                  "",
+
+                revision_cycle_end_ayah:
+                  null,
+
+                revision_cycle_faces:
+                  0,
+
+                revision_cycle_lines:
+                  0,
+
+                revision_cycle_full_count:
+                  0,
+
+                revision_cycle_wrap_count:
+                  0,
+
+                revision_cycle_equivalent:
+                  0,
+
                 memorization_daily_amount:
                   memDailyAmount,
 
@@ -3408,16 +3622,7 @@ export default function MonthlyPlan() {
               next = regenerated;
             }
 
-            if (
-              next.revision_auto_range &&
-              (sessionsChanged ||
-                !hasCompletePlanRange(
-                  next.revision_from_surah,
-                  next.revision_from_ayah,
-                  next.revision_to_surah,
-                  next.revision_to_ayah
-                ))
-            ) {
+            if (next.revision_auto_range) {
               const regenerated = await applyAutomaticRangeToSnapshot(
                 next,
                 "revision"
@@ -3590,6 +3795,19 @@ export default function MonthlyPlan() {
             [`${prefix}_start_page`]: next[`${prefix}_start_page`] ?? null,
             [`${prefix}_end_page`]: next[`${prefix}_end_page`] ?? null,
             [`${prefix}_precision_label`]: next[`${prefix}_precision_label`] || "",
+            ...(prefix === "revision"
+              ? {
+                  revision_cycle_start_surah: next.revision_cycle_start_surah || "",
+                  revision_cycle_start_ayah: next.revision_cycle_start_ayah ?? null,
+                  revision_cycle_end_surah: next.revision_cycle_end_surah || "",
+                  revision_cycle_end_ayah: next.revision_cycle_end_ayah ?? null,
+                  revision_cycle_faces: Number(next.revision_cycle_faces || 0),
+                  revision_cycle_lines: Number(next.revision_cycle_lines || 0),
+                  revision_cycle_full_count: Number(next.revision_cycle_full_count || 0),
+                  revision_cycle_wrap_count: Number(next.revision_cycle_wrap_count || 0),
+                  revision_cycle_equivalent: Number(next.revision_cycle_equivalent || 0),
+                }
+              : {}),
             [`${prefix}_auto_range`]: true,
             [`${prefix}_generating`]: false,
             [`${prefix}_route_error`]: "",
@@ -3612,8 +3830,10 @@ export default function MonthlyPlan() {
             ...row,
             [`${prefix}_generating`]: false,
             [`${prefix}_route_error`]:
-              String(error?.message || "").includes("QURAN_RANGE_REVERSED")
-                ? "اتجاه المسار لا يطابق نقطة البداية"
+              /QURAN_CYCLE_|QURAN_RANGE_REVERSED|QURAN_REVERSE_SURAH_RANGE_INVALID/.test(
+                String(error?.message || "")
+              )
+                ? "بداية المراجعة خارج نطاق الدورة المحفوظة"
                 : "تعذر حساب نهاية الخطة تلقائيًا",
           };
         })
@@ -3706,6 +3926,19 @@ export default function MonthlyPlan() {
 
     if (autoEnabled) {
       scheduleAutoRoute(studentId, prefix, nextSnapshot);
+
+      if (
+        prefix === "memorization" &&
+        part === "from_surah" &&
+        nextSnapshot.revision_auto_range &&
+        hasPlanStart(
+          nextSnapshot.revision_from_surah,
+          nextSnapshot.revision_from_ayah
+        )
+      ) {
+        scheduleAutoRoute(studentId, "revision", nextSnapshot);
+      }
+
       return;
     }
 
@@ -6174,6 +6407,17 @@ function StudentPlanCard({
                         autoRange={row.revision_auto_range}
                         generating={row.revision_generating}
                         routeError={row.revision_route_error}
+                        cycleInfo={{
+                          startSurah: row.revision_cycle_start_surah,
+                          startAyah: row.revision_cycle_start_ayah,
+                          endSurah: row.revision_cycle_end_surah,
+                          endAyah: row.revision_cycle_end_ayah,
+                          faces: row.revision_cycle_faces,
+                          lines: row.revision_cycle_lines,
+                          fullCount: row.revision_cycle_full_count,
+                          wrapCount: row.revision_cycle_wrap_count,
+                          equivalent: row.revision_cycle_equivalent,
+                        }}
                         showPace={showPace}
                       />
                     </div>
@@ -6247,6 +6491,30 @@ function SummaryItem({ label, value, sub }) {
   );
 }
 
+
+function formatReviewCycleCount(value) {
+  const number = Number(value || 0);
+  if (!Number.isFinite(number) || number <= 0) return "—";
+
+  const rounded = Math.round((number + Number.EPSILON) * 100) / 100;
+
+  if (Math.abs(rounded - 1) < 0.01) return "دورة واحدة";
+  if (Math.abs(rounded - 1.5) < 0.01) return "دورة ونصف";
+  if (Math.abs(rounded - 2) < 0.01) return "دورتان";
+
+  return `${rounded.toLocaleString("ar-SA", {
+    maximumFractionDigits: 2,
+  })} دورة`;
+}
+
+function formatFullReviewCycles(count) {
+  const number = Number(count || 0);
+  if (number <= 0) return "";
+  if (number === 1) return "دورة كاملة";
+  if (number === 2) return "دورتان كاملتان";
+  return `${number.toLocaleString("ar-SA")} دورات كاملة`;
+}
+
 /* =========================================================
    PLAN SECTION
 ========================================================= */
@@ -6274,6 +6542,7 @@ function PlanSection({
   autoRange = true,
   generating = false,
   routeError = "",
+  cycleInfo = null,
   showPace = true,
 }) {
   const targetNumber = Number(target || 0);
@@ -6305,6 +6574,15 @@ function PlanSection({
     dailyAmount,
     plannedSessions
   );
+
+  const hasCycleInfo =
+    type === "revision" &&
+    autoRange &&
+    String(cycleInfo?.startSurah || "").trim() &&
+    String(cycleInfo?.endSurah || "").trim() &&
+    Number(cycleInfo?.faces || 0) > 0;
+
+  const cycleWrapped = Number(cycleInfo?.wrapCount || 0) > 0;
 
   return (
     <section className={`student-plan-section ${type} smart-plan-section`}>
@@ -6446,6 +6724,35 @@ function PlanSection({
             <span>سيتم حساب نهاية الخطة تلقائيًا.</span>
           )}
         </div>
+
+        {hasCycleInfo && (
+          <div className="revision-cycle-summary">
+            <div>
+              <span>دورة المراجعة</span>
+              <strong>
+                {cycleInfo.startSurah} ← {cycleInfo.endSurah}
+              </strong>
+            </div>
+
+            <div>
+              <span>حجم الدورة</span>
+              <strong>{formatPagesAndLines(cycleInfo.faces)}</strong>
+            </div>
+
+            <div>
+              <span>خطة الشهر</span>
+              <strong>{formatReviewCycleCount(cycleInfo.equivalent)}</strong>
+            </div>
+
+            {cycleWrapped && (
+              <small>
+                {formatFullReviewCycles(cycleInfo.fullCount)}
+                {Number(cycleInfo.fullCount || 0) > 0 ? "، ثم " : ""}
+                {cycleInfo.startSurah} ← {toSurah} {toAyah || ""}
+              </small>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="daily-plan-editor speed-only-editor">
@@ -10631,6 +10938,55 @@ function MonthlyPlanStyles() {
           color: #7f8a85;
           font-size: 9px;
           line-height: 1.5;
+        }
+
+
+        .revision-cycle-summary {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 10px;
+          padding: 10px;
+          border: 1px solid rgba(180, 137, 45, 0.16);
+          border-radius: 14px;
+          background: linear-gradient(135deg, rgba(255,255,255,.9), rgba(248,245,235,.72));
+        }
+
+        .revision-cycle-summary > div {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .revision-cycle-summary span {
+          color: #6f766f;
+          font-size: 11px;
+        }
+
+        .revision-cycle-summary strong {
+          color: #203d31;
+          font-size: 12px;
+          line-height: 1.5;
+        }
+
+        .revision-cycle-summary small {
+          grid-column: 1 / -1;
+          color: #7a5d21;
+          font-size: 11px;
+          line-height: 1.65;
+          padding-top: 6px;
+          border-top: 1px dashed rgba(180, 137, 45, 0.18);
+        }
+
+        @media (max-width: 680px) {
+          .revision-cycle-summary {
+            grid-template-columns: 1fr;
+          }
+
+          .revision-cycle-summary small {
+            grid-column: auto;
+          }
         }
 
         .autosave-chip {

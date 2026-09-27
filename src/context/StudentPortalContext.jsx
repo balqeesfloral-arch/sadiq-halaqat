@@ -40,12 +40,11 @@ export function StudentPortalProvider({ children }) {
         return;
       }
 
-      const { data: student, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("auth_user_id", user.id)
-        .eq("role", "student")
-        .maybeSingle();
+      const { data: profileRows, error: profileError } = await supabase.rpc(
+        "student_my_profile_v1"
+      );
+
+      const student = profileRows?.[0] || null;
 
       if (profileError) throw profileError;
 
@@ -104,45 +103,12 @@ export function StudentPortalProvider({ children }) {
         setMosque(null);
       }
 
-      const { data: teacherLinks, error: teacherLinksError } = await supabase
-        .from("teacher_halaqat")
-        .select("teacher_id, role")
-        .eq("halaqa_id", studentAssignment.halaqa_id);
+      const { data: teacherRows, error: teachersError } = await supabase.rpc(
+        "student_my_halaqa_teachers_v1"
+      );
 
-      if (teacherLinksError) throw teacherLinksError;
-
-      const teacherIds = [
-        ...new Set(
-          (teacherLinks || [])
-            .map((item) => Number(item.teacher_id))
-            .filter(Boolean)
-        ),
-      ];
-
-      if (teacherIds.length) {
-        const result = await supabase
-          .from("profiles")
-          .select("id, full_name, user_number, phone")
-          .in("id", teacherIds);
-
-        if (result.error) throw result.error;
-
-        const roleMap = new Map(
-          (teacherLinks || []).map((item) => [
-            Number(item.teacher_id),
-            item.role,
-          ])
-        );
-
-        setTeachers(
-          (result.data || []).map((teacher) => ({
-            ...teacher,
-            halaqa_role: roleMap.get(Number(teacher.id)) || "assistant",
-          }))
-        );
-      } else {
-        setTeachers([]);
-      }
+      if (teachersError) throw teachersError;
+      setTeachers(teacherRows || []);
 
       const countResult = await supabase
         .from("student_halaqat")
