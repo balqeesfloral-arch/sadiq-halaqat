@@ -32,6 +32,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import { useToast } from "../../components/Toast";
 import PasskeyManager from "../../components/security/PasskeyManager";
+import DeviceNotificationSettings from "../../components/pwa/DeviceNotificationSettings";
 import {
   TEACHER_PREFERENCES_DEFAULTS,
   TEACHER_PREFERENCE_SECTION_KEYS,
@@ -805,10 +806,16 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "security" && (
-            <PasskeyManager
-              title="دخول المعلم بالبصمة أو الوجه"
-              subtitle="اربط جهازك بحساب المعلم لتدخل بسرعة باستخدام بصمة الإصبع أو الوجه أو رمز الجهاز."
-            />
+            <>
+              <PasskeyManager
+                title="دخول المعلم بالبصمة أو الوجه"
+                subtitle="اربط جهازك بحساب المعلم لتدخل بسرعة باستخدام بصمة الإصبع أو الوجه أو رمز الجهاز."
+              />
+              <DeviceNotificationSettings
+                title="إشعارات المعلم على الجهاز"
+                description="استقبل تنبيهات الصديق والرسائل المهمة على جهازك أثناء عملك."
+              />
+            </>
           )}
 
           {activeTab === "privacy" && (
