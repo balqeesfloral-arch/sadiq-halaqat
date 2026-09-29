@@ -22,10 +22,10 @@ const TEXT_EXTENSIONS = new Set([
 ]);
 
 const severityWeight = {
-  critical: 30,
-  high: 15,
-  medium: 6,
-  low: 2,
+  critical: 25,
+  high: 10,
+  medium: 4,
+  low: 1,
   info: 0,
 };
 
@@ -97,7 +97,7 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 
 const files = walk(ROOT);
 
-const genericRules = [
+const secretRules = [
   {
     severity: "critical",
     category: "Secrets",
@@ -122,10 +122,13 @@ const genericRules = [
     fix: "Never ship service-role credentials to the browser. Move privileged operations to a trusted server/Edge Function.",
     pattern: /(?:SUPABASE_SERVICE_ROLE_KEY|service[_-]?role)\s*[:=]\s*["'`][^"'`\n]{12,}/gi,
   },
+];
+
+const runtimeCodeRules = [
   {
     severity: "high",
     category: "Code execution",
-    title: "eval() detected",
+    title: "eval() detected in runtime code",
     evidence: "Dynamic code execution",
     fix: "Replace eval() with explicit parsing or a fixed dispatch table.",
     pattern: /\beval\s*\(/g,
@@ -133,7 +136,7 @@ const genericRules = [
   {
     severity: "high",
     category: "Code execution",
-    title: "new Function() detected",
+    title: "new Function() detected in runtime code",
     evidence: "Dynamic function construction",
     fix: "Replace dynamic code generation with explicit functions.",
     pattern: /\bnew\s+Function\s*\(/g,
@@ -183,9 +186,19 @@ for (const file of files) {
     continue;
   }
 
-  for (const rule of genericRules) scanRegex(file, source, rule);
+  for (const rule of secretRules) scanRegex(file, source, rule);
 
-  if (relative(file).startsWith("src/")) {
+  const rel = relative(file);
+  const isRuntimeCode =
+    rel.startsWith("src/") ||
+    rel.startsWith("public/") ||
+    rel.startsWith("supabase/functions/");
+
+  if (isRuntimeCode) {
+    for (const rule of runtimeCodeRules) scanRegex(file, source, rule);
+  }
+
+  if (rel.startsWith("src/")) {
     for (const rule of frontendRules) scanRegex(file, source, rule);
 
     if (/target=["']_blank["']/.test(source)) {
@@ -362,11 +375,11 @@ for (const file of migrationFiles) {
   const grantMatches = [...source.matchAll(/grant\s+execute\s+on\s+function[\s\S]{0,300}?\s+to\s+anon\b/gi)];
   for (const match of grantMatches) {
     add(
-      "high",
+      "medium",
       "Supabase / PostgreSQL",
-      "Function execution granted to anon",
+      "Anonymous RPC exposure requires review",
       "A database function is explicitly executable by anon.",
-      "Confirm the function is intentionally public, validates all inputs, and cannot bypass RLS. Otherwise revoke anon EXECUTE.",
+      "Keep anon EXECUTE only for intentionally public RPCs, validate inputs, rate-limit write endpoints, and revoke it everywhere else.",
       relative(file),
       lineOf(source, match.index)
     );
