@@ -27,7 +27,6 @@ import {
   HeartHandshake,
   Landmark,
   Layers3,
-  LogIn,
   MapPin,
   Medal,
   Moon,
@@ -233,6 +232,23 @@ const WHY_SADIQ = [
     icon: ShieldCheck,
     title: "خصوصية وصلاحيات",
     text: "الصفحة العامة تعرض مؤشرات مجمعة فقط دون أي بيانات شخصية.",
+  },
+];
+
+const HERO_WISDOM = [
+  {
+    type: "ayah",
+    icon: BookOpen,
+    badge: "آية كريمة",
+    text: "﴿ وَقُلْ رَبِّ زِدْنِي عِلْمًا ﴾",
+    reference: "سورة طه — الآية 114",
+  },
+  {
+    type: "hadith",
+    icon: Sparkles,
+    badge: "حديث شريف",
+    text: "« خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ »",
+    reference: "صحيح البخاري — حديث 5027",
   },
 ];
 
@@ -2032,13 +2048,6 @@ export default function LandingPage() {
     await changeMosque(mosqueId);
   }
 
-  const scrollToStats = () => {
-    document.getElementById("stats")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
-
   return (
     <div className="landing-page">
       <div className="landing-intro">
@@ -2071,24 +2080,29 @@ export default function LandingPage() {
               </p>
 
 
-              <div className="landing-hero-actions">
-                <button
-                  type="button"
-                  className="landing-primary-button"
-                  onClick={() => navigate("/login")}
-                >
-                  <LogIn size={18} />
-                  تسجيل الدخول
-                </button>
+              <div className="landing-wisdom-panel" aria-label="آية وحديث">
+                {HERO_WISDOM.map((item) => {
+                  const Icon = item.icon;
 
-                <button
-                  type="button"
-                  className="landing-secondary-button"
-                  onClick={scrollToStats}
-                >
-                  استكشف الإحصائيات
-                  <ArrowLeft size={17} />
-                </button>
+                  return (
+                    <article
+                      key={item.reference}
+                      className={`landing-wisdom-card ${item.type}`}
+                    >
+                      <div className="landing-wisdom-corner" aria-hidden="true" />
+
+                      <div className="landing-wisdom-badge">
+                        <Icon size={14} />
+                        <span>{item.badge}</span>
+                      </div>
+
+                      <p className="landing-wisdom-text">{item.text}</p>
+                      <span className="landing-wisdom-reference">
+                        {item.reference}
+                      </span>
+                    </article>
+                  );
+                })}
               </div>
 
               <div className="landing-trust-row">
