@@ -7,6 +7,7 @@ import router from "./router";
 
 import { ToastProvider } from "./components/Toast";
 import { ConfirmProvider } from "./context/ConfirmContext";
+import PwaExperience from "./components/pwa/PwaExperience";
 
 import "./index.css";
 import "./styles/responsive.css";
@@ -24,6 +25,7 @@ ReactDOM.createRoot(
         <RouterProvider
           router={router}
         />
+        <PwaExperience />
       </ConfirmProvider>
     </ToastProvider>
   </React.StrictMode>
