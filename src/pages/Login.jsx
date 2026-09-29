@@ -326,9 +326,9 @@ export default function Login() {
         throw new Error("هذا الحساب غير نشط حاليًا.");
       }
 
-      if (!['admin', 'supervisor', 'teacher'].includes(profile.role)) {
+      if (!["admin", "supervisor", "teacher", "student"].includes(profile.role)) {
         await supabase.auth.signOut();
-        throw new Error("مفتاح المرور هذا غير مصرح له بدخول بوابة الإدارة.");
+        throw new Error("مفتاح المرور هذا غير مرتبط بدور صالح داخل الصديق.");
       }
 
       let destination = getDestination(profile.role);
@@ -357,8 +357,11 @@ export default function Login() {
       }
 
       rememberSuccessfulLogin({
-        mode: "staff",
-        identifier: authUser.email || profile.user_number || "passkey",
+        mode: profile.role === "student" ? "student" : "staff",
+        identifier:
+          profile.role === "student"
+            ? profile.full_name || profile.user_number || "طالب"
+            : authUser.email || profile.user_number || "passkey",
         label: profile.full_name || "حساب محمي",
         role: profile.role,
       });
@@ -686,20 +689,22 @@ export default function Login() {
             </button>
           </form>
 
-          {loginMode === "staff" && (
+          <div className="login-passkey-compact-wrap">
+            <span className="login-passkey-divider">أو</span>
             <button
               type="button"
-              className="login-passkey-button"
+              className="login-passkey-button login-passkey-button--compact"
               onClick={handlePasskeyLogin}
               disabled={loading}
+              title="الدخول بالبصمة أو الوجه أو رمز الجهاز"
             >
-              <Fingerprint />
-              <span>
-                <strong>الدخول بالبصمة / Passkey</strong>
-                <small>Face ID • Touch ID • Windows Hello • مفتاح أمني</small>
+              <span className="login-passkey-icon"><Fingerprint /></span>
+              <span className="login-passkey-copy">
+                <strong>البصمة أو الوجه</strong>
+                <small>Face ID • Touch ID • Windows Hello • PIN</small>
               </span>
             </button>
-          )}
+          </div>
 
           {loginMode === "staff" && (
             <button
