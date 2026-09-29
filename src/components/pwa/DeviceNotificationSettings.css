@@ -1,0 +1,256 @@
+.device-notify-card {
+  --dn-green: var(--app-color-0f4c45, #0f4c45);
+  --dn-dark: var(--app-color-082f2a, #082f2a);
+  position: relative;
+  overflow: hidden;
+  margin-top: 18px;
+  padding: clamp(18px, 2.4vw, 26px);
+  border: 1px solid color-mix(in srgb, var(--dn-green) 12%, transparent);
+  border-radius: calc(22px * var(--app-radius-scale, 1));
+  background:
+    radial-gradient(circle at 92% 10%, rgba(202, 166, 76, .10), transparent 26%),
+    linear-gradient(145deg, #fff, #f8fbf9);
+  box-shadow: 0 16px 42px rgba(8,47,42,.07);
+}
+
+.device-notify-card::after {
+  content: "";
+  position: absolute;
+  left: -72px;
+  bottom: -94px;
+  width: 230px;
+  height: 230px;
+  opacity: .035;
+  pointer-events: none;
+  background: url("/ornaments/sadiq/gold/04-madar.svg") center/contain no-repeat;
+}
+
+.device-notify-card > * { position: relative; z-index: 1; }
+
+.device-notify-card__head {
+  display: grid;
+  grid-template-columns: 50px minmax(0,1fr) auto;
+  gap: 13px;
+  align-items: center;
+}
+
+.device-notify-card__icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: linear-gradient(145deg,#edf7f2,#fff8e8);
+  color: #a37b23;
+}
+
+.device-notify-card__icon svg { width: 23px; height: 23px; stroke-width: 1.6; }
+
+.device-notify-card__copy span {
+  color: #a27b25;
+  font-size: calc(8px * var(--app-font-scale,1));
+  font-weight: 900;
+}
+
+.device-notify-card__copy h3 {
+  margin: 3px 0 0;
+  color: var(--dn-dark);
+  font-size: calc(18px * var(--app-font-scale,1));
+  font-weight: 950;
+}
+
+.device-notify-card__copy p {
+  margin: 4px 0 0;
+  color: #76867f;
+  font-size: calc(9px * var(--app-font-scale,1));
+  line-height: 1.7;
+  font-weight: 650;
+}
+
+.device-notify-card__state {
+  min-width: 125px;
+  padding: 10px 12px;
+  border: 1px solid #e3eae6;
+  border-radius: 14px;
+  background: rgba(255,255,255,.85);
+  text-align: center;
+}
+
+.device-notify-card__state i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: #168166;
+  box-shadow: 0 0 0 4px rgba(22,129,102,.09);
+}
+
+.device-notify-card__state i.danger {
+  background: #b54b42;
+  box-shadow: 0 0 0 4px rgba(181,75,66,.09);
+}
+
+.device-notify-card__state strong,
+.device-notify-card__state small { display: block; }
+
+.device-notify-card__state strong {
+  color: #29473e;
+  font-size: calc(9px * var(--app-font-scale,1));
+  font-weight: 900;
+}
+
+.device-notify-card__state small {
+  margin-top: 3px;
+  color: #87948e;
+  font-size: calc(7px * var(--app-font-scale,1));
+  font-weight: 700;
+}
+
+.device-notify-card__features {
+  margin-top: 17px;
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 8px;
+}
+
+.device-notify-card__features > div {
+  min-width: 0;
+  padding: 11px;
+  display: grid;
+  grid-template-columns: 28px minmax(0,1fr);
+  gap: 8px;
+  align-items: start;
+  border: 1px solid #e8edea;
+  border-radius: 13px;
+  background: rgba(255,255,255,.78);
+}
+
+.device-notify-card__features svg {
+  width: 18px;
+  height: 18px;
+  color: var(--dn-green);
+}
+
+.device-notify-card__features strong,
+.device-notify-card__features small { display: block; }
+
+.device-notify-card__features strong {
+  color: #3a524a;
+  font-size: calc(8.5px * var(--app-font-scale,1));
+  font-weight: 900;
+}
+
+.device-notify-card__features small {
+  margin-top: 2px;
+  color: #89958f;
+  font-size: calc(7px * var(--app-font-scale,1));
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.device-notify-card__message {
+  margin-top: 12px;
+  padding: 10px 11px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 11px;
+  font-size: calc(8px * var(--app-font-scale,1));
+  font-weight: 760;
+}
+
+.device-notify-card__message.success {
+  border: 1px solid #d5eadf;
+  background: #edf8f2;
+  color: #176b54;
+}
+
+.device-notify-card__message.error {
+  border: 1px solid #efd7d4;
+  background: #fff3f1;
+  color: #a8453d;
+}
+
+.device-notify-card__message svg { width: 16px; height: 16px; flex: 0 0 auto; }
+
+.device-notify-card__actions {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.device-notify-card__primary,
+.device-notify-card__secondary,
+.device-notify-card__icon-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 11px;
+  cursor: pointer;
+  font-size: calc(8.5px * var(--app-font-scale,1));
+  font-weight: 900;
+  transition: .17s ease;
+}
+
+.device-notify-card__primary {
+  padding: 0 14px;
+  border: 0;
+  color: #fff;
+  background: linear-gradient(135deg,var(--dn-dark),var(--dn-green));
+}
+
+.device-notify-card__secondary {
+  padding: 0 13px;
+  border: 1px solid #dce5e0;
+  background: #fff;
+  color: var(--dn-green);
+}
+
+.device-notify-card__icon-button {
+  width: 40px;
+  border: 1px solid #dce5e0;
+  background: #fff;
+  color: #76867f;
+}
+
+.device-notify-card__primary:hover:not(:disabled),
+.device-notify-card__secondary:hover:not(:disabled),
+.device-notify-card__icon-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(202,166,76,.36);
+}
+
+.device-notify-card__primary:disabled,
+.device-notify-card__secondary:disabled,
+.device-notify-card__icon-button:disabled {
+  opacity: .58;
+  cursor: wait;
+}
+
+.device-notify-card__actions svg { width: 15px; height: 15px; }
+.device-notify-spin { animation: deviceNotifySpin .8s linear infinite; }
+@keyframes deviceNotifySpin { to { transform: rotate(360deg); } }
+
+@media(max-width:760px) {
+  .device-notify-card__head { grid-template-columns: 46px minmax(0,1fr); }
+  .device-notify-card__state { grid-column: 1 / -1; text-align: right; }
+  .device-notify-card__features { grid-template-columns: 1fr; }
+}
+
+@media(max-width:520px) {
+  .device-notify-card { padding: 16px; border-radius: 18px; }
+  .device-notify-card__actions { flex-wrap: wrap; }
+  .device-notify-card__primary,
+  .device-notify-card__secondary { flex: 1 1 auto; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .device-notify-card__primary,
+  .device-notify-card__secondary,
+  .device-notify-card__icon-button { transition: none; }
+  .device-notify-spin { animation-duration: 1.4s; }
+}
