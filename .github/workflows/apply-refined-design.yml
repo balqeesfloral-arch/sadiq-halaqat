@@ -1,0 +1,56 @@
+name: Apply Refined Design and Verify
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/apply-refined-design.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  merge-design:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply staged refined-design patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .github/patches/refined-design.patch.gz.b64
+          base64 -d .github/patches/refined-design.patch.gz.b64 | gzip -d > /tmp/refined-design.patch
+          git apply --check /tmp/refined-design.patch
+          git apply /tmp/refined-design.patch
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit verified design merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/patches/refined-design.patch.gz.b64
+
+          git config user.name "sadiq-build-bot"
+          git config user.email "actions@users.noreply.github.com"
+
+          git add             src/pages/LandingPage.jsx             src/pages/LandingPage.css             src/styles/SadiqOrnamentsPro.css             .github/patches/refined-design.patch.gz.b64
+
+          if git diff --cached --quiet; then
+            echo "No design changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Merge refined landing design after successful build"
+          git push origin HEAD:main
