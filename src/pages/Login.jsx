@@ -562,10 +562,7 @@ export default function Login() {
               onClick={() => switchMode("staff")}
             >
               <ShieldCheck />
-              <span>
-                <strong>دخول الإدارة</strong>
-                <small>مدير النظام • المشرف • المعلم</small>
-              </span>
+              <strong>الإدارة</strong>
             </button>
 
             <button
@@ -574,10 +571,7 @@ export default function Login() {
               onClick={() => switchMode("student")}
             >
               <UserRound />
-              <span>
-                <strong>دخول الطالب</strong>
-                <small>الاسم + رقم الطالب</small>
-              </span>
+              <strong>الطالب</strong>
             </button>
           </div>
 
