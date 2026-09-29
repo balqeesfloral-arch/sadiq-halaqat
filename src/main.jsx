@@ -12,6 +12,7 @@ import PwaExperience from "./components/pwa/PwaExperience";
 import "./index.css";
 import "./styles/responsive.css";
 import "./styles/SadiqOrnamentsPro.css";
+import "./styles/SadiqSurfaces.css";
 import { applyAppAppearance } from "./lib/appearance";
 
 applyAppAppearance();
