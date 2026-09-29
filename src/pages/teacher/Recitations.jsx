@@ -130,6 +130,7 @@ function createNooraniaForm() {
     lesson: "",
     lesson_evaluation: "",
     lesson_faces: "",
+    lesson_unit: "lines",
 
     side_lesson: "",
     side_lesson_evaluation: "",
@@ -137,7 +138,23 @@ function createNooraniaForm() {
     revision: "",
     revision_evaluation: "",
     revision_faces: "",
+    revision_unit: "lines",
   };
+}
+
+function nooraniaAmountToPages(value, unit) {
+  const amount = Number(value || 0);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return 0;
+  }
+
+  // قاعدة الصديق للقاعدة النورانية: 10 أسطر = صفحة واحدة.
+  const pages = unit === "lines"
+    ? amount / 10
+    : amount;
+
+  return Math.round((pages + Number.EPSILON) * 10000) / 10000;
 }
 
 /* =========================================================
@@ -3164,8 +3181,11 @@ export default function Recitations() {
 
       lesson_faces:
         valueToString(
-          record.lesson_faces
+          record.lesson_amount_value ?? record.lesson_faces
         ),
+
+      lesson_unit:
+        record.lesson_amount_unit || "faces",
 
       side_lesson:
         record.side_lesson ||
@@ -3185,8 +3205,11 @@ export default function Recitations() {
 
       revision_faces:
         valueToString(
-          record.revision_faces
+          record.revision_amount_value ?? record.revision_faces
         ),
+
+      revision_unit:
+        record.revision_amount_unit || "faces",
     });
 
     setPlanSuggestion(null);
@@ -4748,7 +4771,7 @@ export default function Recitations() {
       ) < 0
     ) {
       showToast(
-        "أدخل عدد أوجه تسميع الدرس",
+        "أدخل مقدار تسميع الدرس",
         "error"
       );
 
@@ -4797,7 +4820,7 @@ export default function Recitations() {
         ) < 0
       ) {
         showToast(
-          "أدخل عدد أوجه المراجعة",
+          "أدخل مقدار المراجعة",
           "error"
         );
 
@@ -4836,10 +4859,19 @@ export default function Recitations() {
               .lesson_evaluation
           ),
 
-        lesson_faces:
+        lesson_amount_value:
           numberOrNull(
             nooraniaForm
               .lesson_faces
+          ),
+
+        lesson_amount_unit:
+          nooraniaForm.lesson_unit || "lines",
+
+        lesson_faces:
+          nooraniaAmountToPages(
+            nooraniaForm.lesson_faces,
+            nooraniaForm.lesson_unit
           ),
 
         side_lesson:
@@ -4866,11 +4898,23 @@ export default function Recitations() {
               .revision_evaluation
           ),
 
+        revision_amount_value:
+          nooraniaForm.revision.trim()
+            ? numberOrNull(nooraniaForm.revision_faces)
+            : null,
+
+        revision_amount_unit:
+          nooraniaForm.revision.trim()
+            ? (nooraniaForm.revision_unit || "lines")
+            : null,
+
         revision_faces:
-          numberOrNull(
-            nooraniaForm
-              .revision_faces
-          ),
+          nooraniaForm.revision.trim()
+            ? nooraniaAmountToPages(
+                nooraniaForm.revision_faces,
+                nooraniaForm.revision_unit
+              )
+            : null,
 
         notes:
           textOrNull(
@@ -6656,15 +6700,13 @@ export default function Recitations() {
                         placeholder="مثال: الدرس العاشر"
                       />
 
-                      <NumberField
-                        label="الأوجه"
+                      <NooraniaAmountField
+                        label="المقدار"
                         required
                         value={nooraniaForm.lesson_faces}
-                        onChange={(value) => setNoorania("lesson_faces", value)}
-                        min="0"
-                        step="0.5"
-                        placeholder="2"
-                        suffix="وجه"
+                        unit={nooraniaForm.lesson_unit}
+                        onValueChange={(value) => setNoorania("lesson_faces", value)}
+                        onUnitChange={(value) => setNoorania("lesson_unit", value)}
                       />
                     </div>
 
@@ -6717,14 +6759,12 @@ export default function Recitations() {
                         placeholder="مثال: الدرس الأول إلى الخامس"
                       />
 
-                      <NumberField
-                        label="الأوجه"
+                      <NooraniaAmountField
+                        label="المقدار"
                         value={nooraniaForm.revision_faces}
-                        onChange={(value) => setNoorania("revision_faces", value)}
-                        min="0"
-                        step="0.5"
-                        placeholder="6"
-                        suffix="وجه"
+                        unit={nooraniaForm.revision_unit}
+                        onValueChange={(value) => setNoorania("revision_faces", value)}
+                        onUnitChange={(value) => setNoorania("revision_unit", value)}
                       />
                     </div>
 
@@ -7932,6 +7972,64 @@ function QuranSelect({
           size={15}
         />
       </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   Noorania Amount — 10 lines = 1 page
+========================================================= */
+
+function NooraniaAmountField({
+  label,
+  value,
+  unit,
+  onValueChange,
+  onUnitChange,
+  required = false,
+}) {
+  const pages = nooraniaAmountToPages(value, unit);
+
+  return (
+    <div className="field noorania-amount-field">
+      <label className="field-label">
+        {label}
+        {required && <span className="required">*</span>}
+      </label>
+
+      <div className="noorania-amount-control">
+        <input
+          type="number"
+          min="0"
+          step={unit === "lines" ? "1" : "0.1"}
+          value={value}
+          onChange={(event) => onValueChange(event.target.value)}
+          placeholder={unit === "lines" ? "1" : "0.5"}
+        />
+
+        <div className="noorania-unit-toggle">
+          <button
+            type="button"
+            className={unit === "lines" ? "active" : ""}
+            onClick={() => onUnitChange("lines")}
+          >
+            أسطر
+          </button>
+          <button
+            type="button"
+            className={unit === "faces" ? "active" : ""}
+            onClick={() => onUnitChange("faces")}
+          >
+            صفحات
+          </button>
+        </div>
+      </div>
+
+      {Number(value || 0) > 0 && (
+        <small className="noorania-pages-preview">
+          = {formatFaces(pages)} صفحة
+        </small>
+      )}
     </div>
   );
 }
@@ -11579,6 +11677,76 @@ function PageStyles() {
           .points-preview {
             grid-template-columns: 28px 1fr auto !important;
             min-height: 54px !important;
+          }
+        }
+
+        .noorania-amount-control {
+          display: grid;
+          grid-template-columns: minmax(0,1fr) auto;
+          gap: 6px;
+          align-items: stretch;
+        }
+
+        .noorania-amount-control > input {
+          width: 100%;
+          height: 38px;
+          border: 1px solid #dce4df;
+          border-radius: 10px;
+          outline: none;
+          padding: 0 9px;
+          color: #33443a;
+          background: #fbfdfc;
+          font-family: inherit;
+          font-size: 9px;
+          font-weight: 700;
+        }
+
+        .noorania-unit-toggle {
+          display: grid;
+          grid-template-columns: repeat(2,auto);
+          gap: 3px;
+          padding: 3px;
+          border-radius: 10px;
+          background: #f0f4f1;
+        }
+
+        .noorania-unit-toggle button {
+          min-width: 52px;
+          border: 0;
+          border-radius: 8px;
+          background: transparent;
+          color: #718079;
+          font-family: inherit;
+          font-size: 8px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .noorania-unit-toggle button.active {
+          background: #fff;
+          color: #175b47;
+          box-shadow: 0 2px 8px rgba(17,79,61,.08);
+        }
+
+        .noorania-pages-preview {
+          display: block;
+          margin-top: 4px;
+          color: #8b753d;
+          font-size: 7.5px;
+          font-weight: 850;
+        }
+
+        @media (max-width: 520px) {
+          .noorania-amount-control {
+            grid-template-columns: 1fr;
+          }
+
+          .noorania-unit-toggle {
+            grid-template-columns: repeat(2,minmax(0,1fr));
+          }
+
+          .noorania-unit-toggle button {
+            min-height: 30px;
           }
         }
 
