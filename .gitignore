@@ -53,3 +53,7 @@ public/*snippet*
 *.jks
 android/
 .gradle/
+
+# Generated security/export reports
+security-artifacts/
+export/
