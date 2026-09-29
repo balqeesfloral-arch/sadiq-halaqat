@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Fingerprint, Moon, Palette, Settings, Sparkles, Sun, Type, Waves } from "lucide-react";
+import { Moon, Palette, Settings, Sparkles, Sun, Type, Waves } from "lucide-react";
 import StudentPage from "../../components/student/StudentPage";
 import PasskeyManager from "../../components/security/PasskeyManager";
 import {
