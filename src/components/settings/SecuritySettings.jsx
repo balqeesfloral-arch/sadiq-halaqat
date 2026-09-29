@@ -3,6 +3,7 @@ import { ShieldCheck, KeyRound, Mail, Save, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { showToast } from "../../components/Toast";
 import PasskeyManager from "../security/PasskeyManager";
+import DeviceNotificationSettings from "../pwa/DeviceNotificationSettings";
 
 export default function SecuritySettings(){
   const [email,setEmail]=useState(""),[password,setPassword]=useState(""),[confirm,setConfirm]=useState(""),[saving,setSaving]=useState(false);
@@ -22,6 +23,10 @@ export default function SecuritySettings(){
     <PasskeyManager
       title="البصمة والوجه"
       subtitle="سجّل بصمة الإصبع أو الوجه أو رمز الجهاز، وادخل إلى الصديق بدون كتابة كلمة المرور."
+    />
+    <DeviceNotificationSettings
+      title="إشعارات المشرف على الجهاز"
+      description="فعّل التنبيهات الفورية للرسائل والإشعارات المهمة في حساب المشرف."
     />
     <section className="settings-real-card">
       <div className="settings-real-card__head"><div><KeyRound size={17}/><span><strong>تغيير كلمة المرور</strong><small>استخدم كلمة مرور قوية</small></span></div></div>
