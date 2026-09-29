@@ -2,15 +2,13 @@ import { OrnamentScene } from "../components/ornaments/Ornament";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   Clock3,
   House,
-  KeyRound,
   Loader2,
   LockKeyhole,
   Mail,
-  RotateCcw,
   Send,
   ShieldCheck,
   Sparkles,
@@ -177,7 +175,7 @@ export default function ForgotPassword() {
           {!sent ? (
             <>
               <header className="recovery-heading">
-                <div className="recovery-eyebrow"><KeyRound /> استعادة الحساب</div>
+                <div className="recovery-eyebrow"><LockKeyhole /> استعادة الحساب</div>
                 <h2>نسيت كلمة المرور؟</h2>
                 <p>
                   أدخل البريد الإلكتروني المستخدم في حساب مدير النظام أو المشرف
@@ -268,7 +266,7 @@ export default function ForgotPassword() {
                 ) : cooldown > 0 ? (
                   <><Clock3 /> إعادة الإرسال بعد {cooldown}ث</>
                 ) : (
-                  <><RotateCcw /> إعادة إرسال الرابط</>
+                  <><Mail /> إعادة إرسال الرابط</>
                 )}
               </button>
             </div>
@@ -279,7 +277,7 @@ export default function ForgotPassword() {
             className="recovery-back"
             onClick={() => navigate("/login", { replace: false })}
           >
-            <ArrowRight /> العودة إلى تسجيل الدخول
+            <ArrowLeft /> العودة إلى تسجيل الدخول
           </button>
         </section>
       </section>
