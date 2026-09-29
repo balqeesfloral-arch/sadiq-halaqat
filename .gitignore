@@ -47,3 +47,9 @@ src/**/*.old
 # Public directory must contain deployable assets only
 public/README*
 public/*snippet*
+
+# Android / TWA signing and generated build files
+*.keystore
+*.jks
+android/
+.gradle/
