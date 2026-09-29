@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock3,
   Gauge,
+  Fingerprint,
   HeartHandshake,
   Info,
   LayoutDashboard,
@@ -30,6 +31,7 @@ import {
 
 import { supabase } from "../../lib/supabase";
 import { useToast } from "../../components/Toast";
+import PasskeyManager from "../../components/security/PasskeyManager";
 import {
   TEACHER_PREFERENCES_DEFAULTS,
   TEACHER_PREFERENCE_SECTION_KEYS,
@@ -46,6 +48,7 @@ const TABS = [
   { key: "care", label: "العناية بالطلاب", icon: HeartHandshake },
   { key: "communication", label: "التواصل وواتساب", icon: MessageCircle },
   { key: "notifications", label: "الإشعارات", icon: Bell },
+  { key: "security", label: "الأمان والبصمة", icon: Fingerprint },
   { key: "privacy", label: "الخصوصية", icon: ShieldCheck },
   { key: "policies", label: "السياسات", icon: LockKeyhole },
   { key: "about", label: "حول الصديق", icon: Info },
@@ -799,6 +802,13 @@ export default function SettingsPage() {
 
           {activeTab === "notifications" && (
             <NotificationsTab p={preferences} setP={setPreference} />
+          )}
+
+          {activeTab === "security" && (
+            <PasskeyManager
+              title="دخول المعلم بالبصمة أو الوجه"
+              subtitle="اربط جهازك بحساب المعلم لتدخل بسرعة باستخدام بصمة الإصبع أو الوجه أو رمز الجهاز."
+            />
           )}
 
           {activeTab === "privacy" && (
