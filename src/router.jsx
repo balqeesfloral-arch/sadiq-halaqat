@@ -6,7 +6,9 @@ import {
 
 import AdminLayout from "./components/AdminLayout";
 
-const Login = lazy(() => import("./pages/Login"));\nconst ForgotPassword = lazy(() => import("./pages/ForgotPassword"));\nconst ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const SystemAdmin = lazy(() => import("./pages/SystemAdmin"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -120,6 +122,11 @@ const router = createBrowserRouter([
   {
     path: "/forgot-password",
     element: renderLazy(ForgotPassword),
+  },
+
+  {
+    path: "/reset-password",
+    element: renderLazy(ResetPassword),
   },
 
   {
