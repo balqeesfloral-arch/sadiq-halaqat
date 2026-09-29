@@ -1,0 +1,525 @@
+.passkey-vault {
+  --pk-green: var(--app-color-0f4c45, #0f4c45);
+  --pk-dark: var(--app-color-082f2a, #082f2a);
+  --pk-gold: #c9a343;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--pk-green) 13%, transparent);
+  border-radius: calc(26px * var(--app-radius-scale, 1));
+  background:
+    radial-gradient(circle at 8% 8%, rgba(201, 163, 67, .11), transparent 24%),
+    radial-gradient(circle at 92% 92%, color-mix(in srgb, var(--pk-green) 9%, transparent), transparent 27%),
+    linear-gradient(145deg, #fff, #fbfcfa 58%, #f3f8f5);
+  box-shadow:
+    0 22px 62px color-mix(in srgb, var(--pk-dark) 10%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.92);
+}
+
+.passkey-vault::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .032;
+  pointer-events: none;
+  background-image: url("/ornaments/sadiq/gold/05-wasl.svg");
+  background-size: 360px auto;
+  background-repeat: repeat;
+}
+
+.passkey-vault > * { position: relative; z-index: 1; }
+
+.passkey-vault__hero {
+  min-height: 210px;
+  padding: clamp(24px, 3.2vw, 40px);
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr) auto;
+  gap: clamp(18px, 2.5vw, 30px);
+  align-items: center;
+  color: #fff;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(232, 208, 132, .16), transparent 26%),
+    radial-gradient(circle at 86% 88%, rgba(40, 126, 105, .18), transparent 34%),
+    linear-gradient(145deg, #052d28, #083d35 48%, #0d574a);
+}
+
+.passkey-vault__hero::after {
+  content: "";
+  position: absolute;
+  left: -82px;
+  bottom: -104px;
+  width: 330px;
+  height: 330px;
+  opacity: .14;
+  pointer-events: none;
+  background: url("/ornaments/sadiq/gold/04-madar.svg") center/contain no-repeat;
+  animation: passkeyOrbit 48s linear infinite;
+}
+
+.passkey-vault__orb {
+  width: 102px;
+  height: 102px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(233, 210, 139, .32);
+  border-radius: 32px;
+  background: rgba(255,255,255,.08);
+  box-shadow:
+    inset 0 0 0 5px rgba(255,255,255,.025),
+    0 18px 46px rgba(0,0,0,.13);
+  backdrop-filter: blur(8px);
+}
+
+.passkey-vault__orb svg {
+  width: 52px;
+  height: 52px;
+  color: #ead58a;
+  stroke-width: 1.25;
+}
+
+.passkey-vault__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #ead58a;
+  font-size: calc(11px * var(--app-font-scale, 1));
+  font-weight: 900;
+}
+
+.passkey-vault__eyebrow svg { width: 14px; height: 14px; }
+
+.passkey-vault__hero-copy h2 {
+  margin: 7px 0 0;
+  font-size: clamp(25px, 3vw, 36px);
+  font-weight: 950;
+  letter-spacing: -.5px;
+}
+
+.passkey-vault__hero-copy > p {
+  max-width: 630px;
+  margin: 8px 0 0;
+  color: rgba(255,255,255,.72);
+  font-size: calc(12px * var(--app-font-scale, 1));
+  line-height: 1.9;
+  font-weight: 650;
+}
+
+.passkey-vault__chips {
+  margin-top: 17px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.passkey-vault__chips span {
+  min-height: 30px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.84);
+  font-size: calc(9px * var(--app-font-scale, 1));
+  font-weight: 780;
+}
+
+.passkey-vault__chips svg { width: 14px; height: 14px; color: #ead58a; }
+
+.passkey-vault__status {
+  min-width: 155px;
+  padding: 16px 17px;
+  border: 1px solid rgba(234, 213, 138, .18);
+  border-radius: 18px;
+  background: rgba(1, 30, 27, .28);
+  text-align: center;
+}
+
+.passkey-vault__status span,
+.passkey-vault__status small {
+  display: block;
+  color: rgba(255,255,255,.59);
+  font-size: calc(8px * var(--app-font-scale, 1));
+  font-weight: 750;
+}
+
+.passkey-vault__status strong {
+  display: block;
+  margin: 5px 0;
+  color: #f2dfa1;
+  font-size: calc(15px * var(--app-font-scale, 1));
+  font-weight: 950;
+}
+
+.passkey-vault__grid {
+  padding: 22px clamp(20px, 3vw, 34px) 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.passkey-vault__device {
+  min-width: 0;
+  padding: 17px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  border: 1px solid #e4ebe7;
+  border-radius: 17px;
+  background: rgba(255,255,255,.85);
+}
+
+.passkey-vault__device-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #edf7f2;
+  color: var(--pk-green);
+}
+
+.passkey-vault__device-icon.gold {
+  background: #fff9e9;
+  color: #a77d24;
+}
+
+.passkey-vault__device-icon svg { width: 22px; height: 22px; }
+
+.passkey-vault__device span {
+  display: block;
+  color: #89968f;
+  font-size: calc(8px * var(--app-font-scale, 1));
+  font-weight: 800;
+}
+
+.passkey-vault__device strong {
+  display: block;
+  margin-top: 3px;
+  color: #29453c;
+  font-size: calc(12px * var(--app-font-scale, 1));
+  font-weight: 930;
+}
+
+.passkey-vault__device p {
+  margin: 5px 0 0;
+  color: #72827b;
+  font-size: calc(9px * var(--app-font-scale, 1));
+  line-height: 1.7;
+  font-weight: 650;
+}
+
+.passkey-vault__actions {
+  padding: 17px clamp(20px, 3vw, 34px) 0;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+
+.passkey-vault__primary,
+.passkey-vault__refresh {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 13px;
+  cursor: pointer;
+  font-weight: 900;
+  transition: .18s ease;
+}
+
+.passkey-vault__primary {
+  flex: 1;
+  border: 0;
+  color: #fff;
+  background: linear-gradient(135deg, #073a33, var(--pk-green));
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--pk-green) 17%, transparent);
+}
+
+.passkey-vault__refresh {
+  padding: 0 16px;
+  border: 1px solid #dfe7e2;
+  background: #fff;
+  color: var(--pk-green);
+}
+
+.passkey-vault__primary:hover:not(:disabled),
+.passkey-vault__refresh:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(201,163,67,.45);
+}
+
+.passkey-vault__primary:disabled,
+.passkey-vault__refresh:disabled,
+.passkey-vault__delete:disabled {
+  opacity: .58;
+  cursor: wait;
+}
+
+.passkey-vault__primary svg,
+.passkey-vault__refresh svg { width: 18px; height: 18px; }
+
+.passkey-vault__message {
+  margin: 13px clamp(20px, 3vw, 34px) 0;
+  padding: 11px 13px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border-radius: 12px;
+  font-size: calc(10px * var(--app-font-scale, 1));
+  font-weight: 780;
+}
+
+.passkey-vault__message.success {
+  background: #edf8f2;
+  color: #166951;
+  border: 1px solid #d6ecdf;
+}
+
+.passkey-vault__message.error {
+  background: #fff3f1;
+  color: #a4433a;
+  border: 1px solid #f0d8d4;
+}
+
+.passkey-vault__message svg { width: 17px; height: 17px; flex: 0 0 auto; }
+
+.passkey-vault__list-head {
+  margin: 21px clamp(20px, 3vw, 34px) 0;
+  padding-top: 18px;
+  border-top: 1px solid #e8edea;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.passkey-vault__list-head strong,
+.passkey-vault__list-head span { display: block; }
+
+.passkey-vault__list-head strong {
+  color: #2a463d;
+  font-size: calc(12px * var(--app-font-scale, 1));
+  font-weight: 930;
+}
+
+.passkey-vault__list-head span {
+  margin-top: 3px;
+  color: #87938e;
+  font-size: calc(8px * var(--app-font-scale, 1));
+  font-weight: 650;
+}
+
+.passkey-vault__list-head em {
+  min-width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #eef6f2;
+  color: var(--pk-green);
+  font-style: normal;
+  font-weight: 950;
+}
+
+.passkey-vault__list {
+  padding: 10px clamp(20px, 3vw, 34px) 0;
+  display: grid;
+  gap: 8px;
+}
+
+.passkey-vault__key {
+  min-width: 0;
+  padding: 11px 12px;
+  display: grid;
+  grid-template-columns: 40px minmax(0,1fr) 38px;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e4eae7;
+  border-radius: 14px;
+  background: #fff;
+  transition: .17s ease;
+}
+
+.passkey-vault__key:hover {
+  border-color: rgba(201,163,67,.35);
+  box-shadow: 0 8px 22px rgba(7,58,51,.06);
+}
+
+.passkey-vault__key-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #edf6f2;
+  color: var(--pk-green);
+}
+
+.passkey-vault__key-icon svg { width: 19px; height: 19px; }
+
+.passkey-vault__key-copy { min-width: 0; }
+
+.passkey-vault__key-copy strong,
+.passkey-vault__key-copy span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passkey-vault__key-copy strong {
+  color: #2f4941;
+  font-size: calc(10px * var(--app-font-scale, 1));
+  font-weight: 900;
+}
+
+.passkey-vault__key-copy span {
+  margin-top: 3px;
+  color: #8a9590;
+  font-size: calc(7.5px * var(--app-font-scale, 1));
+  line-height: 1.5;
+}
+
+.passkey-vault__delete {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: #a9b2ae;
+  cursor: pointer;
+}
+
+.passkey-vault__delete:hover {
+  background: #fff0ee;
+  color: #a8483f;
+}
+
+.passkey-vault__delete svg { width: 17px; height: 17px; }
+
+.passkey-vault__empty,
+.passkey-vault__loading {
+  margin: 10px clamp(20px, 3vw, 34px) 0;
+  min-height: 116px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  border: 1px dashed #dce5e0;
+  border-radius: 15px;
+  background: #fbfcfb;
+  color: #7a8983;
+}
+
+.passkey-vault__empty > div {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #edf6f2;
+  color: var(--pk-green);
+}
+
+.passkey-vault__empty svg { width: 21px; height: 21px; }
+
+.passkey-vault__empty strong {
+  color: #39534b;
+  font-size: calc(11px * var(--app-font-scale, 1));
+  font-weight: 900;
+}
+
+.passkey-vault__empty span {
+  max-width: 520px;
+  color: #84918b;
+  font-size: calc(8px * var(--app-font-scale, 1));
+  line-height: 1.7;
+  font-weight: 650;
+}
+
+.passkey-vault__loading {
+  flex-direction: row;
+  min-height: 82px;
+  font-size: calc(9px * var(--app-font-scale, 1));
+  font-weight: 750;
+}
+
+.passkey-vault__loading svg { width: 18px; height: 18px; }
+
+.passkey-vault__footnote {
+  margin: 14px clamp(20px, 3vw, 34px) 0;
+  padding: 13px 0 19px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #7f8e87;
+  font-size: calc(8.5px * var(--app-font-scale, 1));
+  line-height: 1.6;
+  font-weight: 680;
+}
+
+.passkey-vault__footnote svg { width: 15px; height: 15px; color: #a78229; flex: 0 0 auto; }
+
+.passkey-spin { animation: passkeySpin .8s linear infinite; }
+
+@keyframes passkeySpin { to { transform: rotate(360deg); } }
+@keyframes passkeyOrbit { to { transform: rotate(360deg); } }
+
+@media (max-width: 760px) {
+  .passkey-vault__hero {
+    grid-template-columns: 74px minmax(0,1fr);
+    min-height: 0;
+  }
+
+  .passkey-vault__orb {
+    width: 70px;
+    height: 70px;
+    border-radius: 22px;
+  }
+
+  .passkey-vault__orb svg { width: 36px; height: 36px; }
+
+  .passkey-vault__status {
+    grid-column: 1 / -1;
+    min-width: 0;
+    text-align: right;
+  }
+
+  .passkey-vault__grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 520px) {
+  .passkey-vault { border-radius: 21px; }
+  .passkey-vault__hero {
+    padding: 22px 18px;
+    grid-template-columns: 1fr;
+  }
+  .passkey-vault__orb {
+    width: 62px;
+    height: 62px;
+  }
+  .passkey-vault__hero-copy h2 { font-size: 25px; }
+  .passkey-vault__chips span { font-size: calc(8px * var(--app-font-scale, 1)); }
+  .passkey-vault__grid,
+  .passkey-vault__actions,
+  .passkey-vault__list { padding-inline: 14px; }
+  .passkey-vault__actions { flex-direction: column; }
+  .passkey-vault__primary,
+  .passkey-vault__refresh { width: 100%; }
+  .passkey-vault__list-head,
+  .passkey-vault__message,
+  .passkey-vault__empty,
+  .passkey-vault__loading,
+  .passkey-vault__footnote { margin-inline: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .passkey-vault__hero::after { animation: none; }
+  .passkey-spin { animation-duration: 1.4s; }
+}
