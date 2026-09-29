@@ -3475,16 +3475,16 @@ export default function MonthlyAchievement() {
       </head>
       <body>
         <div class="page">
-          <img class="corner r" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" onerror="this.style.display='none'" />
-          <img class="corner l" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" onerror="this.style.display='none'" />
-          <img class="corner br" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" onerror="this.style.display='none'" />
-          <img class="corner bl" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" onerror="this.style.display='none'" />
-          <img class="watermark" src="${origin}/icon-512.png" alt="" onerror="this.style.display='none'" />
+          <img class="corner r" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" />
+          <img class="corner l" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" />
+          <img class="corner br" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" />
+          <img class="corner bl" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" />
+          <img class="watermark" src="${origin}/icon-512.png" alt="" />
 
           <main class="report">
             <div class="top-line"></div>
             <header class="header">
-              <img class="header-logo" src="${origin}/icon-512.png" alt="شعار الصديق" onerror="this.src='${origin}/logo.png'" />
+              <img class="header-logo" src="${origin}/icon-512.png" alt="شعار الصديق" />
               <div class="title">
                 <h1>تقرير الإنجاز الشهري</h1>
                 <p>نظام الصديق لإدارة حلقات القرآن الكريم</p>
@@ -3526,7 +3526,7 @@ export default function MonthlyAchievement() {
                 تقرير تعليمي لمساندة المعلم في متابعة رحلة الطالب، لا لمجرد تسجيل الأرقام.
               </div>
               <div class="brand-sign">
-                <img src="${origin}/icon-512.png" alt="شعار الصديق" onerror="this.style.display='none'" />
+                <img src="${origin}/icon-512.png" alt="شعار الصديق" />
                 <span>الصديق • متابعةٌ تصنع فرقًا</span>
               </div>
             </footer>
@@ -3534,16 +3534,28 @@ export default function MonthlyAchievement() {
             ${mode === "pdf" ? '<div class="pdf-hint">من نافذة الطباعة اختر «حفظ بتنسيق PDF» للحصول على النسخة النهائية مع الحفاظ على العربية والزخارف.</div>' : ''}
           </main>
         </div>
-        <script>
-          window.onload = function () {
-            setTimeout(function () { window.focus(); window.print(); }, 420);
-          };
-        </script>
       </body>
       </html>
     `);
 
     printWindow.document.close();
+
+    const triggerPrint = () => {
+      window.setTimeout(() => {
+        try {
+          printWindow.focus();
+          printWindow.print();
+        } catch {
+          // The print window may have been closed by the user.
+        }
+      }, 420);
+    };
+
+    if (printWindow.document.readyState === "complete") {
+      triggerPrint();
+    } else {
+      printWindow.addEventListener("load", triggerPrint, { once: true });
+    }
   }
 
   function printReport() {
