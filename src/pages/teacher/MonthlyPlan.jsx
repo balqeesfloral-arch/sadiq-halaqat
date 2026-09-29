@@ -6492,7 +6492,7 @@ function StudentPlanCard({
                     <div className="plan-sections">
                       <PlanSection
                         type="memorization"
-                        title="الحفظ اليومي"
+                        title="خطة الحفظ"
                         icon={<BookOpen size={16} />}
                         locked={locked}
                         fromSurah={row.memorization_from_surah}
@@ -6518,7 +6518,7 @@ function StudentPlanCard({
 
                       <PlanSection
                         type="revision"
-                        title="المراجعة اليومية"
+                        title="خطة المراجعة"
                         icon={<RefreshCw size={16} />}
                         locked={locked}
                         fromSurah={row.revision_from_surah}
@@ -6575,31 +6575,35 @@ function StudentPlanCard({
                 )}
               </div>
 
-              <div className="plan-card-bottom modal-bottom-fields">
-                <div className="bottom-field">
-                  <label>سبب تخصيص الخطة</label>
-                  <input
-                    value={row.customization_reason}
-                    disabled={locked}
-                    onChange={(event) => onChange("customization_reason", event.target.value)}
-                    placeholder="اختياري: طالب جديد، يحتاج تثبيت، متقدم..."
-                  />
-                </div>
+              <details className="plan-extra-details">
+                <summary>
+                  <MessageSquareText size={14} />
+                  ملاحظات إضافية
+                </summary>
 
-                <div className="bottom-field">
-                  <label>
-                    <MessageSquareText size={14} />
-                    ملاحظات الخطة
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={row.notes}
-                    disabled={locked}
-                    onChange={(event) => onChange("notes", event.target.value)}
-                    placeholder="ملاحظات تعليمية خاصة بخطة هذا الشهر..."
-                  />
+                <div className="plan-card-bottom modal-bottom-fields">
+                  <div className="bottom-field">
+                    <label>سبب التخصيص</label>
+                    <input
+                      value={row.customization_reason}
+                      disabled={locked}
+                      onChange={(event) => onChange("customization_reason", event.target.value)}
+                      placeholder="اختياري"
+                    />
+                  </div>
+
+                  <div className="bottom-field">
+                    <label>ملاحظة</label>
+                    <textarea
+                      rows={2}
+                      value={row.notes}
+                      disabled={locked}
+                      onChange={(event) => onChange("notes", event.target.value)}
+                      placeholder="اختياري"
+                    />
+                  </div>
                 </div>
-              </div>
+              </details>
 
               {locked && (
                 <div className="plan-lock-note modal-lock-note">
@@ -6673,31 +6677,24 @@ function ReviewMemoryScopeEditor({
     Number(scope?.endAyah || 0) > 0
   );
 
-  const forward = normalizePlanDirection(direction) === "forward";
-
   return (
-    <section className={`review-memory-scope ${manual ? "manual" : "derived"}`}>
-      <div className="review-memory-scope-head">
+    <section className={`review-memory-scope compact ${manual ? "manual" : "derived"}`}>
+      <div className="review-memory-scope-head compact">
         <div>
-          <ShieldCheck size={17} />
-          <div>
-            <strong>محفوظ الطالب للمراجعة</strong>
-            <span>هذا الإعداد خاص بهذا الطالب وحده ويستمر معه بين الأشهر.</span>
-          </div>
+          <ShieldCheck size={16} />
+          <strong>محفوظ الطالب</strong>
         </div>
-
         <span className="review-memory-private-badge">فردي</span>
       </div>
 
-      <div className="review-memory-mode-toggle">
+      <div className="review-memory-mode-toggle compact">
         <button
           type="button"
           disabled={locked}
           className={!manual ? "active" : ""}
           onClick={() => onChange("revision_scope_mode", "lesson_derived")}
         >
-          <Sparkles size={14} />
-          استنتاج من مسار الحفظ
+          تلقائي
         </button>
 
         <button
@@ -6706,90 +6703,55 @@ function ReviewMemoryScopeEditor({
           className={manual ? "active" : ""}
           onClick={() => onChange("revision_scope_mode", "manual")}
         >
-          <Target size={14} />
-          تحديد المحفوظ يدويًا
+          تحديد يدوي
         </button>
       </div>
 
-      {manual ? (
+      {manual && (
         <>
-          <div className="review-memory-scope-grid">
+          <div className="review-memory-scope-grid compact">
             <SurahField
-              label="بداية دورة المراجعة"
+              label="من سورة"
               value={scope?.startSurah || ""}
               disabled={locked}
-              onChange={(value) =>
-                onChange("revision_scope_start_surah", value)
-              }
+              onChange={(value) => onChange("revision_scope_start_surah", value)}
             />
-
             <NumberField
-              label="آية البداية"
+              label="آية"
               value={scope?.startAyah ?? ""}
               disabled={locked}
               min="1"
               step="1"
-              onChange={(value) =>
-                onChange("revision_scope_start_ayah", value)
-              }
+              onChange={(value) => onChange("revision_scope_start_ayah", value)}
             />
-
             <SurahField
-              label="نهاية المحفوظ"
+              label="إلى سورة"
               value={scope?.endSurah || ""}
               disabled={locked}
-              onChange={(value) =>
-                onChange("revision_scope_end_surah", value)
-              }
+              onChange={(value) => onChange("revision_scope_end_surah", value)}
             />
-
             <NumberField
-              label="آية النهاية"
+              label="آية"
               value={scope?.endAyah ?? ""}
               disabled={locked}
               min="1"
               step="1"
-              onChange={(value) =>
-                onChange("revision_scope_end_ayah", value)
-              }
+              onChange={(value) => onChange("revision_scope_end_ayah", value)}
             />
           </div>
 
-          <div className={`review-memory-scope-status ${complete ? "ready" : "waiting"}`}>
-            {complete ? (
-              <>
-                <CheckCircle2 size={15} />
-                <span>
-                  إذا وصل الطالب لنهاية هذا المحفوظ، يبدأ الصديق دورة جديدة من البداية ويكمل المقدار المتبقي تلقائيًا.
-                </span>
-              </>
-            ) : (
-              <>
-                <CircleAlert size={15} />
-                <span>أكمل بداية ونهاية المحفوظ حتى يعمل الدوران التلقائي بأمان.</span>
-              </>
-            )}
+          <div className={`review-memory-scope-status compact ${complete ? "ready" : "waiting"}`}>
+            {complete ? <CheckCircle2 size={14} /> : <CircleAlert size={14} />}
+            <span>{complete ? "نطاق المحفوظ جاهز" : "أكمل حدود المحفوظ"}</span>
           </div>
-
-          <small className="review-memory-scope-help">
-            اتجاه الدورة الحالي: {forward ? "مع ترتيب المصحف" : "من الناس وما قبلها"}.
-            {" "}
-            إذا عاد الطالب للحفظ لاحقًا، عدّل نهاية المحفوظ لهذا الطالب فقط بعد اعتماد الحفظ الجديد.
-          </small>
         </>
-      ) : (
-        <div className="review-memory-derived-note">
-          <Sparkles size={15} />
-          <span>
-            الصديق يستخدم السلوك السابق ويستنتج حدود المراجعة من موضع الحفظ. للطالب الجديد أو الطالب الذي دخل ومعه محفوظ سابق، اختر «تحديد المحفوظ يدويًا».
-          </span>
-        </div>
       )}
     </section>
   );
 }
 
 /* =========================================================
+   PLAN SECTION/* =========================================================
    PLAN SECTION
 ========================================================= */
 
@@ -6820,35 +6782,12 @@ function PlanSection({
   cycleInfo = null,
   showPace = true,
 }) {
+  const [expanded, setExpanded] = useState(false);
+
   const targetNumber = Number(target || 0);
   const achievedNumber = Number(achieved || 0);
-
-  const remaining = Math.max(
-    0,
-    roundFaces(targetNumber - achievedNumber)
-  );
-
-  const barWidth =
-    targetNumber > 0
-      ? Math.min(100, pace.percentage)
-      : 0;
-
-  const routeComplete = hasCompletePlanRange(
-    fromSurah,
-    fromAyah,
-    toSurah,
-    toAyah
-  );
-
-  const startComplete = hasPlanStart(
-    fromSurah,
-    fromAyah
-  );
-
-  const totalRequested = totalDailyPlanAmount(
-    dailyAmount,
-    plannedSessions
-  );
+  const routeComplete = hasCompletePlanRange(fromSurah, fromAyah, toSurah, toAyah);
+  const startComplete = hasPlanStart(fromSurah, fromAyah);
 
   const hasCycleInfo =
     type === "revision" &&
@@ -6857,279 +6796,213 @@ function PlanSection({
     String(cycleInfo?.endSurah || "").trim() &&
     Number(cycleInfo?.faces || 0) > 0;
 
-  const cycleWrapped = Number(cycleInfo?.wrapCount || 0) > 0;
+  const dailyValue = Number(dailyAmount || 0);
+  const dailyLabel = dailyValue
+    ? `${formatFaces(dailyValue)} ${dailyUnit === "lines" ? "سطر" : "صفحة"}`
+    : "غير محدد";
+
+  const routeLabel = startComplete
+    ? routeComplete
+      ? `${fromSurah} ${fromAyah} ← ${toSurah} ${toAyah}`
+      : `${fromSurah} ${fromAyah}`
+    : "لم يبدأ";
 
   return (
-    <section className={`student-plan-section ${type} smart-plan-section`}>
-      <div className="plan-section-title">
-        <div>
-          {icon}
+    <section className={`student-plan-section ${type} smart-plan-section compact-plan-section ${expanded ? "expanded" : ""}`}>
+      <button
+        type="button"
+        className="compact-plan-toggle"
+        onClick={() => setExpanded((value) => !value)}
+        aria-expanded={expanded}
+      >
+        <span className="compact-plan-toggle-icon">{icon}</span>
+
+        <span className="compact-plan-toggle-copy">
           <strong>{title}</strong>
-        </div>
+          <small>{dailyLabel} • {routeLabel}</small>
+        </span>
 
-        {showPace && (
-          <span className={`pace-badge ${pace.className}`}>
-            {pace.label}
-          </span>
-        )}
-      </div>
+        <span className="compact-plan-toggle-meta">
+          {routeComplete && (
+            <b>{formatPagesAndLines(targetNumber)}</b>
+          )}
+          <ChevronDown className={expanded ? "open" : ""} size={18} />
+        </span>
+      </button>
 
-      <div className="route-first-card">
-        {type === "revision" && (
-          <ReviewMemoryScopeEditor
-            scope={reviewScope}
-            direction={direction}
-            locked={locked}
-            onChange={onChange}
-          />
-        )}
+      {expanded && (
+        <div className="compact-plan-body">
+          {type === "revision" && (
+            <ReviewMemoryScopeEditor
+              scope={reviewScope}
+              direction={direction}
+              locked={locked}
+              onChange={onChange}
+            />
+          )}
 
-        <div className="route-first-head">
-          <div>
-            <BookOpen size={15} />
-            <strong>المسار القرآني الذكي</strong>
+          <div className="compact-plan-row">
+            <div className="compact-plan-group compact-plan-start">
+              <span className="compact-plan-label">البداية</span>
+              <div className="compact-plan-fields">
+                <SurahField
+                  label="السورة"
+                  value={fromSurah}
+                  disabled={locked}
+                  onChange={(value) => onChange(`${fieldPrefix}_from_surah`, value)}
+                />
+                <NumberField
+                  label="الآية"
+                  value={fromAyah}
+                  disabled={locked}
+                  min="1"
+                  step="1"
+                  onChange={(value) => onChange(`${fieldPrefix}_from_ayah`, value)}
+                />
+              </div>
+            </div>
+
+            <div className="compact-plan-group compact-plan-speed">
+              <span className="compact-plan-label">المقدار اليومي</span>
+              <div className="daily-amount-control">
+                <input
+                  type="number"
+                  min="0"
+                  step={dailyUnit === "lines" ? "1" : "0.25"}
+                  disabled={locked || !startComplete}
+                  value={dailyAmount ?? ""}
+                  onChange={(event) =>
+                    onChange(
+                      `${fieldPrefix}_daily_amount`,
+                      event.target.value === "" ? "" : Number(event.target.value)
+                    )
+                  }
+                  placeholder="المقدار"
+                />
+                <div className="daily-unit-toggle">
+                  <button
+                    type="button"
+                    disabled={locked || !startComplete}
+                    className={dailyUnit === "lines" ? "active" : ""}
+                    onClick={() => onChange(`${fieldPrefix}_daily_unit`, "lines")}
+                  >
+                    أسطر
+                  </button>
+                  <button
+                    type="button"
+                    disabled={locked || !startComplete}
+                    className={dailyUnit === "faces" ? "active" : ""}
+                    onClick={() => onChange(`${fieldPrefix}_daily_unit`, "faces")}
+                  >
+                    صفحات
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <span>{autoRange ? "النهاية تُحسب تلقائيًا" : "النهاية معدلة يدويًا"}</span>
-        </div>
 
-        <div className="route-direction-panel">
-          <div className="route-direction-label">
-            <span>اتجاه السير</span>
-            <small>في اتجاه الناس نعكس ترتيب السور فقط، أما الآيات فتبقى من أول السورة إلى آخرها.</small>
-          </div>
+          <div className="compact-plan-options">
+            <div className="route-direction-toggle compact">
+              <button
+                type="button"
+                disabled={locked}
+                className={normalizePlanDirection(direction) === "forward" ? "active" : ""}
+                onClick={() => onChange(`${fieldPrefix}_direction`, "forward")}
+              >
+                باتجاه الناس
+              </button>
+              <button
+                type="button"
+                disabled={locked}
+                className={normalizePlanDirection(direction) === "backward" ? "active" : ""}
+                onClick={() => onChange(`${fieldPrefix}_direction`, "backward")}
+              >
+                عكس الاتجاه
+              </button>
+            </div>
 
-          <div className="route-direction-toggle">
             <button
               type="button"
+              className={autoRange ? "auto-range-switch active compact" : "auto-range-switch compact"}
               disabled={locked}
-              className={normalizePlanDirection(direction) === "forward" ? "active" : ""}
-              onClick={() => onChange(`${fieldPrefix}_direction`, "forward")}
+              onClick={() => onChange(`${fieldPrefix}_auto_range`, !autoRange)}
             >
-              من البقرة وما بعدها
-            </button>
-
-            <button
-              type="button"
-              disabled={locked}
-              className={normalizePlanDirection(direction) === "backward" ? "active" : ""}
-              onClick={() => onChange(`${fieldPrefix}_direction`, "backward")}
-            >
-              من الناس وما قبلها
+              <Sparkles size={13} />
+              {autoRange ? "تلقائي" : "يدوي"}
             </button>
           </div>
-        </div>
-
-        <div className="plan-range-grid route-required-grid">
-          <SurahField
-            label="من سورة"
-            value={fromSurah}
-            disabled={locked}
-            onChange={(value) =>
-              onChange(`${fieldPrefix}_from_surah`, value)
-            }
-          />
-
-          <NumberField
-            label="من آية"
-            value={fromAyah}
-            disabled={locked}
-            min="1"
-            step="1"
-            onChange={(value) =>
-              onChange(`${fieldPrefix}_from_ayah`, value)
-            }
-          />
-
-          <SurahField
-            label={autoRange ? "إلى سورة — تلقائي" : "إلى سورة — يدوي"}
-            value={toSurah}
-            disabled={locked || autoRange}
-            onChange={(value) =>
-              onChange(`${fieldPrefix}_to_surah`, value)
-            }
-          />
-
-          <NumberField
-            label={autoRange ? "إلى آية — تلقائي" : "إلى آية — يدوي"}
-            value={toAyah}
-            disabled={locked || autoRange}
-            min="1"
-            step="1"
-            onChange={(value) =>
-              onChange(`${fieldPrefix}_to_ayah`, value)
-            }
-          />
-        </div>
-
-        <div className="auto-range-switch-row">
-          <button
-            type="button"
-            className={autoRange ? "auto-range-switch active" : "auto-range-switch"}
-            disabled={locked}
-            onClick={() => onChange(`${fieldPrefix}_auto_range`, !autoRange)}
-          >
-            <Sparkles size={14} />
-            {autoRange ? "الحساب التلقائي مفعّل" : "تفعيل الحساب التلقائي"}
-          </button>
 
           {!autoRange && (
-            <span className="manual-range-note">
-              عدّل النهاية يدويًا، أو أعد تشغيل الحساب التلقائي في أي وقت.
-            </span>
+            <div className="compact-manual-end">
+              <span className="compact-plan-label">النهاية</span>
+              <div className="compact-plan-fields">
+                <SurahField
+                  label="السورة"
+                  value={toSurah}
+                  disabled={locked}
+                  onChange={(value) => onChange(`${fieldPrefix}_to_surah`, value)}
+                />
+                <NumberField
+                  label="الآية"
+                  value={toAyah}
+                  disabled={locked}
+                  min="1"
+                  step="1"
+                  onChange={(value) => onChange(`${fieldPrefix}_to_ayah`, value)}
+                />
+              </div>
+            </div>
           )}
-        </div>
 
-        <div className={`route-calculated-result ${routeComplete ? "ready" : "empty"}`}>
-          {generating ? (
-            <>
-              <Loader2 size={15} className="spin" />
-              <span>جارٍ حساب نهاية الخطة من المصحف...</span>
-            </>
-          ) : routeError ? (
-            <>
-              <CircleAlert size={15} />
-              <span>{routeError}</span>
-            </>
-          ) : routeComplete ? (
-            <>
-              <ShieldCheck size={15} />
-              <span>
-                {autoRange ? "النهاية المحسوبة:" : "حجم المسار اليدوي:"}
-              </span>
-              <strong>{formatPagesAndLines(targetNumber)}</strong>
-            </>
-          ) : !startComplete ? (
-            <span>ابدأ باختيار السورة والآية فقط.</span>
-          ) : Number(dailyAmount || 0) <= 0 ? (
-            <span>حدد مقدار التسميع اليومي ليحسب الصديق نهاية الشهر.</span>
-          ) : Number(plannedSessions || 0) <= 0 ? (
-            <span>لا توجد جلسات فعلية في هذا الشهر بعد خصم الإجازات.</span>
-          ) : (
-            <span>سيتم حساب نهاية الخطة تلقائيًا.</span>
-          )}
-        </div>
-
-        {hasCycleInfo && (
-          <div className="revision-cycle-summary">
-            <div>
-              <span>دورة المراجعة</span>
-              <strong>
-                {cycleInfo.startSurah} ← {cycleInfo.endSurah}
-              </strong>
-            </div>
-
-            <div>
-              <span>حجم الدورة</span>
-              <strong>{formatPagesAndLines(cycleInfo.faces)}</strong>
-            </div>
-
-            <div>
-              <span>خطة الشهر</span>
-              <strong>{formatReviewCycleCount(cycleInfo.equivalent)}</strong>
-            </div>
-
-            {cycleWrapped && (
-              <small>
-                {formatFullReviewCycles(cycleInfo.fullCount)}
-                {Number(cycleInfo.fullCount || 0) > 0 ? "، ثم " : ""}
-                {cycleInfo.startSurah} ← {toSurah} {toAyah || ""}
-              </small>
+          <div className={`compact-plan-result ${routeError ? "error" : routeComplete ? "ready" : ""}`}>
+            {generating ? (
+              <>
+                <Loader2 size={14} className="spin" />
+                <span>جارٍ الحساب…</span>
+              </>
+            ) : routeError ? (
+              <>
+                <CircleAlert size={14} />
+                <span>{routeError}</span>
+              </>
+            ) : routeComplete ? (
+              <>
+                <CheckCircle2 size={14} />
+                <span>النهاية</span>
+                <strong>{toSurah} {toAyah}</strong>
+                <span className="compact-result-sep">•</span>
+                <strong>{formatPagesAndLines(targetNumber)}</strong>
+              </>
+            ) : (
+              <span>حدد البداية والمقدار.</span>
             )}
           </div>
-        )}
-      </div>
 
-      <div className="daily-plan-editor speed-only-editor">
-        <div className="daily-plan-input-block">
-          <label>سرعة الجلسة</label>
-
-          <div className="daily-amount-control">
-            <input
-              type="number"
-              min="0"
-              step={dailyUnit === "lines" ? "1" : "0.25"}
-              disabled={locked || !startComplete}
-              value={dailyAmount ?? ""}
-              onChange={(event) =>
-                onChange(
-                  `${fieldPrefix}_daily_amount`,
-                  event.target.value === ""
-                    ? ""
-                    : Number(event.target.value)
-                )
-              }
-              placeholder={dailyUnit === "lines" ? "مثال: 3" : "مثال: 1"}
-            />
-
-            <div className="daily-unit-toggle">
-              <button
-                type="button"
-                disabled={locked || !startComplete}
-                className={dailyUnit === "lines" ? "active" : ""}
-                onClick={() => onChange(`${fieldPrefix}_daily_unit`, "lines")}
-              >
-                أسطر
-              </button>
-
-              <button
-                type="button"
-                disabled={locked || !startComplete}
-                className={dailyUnit === "faces" ? "active" : ""}
-                onClick={() => onChange(`${fieldPrefix}_daily_unit`, "faces")}
-              >
-                صفحات
-              </button>
+          {hasCycleInfo && (
+            <div className="compact-cycle-line">
+              <RefreshCw size={13} />
+              <span>الدورة: {cycleInfo.startSurah} ← {cycleInfo.endSurah}</span>
+              {Number(cycleInfo.wrapCount || 0) > 0 && (
+                <strong>{formatReviewCycleCount(cycleInfo.equivalent)}</strong>
+              )}
             </div>
-          </div>
+          )}
 
-          <small className="speed-helper">
-            {autoRange
-              ? `الصديق يضرب المقدار في ${plannedSessions || 0} جلسة فعلية${totalRequested > 0 ? ` = ${formatFaces(totalRequested)} ${dailyUnit === "lines" ? "سطر" : "صفحة"}` : ""} ثم يحدد آخر آية تلقائيًا.`
-              : "الحساب التلقائي متوقف؛ النهاية التي أدخلتها يدويًا هي المعتمدة."}
-          </small>
-        </div>
-
-        <div className="monthly-target-card clean-result route-target-card">
-          <span>{autoRange ? "هدف الشهر التلقائي" : "حجم المسار"}</span>
-          <strong>{routeComplete ? formatPagesAndLines(targetNumber) : "—"}</strong>
-        </div>
-      </div>
-
-      {showPace && routeComplete && (
-        <div className="plan-progress smart-plan-progress">
-          <div className="progress-heading">
-            <div>
-              <span>المنجز</span>
-              <strong>{formatPagesAndLines(achievedNumber)}</strong>
+          {showPace && routeComplete && targetNumber > 0 && (
+            <div className="compact-plan-progress">
+              <div>
+                <span>المنجز</span>
+                <strong>{formatPagesAndLines(achievedNumber)}</strong>
+              </div>
+              <div className="progress-track">
+                <div
+                  className={`progress-fill ${pace.className}`}
+                  style={{ width: `${Math.min(100, pace.percentage)}%` }}
+                />
+              </div>
+              <b>{pace.percentage}%</b>
             </div>
-
-            <div>
-              <span>المتبقي</span>
-              <strong>{formatPagesAndLines(remaining)}</strong>
-            </div>
-
-            <div>
-              <span>تحقيق المسار</span>
-              <strong>{pace.percentage}%</strong>
-            </div>
-          </div>
-
-          <div className="progress-track">
-            <div
-              className={`progress-fill ${pace.className}`}
-              style={{ width: `${barWidth}%` }}
-            />
-          </div>
-
-          <div className="progress-foot">
-            <span>المتوقع حسب جلسات التسميع الفعلية: {pace.expected}%</span>
-            <span>
-              {formatFaces(automatic)} تلقائي
-              {Number(manual || 0) > 0
-                ? ` + ${formatFaces(manual)} يدوي`
-                : ""}
-            </span>
-          </div>
+          )}
         </div>
       )}
     </section>
@@ -7137,74 +7010,105 @@ function PlanSection({
 }
 
 function SideLessonPolicyEditor({ row, locked, onChange }) {
+  const [expanded, setExpanded] = useState(false);
+
   const modes = [
-    { value: "none", label: "بدون جنب درس", hint: "يظهر الدرس والمراجعة فقط" },
-    { value: "previous_amount", label: "مقدار سابق", hint: "يرجع قبل درس اليوم بالمقدار المحدد" },
-    { value: "previous_surah", label: "السورة السابقة", hint: "السورة السابقة كاملة تلقائيًا" },
-    { value: "from_surah_start", label: "من بداية السورة", hint: "من أول السورة إلى ما قبل درس اليوم" },
+    { value: "none", label: "بدون" },
+    { value: "previous_amount", label: "مقدار سابق" },
+    { value: "previous_surah", label: "السورة السابقة" },
+    { value: "from_surah_start", label: "من بداية السورة" },
   ];
 
+  const currentLabel =
+    modes.find((item) => item.value === (row.side_lesson_mode || "none"))?.label ||
+    "بدون";
+
   return (
-    <section className="side-policy-card">
-      <div className="side-policy-head">
-        <div>
-          <Target size={17} />
-          <div>
-            <strong>سياسة جنب الدرس</strong>
-            <span>تحدد مرة واحدة ويولدها النظام تلقائيًا في كل جلسة</span>
+    <section className={`side-policy-card compact-side-policy ${expanded ? "expanded" : ""}`}>
+      <button
+        type="button"
+        className="compact-side-toggle"
+        onClick={() => setExpanded((value) => !value)}
+        aria-expanded={expanded}
+      >
+        <Target size={16} />
+        <span>
+          <strong>جنب الدرس</strong>
+          <small>{currentLabel}</small>
+        </span>
+        <ChevronDown className={expanded ? "open" : ""} size={17} />
+      </button>
+
+      {expanded && (
+        <div className="compact-side-body">
+          <div className="side-policy-modes compact">
+            {modes.map((item) => (
+              <button
+                type="button"
+                key={item.value}
+                disabled={locked}
+                className={row.side_lesson_mode === item.value ? "active" : ""}
+                onClick={() => onChange("side_lesson_mode", item.value)}
+              >
+                <strong>{item.label}</strong>
+              </button>
+            ))}
           </div>
-        </div>
-        <span className="side-policy-badge">لا يدخل في الحفظ الجديد</span>
-      </div>
 
-      <div className="side-policy-modes">
-        {modes.map((item) => (
-          <button
-            type="button"
-            key={item.value}
-            disabled={locked}
-            className={row.side_lesson_mode === item.value ? "active" : ""}
-            onClick={() => onChange("side_lesson_mode", item.value)}
-          >
-            <strong>{item.label}</strong>
-            <span>{item.hint}</span>
-          </button>
-        ))}
-      </div>
-
-      {row.side_lesson_mode === "previous_amount" && (
-        <div className="side-policy-amount">
-          <label>المقدار السابق</label>
-          <div className="daily-amount-control">
-            <input
-              type="number"
-              min="0.25"
-              step={row.side_lesson_unit === "lines" ? "1" : "0.25"}
-              disabled={locked}
-              value={row.side_lesson_amount ?? ""}
-              onChange={(event) =>
-                onChange("side_lesson_amount", event.target.value === "" ? "" : Number(event.target.value))
-              }
-              placeholder={row.side_lesson_unit === "lines" ? "مثال: 5" : "مثال: 1"}
-            />
-            <div className="daily-unit-toggle">
-              <button type="button" disabled={locked} className={row.side_lesson_unit === "lines" ? "active" : ""} onClick={() => onChange("side_lesson_unit", "lines")}>أسطر</button>
-              <button type="button" disabled={locked} className={row.side_lesson_unit === "faces" ? "active" : ""} onClick={() => onChange("side_lesson_unit", "faces")}>أوجه</button>
+          {row.side_lesson_mode === "previous_amount" && (
+            <div className="side-policy-amount compact">
+              <div className="daily-amount-control">
+                <input
+                  type="number"
+                  min="0.25"
+                  step={row.side_lesson_unit === "lines" ? "1" : "0.25"}
+                  disabled={locked}
+                  value={row.side_lesson_amount ?? ""}
+                  onChange={(event) =>
+                    onChange(
+                      "side_lesson_amount",
+                      event.target.value === "" ? "" : Number(event.target.value)
+                    )
+                  }
+                  placeholder="المقدار"
+                />
+                <div className="daily-unit-toggle">
+                  <button
+                    type="button"
+                    disabled={locked}
+                    className={row.side_lesson_unit === "lines" ? "active" : ""}
+                    onClick={() => onChange("side_lesson_unit", "lines")}
+                  >
+                    أسطر
+                  </button>
+                  <button
+                    type="button"
+                    disabled={locked}
+                    className={row.side_lesson_unit === "faces" ? "active" : ""}
+                    onClick={() => onChange("side_lesson_unit", "faces")}
+                  >
+                    صفحات
+                  </button>
+                </div>
+              </div>
             </div>
+          )}
+
+          <div className="side-policy-boundary compact">
+            <label>الحد</label>
+            <select
+              disabled={locked}
+              value={row.boundary_suggestion_mode || "ayah_and_surah"}
+              onChange={(event) => onChange("boundary_suggestion_mode", event.target.value)}
+            >
+              <option value="ayah_and_surah">آية أو سورة</option>
+              <option value="ayah">آية</option>
+              <option value="surah">سورة</option>
+              <option value="none">بدون</option>
+            </select>
           </div>
         </div>
       )}
-
-      <div className="side-policy-boundary">
-        <label>اقتراح الحد الطبيعي</label>
-        <select disabled={locked} value={row.boundary_suggestion_mode || "ayah_and_surah"} onChange={(event) => onChange("boundary_suggestion_mode", event.target.value)}>
-          <option value="ayah_and_surah">نهاية آية أو سورة</option>
-          <option value="ayah">نهاية آية</option>
-          <option value="surah">نهاية سورة</option>
-          <option value="none">بدون اقتراح</option>
-        </select>
-        <small>النظام يقترح فقط، والمعلم يقرر.</small>
-      </div>
     </section>
   );
 }
@@ -11455,6 +11359,457 @@ function MonthlyPlanStyles() {
           .route-direction-panel { grid-template-columns: 1fr; }
           .route-direction-toggle { grid-template-columns: 1fr; }
           .autosave-chip { width: 100%; justify-content: center; }
+        }
+
+
+        /* ===== Compact monthly-plan teacher UI ===== */
+        .compact-plan-section {
+          padding: 0 !important;
+          overflow: hidden;
+          border: 1px solid rgba(24, 87, 67, .10);
+          border-radius: 16px;
+          background: #fff;
+          box-shadow: 0 8px 24px rgba(19, 72, 56, .035);
+        }
+
+        .compact-plan-toggle {
+          width: 100%;
+          min-height: 62px;
+          display: grid;
+          grid-template-columns: 34px minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 10px;
+          padding: 11px 13px;
+          border: 0;
+          background: transparent;
+          color: #25483c;
+          font-family: inherit;
+          text-align: right;
+          cursor: pointer;
+        }
+
+        .compact-plan-section.expanded .compact-plan-toggle {
+          border-bottom: 1px solid rgba(24, 87, 67, .08);
+          background: linear-gradient(135deg, rgba(241,248,245,.92), rgba(255,252,244,.68));
+        }
+
+        .compact-plan-toggle-icon {
+          width: 34px;
+          height: 34px;
+          display: grid;
+          place-items: center;
+          border-radius: 11px;
+          background: #eef6f2;
+          color: #176047;
+        }
+
+        .compact-plan-toggle-copy {
+          min-width: 0;
+          display: block;
+        }
+
+        .compact-plan-toggle-copy strong {
+          display: block;
+          font-size: 12px;
+          font-weight: 950;
+          color: #193f32;
+        }
+
+        .compact-plan-toggle-copy small {
+          display: block;
+          margin-top: 3px;
+          overflow: hidden;
+          color: #7d8b85;
+          font-size: 9px;
+          font-weight: 700;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .compact-plan-toggle-meta {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          color: #718078;
+        }
+
+        .compact-plan-toggle-meta b {
+          padding: 4px 7px;
+          border-radius: 999px;
+          background: #f7f3e7;
+          color: #806622;
+          font-size: 9px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .compact-plan-toggle-meta svg,
+        .compact-side-toggle > svg:last-child {
+          transition: transform .18s ease;
+        }
+
+        .compact-plan-toggle-meta svg.open,
+        .compact-side-toggle > svg.open:last-child {
+          transform: rotate(180deg);
+        }
+
+        .compact-plan-body {
+          padding: 12px;
+          display: grid;
+          gap: 11px;
+        }
+
+        .compact-plan-row {
+          display: grid;
+          grid-template-columns: 1.35fr .85fr;
+          gap: 10px;
+        }
+
+        .compact-plan-group {
+          min-width: 0;
+        }
+
+        .compact-plan-label {
+          display: block;
+          margin-bottom: 6px;
+          color: #667870;
+          font-size: 9px;
+          font-weight: 900;
+        }
+
+        .compact-plan-fields {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 82px;
+          gap: 7px;
+        }
+
+        .compact-plan-fields .plan-field label {
+          font-size: 8px !important;
+          margin-bottom: 4px !important;
+        }
+
+        .compact-plan-fields .plan-field select,
+        .compact-plan-fields .plan-field input {
+          min-height: 39px !important;
+        }
+
+        .compact-plan-speed .daily-amount-control {
+          min-height: 39px;
+        }
+
+        .compact-plan-options {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .route-direction-toggle.compact {
+          width: auto;
+          display: inline-grid;
+          grid-template-columns: repeat(2, auto);
+          gap: 5px;
+        }
+
+        .route-direction-toggle.compact button {
+          min-height: 31px;
+          padding: 5px 9px;
+          font-size: 9px;
+          border-radius: 9px;
+        }
+
+        .auto-range-switch.compact {
+          min-height: 31px;
+          padding: 0 9px;
+          font-size: 9px;
+        }
+
+        .compact-manual-end {
+          padding-top: 2px;
+        }
+
+        .compact-plan-result {
+          min-height: 38px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 10px;
+          border-radius: 11px;
+          background: #f7f9f8;
+          color: #718078;
+          font-size: 9px;
+          font-weight: 800;
+        }
+
+        .compact-plan-result.ready {
+          background: #edf7f2;
+          color: #1c6a50;
+        }
+
+        .compact-plan-result.error {
+          background: #fff3f1;
+          color: #a33c33;
+        }
+
+        .compact-plan-result strong {
+          color: inherit;
+          font-size: 10px;
+          font-weight: 950;
+        }
+
+        .compact-result-sep {
+          opacity: .35;
+        }
+
+        .compact-cycle-line {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 32px;
+          padding: 6px 9px;
+          border-radius: 10px;
+          background: #fff9eb;
+          color: #795f22;
+          font-size: 9px;
+          font-weight: 800;
+        }
+
+        .compact-cycle-line strong {
+          margin-right: auto;
+          font-size: 9px;
+        }
+
+        .compact-plan-progress {
+          display: grid;
+          grid-template-columns: auto minmax(100px,1fr) auto;
+          align-items: center;
+          gap: 9px;
+          padding-top: 2px;
+        }
+
+        .compact-plan-progress > div:first-child span,
+        .compact-plan-progress > div:first-child strong {
+          display: block;
+        }
+
+        .compact-plan-progress > div:first-child span {
+          color: #85918c;
+          font-size: 8px;
+        }
+
+        .compact-plan-progress > div:first-child strong,
+        .compact-plan-progress > b {
+          color: #31594b;
+          font-size: 9px;
+          font-weight: 900;
+        }
+
+        .compact-plan-progress .progress-track {
+          height: 6px;
+        }
+
+        .review-memory-scope.compact {
+          margin: 0 !important;
+          padding: 10px !important;
+          border-radius: 12px !important;
+          box-shadow: none !important;
+        }
+
+        .review-memory-scope-head.compact {
+          align-items: center !important;
+          margin-bottom: 8px !important;
+        }
+
+        .review-memory-scope-head.compact > div {
+          align-items: center !important;
+        }
+
+        .review-memory-scope-head.compact > div > div {
+          display: none;
+        }
+
+        .review-memory-mode-toggle.compact {
+          margin-bottom: 8px;
+        }
+
+        .review-memory-mode-toggle.compact button {
+          min-height: 32px;
+          padding: 5px 8px;
+          font-size: 9px;
+        }
+
+        .review-memory-scope-grid.compact {
+          gap: 6px;
+        }
+
+        .review-memory-scope-status.compact {
+          width: fit-content;
+          margin-top: 7px;
+          padding: 6px 8px;
+          font-size: 8.5px;
+          line-height: 1.3;
+        }
+
+        .compact-side-policy {
+          padding: 0 !important;
+          overflow: hidden;
+          border-radius: 14px !important;
+        }
+
+        .compact-side-toggle {
+          width: 100%;
+          min-height: 48px;
+          display: grid;
+          grid-template-columns: 28px minmax(0,1fr) auto;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 11px;
+          border: 0;
+          background: transparent;
+          color: #31584b;
+          font-family: inherit;
+          text-align: right;
+          cursor: pointer;
+        }
+
+        .compact-side-toggle > span strong,
+        .compact-side-toggle > span small {
+          display: block;
+        }
+
+        .compact-side-toggle > span strong {
+          font-size: 10px;
+          font-weight: 950;
+        }
+
+        .compact-side-toggle > span small {
+          margin-top: 2px;
+          color: #89958f;
+          font-size: 8px;
+          font-weight: 750;
+        }
+
+        .compact-side-body {
+          display: grid;
+          gap: 9px;
+          padding: 0 10px 10px;
+        }
+
+        .side-policy-modes.compact {
+          grid-template-columns: repeat(4, minmax(0,1fr));
+          gap: 5px;
+        }
+
+        .side-policy-modes.compact button {
+          min-height: 34px;
+          padding: 5px;
+        }
+
+        .side-policy-modes.compact button span {
+          display: none;
+        }
+
+        .side-policy-modes.compact button strong {
+          font-size: 8.5px;
+        }
+
+        .side-policy-boundary.compact {
+          display: grid;
+          grid-template-columns: auto minmax(0,1fr);
+          align-items: center;
+          gap: 8px;
+        }
+
+        .side-policy-boundary.compact small {
+          display: none;
+        }
+
+        .plan-extra-details {
+          margin-top: 8px;
+          border: 1px solid rgba(22,82,64,.09);
+          border-radius: 13px;
+          background: #fafcfb;
+          overflow: hidden;
+        }
+
+        .plan-extra-details > summary {
+          min-height: 42px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 8px 11px;
+          color: #60746c;
+          font-size: 9px;
+          font-weight: 900;
+          cursor: pointer;
+          list-style: none;
+        }
+
+        .plan-extra-details > summary::-webkit-details-marker {
+          display: none;
+        }
+
+        .plan-extra-details[open] > summary {
+          border-bottom: 1px solid rgba(22,82,64,.07);
+        }
+
+        .plan-extra-details .modal-bottom-fields {
+          margin-top: 0 !important;
+          padding: 10px !important;
+        }
+
+        @media (max-width: 760px) {
+          .compact-plan-row {
+            grid-template-columns: 1fr;
+          }
+
+          .side-policy-modes.compact {
+            grid-template-columns: repeat(2, minmax(0,1fr));
+          }
+        }
+
+        @media (max-width: 520px) {
+          .compact-plan-toggle {
+            grid-template-columns: 31px minmax(0,1fr) auto;
+            min-height: 58px;
+            padding: 9px 10px;
+          }
+
+          .compact-plan-toggle-icon {
+            width: 31px;
+            height: 31px;
+          }
+
+          .compact-plan-toggle-meta b {
+            display: none;
+          }
+
+          .compact-plan-fields {
+            grid-template-columns: minmax(0,1fr) 72px;
+          }
+
+          .route-direction-toggle.compact {
+            width: 100%;
+            grid-template-columns: repeat(2,minmax(0,1fr));
+          }
+
+          .compact-plan-options .auto-range-switch.compact {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .compact-plan-progress {
+            grid-template-columns: 1fr auto;
+          }
+
+          .compact-plan-progress > div:first-child {
+            display: none;
+          }
+
+          .review-memory-scope-grid.compact {
+            grid-template-columns: repeat(2, minmax(0,1fr));
+          }
         }
       `}
     </style>
