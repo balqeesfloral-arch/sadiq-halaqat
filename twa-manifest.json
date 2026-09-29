@@ -31,13 +31,13 @@
       "name": "تسجيل الدخول",
       "shortName": "الدخول",
       "url": "/login?source=android-shortcut",
-      "iconUrl": "https://sadiqh.vercel.app/icon-192.png"
+      "chosenIconUrl": "https://sadiqh.vercel.app/icon-192.png"
     },
     {
       "name": "الإشعارات",
       "shortName": "الإشعارات",
       "url": "/student/notifications?source=android-shortcut",
-      "iconUrl": "https://sadiqh.vercel.app/icon-192.png"
+      "chosenIconUrl": "https://sadiqh.vercel.app/icon-192.png"
     }
   ],
   "generatorApp": "bubblewrap",
