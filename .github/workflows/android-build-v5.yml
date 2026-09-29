@@ -86,7 +86,7 @@ jobs:
           cp android.keystore release/android.keystore
 
           AAB="$(find . -type f -name "*.aab" | head -n 1)"
-          APK="$(find . -type f -name "*signed*.apk" | head -n 1)"
+          APK="./app-release-signed.apk"
           ASSETLINKS="$(find . -type f -name "assetlinks.json" | head -n 1 || true)"
 
           test -n "$AAB"
