@@ -13,7 +13,8 @@
     "security:scan": "node scripts/security-scan.mjs",
     "security:check": "npm run security:scan && npm run lint && npm run build && npm run security:dist",
     "security:dist": "node scripts/security-dist-scan.mjs",
-    "security:full": "npm run security:check && npm run audit:prod"
+    "security:full": "npm run security:check && npm run audit:prod",
+    "push:keys": "node scripts/generate-vapid.mjs"
   },
   "dependencies": {
     "@mui/x-date-pickers": "^9.13.0",
