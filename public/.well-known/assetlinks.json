@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.sadiq.halaqat",
+      "sha256_cert_fingerprints": [
+        "13:EA:84:B7:A1:9C:82:BE:C9:40:15:9F:7A:19:75:E8:3F:08:CB:E6:83:8D:C2:E7:12:6B:F9:3D:BE:82:EE:8B"
+      ]
+    }
+  }
+]
