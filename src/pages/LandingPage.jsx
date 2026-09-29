@@ -1539,11 +1539,7 @@ function LandingAssistant() {
         >
           <span className="landing-assistant-launch-symbol" aria-hidden="true">
             {open ? <X size={24} /> : <MessageCircle size={28} strokeWidth={1.65} />}
-            {!open && <span className="landing-assistant-launch-dots"><i /><i /><i /></span>}
           </span>
-          {!open && (
-            <span className="landing-assistant-launch-ping" aria-hidden="true" />
-          )}
         </button>
       </div>
 
