@@ -22,14 +22,14 @@ jobs:
   core-audit:
     name: Core security audit
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
           cache: npm
@@ -57,6 +57,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Verify CSP hashes against built HTML
+        run: npm run security:csp
+
       - name: Production artifact security scan
         run: npm run security:dist
 
@@ -82,20 +85,68 @@ jobs:
       - name: Create clean source snapshot
         if: always()
         run: |
+          set -euo pipefail
           mkdir -p security-artifacts/source
-          rsync -a             --exclude='.git'             --exclude='node_modules'             --exclude='dist'             --exclude='security-artifacts'             ./ security-artifacts/source/
+          rsync -a \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='dist' \
+            --exclude='security-artifacts' \
+            --exclude='*.keystore' \
+            --exclude='*.jks' \
+            --exclude='.env*' \
+            ./ security-artifacts/source/
           cd security-artifacts
           zip -qr sadiq-security-v-infinity-source.zip source
           rm -rf source
 
       - name: Upload core audit
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sadiq-security-v-infinity-core-${{ github.run_number }}
           path: security-artifacts/
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Block release on critical Sentinel findings
+        if: always() && hashFiles('security-artifacts/sentinel-report.json') != ''
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('security-artifacts/sentinel-report.json','utf8'));
+          if ((report?.counts?.critical || 0) > 0) {
+            console.error('Critical security finding detected. Release gate closed.');
+            process.exit(1);
+          }
+          NODE
+
+  codeql:
+    name: CodeQL deep analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@1190a975f95ce23525efb6a3fc21ea29567c1b52
+        with:
+          languages: javascript-typescript
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@1190a975f95ce23525efb6a3fc21ea29567c1b52
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@1190a975f95ce23525efb6a3fc21ea29567c1b52
+        with:
+          category: "/language:javascript-typescript"
 
   semgrep:
     name: Deep SAST with Semgrep
@@ -105,15 +156,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.12"
 
       - name: Install Semgrep
-        run: python -m pip install --disable-pip-version-check semgrep
+        run: python -m pip install --disable-pip-version-check "semgrep==1.178.0"
 
       - name: Run Semgrep
         continue-on-error: true
@@ -123,9 +174,53 @@ jobs:
 
       - name: Upload Semgrep report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sadiq-security-v-infinity-semgrep-${{ github.run_number }}
+          path: security-artifacts/
+          if-no-files-found: warn
+          retention-days: 30
+
+  trivy:
+    name: Trivy dependency secret and misconfiguration scan
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Prepare report directory
+        run: mkdir -p security-artifacts
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH,MEDIUM
+          ignore-unfixed: true
+          format: sarif
+          output: security-artifacts/trivy.sarif
+          exit-code: "0"
+
+      - name: Upload Trivy SARIF to GitHub code scanning
+        if: always() && hashFiles('security-artifacts/trivy.sarif') != ''
+        uses: github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52
+        with:
+          sarif_file: security-artifacts/trivy.sarif
+          category: trivy
+
+      - name: Upload Trivy report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sadiq-security-v-infinity-trivy-${{ github.run_number }}
           path: security-artifacts/
           if-no-files-found: warn
           retention-days: 30
@@ -142,7 +237,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Prepare report directory
         run: mkdir -p security-artifacts
@@ -155,13 +250,13 @@ jobs:
             exit 0
           fi
 
-          npx --yes supabase@latest link             --project-ref "$SUPABASE_PROJECT_REF"             --password "$SUPABASE_DB_PASSWORD"
+          npx --yes supabase@2.118.0 link             --project-ref "$SUPABASE_PROJECT_REF"             --password "$SUPABASE_DB_PASSWORD"
 
-          npx --yes supabase@latest db lint             --linked             --level warning             > security-artifacts/supabase-db-lint.txt 2>&1 || true
+          npx --yes supabase@2.118.0 db lint             --linked             --level warning             > security-artifacts/supabase-db-lint.txt 2>&1 || true
 
       - name: Upload Supabase lint
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sadiq-security-v-infinity-supabase-${{ github.run_number }}
           path: security-artifacts/
@@ -176,18 +271,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Run passive/baseline web scan
         continue-on-error: true
         run: |
           mkdir -p security-artifacts/zap
           chmod 777 security-artifacts/zap
-          docker run --rm             -v "$PWD/security-artifacts/zap:/zap/wrk/:rw"             -t ghcr.io/zaproxy/zaproxy:stable             zap-baseline.py             -t https://sadiqh.vercel.app             -J zap-report.json             -r zap-report.html             -w zap-report.md             -I || true
+          docker run --rm             -v "$PWD/security-artifacts/zap:/zap/wrk/:rw"             -t ghcr.io/zaproxy/zaproxy:2.17.0             zap-baseline.py             -t https://sadiqh.vercel.app             -J zap-report.json             -r zap-report.html             -w zap-report.md             -I || true
 
       - name: Upload ZAP report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sadiq-security-v-infinity-zap-${{ github.run_number }}
           path: security-artifacts/zap/
