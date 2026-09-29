@@ -1541,13 +1541,9 @@ function LandingAssistant() {
             {open ? <X size={24} /> : <MessageCircle size={28} strokeWidth={1.65} />}
             {!open && <span className="landing-assistant-launch-dots"><i /><i /><i /></span>}
           </span>
-          {!open && <>
-            <span className="landing-assistant-launch-copy" aria-hidden="true">
-              <strong>مساعد الصِّدّيق</strong>
-              <small>الأسئلة والتواصل</small>
-            </span>
-            <ArrowUpLeft className="landing-assistant-launch-arrow" size={18} aria-hidden="true" />
-          </>}
+          {!open && (
+            <span className="landing-assistant-launch-ping" aria-hidden="true" />
+          )}
         </button>
       </div>
 
