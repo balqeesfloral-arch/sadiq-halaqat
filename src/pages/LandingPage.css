@@ -256,60 +256,95 @@
   font-weight: 650;
 }
 
-.landing-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
+.landing-wisdom-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: calc(12px * var(--app-density,1));
   margin-top: 34px;
 }
 
-.landing-primary-button,
-.landing-secondary-button {
-  min-height: 52px;
-  padding: 0 calc(22px * var(--app-density,1));
+.landing-wisdom-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 158px;
+  padding: calc(17px * var(--app-density,1));
+  border-radius: calc(21px * var(--app-radius-scale,1));
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.94), rgba(250,247,239,.88));
+  box-shadow:
+    0 18px 40px rgba(8, 61, 49, .07),
+    inset 0 1px 0 rgba(255,255,255,.72);
+  backdrop-filter: blur(14px);
+  isolation: isolate;
+}
+
+.landing-wisdom-card.hadith {
+  background:
+    linear-gradient(145deg, rgba(247,252,249,.96), rgba(255,250,239,.9));
+}
+
+.landing-wisdom-corner {
+  position: absolute;
+  left: -46px;
+  bottom: -54px;
+  width: 150px;
+  height: 150px;
+  opacity: .26;
+  background:
+    url('/ornaments/sadiq/gold/03-falak.svg')
+    center / contain no-repeat;
+  transform: rotate(-12deg);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.landing-wisdom-card::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(212,175,55,.08);
+  border-radius: calc(15px * var(--app-radius-scale,1));
+  pointer-events: none;
+}
+
+.landing-wisdom-badge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: calc(10px * var(--app-density,1));
-  border-radius: calc(16px * var(--app-radius-scale,1));
-  cursor: pointer;
-  font-size: calc(14px * var(--app-font-scale,1));
-  font-weight: 900;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.landing-primary-button {
-  border: 0;
-  background:
-    linear-gradient(
-      135deg,
-      var(--landing-green-dark),
-      var(--landing-green)
-    );
-  color: #fff;
-  box-shadow: 0 16px 38px color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 22%,transparent);
-}
-
-.landing-primary-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 22px 48px color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 28.000000000000004%,transparent);
-}
-
-.landing-secondary-button {
-  border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 13%,transparent);
-  background: rgba(255, 255, 255, 0.82);
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
   color: var(--landing-green);
-  backdrop-filter: blur(10px);
+  border: 1px solid rgba(212,175,55,.16);
+  box-shadow: 0 8px 18px rgba(11,70,55,.045);
+  font-size: calc(10px * var(--app-font-scale,1));
+  font-weight: 900;
 }
 
-.landing-secondary-button:hover {
-  transform: translateY(-2px);
-  background: #fff;
-  border-color: rgba(212, 175, 55, 0.32);
+.landing-wisdom-badge svg {
+  color: var(--landing-gold);
+}
+
+.landing-wisdom-text {
+  margin: 16px 0 0;
+  color: var(--landing-green-dark);
+  font-size: clamp(
+    calc(17px * var(--app-font-scale,1)),
+    1.85vw,
+    calc(22px * var(--app-font-scale,1))
+  );
+  line-height: 1.9;
+  font-weight: 950;
+}
+
+.landing-wisdom-reference {
+  display: block;
+  margin-top: 12px;
+  color: #95762d;
+  font-size: calc(10px * var(--app-font-scale,1));
+  font-weight: 850;
 }
 
 .landing-trust-row {
@@ -1841,7 +1876,12 @@
     margin-right: auto;
   }
 
-  .landing-hero-actions,
+  .landing-wisdom-panel {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
   .landing-trust-row {
     justify-content: center;
   }
@@ -1935,13 +1975,19 @@
     font-size: calc(14px * var(--app-font-scale,1));
   }
 
-  .landing-hero-actions {
-    flex-direction: column;
+  .landing-wisdom-panel {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
-  .landing-primary-button,
-  .landing-secondary-button {
-    width: 100%;
+  .landing-wisdom-card {
+    min-height: auto;
+    padding: 15px;
+  }
+
+  .landing-wisdom-text {
+    font-size: calc(16px * var(--app-font-scale,1));
+    line-height: 1.85;
   }
 
   .landing-trust-row {
@@ -2274,3 +2320,37 @@
 }
 html[data-app-reduced-motion="true"] :is(.landing-assistant-panel,.landing-assistant-launch,.landing-assistant-choice,.landing-assistant-launch-symbol,.landing-assistant-launch-arrow) { transition: none; }
 @media print { .landing-assistant { display: none; } }
+
+
+/* ===== Hero wisdom mobile polish ===== */
+@media (max-width: 620px) {
+  .landing-wisdom-panel {
+    margin-top: 25px;
+  }
+
+  .landing-wisdom-card {
+    border-radius: calc(18px * var(--app-radius-scale,1));
+  }
+
+  .landing-wisdom-card::after {
+    inset: 6px;
+    border-radius: calc(13px * var(--app-radius-scale,1));
+  }
+
+  .landing-wisdom-badge {
+    min-height: 28px;
+    font-size: calc(9px * var(--app-font-scale,1));
+  }
+
+  .landing-wisdom-reference {
+    margin-top: 9px;
+    font-size: calc(9px * var(--app-font-scale,1));
+  }
+
+  .landing-wisdom-corner {
+    width: 118px;
+    height: 118px;
+    left: -38px;
+    bottom: -44px;
+  }
+}
