@@ -1375,6 +1375,16 @@ function isNooraniaGoal(goal) {
   return ["noorania", "noorania_quran", "foundation"].includes(goal);
 }
 
+function isNooraniaOnlyGoal(goal) {
+  return ["noorania", "foundation"].includes(
+    String(goal || "").trim()
+  );
+}
+
+function needsMonthlyPlan(goal) {
+  return !isNooraniaOnlyGoal(goal);
+}
+
 function nooraniaMonthlyTarget(amount, unit, sessions) {
   const number = Number(amount || 0);
   const count = Number(sessions || 0);
@@ -3141,6 +3151,12 @@ export default function MonthlyPlan() {
         (
           profiles || []
         )
+          .filter(
+            (profile) =>
+              needsMonthlyPlan(
+                profile.learning_goal
+              )
+          )
           .map(
             (profile) => {
               const studentId =
@@ -6221,7 +6237,7 @@ export default function MonthlyPlan() {
           description={
             search
               ? "لا يوجد طالب مطابق للبحث."
-              : "لا يوجد طلاب في هذه الحلقة خلال الشهر المحدد."
+              : "لا يوجد طلاب يحتاجون خطة شهرية في هذه الحلقة. طلاب القاعدة النورانية لا تُنشأ لهم خطة شهرية."
           }
         />
       ) : (
