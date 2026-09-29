@@ -742,10 +742,48 @@ async function generateAutomaticQuranRange({
 }
 
 
+function hasAnyRevisionScope(row) {
+  return Boolean(
+    String(row?.revision_scope_start_surah || "").trim() ||
+    Number(row?.revision_scope_start_ayah || 0) > 0 ||
+    String(row?.revision_scope_end_surah || "").trim() ||
+    Number(row?.revision_scope_end_ayah || 0) > 0
+  );
+}
+
+function hasCompleteRevisionScope(row) {
+  return Boolean(
+    String(row?.revision_scope_start_surah || "").trim() &&
+    Number(row?.revision_scope_start_ayah || 0) > 0 &&
+    String(row?.revision_scope_end_surah || "").trim() &&
+    Number(row?.revision_scope_end_ayah || 0) > 0
+  );
+}
+
 async function getRevisionCycleBounds({
+  row,
   lessonSurah,
   direction,
 }) {
+  const scopeMode =
+    row?.revision_scope_mode === "manual"
+      ? "manual"
+      : "lesson_derived";
+
+  if (scopeMode === "manual") {
+    if (!hasCompleteRevisionScope(row)) {
+      throw new Error("QURAN_STUDENT_REVISION_SCOPE_INCOMPLETE");
+    }
+
+    return {
+      startSurah: row.revision_scope_start_surah,
+      startAyah: Number(row.revision_scope_start_ayah),
+      endSurah: row.revision_scope_end_surah,
+      endAyah: Number(row.revision_scope_end_ayah),
+      source: "manual",
+    };
+  }
+
   if (!String(lessonSurah || "").trim()) return null;
 
   const { data, error } = await supabase.rpc(
@@ -766,6 +804,7 @@ async function getRevisionCycleBounds({
     startAyah: Number(bounds.cycle_start_ayah),
     endSurah: bounds.cycle_end_surah_name,
     endAyah: Number(bounds.cycle_end_ayah),
+    source: "lesson_derived",
   };
 }
 
@@ -792,7 +831,10 @@ async function generateAutomaticRevisionRange({
   }
 
   const cycleBounds = await getRevisionCycleBounds({
-    lessonSurah: row?.memorization_from_surah,
+    row,
+    lessonSurah:
+      row?.memorization_from_surah ||
+      row?.memorization_to_surah,
     direction,
   });
 
@@ -1156,6 +1198,7 @@ async function buildNextMonthPlanSnapshot({
   });
 
   const revisionCycleBounds = await getRevisionCycleBounds({
+    row,
     lessonSurah:
       memorizationStart?.surah ||
       previousPlan.memorization_from_surah ||
@@ -2823,7 +2866,12 @@ export default function MonthlyPlan() {
         .select(`
           id, student_id, halaqa_id, teacher_id,
           side_lesson_mode, side_lesson_amount, side_lesson_unit,
-          boundary_suggestion_mode, effective_from, effective_to, active
+          boundary_suggestion_mode,
+          revision_scope_mode,
+          revision_scope_start_surah, revision_scope_start_ayah,
+          revision_scope_end_surah, revision_scope_end_ayah,
+          revision_scope_updated_at,
+          effective_from, effective_to, active
         `)
         .eq("halaqa_id", Number(selectedHalaqa))
         .in("student_id", studentIds)
@@ -3379,6 +3427,30 @@ export default function MonthlyPlan() {
                 revision_cycle_equivalent:
                   0,
 
+                revision_scope_mode:
+                  policy?.revision_scope_mode ||
+                  "lesson_derived",
+
+                revision_scope_start_surah:
+                  policy?.revision_scope_start_surah ||
+                  "",
+
+                revision_scope_start_ayah:
+                  policy?.revision_scope_start_ayah ??
+                  "",
+
+                revision_scope_end_surah:
+                  policy?.revision_scope_end_surah ||
+                  "",
+
+                revision_scope_end_ayah:
+                  policy?.revision_scope_end_ayah ??
+                  "",
+
+                revision_scope_updated_at:
+                  policy?.revision_scope_updated_at ||
+                  null,
+
                 memorization_daily_amount:
                   memDailyAmount,
 
@@ -3830,11 +3902,15 @@ export default function MonthlyPlan() {
             ...row,
             [`${prefix}_generating`]: false,
             [`${prefix}_route_error`]:
-              /QURAN_CYCLE_|QURAN_RANGE_REVERSED|QURAN_REVERSE_SURAH_RANGE_INVALID/.test(
+              /QURAN_STUDENT_REVISION_SCOPE_INCOMPLETE/.test(
                 String(error?.message || "")
               )
-                ? "بداية المراجعة خارج نطاق الدورة المحفوظة"
-                : "تعذر حساب نهاية الخطة تلقائيًا",
+                ? "أكمل نطاق محفوظ الطالب أولًا"
+                : /QURAN_CYCLE_|QURAN_RANGE_REVERSED|QURAN_REVERSE_SURAH_RANGE_INVALID/.test(
+                    String(error?.message || "")
+                  )
+                  ? "بداية المراجعة خارج نطاق الدورة المحفوظة"
+                  : "تعذر حساب نهاية الخطة تلقائيًا",
           };
         })
       );
@@ -3885,6 +3961,10 @@ export default function MonthlyPlan() {
     const prefix = routeField?.[1] || null;
     const part = routeField?.[2] || null;
 
+    const revisionScopeField = field.match(
+      /^revision_scope_(mode|start_surah|start_ayah|end_surah|end_ayah)$/
+    );
+
     const nextSnapshot = {
       ...currentRow,
       [field]: value,
@@ -3919,6 +3999,22 @@ export default function MonthlyPlan() {
         };
       })
     );
+
+    if (revisionScopeField) {
+      nextSnapshot.revision_scope_updated_at = new Date().toISOString();
+
+      if (
+        nextSnapshot.revision_auto_range &&
+        hasPlanStart(
+          nextSnapshot.revision_from_surah,
+          nextSnapshot.revision_from_ayah
+        )
+      ) {
+        scheduleAutoRoute(studentId, "revision", nextSnapshot);
+      }
+
+      return;
+    }
 
     if (!prefix) return;
 
@@ -4064,6 +4160,18 @@ export default function MonthlyPlan() {
       if (memAny && !memComplete) {
         showToast(
           `أكمل مسار الحفظ من سورة/آية إلى سورة/آية للطالب ${row.student_name}`,
+          "error"
+        );
+        return false;
+      }
+
+      if (
+        row.revision_scope_mode === "manual" &&
+        (revAny || Number(row.revision_daily_amount || 0) > 0) &&
+        !hasCompleteRevisionScope(row)
+      ) {
+        showToast(
+          `أكمل نطاق محفوظ الطالب ${row.student_name} قبل إرسال الخطة`,
           "error"
         );
         return false;
@@ -4359,6 +4467,30 @@ export default function MonthlyPlan() {
       side_lesson_amount: needsAmount ? Number(row.side_lesson_amount) : null,
       side_lesson_unit: needsAmount ? (row.side_lesson_unit || "faces") : null,
       boundary_suggestion_mode: row.boundary_suggestion_mode || "ayah_and_surah",
+      revision_scope_mode:
+        row.revision_scope_mode === "manual"
+          ? "manual"
+          : "lesson_derived",
+      revision_scope_start_surah:
+        row.revision_scope_mode === "manual"
+          ? textOrNull(row.revision_scope_start_surah)
+          : null,
+      revision_scope_start_ayah:
+        row.revision_scope_mode === "manual"
+          ? numberOrNull(row.revision_scope_start_ayah)
+          : null,
+      revision_scope_end_surah:
+        row.revision_scope_mode === "manual"
+          ? textOrNull(row.revision_scope_end_surah)
+          : null,
+      revision_scope_end_ayah:
+        row.revision_scope_mode === "manual"
+          ? numberOrNull(row.revision_scope_end_ayah)
+          : null,
+      revision_scope_updated_at:
+        row.revision_scope_mode === "manual"
+          ? new Date().toISOString()
+          : null,
       active: true,
       effective_to: null,
       updated_at: new Date().toISOString(),
@@ -6407,6 +6539,14 @@ function StudentPlanCard({
                         autoRange={row.revision_auto_range}
                         generating={row.revision_generating}
                         routeError={row.revision_route_error}
+                        reviewScope={{
+                          mode: row.revision_scope_mode,
+                          startSurah: row.revision_scope_start_surah,
+                          startAyah: row.revision_scope_start_ayah,
+                          endSurah: row.revision_scope_end_surah,
+                          endAyah: row.revision_scope_end_ayah,
+                          updatedAt: row.revision_scope_updated_at,
+                        }}
                         cycleInfo={{
                           startSurah: row.revision_cycle_start_surah,
                           startAyah: row.revision_cycle_start_ayah,
@@ -6516,6 +6656,140 @@ function formatFullReviewCycles(count) {
 }
 
 /* =========================================================
+   INDIVIDUAL MEMORIZED SCOPE
+========================================================= */
+
+function ReviewMemoryScopeEditor({
+  scope,
+  direction,
+  locked,
+  onChange,
+}) {
+  const manual = scope?.mode === "manual";
+  const complete = manual && Boolean(
+    String(scope?.startSurah || "").trim() &&
+    Number(scope?.startAyah || 0) > 0 &&
+    String(scope?.endSurah || "").trim() &&
+    Number(scope?.endAyah || 0) > 0
+  );
+
+  const forward = normalizePlanDirection(direction) === "forward";
+
+  return (
+    <section className={`review-memory-scope ${manual ? "manual" : "derived"}`}>
+      <div className="review-memory-scope-head">
+        <div>
+          <ShieldCheck size={17} />
+          <div>
+            <strong>محفوظ الطالب للمراجعة</strong>
+            <span>هذا الإعداد خاص بهذا الطالب وحده ويستمر معه بين الأشهر.</span>
+          </div>
+        </div>
+
+        <span className="review-memory-private-badge">فردي</span>
+      </div>
+
+      <div className="review-memory-mode-toggle">
+        <button
+          type="button"
+          disabled={locked}
+          className={!manual ? "active" : ""}
+          onClick={() => onChange("revision_scope_mode", "lesson_derived")}
+        >
+          <Sparkles size={14} />
+          استنتاج من مسار الحفظ
+        </button>
+
+        <button
+          type="button"
+          disabled={locked}
+          className={manual ? "active" : ""}
+          onClick={() => onChange("revision_scope_mode", "manual")}
+        >
+          <Target size={14} />
+          تحديد المحفوظ يدويًا
+        </button>
+      </div>
+
+      {manual ? (
+        <>
+          <div className="review-memory-scope-grid">
+            <SurahField
+              label="بداية دورة المراجعة"
+              value={scope?.startSurah || ""}
+              disabled={locked}
+              onChange={(value) =>
+                onChange("revision_scope_start_surah", value)
+              }
+            />
+
+            <NumberField
+              label="آية البداية"
+              value={scope?.startAyah ?? ""}
+              disabled={locked}
+              min="1"
+              step="1"
+              onChange={(value) =>
+                onChange("revision_scope_start_ayah", value)
+              }
+            />
+
+            <SurahField
+              label="نهاية المحفوظ"
+              value={scope?.endSurah || ""}
+              disabled={locked}
+              onChange={(value) =>
+                onChange("revision_scope_end_surah", value)
+              }
+            />
+
+            <NumberField
+              label="آية النهاية"
+              value={scope?.endAyah ?? ""}
+              disabled={locked}
+              min="1"
+              step="1"
+              onChange={(value) =>
+                onChange("revision_scope_end_ayah", value)
+              }
+            />
+          </div>
+
+          <div className={`review-memory-scope-status ${complete ? "ready" : "waiting"}`}>
+            {complete ? (
+              <>
+                <CheckCircle2 size={15} />
+                <span>
+                  إذا وصل الطالب لنهاية هذا المحفوظ، يبدأ الصديق دورة جديدة من البداية ويكمل المقدار المتبقي تلقائيًا.
+                </span>
+              </>
+            ) : (
+              <>
+                <CircleAlert size={15} />
+                <span>أكمل بداية ونهاية المحفوظ حتى يعمل الدوران التلقائي بأمان.</span>
+              </>
+            )}
+          </div>
+
+          <small className="review-memory-scope-help">
+            اتجاه الدورة الحالي: {forward ? "مع ترتيب المصحف" : "من الناس وما قبلها"}.
+            {" "}
+            إذا عاد الطالب للحفظ لاحقًا، عدّل نهاية المحفوظ لهذا الطالب فقط بعد اعتماد الحفظ الجديد.
+          </small>
+        </>
+      ) : (
+        <div className="review-memory-derived-note">
+          <Sparkles size={15} />
+          <span>
+            الصديق يستخدم السلوك السابق ويستنتج حدود المراجعة من موضع الحفظ. للطالب الجديد أو الطالب الذي دخل ومعه محفوظ سابق، اختر «تحديد المحفوظ يدويًا».
+          </span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* =========================================================
    PLAN SECTION
 ========================================================= */
 
@@ -6542,6 +6816,7 @@ function PlanSection({
   autoRange = true,
   generating = false,
   routeError = "",
+  reviewScope = null,
   cycleInfo = null,
   showPace = true,
 }) {
@@ -6600,6 +6875,15 @@ function PlanSection({
       </div>
 
       <div className="route-first-card">
+        {type === "revision" && (
+          <ReviewMemoryScopeEditor
+            scope={reviewScope}
+            direction={direction}
+            locked={locked}
+            onChange={onChange}
+          />
+        )}
+
         <div className="route-first-head">
           <div>
             <BookOpen size={15} />
@@ -10980,7 +11264,165 @@ function MonthlyPlanStyles() {
         }
 
         @media (max-width: 680px) {
-          .revision-cycle-summary {
+          .review-memory-scope {
+          margin-bottom: 12px;
+          padding: 12px;
+          border: 1px solid rgba(20, 91, 72, 0.14);
+          border-radius: 16px;
+          background:
+            radial-gradient(circle at top right, rgba(190, 153, 63, 0.09), transparent 34%),
+            linear-gradient(145deg, rgba(247, 251, 249, 0.98), rgba(255, 255, 255, 0.96));
+          box-shadow: 0 10px 30px rgba(21, 67, 53, 0.05);
+        }
+
+        .review-memory-scope.manual {
+          border-color: rgba(176, 137, 47, 0.22);
+          background:
+            radial-gradient(circle at top right, rgba(190, 153, 63, 0.14), transparent 36%),
+            linear-gradient(145deg, #fffdf7, #ffffff);
+        }
+
+        .review-memory-scope-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+
+        .review-memory-scope-head > div {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          color: #174f3e;
+        }
+
+        .review-memory-scope-head strong {
+          display: block;
+          color: #173d2b;
+          font-size: 12px;
+          font-weight: 950;
+        }
+
+        .review-memory-scope-head span {
+          display: block;
+          margin-top: 2px;
+          color: #75827c;
+          font-size: 9px;
+          line-height: 1.55;
+        }
+
+        .review-memory-private-badge {
+          flex: 0 0 auto;
+          margin-top: 0 !important;
+          padding: 5px 8px;
+          border: 1px solid rgba(176, 137, 47, 0.18);
+          border-radius: 999px;
+          background: #fff9e9;
+          color: #7c611e !important;
+          font-size: 9px !important;
+          font-weight: 950;
+        }
+
+        .review-memory-mode-toggle {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 7px;
+          margin-bottom: 10px;
+        }
+
+        .review-memory-mode-toggle button {
+          min-height: 38px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 7px 9px;
+          border: 1px solid #dfe8e3;
+          border-radius: 12px;
+          background: rgba(255,255,255,.9);
+          color: #60716a;
+          font-family: inherit;
+          font-size: 10px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: .18s ease;
+        }
+
+        .review-memory-mode-toggle button.active {
+          border-color: rgba(20,91,72,.26);
+          background: #eaf5f0;
+          color: #145b48;
+          box-shadow: inset 0 0 0 1px rgba(20,91,72,.04);
+        }
+
+        .review-memory-mode-toggle button:disabled {
+          opacity: .56;
+          cursor: not-allowed;
+        }
+
+        .review-memory-scope-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .review-memory-scope-status,
+        .review-memory-derived-note {
+          display: flex;
+          align-items: flex-start;
+          gap: 7px;
+          margin-top: 10px;
+          padding: 9px 10px;
+          border-radius: 12px;
+          font-size: 10px;
+          line-height: 1.7;
+        }
+
+        .review-memory-scope-status.ready {
+          border: 1px solid rgba(22, 126, 88, 0.13);
+          background: #edf8f3;
+          color: #1d6a52;
+        }
+
+        .review-memory-scope-status.waiting {
+          border: 1px solid rgba(176, 137, 47, 0.16);
+          background: #fff9e9;
+          color: #7e621e;
+        }
+
+        .review-memory-derived-note {
+          border: 1px dashed rgba(20,91,72,.16);
+          background: rgba(239,247,243,.72);
+          color: #557067;
+        }
+
+        .review-memory-scope-help {
+          display: block;
+          margin-top: 8px;
+          color: #7b8781;
+          font-size: 9px;
+          line-height: 1.7;
+        }
+
+        @media (max-width: 860px) {
+          .review-memory-scope-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 560px) {
+          .review-memory-mode-toggle,
+          .review-memory-scope-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .review-memory-scope-head {
+            align-items: center;
+          }
+        }
+
+        .revision-cycle-summary {
             grid-template-columns: 1fr;
           }
 
