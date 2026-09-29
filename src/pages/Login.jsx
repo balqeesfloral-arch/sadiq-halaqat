@@ -687,15 +687,14 @@ export default function Login() {
             <span className="login-passkey-divider">أو</span>
             <button
               type="button"
-              className="login-passkey-button login-passkey-button--compact"
+              className="login-passkey-button login-passkey-button--compact login-passkey-button--icon-only"
               onClick={handlePasskeyLogin}
               disabled={loading}
               title="الدخول بالبصمة أو الوجه أو رمز الجهاز"
+              aria-label="الدخول بالبصمة أو الوجه أو رمز الجهاز"
             >
-              <span className="login-passkey-icon"><Fingerprint /></span>
-              <span className="login-passkey-copy">
-                <strong>البصمة أو الوجه</strong>
-                <small>Face ID • Touch ID • Windows Hello • PIN</small>
+              <span className="login-passkey-icon">
+                {loading ? <Loader2 className="login-pro-spin" /> : <Fingerprint />}
               </span>
             </button>
           </div>
