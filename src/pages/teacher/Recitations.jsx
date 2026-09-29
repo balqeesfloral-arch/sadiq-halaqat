@@ -6282,26 +6282,6 @@ export default function Recitations() {
                               quranForm.to_ayah
                             )
                           : "اضغط للتسجيل"
-                    }                  <FormSection
-                    icon={<BookOpen size={17} />}
-                    title="الحفظ"
-                    collapsible
-                    summary={
-                      planSuggestion?.generatedLesson
-                        ? formatGeneratedRange(planSuggestion.generatedLesson)
-                        : quranForm.from_surah
-                          ? formatRecordRange(
-                              quranForm.from_surah,
-                              quranForm.from_ayah,
-                              quranForm.to_surah,
-                              quranForm.to_ayah
-                            )
-                          : "اضغط للتسجيل"
-                    }
-                    subtitle={
-                      planSuggestion?.generatedLesson && !editing
-                        ? "المطلوب جاهز — في الوضع الطبيعي قيّم الطالب فقط"
-                        : "النطاق الفعلي الذي سمعه الطالب — الحساب يتم تلقائيًا من المصحف"
                     }
                   >
                     {planSuggestion?.lessonSuppressed && !editing ? (
