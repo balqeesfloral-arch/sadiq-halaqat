@@ -705,7 +705,11 @@ export default function Login() {
             <button
               type="button"
               className="login-pro-link"
-              onClick={() => showToast("سنفعّل استعادة كلمة المرور في مرحلة لاحقة.", "info")}
+              onClick={() =>
+                navigate("/forgot-password", {
+                  state: { email: identifier.trim() },
+                })
+              }
             >
               نسيت كلمة المرور؟ <ArrowLeft />
             </button>
