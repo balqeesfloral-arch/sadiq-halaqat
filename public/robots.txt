@@ -8,4 +8,4 @@ Disallow: /login
 Disallow: /register
 Allow: /
 
-Sitemap: https://sadiq-halaqat.vercel.app/sitemap.xml
+Sitemap: https://sadiqh.vercel.app/sitemap.xml
