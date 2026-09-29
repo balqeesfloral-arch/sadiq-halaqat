@@ -38,9 +38,6 @@
 .supervisor-hero-grid,.hm-hero-top,.hm-hero-content,.hm-nav-row,.landing-container.landing-hero-grid { position: relative; z-index: 1; }
 .landing-hero,.landing-cta-shell { position: relative; isolation: isolate; }
 .landing-cta-shell > :not(.sq-scene) { position: relative; z-index: 1; }
-.landing-assistant-head-ornament { background: none!important; animation: none!important; width: 245px!important; height: 245px!important; left: -90px!important; top: -105px!important; opacity: .23!important; color: inherit!important; }
-.landing-assistant-head-ornament .sq-ornament { opacity: 1!important; }
-.landing-assistant-rosette.is-launch-ring { background: none!important; border: 0!important; }
 .sq-ornament.settings-islamic-bg { width: 620px; height: 620px; opacity: .055; background: none; }
 .settings-hero-seal .sq-ornament { width: 88px; }
 .sq-ornament.profile-modal-ornament { width: 92px; height: 92px; opacity: .18; background: none; font-size: 0; }

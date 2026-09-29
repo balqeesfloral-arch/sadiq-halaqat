@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import {
   Activity,
   ArrowLeft,
@@ -1311,6 +1312,9 @@ function AssistantRosette({ className = "" }) {
 }
 
 function LandingAssistant() {
+  const panelId = useId();
+  const panelRef = useRef(null);
+  const launcherRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [screen, setScreen] = useState("home");
   const [question, setQuestion] = useState("");
@@ -1335,12 +1339,34 @@ function LandingAssistant() {
   useEffect(() => {
     if (!open) return undefined;
 
+    const launcher = launcherRef.current;
+    const frame = requestAnimationFrame(() => {
+      panelRef.current?.querySelector('.landing-assistant-close')?.focus();
+    });
     const onKeyDown = (event) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+      }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(panelRef.current?.querySelectorAll(
+        'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), [tabindex="0"]'
+      ) || []).filter((node) => node.getClientRects().length);
+      const first = controls[0];
+      const last = controls.at(-1);
+      const outside = !panelRef.current?.contains(document.activeElement);
+      if (outside || (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first)?.focus();
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", onKeyDown);
+      if (launcher?.isConnected) launcher.focus({ preventScroll: true });
+    };
   }, [open]);
 
   function askFaq(text) {
@@ -1431,7 +1457,7 @@ function LandingAssistant() {
     setContactError("");
   }
 
-  return (
+  return createPortal(
     <div className={`landing-assistant ${open ? "is-open" : ""}`}>
       {open && (
         <button
@@ -1443,56 +1469,39 @@ function LandingAssistant() {
       )}
 
       <div className="landing-assistant-launch-wrap">
-        <AssistantRosette className="is-launch-ring" />
-
         <button
+          ref={launcherRef}
           type="button"
           className="landing-assistant-launch"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
-          aria-label={open ? (
-            <X size={22} />
-          ) : (
-            <svg
-              className="landing-assistant-question-icon"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <path
-                d="M12 3.35c-5.06 0-9.16 3.52-9.16 7.88 0 2.42 1.25 4.57 3.27 6.02l-.78 3.25 3.73-1.5c.93.23 1.92.35 2.94.35 5.06 0 9.16-3.52 9.16-7.88S17.06 3.35 12 3.35Z"
-                stroke="currentColor"
-                strokeWidth="1.55"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M9.36 9.19c.13-1.42 1.2-2.33 2.69-2.33 1.57 0 2.74.91 2.74 2.29 0 1.03-.52 1.68-1.59 2.33-.95.57-1.3 1.01-1.3 1.94v.18"
-                stroke="currentColor"
-                strokeWidth="1.55"
-                strokeLinecap="round"
-              />
-              <circle cx="11.9" cy="16.7" r=".9" fill="currentColor" />
-            </svg>
-          )}
-          title={open ? "إغلاق" : "المساعدة"}
+          aria-controls={panelId}
+          aria-label={open ? "إغلاق المساعد" : "الأسئلة الشائعة والتواصل مع الإدارة"}
+          title={open ? "إغلاق المساعد" : "مساعد الصِّدّيق"}
         >
-          {open ? <X size={22} /> : <MessageCircle size={24} />}
-          {!open && (
-            <span className="landing-assistant-launch-spark" aria-hidden="true">
-              <Sparkles size={10} />
+          <span className="landing-assistant-launch-symbol" aria-hidden="true">
+            {open ? <X size={24} /> : <MessageCircle size={28} strokeWidth={1.65} />}
+            {!open && <span className="landing-assistant-launch-dots"><i /><i /><i /></span>}
+          </span>
+          {!open && <>
+            <span className="landing-assistant-launch-copy" aria-hidden="true">
+              <strong>مساعد الصِّدّيق</strong>
+              <small>الأسئلة والتواصل</small>
             </span>
-          )}
+            <ArrowUpLeft className="landing-assistant-launch-arrow" size={18} aria-hidden="true" />
+          </>}
         </button>
       </div>
 
       <section
+        ref={panelRef}
+        id={panelId}
         className="landing-assistant-panel"
         role="dialog"
         aria-modal="true"
-        aria-label="مساعد الصديق"
+        aria-labelledby={`${panelId}-title`}
+        aria-hidden={!open}
+        inert={!open}
       >
         <header className="landing-assistant-head">
           <div className="landing-assistant-head-ornament">
@@ -1511,8 +1520,8 @@ function LandingAssistant() {
               </button>
             ) : (
               <span className="landing-assistant-live">
-                <i />
-                متاح الآن
+                <BookOpen size={15} />
+                مساعد الصِّدّيق
               </span>
             )}
 
@@ -1527,10 +1536,10 @@ function LandingAssistant() {
           </div>
 
           <div className="landing-assistant-emblem">
-            <Sparkles size={19} />
+            <img src="/icon-512.png" alt="" aria-hidden="true" />
           </div>
 
-          <h2>
+          <h2 id={`${panelId}-title`}>
             {screen === "home" && "حيّاك الله، كيف نخدمك؟"}
             {screen === "faq" && "اسأل مساعد الصِّديق"}
             {screen === "contact" && "تواصل مع فريق الإدارة"}
@@ -1538,11 +1547,11 @@ function LandingAssistant() {
 
           <p>
             {screen === "home" &&
-              "اختر ما يناسبك، وسنحاول أن نجعل وصولك للمعلومة أوضح وأسرع."}
+              "إجابة لسؤالك، أو رسالة لفريقنا. نحن أقرب إليك."}
             {screen === "faq" &&
-              "اكتب سؤالك بطريقتك؛ أفهم الصيغ المتقاربة والمرادفات وأبحث عن أقرب إجابة معتمدة داخل المنظومة."}
+              "إجابات واضحة عن المنصة والدخول والانضمام. اختر سؤالًا أو اكتب استفسارك."}
             {screen === "contact" &&
-              "اكتب رسالتك وسيتم إرسالها مباشرة إلى مركز تنبيهات مدير النظام."}
+              "شاركنا استفسارك أو ملاحظتك، وسنوصلها إلى فريق الإدارة."}
           </p>
         </header>
 
@@ -1560,7 +1569,7 @@ function LandingAssistant() {
               <span className="landing-assistant-choice-copy">
                 <strong>التواصل مع فريق الإدارة</strong>
                 <small>
-                  أرسل طلبًا أو استفسارًا وسيصل مباشرة إلى مدير النظام.
+                  أرسل استفسارك أو ملاحظتك إلى فريقنا.
                 </small>
               </span>
 
@@ -1573,13 +1582,13 @@ function LandingAssistant() {
               onClick={() => setScreen("faq")}
             >
               <span className="landing-assistant-choice-icon">
-                <Sparkles size={21} />
+                <BookOpen size={21} />
               </span>
 
               <span className="landing-assistant-choice-copy">
-                <strong>اسألني عن الصِّديق</strong>
+                <strong>الأسئلة الشائعة</strong>
                 <small>
-                  دخول، انضمام، أدوار المستخدمين، الخصوصية وأكثر.
+                  كل ما تحتاج معرفته عن الدخول واستخدام المنصة.
                 </small>
               </span>
 
@@ -1645,6 +1654,7 @@ function LandingAssistant() {
               }}
             >
               <input
+                aria-label="سؤالك عن الصديق"
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
                 placeholder="اكتب سؤالك هنا…"
@@ -1772,7 +1782,8 @@ function LandingAssistant() {
           </div>
         )}
       </section>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -2030,13 +2041,14 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page">
+      <div className="landing-intro">
+      <OrnamentScene variant="landing" palette="emerald" primary="03-falak" />
       {/* HERO */}
       <section
         id="home"
         className="landing-hero"
         ref={heroRef}
       >
-        <OrnamentScene variant="landing" palette="emerald" primary="03-falak" />
         <div className="landing-container landing-hero-grid">
           <Reveal>
             <div className="landing-hero-copy">
@@ -2179,6 +2191,8 @@ export default function LandingPage() {
             </div>
           </Reveal>
         </div>
+      </div>
+
       </div>
 
       {/* MOSQUE EXPLORER */}
