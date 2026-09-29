@@ -93,11 +93,11 @@
 .login-pro-eyebrow svg { width:16px; height:16px; color:var(--gold); }
 .login-pro-heading h2 { margin:10px 0 0; color:var(--green-dark); font-size:calc(30px * var(--app-font-scale,1)); font-weight:950; }
 .login-pro-heading p { margin:8px 0 0; color:var(--muted); font-size:calc(13px * var(--app-font-scale,1)); line-height:1.8; font-weight:650; }
-.login-pro-switch { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:calc(10px * var(--app-density,1)); margin:24px 0; padding:calc(5px * var(--app-density,1)); border-radius:calc(18px * var(--app-radius-scale,1)); background:#f2f5f2; }
-.login-pro-switch button { min-height:72px; padding:calc(12px * var(--app-density,1)) calc(14px * var(--app-density,1)); display:flex; align-items:center; gap:calc(11px * var(--app-density,1)); border:1px solid transparent; border-radius:calc(14px * var(--app-radius-scale,1)); background:transparent; color:#61716c; cursor:pointer; text-align:right; transition:.2s; }
-.login-pro-switch button>svg { width:22px; height:22px; flex:0 0 auto; }
-.login-pro-switch strong { display:block; font-size:calc(13px * var(--app-font-scale,1)); font-weight:900; }
-.login-pro-switch small { display:block; margin-top:4px; color:inherit; opacity:.72; font-size:calc(10px * var(--app-font-scale,1)); line-height:1.4; font-weight:700; }
+.login-pro-switch { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:calc(8px * var(--app-density,1)); margin:20px 0; padding:calc(5px * var(--app-density,1)); border-radius:calc(18px * var(--app-radius-scale,1)); background:#f2f5f2; }
+.login-pro-switch button { min-height:60px; padding:calc(10px * var(--app-density,1)) calc(12px * var(--app-density,1)); display:flex; align-items:center; gap:calc(9px * var(--app-density,1)); border:1px solid transparent; border-radius:calc(14px * var(--app-radius-scale,1)); background:transparent; color:#61716c; cursor:pointer; text-align:right; transition:.2s; }
+.login-pro-switch button>svg { width:19px; height:19px; flex:0 0 auto; }
+.login-pro-switch strong { display:block; font-size:calc(12px * var(--app-font-scale,1)); font-weight:900; line-height:1.2; }
+.login-pro-switch small { display:block; margin-top:3px; color:inherit; opacity:.72; font-size:calc(8.5px * var(--app-font-scale,1)); line-height:1.35; font-weight:700; }
 .login-pro-switch button.active { color:#fff; background:linear-gradient(135deg,var(--green-dark),var(--green)); box-shadow:0 12px 30px color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 16%,transparent); }
 .login-pro-form { display:grid; gap:calc(16px * var(--app-density,1)); }
 .login-pro-field label { display:block; margin-bottom:8px; color:#3b504a; font-size:calc(13px * var(--app-font-scale,1)); font-weight:850; }
@@ -136,7 +136,7 @@
   .login-pro-page { padding:calc(12px * var(--app-density,1)); align-items:start; }
   .login-pro-shell { border-radius:calc(24px * var(--app-radius-scale,1)); }
   .login-pro-card { padding:calc(26px * var(--app-density,1)) calc(20px * var(--app-density,1)); }
-  .login-pro-switch { grid-template-columns:1fr; }
+  .login-pro-switch { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
   .login-pro-register { align-items:stretch; flex-direction:column; }
   .login-pro-register button { justify-content:center; }
 }
@@ -759,16 +759,18 @@
 
 .login-pro-switch {
   gap: 8px !important;
-  margin: 21px 0 !important;
-  padding: 6px !important;
+  margin: 18px 0 !important;
+  padding: 5px !important;
   border: 1px solid rgba(9,79,67,.075) !important;
-  border-radius: 20px !important;
+  border-radius: 18px !important;
   background: linear-gradient(180deg, #f1f5f2, #edf2ee) !important;
   box-shadow: inset 0 1px 3px rgba(7,53,46,.035) !important;
 }
 
 .login-pro-switch button {
-  min-height: 70px !important;
+  min-height: 58px !important;
+  padding: 10px 11px !important;
+  gap: 8px !important;
   border-radius: 15px !important;
 }
 
@@ -1059,11 +1061,28 @@
   }
 
   .login-pro-switch {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: 7px !important;
   }
 
   .login-pro-switch button {
-    min-height: 62px !important;
+    min-height: 54px !important;
+    padding: 9px 8px !important;
+    gap: 7px !important;
+  }
+
+  .login-pro-switch button > svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .login-pro-switch strong {
+    font-size: 11px !important;
+  }
+
+  .login-pro-switch small {
+    font-size: 7.5px !important;
+    line-height: 1.25 !important;
   }
 
   .login-quick-list {
@@ -1211,5 +1230,20 @@
 
   .login-passkey-copy small {
     white-space: normal;
+  }
+}
+
+@media (max-width: 380px) {
+  .login-pro-switch button {
+    min-height: 50px !important;
+    padding: 8px 7px !important;
+  }
+
+  .login-pro-switch strong {
+    font-size: 10px !important;
+  }
+
+  .login-pro-switch small {
+    font-size: 7px !important;
   }
 }
