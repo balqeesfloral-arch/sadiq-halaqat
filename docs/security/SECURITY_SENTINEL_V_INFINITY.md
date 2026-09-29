@@ -14,9 +14,12 @@
 - مكتبات npm المعروفة بالثغرات.
 - lint + production build + فحص dist.
 - الموقع الحي على `https://sadiqh.vercel.app`.
-- Semgrep SAST عميق.
+- Semgrep SAST عميق بإصدار مثبت.
+- CodeQL لتحليل JavaScript/TypeScript بقواعد `security-extended` و`security-and-quality`.
+- Trivy لفحص المكتبات والأسرار وسوء الإعدادات، مع SARIF عند توفر GitHub Code Scanning.
 - OWASP ZAP Baseline آمن ومجدول.
 - Supabase DB lint بشكل اختياري عند إضافة أسرار GitHub Actions المخصصة.
+- بوابة إصدار تمنع Critical من Sentinel، مع إبقاء التحذيرات القابلة للمراجعة كتقارير بدل كسر الإنتاج عشوائيًا.
 
 ## التشغيل
 
@@ -82,3 +85,21 @@ Sentinel لا يطبّق تغييرات أمنية حساسة على قاعدة 
 - فحص ZAP المستخدم هنا **Baseline** وغير تدميري.
 - لا يوجد ماسح واحد يستطيع إثبات أن النظام خالٍ 100% من الثغرات.
 - أمان مشروع الصديق يعتمد على طبقات: الواجهة + Supabase RLS + RPC + Edge Functions + Vercel + إدارة الأسرار.
+
+
+## حماية سلسلة التوريد والإصدار
+
+- GitHub Actions الأساسية مثبتة على **commit SHA** بدل tags متحركة.
+- Supabase CLI في Workflow مثبت على إصدار محدد بدل `latest`.
+- Dependabot يستخدم cooldown لتقليل التقاط إصدارات حديثة جدًا قبل أن تأخذ وقتًا كافيًا للمراجعة.
+- Android release لا يولد مفتاح توقيع جديدًا؛ البناء يرفض أي keystore لا يطابق بصمة شهادة الصديق المعتمدة.
+- ملفات signing key وكلمات المرور **لا تدخل Artifacts**.
+- Workflows القديمة والتجريبية حُذفت بعد اعتماد المسارات النهائية لتقليل سطح الصيانة والهجوم.
+
+## التقارير الحية
+
+آخر جولة إنتاج موثقة:
+`docs/security/SUPABASE_LIVE_AUDIT_2026-09-29.md`
+
+قائمة ما قبل الإصدار:
+`docs/security/RELEASE_SECURITY_CHECKLIST.md`
