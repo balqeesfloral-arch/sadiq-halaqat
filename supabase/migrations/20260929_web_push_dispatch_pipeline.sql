@@ -65,7 +65,7 @@ begin
   end if;
 
   perform net.http_post(
-    url := 'https://mdkhklotknuseilyrvqe.supabase.co/functions/v1/push-notify',
+    url := 'https://mdkhklotknuseilyrvqe.supabase.co/functions/v1/push-notify-v2',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-sadiq-push-secret', v_secret
