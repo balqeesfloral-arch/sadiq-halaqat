@@ -1112,3 +1112,104 @@
 
 /* END SADIQ LOGIN PAGE PRO MAX v2 */
 
+
+
+/* =========================================================
+   PASSKEY LOGIN — compact premium control
+========================================================= */
+.login-passkey-compact-wrap {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.login-passkey-divider {
+  color: #a2aca7;
+  font-size: calc(9px * var(--app-font-scale,1));
+  font-weight: 800;
+}
+
+.login-passkey-button.login-passkey-button--compact {
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding:
+    0
+    calc(13px * var(--app-density,1))
+    0
+    calc(11px * var(--app-density,1)) !important;
+  justify-content: flex-start !important;
+  gap: calc(8px * var(--app-density,1)) !important;
+  border: 1px solid rgba(167, 122, 34, .28) !important;
+  border-radius: 999px !important;
+  background:
+    linear-gradient(135deg, rgba(255,253,247,.98), rgba(247,250,248,.98)) !important;
+  color: #153f36 !important;
+  box-shadow:
+    0 7px 20px rgba(8, 47, 42, .07),
+    inset 0 1px 0 rgba(255,255,255,.92) !important;
+}
+
+.login-passkey-button.login-passkey-button--compact:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+  border-color: rgba(167, 122, 34, .48) !important;
+  box-shadow:
+    0 11px 24px rgba(8, 47, 42, .10),
+    0 0 0 3px rgba(202,166,76,.06) !important;
+}
+
+.login-passkey-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    linear-gradient(145deg, rgba(15,76,69,.10), rgba(212,175,55,.10));
+  color: #9d7724;
+  flex: 0 0 auto;
+}
+
+.login-passkey-icon svg {
+  width: 17px !important;
+  height: 17px !important;
+  stroke-width: 1.7 !important;
+}
+
+.login-passkey-copy {
+  display: grid !important;
+  gap: 1px !important;
+  text-align: right !important;
+  line-height: 1.2;
+}
+
+.login-passkey-copy strong {
+  font-size: calc(10px * var(--app-font-scale,1)) !important;
+  font-weight: 950 !important;
+  color: #24483f !important;
+  white-space: nowrap;
+}
+
+.login-passkey-copy small {
+  font-size: calc(6.8px * var(--app-font-scale,1)) !important;
+  color: #89958f !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .login-passkey-compact-wrap {
+    justify-content: flex-start;
+  }
+
+  .login-passkey-button.login-passkey-button--compact {
+    max-width: 100%;
+  }
+
+  .login-passkey-copy small {
+    white-space: normal;
+  }
+}
