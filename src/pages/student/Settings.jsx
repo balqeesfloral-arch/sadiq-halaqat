@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Moon, Palette, Settings, Sparkles, Sun, Type, Waves } from "lucide-react";
+import { Fingerprint, Moon, Palette, Settings, Sparkles, Sun, Type, Waves } from "lucide-react";
 import StudentPage from "../../components/student/StudentPage";
+import PasskeyManager from "../../components/security/PasskeyManager";
 import {
   DEFAULT_STUDENT_PREFERENCES,
   STUDENT_ACCENTS,
@@ -77,6 +78,13 @@ export default function StudentSettings() {
             <Choice active={!value.motion} onClick={() => update("motion", false)} icon={Waves} title="هادئة" />
           </div>
         </SettingCard>
+      </section>
+
+      <section className="student-panel" style={{ padding: 0, overflow: "hidden" }}>
+        <PasskeyManager
+          title="دخول الطالب بالبصمة أو الوجه"
+          subtitle="سجّل جهازك مرة واحدة، وبعدها تستطيع دخول حساب الطالب باستخدام البصمة أو الوجه أو رمز الجهاز بدل كتابة بيانات الدخول كل مرة."
+        />
       </section>
 
       <section className="student-panel">
