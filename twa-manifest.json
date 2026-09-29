@@ -1,0 +1,59 @@
+{
+  "packageId": "app.sadiq.halaqat",
+  "host": "sadiqh.vercel.app",
+  "name": "الصديق",
+  "launcherName": "الصديق",
+  "display": "standalone",
+  "displayOverride": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "themeColor": "#0F4C45",
+  "themeColorDark": "#082F2A",
+  "navigationColor": "#0F4C45",
+  "navigationColorDark": "#082F2A",
+  "navigationDividerColor": "#0F4C45",
+  "navigationDividerColorDark": "#082F2A",
+  "backgroundColor": "#F7F4EA",
+  "enableNotifications": true,
+  "startUrl": "/?source=android",
+  "iconUrl": "https://sadiqh.vercel.app/icon-512.png",
+  "maskableIconUrl": "https://sadiqh.vercel.app/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 250,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "sadiq"
+  },
+  "appVersionCode": 1,
+  "appVersion": "1.0.0",
+  "shortcuts": [
+    {
+      "name": "تسجيل الدخول",
+      "shortName": "الدخول",
+      "url": "/login?source=android-shortcut",
+      "iconUrl": "https://sadiqh.vercel.app/icon-192.png"
+    },
+    {
+      "name": "الإشعارات",
+      "shortName": "الإشعارات",
+      "url": "/student/notifications?source=android-shortcut",
+      "iconUrl": "https://sadiqh.vercel.app/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap",
+  "webManifestUrl": "https://sadiqh.vercel.app/site.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://sadiqh.vercel.app/",
+  "minSdkVersion": 23,
+  "orientation": "default",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": []
+}
