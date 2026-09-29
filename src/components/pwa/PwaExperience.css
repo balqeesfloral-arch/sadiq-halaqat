@@ -1,0 +1,148 @@
+.pwa-prompt {
+  position: fixed;
+  z-index: 9998;
+  right: 22px;
+  bottom: 22px;
+  width: min(520px, calc(100vw - 44px));
+  min-height: 82px;
+  padding: 13px 13px 13px 16px;
+  display: grid;
+  grid-template-columns: 52px minmax(0,1fr) auto;
+  gap: 12px;
+  align-items: center;
+  direction: rtl;
+  border: 1px solid rgba(15,76,69,.13);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(207,170,76,.10), transparent 27%),
+    rgba(255,255,255,.96);
+  box-shadow:
+    0 24px 64px rgba(6,47,41,.17),
+    inset 0 1px 0 rgba(255,255,255,.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: pwaPromptIn .34s cubic-bezier(.2,.8,.2,1);
+}
+
+.pwa-prompt--notify { bottom: 22px; }
+
+.pwa-prompt__close {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #9aa49f;
+  cursor: pointer;
+}
+
+.pwa-prompt__close:hover { background: #f1f4f2; color: #52655e; }
+.pwa-prompt__close svg { width: 14px; height: 14px; }
+
+.pwa-prompt__icon {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(201,163,67,.23);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(8,47,42,.08);
+}
+
+.pwa-prompt__icon img { width: 42px; height: 42px; object-fit: contain; }
+
+.pwa-prompt__icon.is-bell {
+  color: #a47d25;
+  background: linear-gradient(145deg,#fffaf0,#f2f8f5);
+}
+
+.pwa-prompt__icon.is-bell svg { width: 24px; height: 24px; stroke-width: 1.6; }
+
+.pwa-prompt__copy { min-width: 0; }
+
+.pwa-prompt__copy > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #a27b24;
+  font-size: calc(8px * var(--app-font-scale,1));
+  font-weight: 900;
+}
+
+.pwa-prompt__copy > span svg { width: 12px; height: 12px; }
+
+.pwa-prompt__copy strong {
+  display: block;
+  margin-top: 3px;
+  color: #173f37;
+  font-size: calc(12px * var(--app-font-scale,1));
+  font-weight: 950;
+}
+
+.pwa-prompt__copy small {
+  display: block;
+  margin-top: 3px;
+  color: #7c8984;
+  font-size: calc(8px * var(--app-font-scale,1));
+  line-height: 1.45;
+  font-weight: 680;
+}
+
+.pwa-prompt__action {
+  min-height: 40px;
+  padding: 0 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg,#082f2a,#0f4c45);
+  color: #fff;
+  box-shadow: 0 9px 22px rgba(15,76,69,.16);
+  cursor: pointer;
+  font-size: calc(9px * var(--app-font-scale,1));
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.pwa-prompt__action:hover:not(:disabled) { transform: translateY(-1px); }
+.pwa-prompt__action:disabled { opacity: .6; cursor: wait; }
+.pwa-prompt__action svg { width: 15px; height: 15px; }
+
+.pwa-spin { animation: pwaSpin .8s linear infinite; }
+
+@keyframes pwaSpin { to { transform: rotate(360deg); } }
+@keyframes pwaPromptIn {
+  from { opacity: 0; transform: translateY(16px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 620px) {
+  .pwa-prompt {
+    right: 10px;
+    bottom: 10px;
+    width: calc(100vw - 20px);
+    grid-template-columns: 44px minmax(0,1fr) auto;
+    gap: 9px;
+    padding: 11px;
+    border-radius: 17px;
+  }
+
+  .pwa-prompt__icon { width: 43px; height: 43px; border-radius: 13px; }
+  .pwa-prompt__icon img { width: 36px; height: 36px; }
+  .pwa-prompt__copy small { font-size: calc(7px * var(--app-font-scale,1)); }
+  .pwa-prompt__action { padding-inline: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwa-prompt { animation: none; }
+  .pwa-spin { animation-duration: 1.4s; }
+}
