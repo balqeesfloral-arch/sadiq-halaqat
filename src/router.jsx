@@ -123,11 +123,6 @@ const router = createBrowserRouter([
   },
 
   {
-    path: "/reset-password",
-    element: renderLazy(ResetPassword),
-  },
-
-  {
     path: "/register",
     element: renderLazy(Register),
   },
