@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ShieldCheck, KeyRound, Mail, Save, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { showToast } from "../../components/Toast";
+import PasskeyManager from "../security/PasskeyManager";
 
 export default function SecuritySettings(){
   const [email,setEmail]=useState(""),[password,setPassword]=useState(""),[confirm,setConfirm]=useState(""),[saving,setSaving]=useState(false);
@@ -18,6 +19,10 @@ export default function SecuritySettings(){
       <div className="settings-real-card__head"><div><Mail size={17}/><span><strong>حساب تسجيل الدخول</strong><small>البريد المستخدم لتسجيل الدخول</small></span></div></div>
       <div className="security-account"><i>{(email||"م").charAt(0).toUpperCase()}</i><div><strong>{email||"لا يوجد بريد"}</strong><small>الحساب الحالي</small></div></div>
     </section>
+    <PasskeyManager
+      title="البصمة والوجه"
+      subtitle="سجّل بصمة الإصبع أو الوجه أو رمز الجهاز، وادخل إلى الصديق بدون كتابة كلمة المرور."
+    />
     <section className="settings-real-card">
       <div className="settings-real-card__head"><div><KeyRound size={17}/><span><strong>تغيير كلمة المرور</strong><small>استخدم كلمة مرور قوية</small></span></div></div>
       <div className="settings-real-grid">
