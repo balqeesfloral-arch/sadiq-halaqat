@@ -11,13 +11,14 @@
     "audit:prod": "npm audit --omit=dev",
     "preview": "vite preview",
     "security:scan": "node scripts/security-scan.mjs",
-    "security:check": "npm run security:scan && npm run lint && npm run build && npm run security:dist",
+    "security:check": "npm run security:scan && npm run lint && npm run build && npm run security:csp && npm run security:dist",
     "security:dist": "node scripts/security-dist-scan.mjs",
     "security:full": "npm run security:check && npm run audit:prod",
     "push:keys": "node scripts/generate-vapid.mjs",
     "security:sentinel": "node scripts/security-sentinel.mjs",
     "security:live": "node scripts/security-live-scan.mjs",
-    "security:infinity": "npm run security:sentinel && npm run security:scan && npm run lint && npm run build && npm run security:dist && npm run audit:prod && npm run security:live"
+    "security:infinity": "npm run security:sentinel && npm run security:scan && npm run lint && npm run build && npm run security:csp && npm run security:dist && npm run audit:prod && npm run security:live",
+    "security:csp": "node scripts/security-csp-verify.mjs"
   },
   "dependencies": {
     "@mui/x-date-pickers": "^9.13.0",
