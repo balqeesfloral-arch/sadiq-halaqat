@@ -29,6 +29,12 @@ const severityWeight = {
   info: 0,
 };
 
+// Reviewed public RPCs. Keep this allow-list deliberately tiny.
+// Each entry must also be documented in the live Supabase audit.
+const INTENTIONAL_ANON_RPCS = new Set([
+  "get_push_public_key",
+]);
+
 const findings = [];
 
 function add(severity, category, title, evidence, fix, file = null, line = null) {
@@ -372,13 +378,16 @@ for (const file of migrationFiles) {
     }
   }
 
-  const grantMatches = [...source.matchAll(/grant\s+execute\s+on\s+function[\s\S]{0,300}?\s+to\s+anon\b/gi)];
+  const grantMatches = [...source.matchAll(/grant\s+execute\s+on\s+function\s+(?:public\.)?([a-zA-Z0-9_]+)[\s\S]{0,300}?\s+to\s+anon\b/gi)];
   for (const match of grantMatches) {
+    const functionName = String(match[1] || "").toLowerCase();
+    if (INTENTIONAL_ANON_RPCS.has(functionName)) continue;
+
     add(
       "medium",
       "Supabase / PostgreSQL",
       "Anonymous RPC exposure requires review",
-      "A database function is explicitly executable by anon.",
+      `Function ${functionName || "(unknown)"} is explicitly executable by anon.`,
       "Keep anon EXECUTE only for intentionally public RPCs, validate inputs, rate-limit write endpoints, and revoke it everywhere else.",
       relative(file),
       lineOf(source, match.index)
