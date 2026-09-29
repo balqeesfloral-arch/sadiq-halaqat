@@ -1,52 +1,83 @@
-name: Export Latest Sadiq Source
+name: Export Legendary Sadiq Source
 
 on:
   push:
     branches: [main]
     paths:
       - ".github/workflows/export-latest-source.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  export:
+  verify-and-export:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+
     steps:
       - name: Checkout latest main
         uses: actions/checkout@v4
 
-      - name: Prepare clean source backup
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify production build
+        run: npm run build
+
+      - name: Prepare clean verified source backup
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p export/Sadiq-Halaqat-LATEST
-          rsync -a ./ export/Sadiq-Halaqat-LATEST/ \
+
+          ROOT="export/Sadiq-Halaqat-LEGENDARY"
+          mkdir -p "$ROOT"
+
+          rsync -a ./ "$ROOT/" \
             --exclude '.git/' \
             --exclude 'export/' \
             --exclude 'node_modules/' \
             --exclude 'dist/' \
             --exclude '*.keystore' \
-            --exclude '*.jks'
+            --exclude '*.jks' \
+            --exclude '.env.local' \
+            --exclude '.env.production' \
+            --exclude '.env.development.local' \
+            --exclude '.env.production.local'
 
-          cat > export/Sadiq-Halaqat-LATEST/BACKUP_INFO.txt <<EOF
+          cat > "$ROOT/BACKUP_INFO.txt" <<EOF
           Project: الصديق - نظام إدارة الحلقات
           Repository: ${{ github.repository }}
           Branch: main
           Commit: ${{ github.sha }}
           Exported: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          Verification: npm ci + npm run build = SUCCESS
 
-          This is a clean source-code backup from GitHub.
-          Android signing keys and other secrets are intentionally excluded.
+          Included:
+          - Latest production source from GitHub main
+          - Refined landing design and premium surfaces
+          - Per-student memorized revision scope and cyclic review logic
+          - PWA / background notifications / passkeys
+          - Supabase migrations and Edge Functions
+          - Android/TWA project configuration
+
+          Excluded intentionally:
+          - node_modules and dist
+          - local environment files
+          - Android signing keys
+          - private secrets
           EOF
 
           cd export
-          zip -r -9 Sadiq-Halaqat-LATEST-2026-09-29.zip Sadiq-Halaqat-LATEST >/dev/null
+          zip -r -9 Sadiq-Halaqat-LEGENDARY-v2026.09.29.zip Sadiq-Halaqat-LEGENDARY >/dev/null
+          sha256sum Sadiq-Halaqat-LEGENDARY-v2026.09.29.zip > SHA256SUMS.txt
 
-      - name: Upload source backup
+      - name: Upload verified source backup
         uses: actions/upload-artifact@v4
         with:
-          name: Sadiq-Halaqat-LATEST-2026-09-29
-          path: export/Sadiq-Halaqat-LATEST-2026-09-29.zip
+          name: Sadiq-Halaqat-LEGENDARY-v2026.09.29
+          path: |
+            export/Sadiq-Halaqat-LEGENDARY-v2026.09.29.zip
+            export/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
