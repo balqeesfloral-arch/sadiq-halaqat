@@ -6240,42 +6240,6 @@ export default function Recitations() {
                   />
                 </div>
 
-                {commonForm
-                  .recitation_date && (
-                  <div
-                    className="dual-date"
-                  >
-                    {teacherPreferences.calendar_mode !== "gregorian" && (
-                      <div>
-                        <span>
-                          هجري — أم القرى
-                        </span>
-
-                        <strong>
-                          {formatHijriDate(
-                            commonForm
-                              .recitation_date
-                          )}
-                        </strong>
-                      </div>
-                    )}
-
-                    {teacherPreferences.calendar_mode !== "hijri" && (
-                      <div>
-                        <span>
-                          ميلادي
-                        </span>
-
-                        <strong>
-                          {formatGregorianDate(
-                            commonForm
-                              .recitation_date
-                          )}
-                        </strong>
-                      </div>
-                    )}
-                  </div>
-                )}
               </FormSection>
 
               {/* =========================================
@@ -6288,84 +6252,52 @@ export default function Recitations() {
 
               {formType === "quran" && (
                 <>
-                  <div className="quran-engine-banner">
-                    <div className="quick-entry-icon">
-                      <Sparkles size={18} />
-                    </div>
-
-                    <div>
-                      <strong>محرك المصحف يعمل بالنطاق القرآني</strong>
-                      <span>
-                        البداية والنهاية هما مصدر الحقيقة. عدد الأسطر والأوجه يُحسب تلقائيًا من جداول المصحف ولا يكتبه المعلم يدويًا.
-                      </span>
-                    </div>
-                  </div>
-
                   {planSuggestion &&
                     teacherPreferences.recitation_show_monthly_plan !== false && (
-                    <div className={`plan-suggestion-card ${planSuggestion.scheduledToday ? "scheduled" : "extra-day"}`}>
-                      <div className="plan-suggestion-icon">
-                        <Target size={18} />
-                      </div>
-
-                      <div className="plan-suggestion-copy">
-                        <span>
-                          {planSuggestion.activeIntervention
-                            ? `قرار عناية نشط: ${formatInterventionType(planSuggestion.interventionType)}`
-                            : "المطلوب اليوم تولّد من الخطة تلقائيًا"}
-                        </span>
-
-                        <strong>
-                          {planSuggestion.generatedLesson
-                            ? `الحفظ: ${formatGeneratedRange(planSuggestion.generatedLesson)}`
-                            : "الحفظ: لا يوجد نطاق مولّد"}
-                          {planSuggestion.generatedSideLesson?.start_surah_name
-                            ? ` • جنب الدرس: ${formatGeneratedRange(planSuggestion.generatedSideLesson)}`
-                            : ""}
-                          {planSuggestion.generatedReview
-                            ? ` • المراجعة: ${formatGeneratedRange(planSuggestion.generatedReview)}`
-                            : ""}
-                        </strong>
-
-                        <small>
-                          {planSuggestion.interventionType === "pause"
-                            ? "الإيقاف المؤقت معتمد من المعلم؛ لا يولّد النظام أي مطلوب قرآني حتى إنهاء التدخل."
-                            : planSuggestion.interventionType === "stabilization_full"
-                              ? "الحفظ الجديد موقوف مؤقتًا، والمطلوب الحالي مخصص للمراجعة والتثبيت."
-                              : planSuggestion.interventionType === "stabilization_partial"
-                                ? `الحفظ مستمر بمقدار مخفّض معتمد: ${planSuggestion.memorizationAmount} ${planSuggestion.memorizationUnit === "lines" ? "سطر" : "وجه"}.`
-                                : planSuggestion.scheduledToday
-                                  ? "اليوم من أيام التسميع. يمكنك تعديل النهاية الفعلية فقط إذا زاد الطالب أو نقص."
-                                  : "هذه جلسة إضافية خارج الأيام المجدولة؛ النطاق المقترح ما زال مبنيًا على آخر تقدم فعلي للطالب."}
-                        </small>
-
-                        {planSuggestion.activeIntervention?.confirmed_reason && (
-                          <div className="precision-warning">
-                            <ShieldCheck size={14} />
-                            <span>
-                              سبب التدخل المؤكد: {planSuggestion.activeIntervention.confirmed_reason}
-                            </span>
-                          </div>
-                        )}
-
-                        {(planSuggestion.generatedLesson?.precision_label === "ayah_boundary_shared_line" ||
-                          planSuggestion.generatedSideLesson?.precision_label === "ayah_boundary_shared_line" ||
-                          planSuggestion.generatedSideLesson?.precision_label === "ayah_line_range_shared_boundary" ||
-                          planSuggestion.generatedReview?.precision_label === "ayah_boundary_shared_line") && (
-                          <div className="precision-warning">
-                            <CircleAlert size={14} />
-                            <span>
-                              يوجد سطر تشترك فيه أكثر من آية؛ لذلك يعرض النظام نهاية آية آمنة ولا يدّعي موضع كلمة غير موثق بعد.
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                    <div className={`recitation-plan-brief ${planSuggestion.scheduledToday ? "scheduled" : "extra-day"}`}>
+                      <Target size={15} />
+                      <span>
+                        {planSuggestion.activeIntervention
+                          ? formatInterventionType(planSuggestion.interventionType)
+                          : "خطة اليوم جاهزة"}
+                      </span>
+                      {!planSuggestion.scheduledToday && (
+                        <small>جلسة إضافية</small>
+                      )}
                     </div>
                   )}
 
                   <FormSection
                     icon={<BookOpen size={17} />}
-                    title="الدرس الجديد"
+                    title="الحفظ"
+                    collapsible
+                    summary={
+                      planSuggestion?.generatedLesson
+                        ? formatGeneratedRange(planSuggestion.generatedLesson)
+                        : quranForm.from_surah
+                          ? formatRecordRange(
+                              quranForm.from_surah,
+                              quranForm.from_ayah,
+                              quranForm.to_surah,
+                              quranForm.to_ayah
+                            )
+                          : "اضغط للتسجيل"
+                    }                  <FormSection
+                    icon={<BookOpen size={17} />}
+                    title="الحفظ"
+                    collapsible
+                    summary={
+                      planSuggestion?.generatedLesson
+                        ? formatGeneratedRange(planSuggestion.generatedLesson)
+                        : quranForm.from_surah
+                          ? formatRecordRange(
+                              quranForm.from_surah,
+                              quranForm.from_ayah,
+                              quranForm.to_surah,
+                              quranForm.to_ayah
+                            )
+                          : "اضغط للتسجيل"
+                    }
                     subtitle={
                       planSuggestion?.generatedLesson && !editing
                         ? "المطلوب جاهز — في الوضع الطبيعي قيّم الطالب فقط"
@@ -6471,7 +6403,19 @@ export default function Recitations() {
                   <FormSection
                     icon={<Target size={17} />}
                     title="جنب الدرس"
-                    subtitle="يولد تلقائيًا من سياسة الطالب ويبقى مستقلًا عن الحفظ الجديد"
+                    collapsible
+                    summary={
+                      planSuggestion?.generatedSideLesson?.start_surah_name
+                        ? formatGeneratedRange(planSuggestion.generatedSideLesson)
+                        : quranForm.next_surah
+                          ? formatRecordRange(
+                              quranForm.next_surah,
+                              quranForm.next_from_ayah,
+                              quranForm.next_to_surah,
+                              quranForm.next_to_ayah
+                            )
+                          : "بدون"
+                    }
                   >
                     {planSuggestion?.lessonSuppressed && !editing ? (
                       <div className="side-policy-none-state">
@@ -6613,10 +6557,18 @@ export default function Recitations() {
                   <FormSection
                     icon={<RefreshCw size={17} />}
                     title="المراجعة"
-                    subtitle={
-                      planSuggestion?.generatedReview && !editing
-                        ? "المراجعة جاهزة — لا تعدّل النطاق إلا إذا اختلف الواقع"
-                        : "من موضع إلى موضع — لا يوجد إدخال يدوي لعدد الأوجه"
+                    collapsible
+                    summary={
+                      planSuggestion?.generatedReview
+                        ? formatGeneratedRange(planSuggestion.generatedReview)
+                        : quranForm.review_surah
+                          ? formatRecordRange(
+                              quranForm.review_surah,
+                              quranForm.review_from_ayah,
+                              quranForm.review_to_surah,
+                              quranForm.review_to_ayah
+                            )
+                          : "اضغط للتسجيل"
                     }
                   >
                     {planSuggestion?.interventionType === "pause" && !editing ? (
@@ -6957,33 +6909,20 @@ export default function Recitations() {
                   </small>
                 </div>
 
-                <div
-                  className="notes-box"
-                >
-                  <label
-                    className="field-label"
-                  >
-                    <MessageSquareText
-                      size={14}
+                <details className="recitation-notes-details">
+                  <summary>
+                    <MessageSquareText size={14} />
+                    ملاحظة
+                  </summary>
+                  <div className="notes-box compact">
+                    <textarea
+                      value={commonForm.notes}
+                      onChange={(e) => setCommon("notes", e.target.value)}
+                      placeholder="اختياري"
+                      rows={3}
                     />
-
-                    ملاحظات المعلم
-                  </label>
-
-                  <textarea
-                    value={
-                      commonForm.notes
-                    }
-                    onChange={(e) =>
-                      setCommon(
-                        "notes",
-                        e.target.value
-                      )
-                    }
-                    placeholder="أي ملاحظات مهمة عن جلسة الطالب..."
-                    rows={5}
-                  />
-                </div>
+                  </div>
+                </details>
               </div>
             </div>
 
@@ -7593,32 +7532,48 @@ function FormSection({
   icon,
   title,
   subtitle,
+  summary = "",
+  collapsible = false,
+  defaultOpen = false,
   children,
 }) {
-  return (
-    <section
-      className="form-section"
-    >
-      <div
-        className="form-section-header"
-      >
-        <div
-          className="form-section-icon"
+  const [open, setOpen] = useState(defaultOpen);
+
+  if (collapsible) {
+    return (
+      <section className={`form-section compact-form-section ${open ? "open" : ""}`}>
+        <button
+          type="button"
+          className="compact-form-section-toggle"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
         >
-          {icon}
-        </div>
+          <span className="form-section-icon">{icon}</span>
+          <span className="compact-form-section-copy">
+            <strong>{title}</strong>
+            {summary && <small>{summary}</small>}
+          </span>
+          <ChevronDown className={open ? "open" : ""} size={18} />
+        </button>
 
+        {open && (
+          <div className="compact-form-section-body">
+            {children}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <section className="form-section">
+      <div className="form-section-header">
+        <div className="form-section-icon">{icon}</div>
         <div>
-          <h3>
-            {title}
-          </h3>
-
-          <p>
-            {subtitle}
-          </p>
+          <h3>{title}</h3>
+          {subtitle && <p>{subtitle}</p>}
         </div>
       </div>
-
       {children}
     </section>
   );
@@ -7828,49 +7783,29 @@ function PlannedQuranTask({
   amount,
   unit,
 }) {
-  if (!assignment) {
-    return null;
-  }
+  if (!assignment) return null;
 
   const amountText =
     Number(amount || 0) > 0
       ? unit === "lines"
-        ? `${amount} ${Number(amount) === 1 ? "سطر" : Number(amount) === 2 ? "سطران" : "أسطر"}`
-        : `${formatFaces(amount)} ${Number(amount) === 1 ? "وجه" : "أوجه"}`
+        ? `${amount} سطر`
+        : `${formatFaces(amount)} وجه`
       : "";
 
   return (
-    <div className="planned-quran-task">
+    <div className="planned-quran-task compact">
       <div className="planned-quran-task-head">
         <div>
           <span>{title}</span>
-          <strong>
-            {formatGeneratedRange(assignment)}
-          </strong>
+          <strong>{formatGeneratedRange(assignment)}</strong>
         </div>
 
         {amountText && (
           <div className="planned-quran-speed">
-            <Target size={14} />
+            <Target size={13} />
             <span>{amountText}</span>
           </div>
         )}
-      </div>
-
-      <div className="planned-quran-task-meta">
-        <span>
-          ص {assignment.start_page}
-          {Number(assignment.end_page) !==
-          Number(assignment.start_page)
-            ? ` → ص ${assignment.end_page}`
-            : ""}
-        </span>
-
-        <span>
-          {assignment.precision_label === "ayah_boundary_shared_line"
-            ? "نهاية آية آمنة"
-            : "محسوب من المصحف"}
-        </span>
       </div>
     </div>
   );
@@ -7881,38 +7816,15 @@ function CompletionStatusSelector({
   onChange,
 }) {
   const items = [
-    {
-      value: "exact",
-      label: "أتم",
-      hint: "أتم المطلوب",
-    },
-    {
-      value: "under",
-      label: "أقل",
-      hint: "توقف قبل النهاية",
-    },
-    {
-      value: "over",
-      label: "أكثر",
-      hint: "تجاوز المطلوب",
-    },
-    {
-      value: "repeat",
-      label: "إعادة",
-      hint: "لا يتقدم المسار",
-    },
+    { value: "exact", label: "أتم" },
+    { value: "under", label: "أقل" },
+    { value: "over", label: "أكثر" },
+    { value: "repeat", label: "إعادة" },
   ];
 
   return (
-    <div className="completion-status-block">
-      <div className="completion-status-heading">
-        <span>نتيجة المقدار</span>
-        <small>
-          في «أقل» أو «أكثر» عدّل النهاية الفعلية فقط
-        </small>
-      </div>
-
-      <div className="completion-status-options">
+    <div className="completion-status-block compact">
+      <div className="completion-status-options compact">
         {items.map((item) => (
           <button
             key={item.value}
@@ -7922,12 +7834,9 @@ function CompletionStatusSelector({
                 ? `completion-status-btn ${item.value} active`
                 : `completion-status-btn ${item.value}`
             }
-            onClick={() =>
-              onChange(item.value)
-            }
+            onClick={() => onChange(item.value)}
           >
             <strong>{item.label}</strong>
-            <span>{item.hint}</span>
           </button>
         ))}
       </div>
@@ -7955,12 +7864,7 @@ function QuranActualEndEditor({
       <div className="actual-end-heading">
         <Edit3 size={15} />
 
-        <div>
-          <strong>{label}</strong>
-          <span>
-            البداية ثابتة من المطلوب؛ غيّر آخر موضع فقط.
-          </span>
-        </div>
+        <strong>{label}</strong>
       </div>
 
       <div className="form-grid two">
@@ -8056,57 +7960,8 @@ function QuranRangeEditor({
   );
 }
 
-function RangeMetricPreview({
-  metrics,
-  loading,
-  emptyText,
-}) {
-  if (loading && !metrics) {
-    return (
-      <div className="range-metric-preview loading">
-        <Loader2 size={15} className="spin" />
-        <span>يحسب من جداول المصحف…</span>
-      </div>
-    );
-  }
-
-  if (!metrics) {
-    return (
-      <div className="range-metric-preview empty">
-        <BookMarked size={15} />
-        <span>{emptyText}</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="range-metric-preview ready">
-      <div>
-        <span>الموضع</span>
-        <strong>
-          ص {metrics.start_page}
-          {Number(metrics.end_page) !== Number(metrics.start_page)
-            ? ` → ص ${metrics.end_page}`
-            : ""}
-        </strong>
-      </div>
-
-      <div>
-        <span>أسطر القرآن</span>
-        <strong>{metrics.quran_lines}</strong>
-      </div>
-
-      <div>
-        <span>الأوجه المحسوبة</span>
-        <strong>{formatFaces(metrics.faces)}</strong>
-      </div>
-
-      <div className="range-source-chip">
-        <ShieldCheck size={14} />
-        من المصحف المعتمد
-      </div>
-    </div>
-  );
+function RangeMetricPreview() {
+  return null;
 }
 
 /* =========================================================
@@ -11625,6 +11480,202 @@ function PageStyles() {
           .plan-suggestion-icon {
             width: 36px;
             height: 36px;
+          }
+        }
+
+        /* ===== Compact recitation modal ===== */
+        .recitation-plan-brief {
+          min-height: 38px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 7px 10px;
+          margin-bottom: 8px;
+          border: 1px solid rgba(22,92,69,.10);
+          border-radius: 11px;
+          background: #f3f8f5;
+          color: #2a6652;
+          font-size: 9.5px;
+          font-weight: 900;
+        }
+
+        .recitation-plan-brief small {
+          margin-right: auto;
+          color: #9b792c;
+          font-size: 8px;
+        }
+
+        .compact-form-section {
+          padding: 0 !important;
+          overflow: hidden;
+          border-radius: 14px !important;
+          box-shadow: none !important;
+        }
+
+        .compact-form-section-toggle {
+          width: 100%;
+          min-height: 56px;
+          display: grid;
+          grid-template-columns: 34px minmax(0,1fr) auto;
+          align-items: center;
+          gap: 9px;
+          padding: 9px 11px;
+          border: 0;
+          background: #fff;
+          color: #2f5548;
+          font-family: inherit;
+          text-align: right;
+          cursor: pointer;
+        }
+
+        .compact-form-section.open .compact-form-section-toggle {
+          border-bottom: 1px solid rgba(24,86,66,.08);
+          background: linear-gradient(135deg,#f6faf8,#fffdf7);
+        }
+
+        .compact-form-section-copy {
+          min-width: 0;
+        }
+
+        .compact-form-section-copy strong {
+          display: block;
+          color: #24483b;
+          font-size: 11px;
+          font-weight: 950;
+        }
+
+        .compact-form-section-copy small {
+          display: block;
+          margin-top: 3px;
+          overflow: hidden;
+          color: #83908b;
+          font-size: 8.5px;
+          font-weight: 700;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .compact-form-section-toggle > svg:last-child {
+          color: #73827c;
+          transition: transform .18s ease;
+        }
+
+        .compact-form-section-toggle > svg.open:last-child {
+          transform: rotate(180deg);
+        }
+
+        .compact-form-section-body {
+          display: grid;
+          gap: 10px;
+          padding: 10px 11px 12px;
+        }
+
+        .planned-quran-task.compact {
+          margin: 0 !important;
+          padding: 9px 10px !important;
+          border-radius: 11px !important;
+        }
+
+        .planned-quran-task.compact .planned-quran-task-meta {
+          display: none !important;
+        }
+
+        .completion-status-block.compact {
+          margin: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          background: transparent !important;
+        }
+
+        .completion-status-options.compact {
+          grid-template-columns: repeat(4,minmax(0,1fr)) !important;
+          gap: 6px !important;
+        }
+
+        .completion-status-options.compact .completion-status-btn {
+          min-height: 36px !important;
+          padding: 6px !important;
+        }
+
+        .completion-status-options.compact .completion-status-btn span {
+          display: none !important;
+        }
+
+        .completion-status-options.compact .completion-status-btn strong {
+          font-size: 9px !important;
+        }
+
+        .actual-end-editor {
+          padding: 9px !important;
+        }
+
+        .actual-end-heading {
+          margin-bottom: 7px !important;
+        }
+
+        .actual-end-heading > strong {
+          font-size: 9px !important;
+        }
+
+        .secondary-side-details > summary {
+          min-height: 40px !important;
+          font-size: 9px !important;
+        }
+
+        .recitation-notes-details {
+          border: 1px solid rgba(24,86,66,.09);
+          border-radius: 12px;
+          background: #fafcfb;
+          overflow: hidden;
+        }
+
+        .recitation-notes-details > summary {
+          min-height: 40px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 10px;
+          color: #60746c;
+          font-size: 9px;
+          font-weight: 900;
+          cursor: pointer;
+          list-style: none;
+        }
+
+        .recitation-notes-details > summary::-webkit-details-marker {
+          display: none;
+        }
+
+        .recitation-notes-details .notes-box.compact {
+          margin: 0 !important;
+          padding: 0 10px 10px !important;
+        }
+
+        .recitation-notes-details .notes-box.compact textarea {
+          min-height: 74px !important;
+        }
+
+        .form-section:not(.compact-form-section) .form-section-header p {
+          display: none;
+        }
+
+        @media (max-width: 620px) {
+          .compact-form-section-toggle {
+            min-height: 52px;
+            grid-template-columns: 31px minmax(0,1fr) auto;
+            padding: 8px 9px;
+          }
+
+          .completion-status-options.compact {
+            grid-template-columns: repeat(4,minmax(0,1fr)) !important;
+          }
+
+          .completion-status-options.compact .completion-status-btn {
+            min-width: 0 !important;
+          }
+
+          .form-grid.three {
+            grid-template-columns: 1fr !important;
           }
         }
 
