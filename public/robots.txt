@@ -6,6 +6,8 @@ Disallow: /system-admin
 Disallow: /supervisor
 Disallow: /login
 Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
 Allow: /
 
 Sitemap: https://sadiqh.vercel.app/sitemap.xml
