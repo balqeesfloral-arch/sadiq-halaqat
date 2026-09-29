@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Moon, Palette, Settings, Sparkles, Sun, Type, Waves } from "lucide-react";
 import StudentPage from "../../components/student/StudentPage";
 import PasskeyManager from "../../components/security/PasskeyManager";
+import DeviceNotificationSettings from "../../components/pwa/DeviceNotificationSettings";
 import {
   DEFAULT_STUDENT_PREFERENCES,
   STUDENT_ACCENTS,
@@ -84,6 +85,10 @@ export default function StudentSettings() {
         <PasskeyManager
           title="دخول الطالب بالبصمة أو الوجه"
           subtitle="سجّل جهازك مرة واحدة، وبعدها تستطيع دخول حساب الطالب باستخدام البصمة أو الوجه أو رمز الجهاز بدل كتابة بيانات الدخول كل مرة."
+        />
+        <DeviceNotificationSettings
+          title="إشعارات الطالب على الجهاز"
+          description="استقبل إشعارات المتابعة والتسميع والخطة والرسائل المهمة على جهازك."
         />
       </section>
 
