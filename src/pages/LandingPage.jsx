@@ -246,9 +246,51 @@ const HERO_WISDOM = [
   {
     type: "hadith",
     icon: Sparkles,
-    badge: "حديث شريف",
+    badge: "حديث صحيح",
     text: "« خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ »",
     reference: "صحيح البخاري — حديث 5027",
+  },
+  {
+    type: "ayah",
+    icon: BookOpen,
+    badge: "آية كريمة",
+    text: "﴿ يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنْكُمْ وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ ﴾",
+    reference: "سورة المجادلة — الآية 11",
+  },
+  {
+    type: "hadith",
+    icon: Sparkles,
+    badge: "حديث صحيح",
+    text: "« وَمَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ »",
+    reference: "صحيح مسلم — حديث 2699",
+  },
+  {
+    type: "ayah",
+    icon: BookOpen,
+    badge: "آية كريمة",
+    text: "﴿ وَالَّذِينَ جَاهَدُوا فِينَا لَنَهْدِيَنَّهُمْ سُبُلَنَا وَإِنَّ اللَّهَ لَمَعَ الْمُحْسِنِينَ ﴾",
+    reference: "سورة العنكبوت — الآية 69",
+  },
+  {
+    type: "hadith",
+    icon: Sparkles,
+    badge: "حديث صحيح",
+    text: "« أَحَبُّ الْأَعْمَالِ إِلَى اللَّهِ أَدْوَمُهَا وَإِنْ قَلَّ »",
+    reference: "صحيح البخاري — حديث 6464 • صحيح مسلم — حديث 783",
+  },
+  {
+    type: "ayah",
+    icon: BookOpen,
+    badge: "آية كريمة",
+    text: "﴿ قُلْ هَلْ يَسْتَوِي الَّذِينَ يَعْلَمُونَ وَالَّذِينَ لَا يَعْلَمُونَ ﴾",
+    reference: "سورة الزمر — الآية 9",
+  },
+  {
+    type: "hadith",
+    icon: Sparkles,
+    badge: "حديث صحيح",
+    text: "« مَثَلُ الْمُؤْمِنِ الَّذِي يَقْرَأُ الْقُرْآنَ كَمَثَلِ الْأُتْرُجَّةِ رِيحُهَا طَيِّبٌ وَطَعْمُهَا طَيِّبٌ »",
+    reference: "صحيح البخاري — حديث 5427 • صحيح مسلم — حديث 797",
   },
 ];
 
@@ -1818,6 +1860,7 @@ export default function LandingPage() {
   const [statsError, setStatsError] = useState("");
   const [lastRefresh, setLastRefresh] = useState(null);
   const [activePeriod, setActivePeriod] = useState("all");
+  const [wisdomIndex, setWisdomIndex] = useState(0);
 
   const activityScore = useMemo(() => {
     if (!selectedMosque.students) return 0;
@@ -1839,6 +1882,23 @@ export default function LandingPage() {
     if (selectedMosque.health >= 45) return "يحتاج تحسين";
     return "يحتاج متابعة";
   }, [selectedMosque.health]);
+
+  const activeWisdom =
+    HERO_WISDOM[wisdomIndex % HERO_WISDOM.length];
+  const ActiveWisdomIcon = activeWisdom.icon;
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setWisdomIndex(
+        (current) =>
+          (current + 1) % HERO_WISDOM.length
+      );
+    }, 7000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const statCards = [
     {
@@ -2080,29 +2140,46 @@ export default function LandingPage() {
               </p>
 
 
-              <div className="landing-wisdom-panel" aria-label="آية وحديث">
-                {HERO_WISDOM.map((item) => {
-                  const Icon = item.icon;
+              <div className="landing-wisdom-panel" aria-label="آيات وأحاديث موثقة">
+                <article
+                  key={activeWisdom.reference}
+                  className={`landing-wisdom-card landing-wisdom-rotating ${activeWisdom.type}`}
+                >
+                  <div className="landing-wisdom-corner" aria-hidden="true" />
 
-                  return (
-                    <article
-                      key={item.reference}
-                      className={`landing-wisdom-card ${item.type}`}
-                    >
-                      <div className="landing-wisdom-corner" aria-hidden="true" />
+                  <div className="landing-wisdom-head">
+                    <div className="landing-wisdom-badge">
+                      <ActiveWisdomIcon size={14} />
+                      <span>{activeWisdom.badge}</span>
+                    </div>
 
-                      <div className="landing-wisdom-badge">
-                        <Icon size={14} />
-                        <span>{item.badge}</span>
-                      </div>
+                    <span className="landing-wisdom-source-label">
+                      المرجع موضح أسفل النص
+                    </span>
+                  </div>
 
-                      <p className="landing-wisdom-text">{item.text}</p>
-                      <span className="landing-wisdom-reference">
-                        {item.reference}
-                      </span>
-                    </article>
-                  );
-                })}
+                  <p className="landing-wisdom-text">
+                    {activeWisdom.text}
+                  </p>
+
+                  <div className="landing-wisdom-footer">
+                    <span className="landing-wisdom-reference">
+                      {activeWisdom.reference}
+                    </span>
+
+                    <div className="landing-wisdom-dots" aria-label="التنقل بين النصوص">
+                      {HERO_WISDOM.map((item, index) => (
+                        <button
+                          key={item.reference}
+                          type="button"
+                          className={index === wisdomIndex ? "active" : ""}
+                          aria-label={`عرض النص ${index + 1}`}
+                          onClick={() => setWisdomIndex(index)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </article>
               </div>
 
               <div className="landing-trust-row">
