@@ -1134,120 +1134,94 @@
 
 
 /* =========================================================
-   PASSKEY LOGIN — compact premium control
+   PASSKEY LOGIN — icon-only premium control
 ========================================================= */
 .login-passkey-compact-wrap {
-  margin-top: 12px;
+  margin-top: 14px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .login-passkey-divider {
-  color: #a2aca7;
-  font-size: calc(9px * var(--app-font-scale,1));
-  font-weight: 800;
+  color: #9aa6a0;
+  font-size: calc(12px * var(--app-font-scale,1));
+  font-weight: 900;
+  line-height: 1;
 }
 
-.login-passkey-button.login-passkey-button--compact {
-  width: auto !important;
-  min-width: 0 !important;
-  min-height: 42px !important;
+.login-passkey-button.login-passkey-button--compact.login-passkey-button--icon-only {
+  width: 76px !important;
+  min-width: 76px !important;
+  height: 76px !important;
+  min-height: 76px !important;
   margin: 0 !important;
-  padding:
-    0
-    calc(13px * var(--app-density,1))
-    0
-    calc(11px * var(--app-density,1)) !important;
-  justify-content: flex-start !important;
-  gap: calc(8px * var(--app-density,1)) !important;
-  border: 1px solid rgba(167, 122, 34, .28) !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid rgba(201, 165, 74, .28) !important;
   border-radius: 999px !important;
   background:
     linear-gradient(135deg, rgba(255,253,247,.98), rgba(247,250,248,.98)) !important;
   color: #153f36 !important;
   box-shadow:
-    0 7px 20px rgba(8, 47, 42, .07),
-    inset 0 1px 0 rgba(255,255,255,.92) !important;
+    0 12px 26px rgba(8, 47, 42, .10),
+    inset 0 1px 0 rgba(255,255,255,.94) !important;
 }
 
-.login-passkey-button.login-passkey-button--compact:hover:not(:disabled) {
-  transform: translateY(-1px) !important;
-  border-color: rgba(167, 122, 34, .48) !important;
+.login-passkey-button.login-passkey-button--compact.login-passkey-button--icon-only:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02) !important;
+  border-color: rgba(167, 122, 34, .46) !important;
   box-shadow:
-    0 11px 24px rgba(8, 47, 42, .10),
-    0 0 0 3px rgba(202,166,76,.06) !important;
+    0 16px 30px rgba(8, 47, 42, .14),
+    0 0 0 4px rgba(202,166,76,.06) !important;
 }
 
 .login-passkey-icon {
-  width: 30px;
-  height: 30px;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background:
-    linear-gradient(145deg, rgba(15,76,69,.10), rgba(212,175,55,.10));
+    linear-gradient(145deg, rgba(15,76,69,.10), rgba(212,175,55,.14));
   color: #9d7724;
   flex: 0 0 auto;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72);
 }
 
 .login-passkey-icon svg {
-  width: 17px !important;
-  height: 17px !important;
-  stroke-width: 1.7 !important;
-}
-
-.login-passkey-copy {
-  display: grid !important;
-  gap: 1px !important;
-  text-align: right !important;
-  line-height: 1.2;
-}
-
-.login-passkey-copy strong {
-  font-size: calc(10px * var(--app-font-scale,1)) !important;
-  font-weight: 950 !important;
-  color: #24483f !important;
-  white-space: nowrap;
-}
-
-.login-passkey-copy small {
-  font-size: calc(6.8px * var(--app-font-scale,1)) !important;
-  color: #89958f !important;
-  font-weight: 700 !important;
-  white-space: nowrap;
+  width: 28px !important;
+  height: 28px !important;
+  stroke-width: 1.75 !important;
 }
 
 @media (max-width: 520px) {
   .login-passkey-compact-wrap {
-    justify-content: flex-start;
+    margin-top: 12px;
+    gap: 10px;
   }
 
-  .login-passkey-button.login-passkey-button--compact {
-    max-width: 100%;
+  .login-passkey-button.login-passkey-button--compact.login-passkey-button--icon-only {
+    width: 72px !important;
+    min-width: 72px !important;
+    height: 72px !important;
+    min-height: 72px !important;
   }
 
-  .login-passkey-copy small {
-    white-space: normal;
-  }
-}
-
-@media (max-width: 380px) {
-  .login-pro-switch button {
-    min-height: 50px !important;
-    padding: 8px 7px !important;
+  .login-passkey-icon {
+    width: 48px;
+    height: 48px;
   }
 
-  .login-pro-switch strong {
-    font-size: 10px !important;
-  }
-
-  .login-pro-switch small {
-    font-size: 7px !important;
+  .login-passkey-icon svg {
+    width: 25px !important;
+    height: 25px !important;
   }
 }
-
 
 /* ===== Compact role switch — final mobile/desktop override ===== */
 .login-pro-switch {
