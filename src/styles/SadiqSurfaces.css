@@ -1,0 +1,56 @@
+/* Remove ornamental frames from the site; keep form controls and table rules. */
+html .login-pro-page::after,
+html .login-pro-shell::before,
+html .login-pro-shell::after,
+html .login-pro-dua::before,
+html .landing-brand-core::before,
+html .supervisor-hero::before,
+html .supervisor-hero-frame,
+html .hm-hero::after,
+html .settings-page-pro .settings-hero-pro::before,
+html .tv-page::after,
+html .tv-header__logo::after,
+html .care-hero::after,
+html .students-page-hero::after,
+html .students-hero::after,
+html .teacher-modal-hero::after {
+  content: none !important;
+  display: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* These are non-interactive surface containers, not a universal border reset. */
+@media screen {
+  html [data-sq-host] { border-color: transparent !important; }
+  html :is(
+    .login-pro-shell, .login-pro-card, .login-pro-showcase, .login-pro-dua,
+    .login-pro-features > div, .login-pro-register,
+    .register-pro-shell, .register-pro-card, .register-pro-success-shell,
+    .supervisor-setup-shell, .supervisor-setup-card,
+    .landing-brand-core, .landing-hero-badge, .landing-floating-card,
+    .landing-global-stats-grid, .landing-explorer-shell, .landing-cta-shell,
+    .supervisor-hero, .settings-hero-pro, .hm-hero,
+    .teacher-modal-shell, .teacher-modal-hero, .profile-modal,
+    .student-profile-modal, .student-page-hero,
+    .exv2-modal-card, .sex-modal-card, .sec-pro-shell,
+    .tp-modal-card, .tp-premium-panel, .tp-stat,
+    .tv-shell, .tv-header, .tv-header__logo, .tv-quote,
+    .tv-podium-card, .report-student-card-pro
+  ) {
+    border-color: transparent !important;
+  }
+
+  html .login-pro-shell {
+    box-shadow: 0 32px 88px rgba(4, 42, 38, .13) !important;
+  }
+  html .login-pro-dua { box-shadow: none !important; }
+  html .login-pro-logo-box {
+    border: 0 !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .10) !important;
+  }
+  html .tv-page .sq-tv-corner { display: none; }
+  html .landing-brand-core {
+    box-shadow: 0 34px 82px rgba(8, 47, 42, .12);
+  }
+}
