@@ -16,6 +16,7 @@ import {
   registerSadiqServiceWorker,
   requestDeviceNotifications,
   showDeviceNotification,
+  syncPushSubscription,
 } from "../../lib/pwa";
 import "./PwaExperience.css";
 
@@ -153,6 +154,20 @@ export default function PwaExperience() {
     return () => {
       cancelled = true;
     };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (
+      !session?.user?.id ||
+      typeof Notification === "undefined" ||
+      Notification.permission !== "granted"
+    ) {
+      return;
+    }
+
+    syncPushSubscription().catch((error) => {
+      console.warn("Background push sync skipped:", error);
+    });
   }, [session?.user?.id]);
 
   useEffect(() => {
