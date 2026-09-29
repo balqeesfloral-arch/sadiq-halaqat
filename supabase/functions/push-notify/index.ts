@@ -38,14 +38,44 @@ function secretKey() {
   }
 }
 
-function isAuthorized(req: Request) {
-  const configuredSecret = Deno.env.get("PUSH_WEBHOOK_SECRET");
+async function readPushConfig(
+  supabase: ReturnType<typeof createClient>
+) {
+  const envPublic = Deno.env.get("VAPID_PUBLIC_KEY");
+  const envPrivate = Deno.env.get("VAPID_PRIVATE_KEY");
+  const envWebhook = Deno.env.get("PUSH_WEBHOOK_SECRET");
+  const envSubject = Deno.env.get("VAPID_SUBJECT");
+
+  if (envPublic && envPrivate && envWebhook) {
+    return {
+      publicKey: envPublic,
+      privateKey: envPrivate,
+      webhookSecret: envWebhook,
+      subject: envSubject || "https://sadiqh.vercel.app",
+    };
+  }
+
+  const { data, error } = await supabase.rpc("get_push_server_config");
+  if (error) throw error;
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error("PUSH_CONFIG_NOT_FOUND");
+
+  return {
+    publicKey: String(row.vapid_public_key || ""),
+    privateKey: String(row.vapid_private_key || ""),
+    webhookSecret: String(row.webhook_secret || ""),
+    subject: String(row.vapid_subject || "https://sadiqh.vercel.app"),
+  };
+}
+
+function isAuthorized(req: Request, expectedSecret: string) {
   const requestSecret = req.headers.get("x-sadiq-push-secret");
 
   if (
-    configuredSecret &&
+    expectedSecret &&
     requestSecret &&
-    cryptoSafeEqual(configuredSecret, requestSecret)
+    cryptoSafeEqual(expectedSecret, requestSecret)
   ) {
     return true;
   }
@@ -167,7 +197,7 @@ function pushContent(
   if (table === "student_notifications") {
     return {
       title: String(row.title || "إشعار جديد من الصديق"),
-      body: String(row.body || "لديك تحديث جديد في حساب الطالب."),
+      body: "لديك تحديث جديد في حساب الطالب. افتح الصديق لعرض التفاصيل.",
       url: String(row.action_path || "/student/notifications"),
       tag: `student-${row.id || Date.now()}`,
     };
@@ -176,7 +206,7 @@ function pushContent(
   if (table === "internal_messages") {
     return {
       title: String(row.subject || "رسالة جديدة في الصديق"),
-      body: String(row.body || "لديك رسالة جديدة."),
+      body: "لديك رسالة جديدة. افتح الصديق لعرض التفاصيل بأمان.",
       url: "/admin/notifications",
       tag: `message-${row.id || Date.now()}`,
     };
@@ -189,11 +219,7 @@ function pushContent(
         row.title ||
         "إشعار جديد من الصديق"
       ),
-      body: String(
-        notification?.message ||
-        row.message ||
-        "لديك إشعار جديد."
-      ),
+      body: "لديك إشعار جديد. افتح الصديق لعرض التفاصيل بأمان.",
       url: String(
         notification?.action_url ||
         row.action_url ||
@@ -237,34 +263,49 @@ export default {
       return json({ error: "METHOD_NOT_ALLOWED" }, 405);
     }
 
-    if (!isAuthorized(req)) {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = secretKey();
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return json({ error: "SUPABASE_SERVER_NOT_CONFIGURED" }, 500);
+    }
+
+    const supabase = createClient(
+      supabaseUrl,
+      serviceRoleKey,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      }
+    );
+
+    let pushConfig;
+
+    try {
+      pushConfig = await readPushConfig(supabase);
+    } catch (error) {
+      console.error("Push config load failed:", error);
+      return json({ error: "PUSH_SERVER_NOT_CONFIGURED" }, 500);
+    }
+
+    if (!isAuthorized(req, pushConfig.webhookSecret)) {
       return json({ error: "UNAUTHORIZED" }, 401);
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRoleKey = secretKey();
-    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
-    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
-    const vapidSubject =
-      Deno.env.get("VAPID_SUBJECT") ||
-      "https://sadiqh.vercel.app";
-
     if (
-      !supabaseUrl ||
-      !serviceRoleKey ||
-      !vapidPublicKey ||
-      !vapidPrivateKey
+      !pushConfig.publicKey ||
+      !pushConfig.privateKey ||
+      !pushConfig.webhookSecret
     ) {
-      return json(
-        { error: "PUSH_SERVER_NOT_CONFIGURED" },
-        500
-      );
+      return json({ error: "PUSH_SERVER_NOT_CONFIGURED" }, 500);
     }
 
     webpush.setVapidDetails(
-      vapidSubject,
-      vapidPublicKey,
-      vapidPrivateKey
+      pushConfig.subject,
+      pushConfig.publicKey,
+      pushConfig.privateKey
     );
 
     let payload: WebhookPayload;
@@ -294,17 +335,6 @@ export default {
     ) {
       return json({ ok: true, skipped: "table" });
     }
-
-    const supabase = createClient(
-      supabaseUrl,
-      serviceRoleKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      }
-    );
 
     const authUserId = await resolveAuthUserId(
       supabase,
