@@ -1,0 +1,52 @@
+name: Export Latest Sadiq Source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/export-latest-source.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+
+      - name: Prepare clean source backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p export/Sadiq-Halaqat-LATEST
+          rsync -a ./ export/Sadiq-Halaqat-LATEST/ \
+            --exclude '.git/' \
+            --exclude 'export/' \
+            --exclude 'node_modules/' \
+            --exclude 'dist/' \
+            --exclude '*.keystore' \
+            --exclude '*.jks'
+
+          cat > export/Sadiq-Halaqat-LATEST/BACKUP_INFO.txt <<EOF
+          Project: الصديق - نظام إدارة الحلقات
+          Repository: ${{ github.repository }}
+          Branch: main
+          Commit: ${{ github.sha }}
+          Exported: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          This is a clean source-code backup from GitHub.
+          Android signing keys and other secrets are intentionally excluded.
+          EOF
+
+          cd export
+          zip -r -9 Sadiq-Halaqat-LATEST-2026-09-29.zip Sadiq-Halaqat-LATEST >/dev/null
+
+      - name: Upload source backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sadiq-Halaqat-LATEST-2026-09-29
+          path: export/Sadiq-Halaqat-LATEST-2026-09-29.zip
+          if-no-files-found: error
+          retention-days: 30
