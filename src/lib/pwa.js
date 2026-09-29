@@ -23,7 +23,30 @@ function subscriptionKeys(subscription) {
 }
 
 export function backgroundPushConfigured() {
-  return Boolean(String(import.meta.env.VITE_VAPID_PUBLIC_KEY || "").trim());
+  // Production reads the public VAPID key from the locked Supabase config RPC.
+  // A Vite env key remains supported for local/offline builds.
+  return true;
+}
+
+async function getVapidPublicKey() {
+  const fromEnv = String(
+    import.meta.env.VITE_VAPID_PUBLIC_KEY || ""
+  ).trim();
+
+  if (fromEnv) return fromEnv;
+
+  const { data, error } = await supabase.rpc("get_push_public_key");
+
+  if (error) throw error;
+
+  const key = Array.isArray(data) ? data[0] : data;
+  const value = String(key || "").trim();
+
+  if (!value) {
+    throw new Error("مفتاح Web Push العام غير مهيأ.");
+  }
+
+  return value;
 }
 
 export async function syncPushSubscription() {
@@ -35,13 +58,7 @@ export async function syncPushSubscription() {
     return { ok: false, reason: "permission" };
   }
 
-  const vapidPublicKey = String(
-    import.meta.env.VITE_VAPID_PUBLIC_KEY || ""
-  ).trim();
-
-  if (!vapidPublicKey) {
-    return { ok: false, reason: "vapid_not_configured" };
-  }
+  const vapidPublicKey = await getVapidPublicKey();
 
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData?.session?.user?.id) {
