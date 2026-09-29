@@ -294,33 +294,46 @@ export default function ReportsCenter({ mode: requestedMode }) {
         </head>
         <body>
           ${element.outerHTML}
-          <script>
-            window.addEventListener('load', async function(){
-              const images = Array.from(document.images || []);
-              await Promise.all(
-                images.map(function(img){
-                  if (img.complete) {
-                    return img.decode ? img.decode().catch(function(){}) : Promise.resolve();
-                  }
 
-                  return new Promise(function(resolve){
-                    img.addEventListener('load', resolve, { once: true });
-                    img.addEventListener('error', resolve, { once: true });
-                  });
-                })
-              );
-
-              setTimeout(function(){
-                window.focus();
-                window.print();
-              }, 250);
-            });
-          </script>
         </body>
       </html>
     `);
 
     win.document.close();
+
+    const printWhenReady = async () => {
+      const images = Array.from(win.document.images || []);
+
+      await Promise.all(
+        images.map((img) => {
+          if (img.complete) {
+            return img.decode?.().catch(() => {}) || Promise.resolve();
+          }
+
+          return new Promise((resolve) => {
+            img.addEventListener("load", resolve, { once: true });
+            img.addEventListener("error", resolve, { once: true });
+          });
+        })
+      );
+
+      window.setTimeout(() => {
+        try {
+          win.focus();
+          win.print();
+        } catch {
+          // The print window may have been closed by the user.
+        }
+      }, 250);
+    };
+
+    if (win.document.readyState === "complete") {
+      void printWhenReady();
+    } else {
+      win.addEventListener("load", () => {
+        void printWhenReady();
+      }, { once: true });
+    }
   }
 
   async function handlePDF() {
