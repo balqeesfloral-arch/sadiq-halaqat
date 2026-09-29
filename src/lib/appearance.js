@@ -82,6 +82,7 @@ export function applyAppAppearance(input = readAppAppearance()) {
   Object.assign(root.dataset, {
     appTheme: value.theme,
     appCorners: value.rounded ? "rounded" : "soft",
+    appOrnaments: String(value.subtleOrnaments),
     appReducedMotion: String(value.reducedMotion),
     appSmoothScroll: String(value.smoothScroll),
   });

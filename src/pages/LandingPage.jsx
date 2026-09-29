@@ -1,3 +1,4 @@
+import Ornament, { OrnamentScene } from '../components/ornaments/Ornament';
 import {
   useEffect,
   useId,
@@ -1306,22 +1307,7 @@ function getLandingFaqAnswer(question) {
 
 
 function AssistantRosette({ className = "" }) {
-  return (
-    <svg
-      className={`landing-assistant-rosette ${className}`}
-      viewBox="0 0 120 120"
-      aria-hidden="true"
-    >
-      <g fill="none" stroke="currentColor" strokeWidth="1.25">
-        <circle cx="60" cy="60" r="50" />
-        <circle cx="60" cy="60" r="34" />
-        <polygon points="60,10 72,36 101,19 84,48 110,60 84,72 101,101 72,84 60,110 48,84 19,101 36,72 10,60 36,48 19,19 48,36" />
-        <polygon points="60,26 70,50 94,60 70,70 60,94 50,70 26,60 50,50" />
-        <polygon points="60,38 82,60 60,82 38,60" />
-        <circle cx="60" cy="60" r="8" />
-      </g>
-    </svg>
-  );
+  return <Ornament name="04-madar" className={`landing-assistant-rosette ${className}`} motion duration={180} />;
 }
 
 function LandingAssistant() {
@@ -2050,6 +2036,7 @@ export default function LandingPage() {
         className="landing-hero"
         ref={heroRef}
       >
+        <OrnamentScene variant="landing" palette="emerald" primary="03-falak" />
         <div className="landing-container landing-hero-grid">
           <Reveal>
             <div className="landing-hero-copy">
@@ -2866,6 +2853,7 @@ export default function LandingPage() {
         <div className="landing-container">
           <Reveal>
             <div className="landing-cta-shell">
+              <OrnamentScene primary="02-shams" />
               <div className="landing-cta-icon">
                 <Star />
               </div>

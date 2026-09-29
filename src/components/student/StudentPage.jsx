@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../ornaments/Ornament';
 export default function StudentPage({
   eyebrow,
   title,
@@ -10,7 +11,7 @@ export default function StudentPage({
   return (
     <div className={`student-page ${className}`}>
       <section className="student-page-hero">
-        <div className="student-page-hero-pattern" />
+        <OrnamentScene variant="student" palette="emerald" primary="01-noor" />
         <div className="student-page-hero-main">
           {Icon && (
             <div className="student-page-hero-icon">

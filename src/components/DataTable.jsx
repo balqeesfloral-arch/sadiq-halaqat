@@ -1,3 +1,4 @@
+import { OrnamentScene } from './ornaments/Ornament';
 import { theme } from "../styles/theme";
 
 export default function PageHero({
@@ -15,30 +16,7 @@ export default function PageHero({
         overflow: "hidden",
       }}
     >
-      {/* زخرفة */}
-      <div
-        style={{
-          position: "absolute",
-          top: -80,
-          left: -80,
-          width: 220,
-          height: 220,
-          borderRadius: "50%",
-          border: "2px solid rgba(255,255,255,.08)",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          bottom: -120,
-          right: -120,
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          border: "2px solid rgba(255,255,255,.08)",
-        }}
-      />
+      <OrnamentScene primary="02-shams" />
 
       <div style={{ position: "relative", zIndex: 2 }}>
         {badge && (

@@ -329,19 +329,21 @@
 .landing-orbit::after {
   content: "";
   position: absolute;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb,var(--app-color-0f4c45,#0f4c45) 11%,transparent);
+  pointer-events: none;
+  background: url('/ornaments/sadiq/gold/04-madar.svg') center/contain no-repeat;
 }
 
 .landing-orbit::before {
   inset: 4%;
-  animation: landingOrbit 20s linear infinite;
+  opacity: .45;
+  animation: landingOrbit 160s linear infinite;
 }
 
 .landing-orbit::after {
   inset: 19%;
-  border-color: rgba(212, 175, 55, 0.22);
-  animation: landingOrbit 16s linear infinite reverse;
+  background-image: url('/ornaments/sadiq/emerald/04-madar.svg');
+  opacity: .2;
+  animation: landingOrbit 210s linear infinite reverse;
 }
 
 @keyframes landingOrbit {
@@ -2822,7 +2824,7 @@
   top: -86px;
   opacity: 0.18;
   color: transparent !important;
-  background-image: url("/patterns/a2.png");
+  background-image: url("/ornaments/sadiq/gold/04-madar.svg");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -2948,4 +2950,3 @@
 }
 
 /* END SADIQ PREMIUM HELP BUTTON v1.7 */
-

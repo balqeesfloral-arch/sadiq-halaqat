@@ -1,3 +1,4 @@
+import Ornament, { OrnamentScene } from '../components/ornaments/Ornament';
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -71,47 +72,11 @@ function average(values = []) {
 }
 
 function IslamicHeroOrnament() {
-  return (
-    <svg
-      className="supervisor-hero-ornament"
-      viewBox="0 0 720 360"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <defs>
-        <pattern id="sadiqArabesque" width="96" height="96" patternUnits="userSpaceOnUse">
-          <path d="M48 4C55 20 64 29 80 36C64 43 55 52 48 68C41 52 32 43 16 36C32 29 41 20 48 4Z" stroke="currentColor" strokeWidth="1" />
-          <path d="M48 28C53 39 61 47 72 52C61 57 53 65 48 76C43 65 35 57 24 52C35 47 43 39 48 28Z" stroke="currentColor" strokeWidth="0.8" />
-          <circle cx="48" cy="48" r="18" stroke="currentColor" strokeWidth="0.7" />
-          <path d="M0 48H18M78 48H96M48 0V18M48 78V96" stroke="currentColor" strokeWidth="0.7" />
-        </pattern>
-        <linearGradient id="sadiqOrnamentFade" x1="720" y1="180" x2="110" y2="180" gradientUnits="userSpaceOnUse">
-          <stop stopColor="white" />
-          <stop offset="1" stopColor="white" stopOpacity="0" />
-        </linearGradient>
-        <mask id="sadiqOrnamentMask">
-          <rect width="720" height="360" fill="url(#sadiqOrnamentFade)" />
-        </mask>
-      </defs>
-      <g mask="url(#sadiqOrnamentMask)">
-        <rect width="720" height="360" fill="url(#sadiqArabesque)" />
-        <path d="M720 38H548C508 38 476 70 476 110V250C476 290 444 322 404 322H246" stroke="currentColor" strokeWidth="1.4" />
-        <path d="M720 58H562C526 58 496 88 496 124V236C496 272 466 302 430 302H272" stroke="currentColor" strokeWidth="0.8" />
-      </g>
-    </svg>
-  );
+  return <OrnamentScene primary="03-falak" pattern="06-naseej" />;
 }
 
 function HeroSeal() {
-  return (
-    <span className="supervisor-hero-seal" aria-hidden="true">
-      <svg viewBox="0 0 42 42" fill="none">
-        <path d="M21 3L26 11L35 12L31 21L35 30L26 31L21 39L16 31L7 30L11 21L7 12L16 11L21 3Z" stroke="currentColor" strokeWidth="1.2" />
-        <path d="M21 11C23.5 16.5 26.5 19.5 32 22C26.5 24.5 23.5 27.5 21 33C18.5 27.5 15.5 24.5 10 22C15.5 19.5 18.5 16.5 21 11Z" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    </span>
-  );
+  return <Ornament name="01-noor" className="sq-hero-seal" />;
 }
 
 function MetricCard({
@@ -605,7 +570,6 @@ export default function AdminDashboard() {
         {/* HERO */}
         <section className="supervisor-hero">
           <IslamicHeroOrnament />
-          <div className="supervisor-hero-frame" aria-hidden="true" />
 
           <div className="supervisor-hero-grid">
             <div className="supervisor-hero-content">
@@ -623,11 +587,7 @@ export default function AdminDashboard() {
                 ومتابعة المؤشرات اليومية والإنجاز من مكان واحد.
               </p>
 
-              <div className="supervisor-hero-divider" aria-hidden="true">
-                <span />
-                <i />
-                <span />
-              </div>
+              <Ornament name="10-ittizan" className="supervisor-hero-divider" />
             </div>
 
             <div className="supervisor-hero-side">
@@ -1118,29 +1078,8 @@ export default function AdminDashboard() {
 
           .supervisor-hero-divider {
             width: 190px;
-            display: grid;
-            grid-template-columns: 1fr 10px 1fr;
-            align-items: center;
-            gap: calc(8px * var(--app-density,1));
+            display: block;
             margin-top: 5px;
-            color: #D8B968;
-          }
-
-          .supervisor-hero-divider span {
-            height: 1px;
-            background: linear-gradient(90deg,transparent,currentColor);
-            opacity: .55;
-          }
-
-          .supervisor-hero-divider span:last-child {
-            background: linear-gradient(90deg,currentColor,transparent);
-          }
-
-          .supervisor-hero-divider i {
-            width: 8px;
-            height: 8px;
-            border: 1px solid currentColor;
-            transform: rotate(45deg);
             opacity: .8;
           }
 

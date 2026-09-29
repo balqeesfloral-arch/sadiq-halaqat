@@ -160,6 +160,7 @@ function StudentShell() {
         collapsed ? "student-shell-collapsed" : ""
       }`}
       data-theme={preferences.theme}
+      data-sq-motion={preferences.motion ? "on" : "off"}
       style={shellStyle}
       dir="rtl"
     >

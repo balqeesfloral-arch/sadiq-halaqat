@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../components/ornaments/Ornament';
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -498,16 +499,11 @@ export default function Login() {
         <House />
       </button>
 
-      <div className="login-pro-geometry login-pro-geometry-top" aria-hidden="true">
-        <IslamicLoginOrnament />
-      </div>
-
-      <div className="login-pro-geometry login-pro-geometry-bottom" aria-hidden="true">
-        <IslamicLoginOrnament compact />
-      </div>
+      <OrnamentScene variant="public" palette="emerald" interactive={false} />
 
       <section className="login-pro-shell">
         <aside className="login-pro-showcase">
+          <OrnamentScene variant="auth" primary="02-shams" pattern="06-naseej" />
           <div className="login-pro-showcase-inner">
             <div className="login-pro-logo-box">
               <img src="/icon-512.png" alt="الصديق" />
@@ -734,35 +730,6 @@ export default function Login() {
   );
 }
 
-function IslamicLoginOrnament({ compact = false }) {
-  return (
-    <svg
-      viewBox="0 0 220 220"
-      className={compact ? "login-pro-geometry-svg compact" : "login-pro-geometry-svg"}
-      aria-hidden="true"
-    >
-      <g
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={compact ? "1.5" : "1.25"}
-        vectorEffect="non-scaling-stroke"
-      >
-        <circle cx="110" cy="110" r="92" />
-        <circle cx="110" cy="110" r="70" />
-        <polygon points="110,18 128,76 186,58 144,100 202,118 144,136 186,178 128,160 110,202 92,160 34,178 76,136 18,118 76,100 34,58 92,76" />
-        <polygon points="110,42 132,88 178,110 132,132 110,178 88,132 42,110 88,88" />
-        <polygon points="110,64 126,94 156,110 126,126 110,156 94,126 64,110 94,94" />
-        <circle cx="110" cy="110" r="18" />
-      </g>
-      <g fill="currentColor" opacity="0.15">
-        <circle cx="110" cy="18" r="3.2" />
-        <circle cx="202" cy="118" r="3.2" />
-        <circle cx="110" cy="202" r="3.2" />
-        <circle cx="18" cy="118" r="3.2" />
-      </g>
-    </svg>
-  );
-}
 
 function FormInput({ label, type = "text", value, onChange, placeholder, icon: Icon, dir = "rtl" }) {
   return (

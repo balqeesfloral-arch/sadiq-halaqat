@@ -1332,21 +1332,7 @@ export default function AdminLayout() {
             position: absolute;
             inset: 0;
             opacity: .16;
-            background-image:
-              linear-gradient(
-                45deg,
-                transparent 48%,
-                rgba(15,81,72,.08) 49%,
-                rgba(15,81,72,.08) 51%,
-                transparent 52%
-              ),
-              linear-gradient(
-                -45deg,
-                transparent 48%,
-                rgba(200,168,75,.06) 49%,
-                rgba(200,168,75,.06) 51%,
-                transparent 52%
-              );
+            background-image: url("/ornaments/sadiq/emerald/05-wasl.svg");
             background-size: 120px 120px;
             mask-image:
               linear-gradient(

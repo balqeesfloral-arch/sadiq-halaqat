@@ -38,7 +38,7 @@ const REPORTS_HERO_STYLES = `
     inset: 0 auto 0 0;
     width: min(45%, 460px);
     opacity: .19;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='112' viewBox='0 0 112 112'%3E%3Cg fill='none' stroke='%23e4cc92' stroke-width='.8'%3E%3Cpath d='M56 12 69 25 87 25 87 43 100 56 87 69 87 87 69 87 56 100 43 87 25 87 25 69 12 56 25 43 25 25 43 25Z'/%3E%3Cpath d='M56 28 84 56 56 84 28 56Z M0 0 25 25 M112 0 87 25 M112 112 87 87 M0 112 25 87'/%3E%3C/g%3E%3C/svg%3E");
+    background-image: url("/ornaments/sadiq/gold/05-wasl.svg");
     background-position: left top;
     background-size: 112px 112px;
     -webkit-mask-image: linear-gradient(to right, #000, transparent);

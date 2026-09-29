@@ -1,3 +1,4 @@
+import { OrnamentScene } from './ornaments/Ornament';
 export default function PageHero({
   title,
   subtitle,
@@ -18,32 +19,7 @@ export default function PageHero({
           "0 20px 50px color-mix(in srgb,var(--app-color-0f766e,#0f766e) 25%,transparent)",
       }}
     >
-      {/* زخرفة */}
-      <div
-        style={{
-          position: "absolute",
-          top: "-60px",
-          left: "-60px",
-          width: "220px",
-          height: "220px",
-          borderRadius: "50%",
-          background:
-            "rgba(255,255,255,.08)",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          bottom: "-80px",
-          right: "-80px",
-          width: "260px",
-          height: "260px",
-          borderRadius: "50%",
-          background:
-            "rgba(255,255,255,.05)",
-        }}
-      />
+      <OrnamentScene primary="02-shams" />
 
       <div
         style={{

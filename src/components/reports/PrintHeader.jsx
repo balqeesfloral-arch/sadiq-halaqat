@@ -10,26 +10,27 @@ export default function PrintHeader() {
     >
 
       <img
-        src="/patterns/Z-1.png"
+        src="/ornaments/sadiq/gold/07-rukn-tr.svg"
         alt=""
         style={{
           position: "absolute",
           top: 0,
           right: 0,
           width: "90px",
-          opacity: 0.15,
+          opacity: 0.28,
         }}
       />
 
       <img
-        src="/patterns/Z-3.png"
+        src="/ornaments/sadiq/gold/07-rukn-tr.svg"
         alt=""
         style={{
           position: "absolute",
           top: 0,
           left: 0,
+          transform: "scaleX(-1)",
           width: "90px",
-          opacity: 0.15,
+          opacity: 0.28,
         }}
       />
 

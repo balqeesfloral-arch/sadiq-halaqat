@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../ornaments/Ornament';
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
@@ -50,7 +51,7 @@ export function HalaqaFrame({ id, data, tab, loading, reload, children }) {
   return (
     <main className="hm-page" dir="rtl">
       <header className="hm-hero">
-        <div className="hm-hero-ornament" aria-hidden="true" />
+        <OrnamentScene primary="01-noor" />
         <div className="hm-hero-top">
           <button type="button" className="hm-back" onClick={() => navigate("/admin/halaqat")}><ArrowRight size={16} /> الحلقات</button>
           <span className={`hm-hero-status ${h.status === "active" ? "is-active" : ""}`}><i /> {status}</span>

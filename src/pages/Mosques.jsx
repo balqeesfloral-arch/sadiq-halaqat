@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../components/ornaments/Ornament';
 import {
   useCallback,
   useEffect,
@@ -113,41 +114,6 @@ function apiMessage(error) {
   return error?.message || "حدث خطأ غير متوقع.";
 }
 
-function IslamicGeometry() {
-  return (
-    <svg
-      viewBox="0 0 260 260"
-      className="mosques-islamic-geometry"
-      aria-hidden="true"
-    >
-      <defs>
-        <pattern
-          id="sadiqMosqueGeometry"
-          width="86"
-          height="86"
-          patternUnits="userSpaceOnUse"
-        >
-          <g
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.35"
-          >
-            <polygon points="43,4 54,22 74,12 64,32 82,43 64,54 74,74 54,64 43,82 32,64 12,74 22,54 4,43 22,32 12,12 32,22" />
-            <polygon points="43,16 52,34 70,43 52,52 43,70 34,52 16,43 34,34" />
-            <polygon points="43,25 61,43 43,61 25,43" />
-            <circle cx="43" cy="43" r="8.5" />
-          </g>
-        </pattern>
-      </defs>
-
-      <rect
-        width="260"
-        height="260"
-        fill="url(#sadiqMosqueGeometry)"
-      />
-    </svg>
-  );
-}
 
 function MetricCard({
   icon: Icon,
@@ -835,9 +801,7 @@ export default function Mosques() {
       dir="rtl"
     >
       <section className="mosques-hero">
-        <div className="mosques-hero-geometry">
-          <IslamicGeometry />
-        </div>
+        <OrnamentScene primary="02-shams" />
 
         <div className="mosques-hero-copy">
           <div className="mosques-eyebrow">

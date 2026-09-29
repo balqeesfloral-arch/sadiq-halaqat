@@ -37,8 +37,7 @@
 }
 .student-sidebar::after{
   content:"";position:fixed;top:0;right:0;width:282px;height:100vh;pointer-events:none;opacity:.05;
-  background-image:linear-gradient(45deg,transparent 47%,#fff 48%,#fff 52%,transparent 53%),
-  linear-gradient(-45deg,transparent 47%,#fff 48%,#fff 52%,transparent 53%);
+  background-image: url("/ornaments/sadiq/emerald/05-wasl.svg");
   background-size:86px 86px;
 }
 .student-brand{position:relative;z-index:2;display:flex;align-items:center;gap:calc(11px * var(--app-density,1));min-height:64px;padding:calc(5px * var(--app-density,1)) calc(7px * var(--app-density,1)) calc(12px * var(--app-density,1))}
@@ -87,7 +86,7 @@
 .student-topbar-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:calc(11px * var(--app-radius-scale,1));color:var(--student-ink)}
 .student-topbar-avatar{width:40px;height:40px;border-radius:calc(12px * var(--app-radius-scale,1));font-size:calc(13px * var(--app-font-scale,1))}
 .student-main{position:relative;min-height:calc(100vh - 76px);padding:calc(22px * var(--app-density,1)) calc(26px * var(--app-density,1)) calc(42px * var(--app-density,1))}
-.student-main::before{content:"";position:fixed;inset:76px 282px 0 0;z-index:-1;opacity:.024;pointer-events:none;background-image:linear-gradient(45deg,transparent 47%,var(--student-accent) 48%,var(--student-accent) 52%,transparent 53%),linear-gradient(-45deg,transparent 47%,var(--student-accent) 48%,var(--student-accent) 52%,transparent 53%);background-size:104px 104px}
+.student-main::before{content:"";position:fixed;inset:76px 282px 0 0;z-index:-1;opacity:.024;pointer-events:none;background-image: url("/ornaments/sadiq/emerald/05-wasl.svg");background-size:104px 104px}
 .student-seasonal{max-width:1500px;position:relative;overflow:hidden;display:grid;grid-template-columns:46px 1fr 32px;gap:calc(11px * var(--app-density,1));align-items:center;margin:0 auto 15px;padding:calc(12px * var(--app-density,1)) calc(13px * var(--app-density,1));border:1px solid color-mix(in srgb,var(--student-accent) 17%,var(--student-border));border-radius:calc(16px * var(--app-radius-scale,1));background:radial-gradient(circle at 15% 0%,rgba(224,188,71,.18),transparent 25%),var(--student-surface);box-shadow:var(--student-shadow)}
 .student-seasonal-glow{position:absolute;width:180px;height:180px;top:-130px;left:20%;border-radius:50%;background:rgba(238,206,92,.13);filter:blur(18px)}
 .student-seasonal-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:calc(13px * var(--app-radius-scale,1));background:linear-gradient(145deg,#f6e6a8,#d1ad42);color:#71560e}

@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../components/ornaments/Ornament';
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useNavigate } from "react-router-dom";
@@ -737,7 +738,7 @@ function getTeacherCount(halaqa) {
     <div className="hq-page" dir="rtl">
       <main className="hq-shell">
         <section className="hq-hero">
-          <div className="hq-pattern" />
+          <OrnamentScene primary="02-shams" pattern />
           <div className="hq-hero-main">
             <div>
               <div className="hq-kicker">
@@ -1076,7 +1077,7 @@ function getTeacherCount(halaqa) {
         .hq-page{min-height:100vh;width:100%;overflow-x:hidden;background:radial-gradient(circle at 8% 5%,rgba(190,151,49,.07),transparent 25%),radial-gradient(circle at 93% 14%,rgba(10,104,78,.07),transparent 27%),#f5f7f4;color:#173b31;padding:calc(22px * var(--app-density,1)) clamp(calc(14px * var(--app-density,1)),2vw,calc(32px * var(--app-density,1))) calc(42px * var(--app-density,1));font-family:inherit}
         .hq-shell{width:100%;max-width:1680px;margin:0 auto}
         .hq-hero{position:relative;overflow:hidden;border-radius:calc(26px * var(--app-radius-scale,1));background:linear-gradient(135deg,#073d33,#0a5b49 58%,#09483c);color:#fff;border:1px solid rgba(204,168,68,.38);box-shadow:0 18px 45px rgba(7,62,52,.13);margin-bottom:14px}
-        .hq-pattern{position:absolute;inset:0;opacity:.13;pointer-events:none;background-image:linear-gradient(45deg,transparent 47%,rgba(255,255,255,.2) 48%,transparent 50%),linear-gradient(-45deg,transparent 47%,rgba(225,190,83,.28) 48%,transparent 50%);background-size:62px 62px;mask-image:linear-gradient(to left,#000,transparent 72%)}
+        .hq-pattern{position:absolute;inset:0;opacity:.13;pointer-events:none;background-image: url("/ornaments/sadiq/emerald/05-wasl.svg");background-size:62px 62px;mask-image:linear-gradient(to left,#000,transparent 72%)}
         .hq-hero-main{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:calc(22px * var(--app-density,1));padding:calc(24px * var(--app-density,1)) calc(26px * var(--app-density,1)) calc(20px * var(--app-density,1))}
         .hq-kicker,.hq-command-kicker{display:inline-flex;align-items:center;gap:calc(6px * var(--app-density,1));color:#e6c768;font-size:calc(10px * var(--app-font-scale,1));font-weight:900;margin-bottom:10px}
         .hq-title-line{display:flex;align-items:center;gap:calc(11px * var(--app-density,1))}

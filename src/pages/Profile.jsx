@@ -1,3 +1,4 @@
+import Ornament from '../components/ornaments/Ornament';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -827,7 +828,7 @@ export default function Profile() {
       {passwordOpen && (
         <div className="profile-password-backdrop" onMouseDown={(e)=>{if(e.target===e.currentTarget&&!changingPassword)setPasswordOpen(false)}}>
           <div className="profile-password-modal" role="dialog" aria-modal="true">
-            <div className="profile-modal-ornament" aria-hidden="true">✦</div>
+            <Ornament name="01-noor" className="profile-modal-ornament" />
             <div className="profile-password-head">
               <span className="profile-password-icon"><LockKeyhole size={22}/></span>
               <div>

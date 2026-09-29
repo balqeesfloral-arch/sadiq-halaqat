@@ -1,512 +1,126 @@
-/* ================================================================
-   SADIQ ORNAMENTS PRO MAX v1
-   Project-wide decorative system only.
-   No auth, queries, RPCs, routes, handlers, forms, or data logic.
-   ================================================================ */
-
+/* Sadiq geometric collection — layered SVG, restrained movement, print-safe geometry. */
 :root {
-  --sadiq-ornament-gold: #d6b45c;
-  --sadiq-ornament-emerald: #0c5549;
-  --sadiq-ornament-navy: #0b3155;
+  --sq-gold: #d4b174;
+  --sq-ink: #0b5341;
+  --sq-texture-gold: url('/ornaments/sadiq/gold/05-wasl.svg');
+  --sq-texture-green: url('/ornaments/sadiq/emerald/05-wasl.svg');
 }
-
-/* ---------- Motion ---------- */
-@keyframes sadiqOrnamentRotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes sadiqOrnamentRotateTranslated {
-  from { transform: translateY(-50%) rotate(0deg); }
-  to { transform: translateY(-50%) rotate(360deg); }
-}
-
-@keyframes sadiqOrnamentFloat {
-  0%, 100% { transform: translate3d(0,0,0) rotate(-2deg); }
-  50% { transform: translate3d(8px,-10px,0) rotate(2deg); }
-}
-
-/* ================================================================
-   PUBLIC / VISITOR LAYOUT
-   Replace old inline geometric ornaments with curated assets.
-   ================================================================ */
-
-.public-background::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: min(1560px, 116vw);
-  height: min(520px, 42vw);
-  transform: translateX(-50%);
-  pointer-events: none;
-  opacity: .075;
-  background:
-    url("/ornaments/pro/corners-top.webp")
-    top center / contain no-repeat;
-  filter: saturate(.92);
-}
-
-.public-ornament {
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  background-size: contain !important;
-  color: transparent !important;
-  opacity: .10 !important;
-}
-
-.public-ornament * {
-  opacity: 0 !important;
-}
-
-.public-ornament.top-right {
-  width: 310px !important;
-  height: 310px !important;
-  top: -105px !important;
-  right: -95px !important;
-  background-image: url("/ornaments/pro/hero-medallion.webp") !important;
-  animation: sadiqOrnamentRotate 82s linear infinite;
-}
-
-.public-ornament.bottom-left {
-  width: 295px !important;
-  height: 295px !important;
-  bottom: -112px !important;
-  left: -102px !important;
-  transform: none !important;
-  background-image: url("/ornaments/pro/emerald-rosette.webp") !important;
-  animation: sadiqOrnamentRotate 94s linear infinite reverse;
-}
-
-/* ================================================================
-   LOGIN
-   Re-map the existing Pro layout ornament slots to the new library.
-   ================================================================ */
-
-.login-pro-page::before {
-  background-image: url("/ornaments/pro/tile-arabesque.webp") !important;
-  background-size: 520px auto !important;
-  opacity: .035 !important;
-}
-
-.login-pro-showcase::after {
-  background-image: url("/ornaments/pro/hero-medallion.webp") !important;
-  opacity: .18 !important;
-  filter: none !important;
-}
-
-.login-pro-logo-box::before {
-  background-image: url("/ornaments/pro/logo-frame.webp") !important;
-  opacity: .58 !important;
-  filter: none !important;
-}
-
-.login-pro-card::before {
-  background-image: url("/ornaments/pro/geometric-stamp.webp") !important;
-  opacity: .035 !important;
-  filter: none !important;
-}
-
-.login-pro-geometry {
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  background-size: contain !important;
-}
-
-.login-pro-geometry svg {
-  display: none !important;
-}
-
-.login-pro-geometry-top {
-  background-image: url("/ornaments/pro/geometric-stamp.webp") !important;
-  opacity: .055 !important;
-}
-
-.login-pro-geometry-bottom {
-  background-image: url("/ornaments/pro/emerald-rosette.webp") !important;
-  opacity: .045 !important;
-}
-
-/* ================================================================
-   LANDING ASSISTANT
-   Keep the chat button clean; only replace the old header ornament.
-   ================================================================ */
-
-.landing-assistant-head-ornament {
-  width: 238px !important;
-  height: 238px !important;
-  left: -74px !important;
-  top: -82px !important;
-  opacity: .11 !important;
-  color: transparent !important;
-  background:
-    url("/ornaments/pro/logo-frame.webp")
-    center / contain no-repeat !important;
-  animation: sadiqOrnamentRotate 72s linear infinite !important;
-}
-
-.landing-assistant-head-ornament svg {
-  display: none !important;
-}
-
-/* ================================================================
-   SUPERVISOR / ADMIN DASHBOARD
-   ================================================================ */
-
-.supervisor-hero-ornament {
-  width: 390px !important;
-  height: 390px !important;
-  top: -128px !important;
-  right: -86px !important;
-  color: transparent !important;
-  opacity: .15 !important;
-  background:
-    url("/ornaments/pro/hero-medallion.webp")
-    center / contain no-repeat !important;
-  animation: sadiqOrnamentRotate 78s linear infinite;
-}
-
-.supervisor-hero-ornament * {
-  opacity: 0 !important;
-}
-
-.supervisor-hero-frame {
-  width: 245px !important;
-  height: 245px !important;
-  left: -105px !important;
-  bottom: -118px !important;
-  border: 0 !important;
-  opacity: .075 !important;
-  transform: rotate(-12deg) !important;
-  background:
-    url("/ornaments/pro/geometric-stamp.webp")
-    center / contain no-repeat !important;
-}
-
-.supervisor-hero-frame::before,
-.supervisor-hero-frame::after {
-  display: none !important;
-}
-
-/* ================================================================
-   MOSQUES / NOTIFICATIONS
-   ================================================================ */
-
-.mosques-hero-geometry,
-.notifications-hero-geometry {
-  width: 340px !important;
-  height: 340px !important;
-  left: -54px !important;
-  opacity: .115 !important;
-  color: transparent !important;
-  background:
-    url("/ornaments/pro/emerald-rosette.webp")
-    center / contain no-repeat !important;
-  animation: sadiqOrnamentRotateTranslated 86s linear infinite;
-}
-
-.notifications-hero-geometry {
-  background-image: url("/ornaments/pro/hero-medallion.webp") !important;
-  animation-direction: reverse;
-}
-
-.mosques-islamic-geometry,
-.notifications-islamic-geometry {
-  display: none !important;
-}
-
-/* ================================================================
-   HALAQA MANAGEMENT / HALAQAT
-   ================================================================ */
-
-.hm-hero-ornament {
-  left: -78px !important;
-  top: -104px !important;
-  width: 365px !important;
-  height: 365px !important;
-  opacity: .12 !important;
-  transform: none !important;
-  background:
-    url("/ornaments/pro/geometric-stamp.webp")
-    center / contain no-repeat !important;
-  animation: sadiqOrnamentRotate 90s linear infinite;
-}
-
-.hq-pattern {
-  opacity: .045 !important;
-  background-image: url("/ornaments/pro/tile-navy-gold.webp") !important;
-  background-size: 430px auto !important;
-  background-repeat: repeat !important;
-  mask-image: linear-gradient(to left,#000,transparent 78%) !important;
-}
-
-/* ================================================================
-   ATTENDANCE
-   ================================================================ */
-
-.aa-ornament {
-  width: 205px !important;
-  height: 205px !important;
-  border: 0 !important;
-  opacity: .075 !important;
-  transform: none !important;
-  background:
-    url("/ornaments/pro/geometric-stamp.webp")
-    center / contain no-repeat !important;
-  animation: sadiqOrnamentFloat 16s ease-in-out infinite;
-}
-
-.aa-ornament-b {
-  background-image: url("/ornaments/pro/emerald-rosette.webp") !important;
-  animation-delay: -7s;
-}
-
-.aa-ornament::before,
-.aa-ornament::after {
-  display: none !important;
-}
-
-/* ================================================================
-   TEACHER EXPERIENCE
-   ================================================================ */
-
-.td-pattern {
-  opacity: .045 !important;
-  background-image: url("/ornaments/pro/tile-navy-gold.webp") !important;
-  background-size: 390px auto !important;
-  background-repeat: repeat !important;
-}
-
-.teacher-main::before {
-  background-image: url("/ornaments/pro/tile-arabesque.webp") !important;
-  background-size: 560px auto !important;
-  background-repeat: repeat !important;
-}
-
-.teacher-modal-ornament {
-  border: 0 !important;
-  background:
-    url("/ornaments/pro/geometric-stamp.webp")
-    center / contain no-repeat !important;
-  opacity: .06 !important;
-}
-
-.teacher-modal-ornament::before,
-.teacher-modal-ornament::after {
-  display: none !important;
-}
-
-/* ================================================================
-   STUDENT EXPERIENCE
-   ================================================================ */
-
-.student-page-hero-pattern {
-  opacity: .038 !important;
-  background-image: url("/ornaments/pro/tile-arabesque.webp") !important;
-  background-size: 390px auto !important;
-  background-repeat: repeat !important;
-}
-
-/* ================================================================
-   SYSTEM ADMIN
-   ================================================================ */
-
-.sa-hero-pattern {
-  opacity: .045 !important;
-  background-image: url("/ornaments/pro/tile-navy-gold.webp") !important;
-  background-size: 430px auto !important;
-  background-repeat: repeat !important;
-}
-
-/* ================================================================
-   REPORTS
-   ================================================================ */
-
-.reports-hero-pattern {
-  opacity: .043 !important;
-  background-image: url("/ornaments/pro/tile-arabesque.webp") !important;
-  background-size: 420px auto !important;
-  background-repeat: repeat !important;
-}
-
-.report-corner {
-  object-fit: contain !important;
-  filter: none !important;
-}
-
-/* ================================================================
-   SETTINGS / PROFILE
-   ================================================================ */
-
-.settings-islamic-bg {
-  width: 560px !important;
-  height: 560px !important;
-  opacity: .04 !important;
-  color: transparent !important;
-  background:
-    url("/ornaments/pro/geometric-stamp.webp")
-    center / contain no-repeat !important;
-}
-
-.settings-islamic-bg * {
-  opacity: 0 !important;
-}
-
-.profile-modal-ornament {
-  font-size: 0 !important;
-  width: 82px !important;
-  height: 82px !important;
-  opacity: .08 !important;
-  background:
-    url("/ornaments/pro/geometric-stamp.webp")
-    center / contain no-repeat !important;
-}
-
-/* ================================================================
-   TV LEADERBOARD
-   Deliberately more alive than the administrative pages.
-   ================================================================ */
-
-.tv-background-pattern {
-  width: 310px !important;
-  height: 310px !important;
-  opacity: .10 !important;
-  filter: none !important;
-  transform: none !important;
-  animation: sadiqOrnamentRotate 48s linear infinite !important;
-}
-
-.tv-background-pattern--one {
-  top: 72px !important;
-  right: -88px !important;
-  background-image: url("/ornaments/pro/hero-medallion.webp") !important;
-}
-
-.tv-background-pattern--two {
-  left: -86px !important;
-  bottom: 42px !important;
-  background-image: url("/ornaments/pro/emerald-rosette.webp") !important;
-  animation-direction: reverse !important;
-}
-
-/* ================================================================
-   GLOBAL PRINT / LEGACY ORNAMENT REFERENCES
-   Z-1 / Z-3 / Z-5 are replaced by the installer with the new set,
-   so existing print/report code keeps working without JSX edits.
-   ================================================================ */
-
-/* ================================================================
-   RESPONSIVE
-   ================================================================ */
-
+[data-sq-host] { isolation: isolate; }
+.sq-ornament { display: inline-block; width: 100%; line-height: 0; pointer-events: none; user-select: none; flex-shrink: 0; }
+.sq-ornament-art { display: block; width: 100%; height: 100%; transform-origin: center; }
+.sq-ornament img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.sq-turn { animation: sq-orbit var(--sq-period,160s) linear infinite; }
+@keyframes sq-orbit { to { transform: rotate(360deg); } }
+.sq-scene { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; border-radius: inherit; contain: paint; }
+.sq-scene-primary,.sq-scene-secondary,.sq-scene-ring { position: absolute; width: var(--sq-size,420px); aspect-ratio: 1; pointer-events: none; }
+.sq-scene-primary { width: clamp(290px,36vw,490px); left: -100px; top: -174px; opacity: .3; }
+.sq-scene-secondary { width: clamp(210px,23vw,320px); right: -100px; bottom: -205px; opacity: .14; }
+.sq-drift { translate: var(--sq-drift-x,0px) var(--sq-drift-y,0px); transition: translate 1.15s cubic-bezier(.2,.8,.2,1), opacity 1.1s ease; }
+.sq-scene-secondary.sq-drift { translate: calc(var(--sq-drift-x,0px) * -.6) calc(var(--sq-drift-y,0px) * -.6); }
+.sq-scene[data-sq-active="true"] .sq-scene-primary { opacity: .42; }
+.sq-texture { position: absolute; inset: 0; background-size: 240px auto; opacity: .08; mask-image: linear-gradient(100deg,#000,transparent 68%); }
+.sq-scene[data-sq-visible="false"] .sq-turn,.sq-scene[data-sq-paused="true"] .sq-turn { animation-play-state: paused; }
+/* Framing adjusts to the purpose of each surface. */
+.sq-scene--student .sq-scene-primary { width: 290px; left: -62px; top: -155px; opacity: .12; }
+.sq-scene--student .sq-scene-secondary { opacity: .06; }
+.sq-scene--student[data-sq-active="true"] .sq-scene-primary { opacity: .2; }
+.sq-scene--landing { mask-image: linear-gradient(to left,#000,transparent 26%,transparent 70%,#000); }
+.sq-scene--landing .sq-scene-primary { width: clamp(350px,42vw,640px); right: -260px; left: auto; top: 3%; opacity: .17; }
+.sq-scene--landing .sq-scene-secondary { width: 400px; left: -200px; right: auto; bottom: -210px; opacity: .13; }
+.sq-scene--landing[data-sq-active="true"] .sq-scene-primary { opacity: .23; }
+.sq-scene--public .sq-scene-primary { width: clamp(240px,32vw,490px); left: -200px; top: 100px; opacity: .1; }
+.sq-scene--public .sq-scene-secondary { right: -160px; bottom: -150px; opacity: .09; width: 360px; }
+.sq-scene--auth .sq-scene-primary { width: 560px; top: auto; bottom: -270px; left: -230px; opacity: .44; }
+.sq-scene--auth .sq-scene-secondary { width: 280px; top: -135px; right: -125px; bottom: auto; opacity: .2; }
+.sq-scene--auth .sq-texture { opacity: .06; }
+/* Shared header elements and form accents. */
+.sq-hero-seal { width: 29px; height: 29px; opacity: .95; }
+.supervisor-hero-grid,.hm-hero-top,.hm-hero-content,.hm-nav-row,.landing-container.landing-hero-grid { position: relative; z-index: 1; }
+.landing-hero,.landing-cta-shell { position: relative; isolation: isolate; }
+.landing-cta-shell > :not(.sq-scene) { position: relative; z-index: 1; }
+.landing-assistant-head-ornament { background: none!important; animation: none!important; width: 245px!important; height: 245px!important; left: -90px!important; top: -105px!important; opacity: .23!important; color: inherit!important; }
+.landing-assistant-head-ornament .sq-ornament { opacity: 1!important; }
+.landing-assistant-rosette.is-launch-ring { background: none!important; border: 0!important; }
+.sq-ornament.settings-islamic-bg { width: 620px; height: 620px; opacity: .055; background: none; }
+.settings-hero-seal .sq-ornament { width: 88px; }
+.sq-ornament.profile-modal-ornament { width: 92px; height: 92px; opacity: .18; background: none; font-size: 0; }
+.sq-ornament.teacher-modal-ornament { border: 0!important; border-radius: 0; width: 155px; height: 155px; opacity: .18; transform: none; background: none; }
+.sq-ornament.teacher-modal-ornament-a { left: 10px; top: 10px; }
+.sq-ornament.teacher-modal-ornament-b { right: 10px; top: 10px; transform: scaleX(-1); }
+.teacher-modal-ornament::before,.teacher-modal-ornament::after { content: none!important; }
+/* Login's previous pseudo-element ornaments are now real independent SVG layers. */
+html .login-pro-showcase::before,html .login-pro-showcase::after,html .login-pro-card::before { content: none!important; }
+html .login-pro-page::before { background-image: var(--sq-texture-green)!important; background-size: 310px auto!important; opacity: .045!important; }
+html .login-pro-logo-box::before { background-image: url('/ornaments/sadiq/gold/04-madar.svg')!important; filter: none!important; opacity: .65!important; animation-duration: 180s!important; }
+/* Quiet repeated geometry on the surrounding application shells. */
+html .public-background::before { background-image: var(--sq-texture-green); background-size: 360px auto; opacity: .03; }
+html .admin-layout-background::before { background-image: var(--sq-texture-green); background-size: 300px auto; opacity: .04; }
+html .admin-layout-sidebar-inner::after { border: 0; border-radius: 0; background: url('/ornaments/sadiq/gold/02-shams.svg') center/contain no-repeat; opacity: .12; transform: none; }
+html .teacher-main::before,html .student-main::before { background-image: var(--sq-texture-green); background-size: 340px auto; }
+html .student-sidebar::after,html .sa-sidebar::before { background-image: var(--sq-texture-gold); background-size: 240px auto; opacity: .065; }
+html .tp-hero::before,html .tp-premium-panel::before,html .tp-modal-card::before,html .records-hero::after,html .tex-hero::before,html .register-pro-page::before,html .supervisor-setup-page::before,html .report-document::after { background-image: var(--sq-texture-green); background-size: 290px auto; opacity: .045; }
+html .register-pro-orb,html .supervisor-setup-orb { border: 0; border-radius: 0; background: url('/ornaments/sadiq/emerald/03-falak.svg') center/contain no-repeat; opacity: .12; }
+html .sex-hero-strip::after { border: 0; background: url('/ornaments/sadiq/emerald/01-noor.svg') center/contain no-repeat; opacity: .16; transform: none; pointer-events: none; }
+/* TV: large, counter-rotating geometry outside the content plane. */
+.sq-scene--tv { position: fixed; border-radius: 0; }
+.sq-scene--tv .sq-scene-primary { width: clamp(340px,39vw,680px); top: -14vw; right: -14vw; left: auto; opacity: .24; }
+.sq-scene--tv .sq-scene-secondary { width: clamp(300px,35vw,600px); bottom: -16vw; left: -13vw; right: auto; opacity: .18; }
+.sq-scene--tv .sq-scene-ring { width: clamp(260px,28vw,480px); top: -9vw; right: -9vw; opacity: .38; }
+.sq-scene--tv[data-sq-active="true"] .sq-scene-primary { opacity: .33; }
+html .tv-page .sq-tv-corner { width: clamp(75px,8vw,135px); height: clamp(75px,8vw,135px); opacity: .35; filter: none; }
+html .tv-page .tv-illumination--tr { transform: scaleX(-1); }
+html .tv-page .tv-illumination--tl { transform: none; }
+html .tv-page .tv-illumination--br { transform: scale(-1); }
+html .tv-page .tv-illumination--bl { transform: scaleY(-1); }
+.tv-quote__ornament .sq-ornament { width: 34px; height: 34px; }
+.sq-quote-divider { width: min(290px,65%); height: auto; opacity: .8; margin: 2px auto 0; }
+html .tv-podium-card__halo { border-radius: 0; background: url('/ornaments/sadiq/gold/01-noor.svg') center/contain no-repeat; opacity: .13; pointer-events: none; }
+/* Readable, static report edges. */
+html .report-corner { width: 88px; opacity: .22; object-fit: contain; filter: none; }
 @media (max-width: 900px) {
-  .public-background::after {
-    width: 1280px;
-    height: 430px;
-    opacity: .05;
-  }
-
-  .supervisor-hero-ornament {
-    width: 300px !important;
-    height: 300px !important;
-    top: -92px !important;
-    right: -90px !important;
-    opacity: .105 !important;
-  }
-
-  .mosques-hero-geometry,
-  .notifications-hero-geometry {
-    width: 270px !important;
-    height: 270px !important;
-    left: -82px !important;
-    opacity: .085 !important;
-  }
-
-  .hm-hero-ornament {
-    width: 280px !important;
-    height: 280px !important;
-    left: -92px !important;
-    top: -82px !important;
-    opacity: .08 !important;
-  }
-
-  .tv-background-pattern {
-    width: 240px !important;
-    height: 240px !important;
-    opacity: .07 !important;
-  }
+  .sq-scene-primary { width: 330px; top: -190px; left: -135px; opacity: .2; }
+  .sq-scene-secondary { width: 240px; right: -155px; bottom: -180px; opacity: .1; }
+  .sq-texture { background-size: 210px auto; opacity: .05; }
+  .sq-scene--landing .sq-scene-primary { right: -240px; opacity: .1; }
+  .sq-scene--auth .sq-scene-primary { width: 390px; bottom: -240px; left: -170px; opacity: .3; }
+  .sq-scene--tv .sq-scene-primary { right: -180px; top: -180px; opacity: .15; }
+  .sq-scene--tv .sq-scene-secondary { left: -180px; bottom: -180px; opacity: .13; }
+  .sq-scene--tv .sq-scene-ring { top: -138px; right: -138px; opacity: .25; }
 }
-
-@media (max-width: 620px) {
-  .public-background::after {
-    width: 940px;
-    height: 314px;
-    opacity: .035;
-  }
-
-  .public-ornament.top-right,
-  .public-ornament.bottom-left {
-    width: 210px !important;
-    height: 210px !important;
-    opacity: .06 !important;
-  }
-
-  .login-pro-page::before {
-    background-size: 350px auto !important;
-  }
-
-  .supervisor-hero-ornament {
-    width: 230px !important;
-    height: 230px !important;
-    top: -72px !important;
-    right: -82px !important;
-    opacity: .075 !important;
-  }
-
-  .supervisor-hero-frame {
-    display: none !important;
-  }
-
-  .mosques-hero-geometry,
-  .notifications-hero-geometry {
-    width: 210px !important;
-    height: 210px !important;
-    left: -90px !important;
-    opacity: .06 !important;
-  }
-
-  .td-pattern,
-  .sa-hero-pattern,
-  .reports-hero-pattern,
-  .student-page-hero-pattern,
-  .teacher-main::before,
-  .hq-pattern {
-    background-size: 315px auto !important;
-  }
-
-  .aa-ornament {
-    width: 150px !important;
-    height: 150px !important;
-    opacity: .05 !important;
-  }
-
-  .tv-background-pattern {
-    width: 190px !important;
-    height: 190px !important;
-    opacity: .05 !important;
-  }
+@media (max-width: 600px) {
+  .sq-scene-secondary { display: none; }
+  .sq-scene--tv .sq-scene-secondary { display: block; }
+  .sq-scene--student .sq-scene-primary { left: -160px; top: -170px; opacity: .09; }
+  .sq-scene--public .sq-scene-primary { left: -190px; opacity: .07; }
+  .sq-scene--landing .sq-scene-primary { width: 360px; right: -275px; top: 2%; }
+  html .tv-page .sq-tv-corner { width: 65px; height: 65px; opacity: .22; }
+  .sq-ornament.teacher-modal-ornament { width: 100px; height: 100px; opacity: .12; }
 }
-
-/* Respect accessibility and battery-saving preferences. */
+/* Honor both system and existing account preferences. */
+html[data-app-reduced-motion="true"] .sq-turn,
+html[data-app-reduced-motion="true"] .login-pro-logo-box::before,
+html[data-app-reduced-motion="true"] .landing-orbit::before,
+html[data-app-reduced-motion="true"] .landing-orbit::after,
+[data-teacher-motion="reduced"] .sq-turn,
+[data-sq-motion="off"] .sq-turn { animation: none!important; }
+html[data-app-reduced-motion="true"] .sq-drift,
+[data-teacher-motion="reduced"] .sq-drift,
+[data-sq-motion="off"] .sq-drift { translate: 0!important; transition: none!important; }
+html[data-app-ornaments="false"] .sq-scene,
+html[data-app-ornaments="false"] .settings-islamic-bg,
+html[data-app-ornaments="false"] .landing-orbit::before,
+html[data-app-ornaments="false"] .landing-orbit::after,
+[data-teacher-pattern="none"] .sq-scene { display: none!important; }
+html[data-app-ornaments="false"] :is(.public-background,.admin-layout-background,.teacher-main,.student-main,.student-sidebar,.sa-sidebar,.tp-hero,.tp-premium-panel,.tp-modal-card,.records-hero,.tex-hero,.register-pro-page,.supervisor-setup-page,.report-document)::before,
+html[data-app-ornaments="false"] :is(.student-sidebar,.student-main,.records-hero,.report-document,.tp-stat,.report-student-card-pro,.admin-layout-sidebar-inner,.sex-hero-strip)::after { background-image: none!important; }
 @media (prefers-reduced-motion: reduce) {
-  .public-ornament,
-  .landing-assistant-head-ornament,
-  .supervisor-hero-ornament,
-  .mosques-hero-geometry,
-  .notifications-hero-geometry,
-  .hm-hero-ornament,
-  .aa-ornament,
-  .tv-background-pattern {
-    animation: none !important;
-  }
+  .sq-turn { animation: none!important; }
+  .sq-drift { translate: 0!important; transition: none!important; }
+  html .login-pro-logo-box::before { animation: none!important; }
+}
+@media print {
+  .sq-scene,.settings-islamic-bg,.public-background { display: none!important; }
+  .sq-turn { animation: none!important; transform: none!important; }
+  .sq-drift { translate: 0!important; }
+  .report-corner { opacity: .28!important; }
 }

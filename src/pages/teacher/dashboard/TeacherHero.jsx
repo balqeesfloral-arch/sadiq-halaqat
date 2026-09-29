@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../../../components/ornaments/Ornament';
 import {
   BookOpen,
   Building2,
@@ -41,7 +42,7 @@ export default function TeacherHero({
 
   return (
     <section className="td-hero">
-      <div className="td-pattern" aria-hidden="true" />
+      <OrnamentScene primary="02-shams" pattern />
 
       <div className="td-hero-copy">
         <div className="td-hero-kicker">

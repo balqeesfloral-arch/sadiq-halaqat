@@ -1,3 +1,4 @@
+import Ornament from '../components/ornaments/Ornament';
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Settings, SlidersHorizontal, Palette, Tv, Quote, ShieldCheck, Info,
@@ -189,8 +190,8 @@ function Toggle({ label, description, checked, onChange, icon: Icon }) {
   return <div className="settings-switch-row"><span className="settings-toggle-icon"><Icon size={20} /></span><div><strong>{label}</strong><small>{description}</small></div><button type="button" role="switch" aria-label={label} aria-checked={checked} className={`settings-switch ${checked ? "on" : ""}`} onClick={() => onChange(!checked)}><i /></button></div>;
 }
 function IslamicBackdrop() {
-  return <svg className="settings-islamic-bg" viewBox="0 0 600 600" aria-hidden="true"><defs><pattern id="sadiqSettingsGeo" width="72" height="72" patternUnits="userSpaceOnUse"><path d="M36 3 46 26 69 36 46 46 36 69 26 46 3 36 26 26Z" fill="none" stroke="currentColor" /><circle cx="36" cy="36" r="13" fill="none" stroke="currentColor" strokeWidth=".7" /></pattern></defs><rect width="600" height="600" fill="url(#sadiqSettingsGeo)" /></svg>;
+  return <Ornament name="03-falak" palette="emerald" className="settings-islamic-bg" />;
 }
 function IslamicSeal() {
-  return <svg viewBox="0 0 100 100"><path d="M50 4 61 27 86 14 73 39 96 50 73 61 86 86 61 73 50 96 39 73 14 86 27 61 4 50 27 39 14 14 39 27Z" fill="none" stroke="currentColor" strokeWidth="2" /><circle cx="50" cy="50" r="25" fill="none" stroke="currentColor" /></svg>;
+  return <Ornament name="01-noor" />;
 }

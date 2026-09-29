@@ -2990,10 +2990,10 @@ export default function MonthlyAchievement() {
       </head>
       <body>
         <div class="page">
-          <img class="corner r" src="${origin}/patterns/Z-1.png" alt="" onerror="this.style.display='none'" />
-          <img class="corner l" src="${origin}/patterns/Z-3.png" alt="" onerror="this.style.display='none'" />
-          <img class="corner br" src="${origin}/patterns/Z-5.png" alt="" onerror="this.style.display='none'" />
-          <img class="corner bl" src="${origin}/patterns/Z-5.png" alt="" onerror="this.style.display='none'" />
+          <img class="corner r" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" onerror="this.style.display='none'" />
+          <img class="corner l" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" onerror="this.style.display='none'" />
+          <img class="corner br" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" onerror="this.style.display='none'" />
+          <img class="corner bl" src="${origin}/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" onerror="this.style.display='none'" />
           <img class="watermark" src="${origin}/icon-512.png" alt="" onerror="this.style.display='none'" />
 
           <main class="report">

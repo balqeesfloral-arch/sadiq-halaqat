@@ -1,3 +1,4 @@
+import Ornament from '../components/ornaments/Ornament';
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -1282,8 +1283,8 @@ function editTeacher(teacher) {
           }}
         >
           <div className="teacher-modal-shell">
-            <div className="teacher-modal-ornament teacher-modal-ornament-a" />
-            <div className="teacher-modal-ornament teacher-modal-ornament-b" />
+            <Ornament name="07-rukn" className="teacher-modal-ornament teacher-modal-ornament-a" />
+            <Ornament name="08-daraj" className="teacher-modal-ornament teacher-modal-ornament-b" />
 
             <div className="teacher-modal-hero">
               <div className="teacher-modal-hero-top">

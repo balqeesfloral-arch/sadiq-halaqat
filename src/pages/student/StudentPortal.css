@@ -3,7 +3,7 @@
 .student-page{width:100%;max-width:1500px;margin:0 auto}
 .student-page *{box-sizing:border-box}
 .student-page-hero{position:relative;overflow:hidden;min-height:158px;display:flex;align-items:center;justify-content:space-between;gap:calc(18px * var(--app-density,1));padding:calc(23px * var(--app-density,1)) calc(25px * var(--app-density,1));border:1px solid var(--student-border);border-radius:calc(23px * var(--app-radius-scale,1));background:radial-gradient(circle at 10% 0%,color-mix(in srgb,var(--student-accent) 15%,transparent),transparent 28%),radial-gradient(circle at 85% 15%,rgba(222,188,75,.13),transparent 26%),var(--student-surface);box-shadow:var(--student-shadow)}
-.student-page-hero-pattern{position:absolute;inset:0;pointer-events:none;opacity:.025;background-image:linear-gradient(45deg,transparent 47%,var(--student-accent) 48%,var(--student-accent) 52%,transparent 53%),linear-gradient(-45deg,transparent 47%,var(--student-accent) 48%,var(--student-accent) 52%,transparent 53%);background-size:76px 76px}
+.student-page-hero-pattern{position:absolute;inset:0;pointer-events:none;opacity:.025;background-image: url("/ornaments/sadiq/emerald/05-wasl.svg");background-size:76px 76px}
 .student-page-hero-main,.student-page-hero-action{position:relative;z-index:2}
 .student-page-hero-main{display:flex;align-items:center;gap:calc(13px * var(--app-density,1))}
 .student-page-hero-icon{width:53px;height:53px;flex:0 0 auto;display:grid;place-items:center;border-radius:calc(16px * var(--app-radius-scale,1));background:linear-gradient(145deg,color-mix(in srgb,var(--student-accent) 92%,#fff),var(--student-accent));color:#fff;box-shadow:0 12px 28px color-mix(in srgb,var(--student-accent) 22%,transparent)}

@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../../components/ornaments/Ornament';
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   Activity,
@@ -609,7 +610,7 @@ function ReportsHero({ scope, mode, onRefresh, loading }) {
 
   return (
     <section className="reports-hero">
-      <div className="reports-hero-pattern" />
+      <OrnamentScene primary="01-noor" />
       <div className="reports-hero-copy">
         <div className="reports-kicker">
           <Sparkles size={15} />
@@ -861,8 +862,8 @@ function ReportDocument({ report, mode }) {
 function ReportDocumentHeader({ report, mode }) {
   return (
     <header className="report-document-header" data-pdf-role="header" data-pdf-unit="true">
-      <img className="report-corner c1" src="/patterns/Z-1.png" alt="" />
-      <img className="report-corner c2" src="/patterns/Z-3.png" alt="" />
+      <img className="report-corner c1" src="/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" />
+      <img className="report-corner c2" src="/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" />
       <div className="report-brand">
         <img src="/icon-512.png" alt="الصديق" />
         <div>
@@ -1171,7 +1172,7 @@ function MiniKpi({ label, value, tone }) {
 function ReportDocumentFooter() {
   return (
     <footer className="report-document-footer" data-pdf-role="footer" data-pdf-unit="true">
-      <img src="/patterns/Z-3.png" alt="" />
+      <img src="/ornaments/sadiq/gold/07-rukn-tr.svg" alt="" />
       <div>
         <strong>بالقرآن نرتقي، وبالمتابعة نصنع أثرًا يبقى.</strong>
         <span>الصديق • تقارير واضحة لاتخاذ قرار أفضل</span>

@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../components/ornaments/Ornament';
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { Activity, Archive, BellRing, BookOpen, Building2, Check, CheckCircle2, ChevronLeft, CircleOff, ClipboardList, Copy, GraduationCap, KeyRound, LayoutDashboard, Link2, Loader2, LogOut, Menu, Fingerprint, Laptop, Trash2, MessageCircle, Phone, Plus, RefreshCw, Search, Settings, ShieldCheck, Sparkles, UserCheck, UserCog, UserRoundCheck, Users, X, XCircle } from "lucide-react";
@@ -602,7 +603,7 @@ function DashboardView({ dashboard, mosques, supervisors, invites, alerts, audit
   return (
     <div className="sa-view-stack">
       <section className="sa-hero">
-        <div className="sa-hero-pattern" />
+        <OrnamentScene primary="03-falak" pattern />
         <div className="sa-hero-copy">
           <span className="sa-hero-kicker"><ShieldCheck /> مركز القيادة المركزي</span>
           <h2>مركز قيادة واحد للمساجد والمشرفين.</h2>

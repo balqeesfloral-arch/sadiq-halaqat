@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../components/ornaments/Ornament';
 import {
   useEffect,
   useMemo,
@@ -648,8 +649,7 @@ export default function Attendance() {
   return (
     <AdminAttendanceShell>
       <section className="aa-hero">
-        <div className="aa-ornament aa-ornament-a" />
-        <div className="aa-ornament aa-ornament-b" />
+        <OrnamentScene primary="02-shams" />
 
         <div className="aa-hero-main">
           <div className="aa-hero-copy">

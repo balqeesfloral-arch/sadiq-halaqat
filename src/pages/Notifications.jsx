@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../components/ornaments/Ornament';
 import {
   useCallback,
   useEffect,
@@ -131,37 +132,6 @@ function roleLabel(role) {
   return "النظام";
 }
 
-function IslamicGeometry() {
-  return (
-    <svg
-      viewBox="0 0 280 280"
-      className="notifications-islamic-geometry"
-      aria-hidden="true"
-    >
-      <defs>
-        <pattern
-          id="sadiqNotificationsGeometry"
-          width="92"
-          height="92"
-          patternUnits="userSpaceOnUse"
-        >
-          <g
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.25"
-          >
-            <polygon points="46,4 57,23 78,14 68,35 88,46 68,57 78,78 57,68 46,88 35,68 14,78 23,57 4,46 23,35 14,14 35,23" />
-            <polygon points="46,17 56,36 75,46 56,56 46,75 36,56 17,46 36,36" />
-            <polygon points="46,27 65,46 46,65 27,46" />
-            <circle cx="46" cy="46" r="8" />
-          </g>
-        </pattern>
-      </defs>
-
-      <rect width="280" height="280" fill="url(#sadiqNotificationsGeometry)" />
-    </svg>
-  );
-}
 
 function MetricCard({
   icon: Icon,
@@ -1276,9 +1246,7 @@ export default function Notifications() {
   return (
     <div className="notifications-page" dir="rtl">
       <section className="notifications-hero">
-        <div className="notifications-hero-geometry">
-          <IslamicGeometry />
-        </div>
+        <OrnamentScene primary="02-shams" />
 
         <div className="notifications-hero-copy">
           <div className="notifications-eyebrow">

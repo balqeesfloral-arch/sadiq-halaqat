@@ -1,3 +1,4 @@
+import Ornament, { OrnamentScene } from '../components/ornaments/Ornament';
 import {
   useCallback,
   useEffect,
@@ -27,12 +28,7 @@ import PageFooter from "../components/tv/PageFooter";
 
 import "../styles/TVLeaderboardPage.css";
 
-/*
-  غيّر الامتداد فقط إذا كانت زخارفك JPG / SVG.
-  حسب ملفاتك الظاهرة في assets نستخدم Z-5 و Z-6.
-*/
-const ornamentMain = "/patterns/Z-5.png";
-import ornamentCorner from "../assets/Z-6.png";
+
 
 const PAGE_DURATION = 25;
 const DATA_REFRESH_INTERVAL = 60 * 1000;
@@ -91,43 +87,7 @@ function formatDate(date) {
 
 
 function IlluminatedCorner({ className = "" }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 180 180"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path className="ill-vine" d="M176 5C126 7 88 21 59 49C31 76 18 112 8 173" />
-      <path className="ill-fine" d="M174 17C134 20 102 32 78 54C49 81 34 119 26 160" />
-      <path className="ill-vine" d="M154 8c-6 23-18 39-37 49-19 10-36 12-50 28-15 17-17 40-21 59" />
-      <path className="ill-vine" d="M114 31c5 17 1 31-12 41-12 9-27 11-35 24-8 12-6 28-7 39" />
-
-      <path className="ill-leaf" d="M132 24c-15 0-25 7-30 21 15 1 26-5 30-21Z" />
-      <path className="ill-leaf" d="M109 50c-14-3-25 2-32 15 14 4 25-1 32-15Z" />
-      <path className="ill-leaf" d="M79 73c-13-5-25-2-34 9 12 7 24 4 34-9Z" />
-      <path className="ill-leaf" d="M55 103c-11-7-22-7-33 1 10 9 22 9 33-1Z" />
-
-      <path className="ill-leaf" d="M142 38c1 14 8 24 21 29 2-14-5-24-21-29Z" />
-      <path className="ill-leaf" d="M116 62c2 13 9 21 21 25 1-12-6-21-21-25Z" />
-      <path className="ill-leaf" d="M88 88c3 12 11 20 23 22 0-12-8-20-23-22Z" />
-
-      <path className="ill-vine" d="M50 118c14-3 24 0 30 10 6 10 4 21-3 31" />
-      <path className="ill-leaf" d="M73 126c8 3 13 9 14 18-9-1-14-7-14-18Z" />
-      <path className="ill-leaf" d="M63 137c-8 2-13 7-16 15 9 0 14-5 16-15Z" />
-
-      <path className="ill-vine" d="M164 5c-2 13-8 22-18 27" />
-      <path className="ill-leaf" d="M151 21c-7-5-9-12-7-20 8 4 10 11 7 20Z" />
-
-      <circle className="ill-dot" cx="116" cy="58" r="2.6" />
-      <circle className="ill-dot" cx="79" cy="84" r="2.2" />
-      <circle className="ill-dot" cx="48" cy="112" r="2.4" />
-      <circle className="ill-dot" cx="24" cy="148" r="1.9" />
-
-      <path className="ill-fine" d="M176 5h-33M176 5v33" />
-      <path className="ill-fine" d="M169 12h-24M169 12v24" />
-    </svg>
-  );
+  return <Ornament name="07-rukn" className={`${className} sq-tv-corner`} />;
 }
 
 export default function TVLeaderboardPage() {
@@ -557,22 +517,7 @@ export default function TVLeaderboardPage() {
       className="tv-page"
       dir="rtl"
     >
-      <div
-        className="tv-background-pattern tv-background-pattern--one"
-        style={{
-          backgroundImage: `url(${ornamentMain})`,
-        }}
-      />
-
-      <div
-        className="tv-background-pattern tv-background-pattern--two"
-        style={{
-          backgroundImage: `url(${ornamentCorner})`,
-        }}
-      />
-
-      <div className="tv-page__glow tv-page__glow--one" />
-      <div className="tv-page__glow tv-page__glow--two" />
+      <OrnamentScene variant="tv" palette="emerald" primary="03-falak" secondary="02-shams" />
 
       <IlluminatedCorner className="tv-illumination tv-illumination--tr" />
       <IlluminatedCorner className="tv-illumination tv-illumination--tl" />
@@ -581,6 +526,7 @@ export default function TVLeaderboardPage() {
 
       <main className="tv-shell">
         <header className="tv-header">
+          <OrnamentScene primary="02-shams" />
           <div className="tv-header__brand">
             <div className="tv-header__logo">
               <Trophy
@@ -903,13 +849,7 @@ export default function TVLeaderboardPage() {
         }
 
         .tv-header::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(circle at 9% 50%, rgba(224,196,109,.13), transparent 22%),
-            linear-gradient(90deg, transparent, rgba(255,255,255,.025), transparent);
+          content: none;
         }
 
         .tv-header::after {

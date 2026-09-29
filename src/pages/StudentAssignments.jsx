@@ -1258,24 +1258,9 @@ function PageShell({
             "none",
           opacity:
             0.035,
-          backgroundImage: `
-            linear-gradient(
-              45deg,
-              transparent 46%,
-              var(--app-color-0f5132,#0f5132) 47%,
-              var(--app-color-0f5132,#0f5132) 53%,
-              transparent 54%
-            ),
-            linear-gradient(
-              -45deg,
-              transparent 46%,
-              var(--app-color-0f5132,#0f5132) 47%,
-              var(--app-color-0f5132,#0f5132) 53%,
-              transparent 54%
-            )
-          `,
+          backgroundImage: 'url("/ornaments/sadiq/emerald/05-wasl.svg")',
           backgroundSize:
-            "85px 85px",
+            "290px 290px",
         }}
       />
 

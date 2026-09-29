@@ -54,7 +54,7 @@
   top: clamp(-140px, -9vw, -65px);
   right: clamp(-165px, -11vw, -75px);
   opacity: .115;
-  background-image: url("/patterns/Z-1.png");
+  background-image: url("/ornaments/sadiq/gold/07-rukn-tr.svg");
 }
 .login-pro-orb-two {
   width: clamp(330px, 39vw, 570px);
@@ -62,7 +62,7 @@
   bottom: clamp(-170px, -12vw, -90px);
   left: clamp(-155px, -10vw, -80px);
   opacity: .09;
-  background-image: url("/patterns/Z-3.png");
+  background-image: url("/ornaments/sadiq/gold/07-rukn-tr.svg");
 }
 .login-pro-shell {
   position:relative; z-index:2; width:min(1120px,100%); min-height:680px;
@@ -474,7 +474,7 @@
   z-index: 0 !important;
   pointer-events: none !important;
   opacity: .055 !important;
-  background-image: url("/patterns/login-pro-a5.png") !important;
+  background-image: url("/ornaments/sadiq/gold/05-wasl.svg") !important;
   background-repeat: repeat !important;
   background-size: 430px auto !important;
   background-position: center !important;
@@ -550,7 +550,7 @@
   z-index: 0 !important;
   pointer-events: none !important;
   opacity: .095 !important;
-  background-image: url("/patterns/login-pro-a5.png") !important;
+  background-image: url("/ornaments/sadiq/gold/05-wasl.svg") !important;
   background-repeat: repeat !important;
   background-size: 360px auto !important;
   mix-blend-mode: screen !important;
@@ -566,7 +566,7 @@
   height: clamp(350px, 36vw, 520px) !important;
   pointer-events: none !important;
   opacity: .23 !important;
-  background-image: url("/patterns/login-pro-a4.png") !important;
+  background-image: url("/ornaments/sadiq/gold/03-falak.svg") !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   background-size: contain !important;
@@ -607,7 +607,7 @@
   inset: -35px !important;
   pointer-events: none !important;
   opacity: .62 !important;
-  background-image: url("/patterns/login-pro-a2.png") !important;
+  background-image: url("/ornaments/sadiq/gold/04-madar.svg") !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   background-size: contain !important;
@@ -717,7 +717,7 @@
   height: 360px !important;
   pointer-events: none !important;
   opacity: .040 !important;
-  background-image: url("/patterns/login-pro-z5.png") !important;
+  background-image: url("/ornaments/sadiq/gold/02-shams.svg") !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   background-size: contain !important;
@@ -930,7 +930,7 @@
   left: clamp(-78px, -4vw, -42px) !important;
   opacity: .075 !important;
   transform: rotate(7deg) !important;
-  background-image: url("/patterns/login-pro-z5.png") !important;
+  background-image: url("/ornaments/sadiq/gold/02-shams.svg") !important;
   filter: none !important;
 }
 
@@ -941,7 +941,7 @@
   bottom: clamp(-56px, -3vw, -24px) !important;
   opacity: .060 !important;
   transform: rotate(-9deg) !important;
-  background-image: url("/patterns/login-pro-a2.png") !important;
+  background-image: url("/ornaments/sadiq/gold/04-madar.svg") !important;
   filter: sepia(.25) saturate(.75) brightness(1.05) !important;
 }
 
@@ -991,7 +991,7 @@
     height: 145px !important;
     z-index: -1 !important;
     opacity: .065 !important;
-    background-image: url("/patterns/login-pro-a2.png") !important;
+    background-image: url("/ornaments/sadiq/gold/04-madar.svg") !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
     background-size: contain !important;

@@ -1,3 +1,4 @@
+import { OrnamentScene } from '../../../components/ornaments/Ornament';
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -157,7 +158,7 @@ export default function TeacherJoinOnboarding({
   return (
     <div className="teacher-dashboard td-onboarding">
       <section className="td-onboarding-hero">
-        <div className="td-pattern" aria-hidden="true" />
+        <OrnamentScene primary="01-noor" />
 
         <div className="td-onboarding-copy">
           <div className="td-hero-kicker">

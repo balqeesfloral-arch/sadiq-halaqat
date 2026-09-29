@@ -11,26 +11,28 @@ export default function PrintFooter() {
     >
 
       <img
-        src="/patterns/Z-5.png"
+        src="/ornaments/sadiq/gold/07-rukn-tr.svg"
         alt=""
         style={{
           position: "absolute",
           right: 0,
+          transform: "scaleY(-1)",
           bottom: 0,
           width: "70px",
-          opacity: 0.12,
+          opacity: 0.22,
         }}
       />
 
       <img
-        src="/patterns/Z-1.png"
+        src="/ornaments/sadiq/gold/07-rukn-tr.svg"
         alt=""
         style={{
           position: "absolute",
           left: 0,
+          transform: "scale(-1)",
           bottom: 0,
           width: "70px",
-          opacity: 0.12,
+          opacity: 0.22,
         }}
       />
 

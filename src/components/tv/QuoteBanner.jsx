@@ -1,6 +1,6 @@
+import Ornament from '../ornaments/Ornament';
 import {
   Quote,
-  Sparkles,
 } from "lucide-react";
 
 export default function QuoteBanner({
@@ -9,7 +9,7 @@ export default function QuoteBanner({
   return (
     <section className="tv-quote">
       <div className="tv-quote__ornament tv-quote__ornament--right">
-        <Sparkles size={19} />
+        <Ornament name="01-noor" />
       </div>
 
       <Quote
@@ -22,14 +22,14 @@ export default function QuoteBanner({
         {quote}
       </p>
 
-      <div className="tv-quote__divider" />
+      <Ornament name="10-ittizan" className="sq-quote-divider" />
 
       <span>
         نفحات قرآنية
       </span>
 
       <div className="tv-quote__ornament tv-quote__ornament--left">
-        <Sparkles size={19} />
+        <Ornament name="01-noor" />
       </div>
     </section>
   );

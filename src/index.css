@@ -138,11 +138,11 @@ button.primary,
 /* SADIQ_A4_GLOBAL_LOADER_START */
 /*
   Global loading identity only.
-  Uses the existing public/patterns/a4.png asset.
+  Uses the existing public/ornaments/sadiq/gold/01-noor.svg asset.
   No page logic, data flow, Supabase calls, or component behavior is changed.
 */
 :root {
-  --sadiq-a4-loader-image: url("/patterns/a4.png");
+  --sadiq-a4-loader-image: url("/ornaments/sadiq/gold/01-noor.svg");
 }
 
 /* Lucide Loader2 / LoaderCircle used across pages and action buttons. */
