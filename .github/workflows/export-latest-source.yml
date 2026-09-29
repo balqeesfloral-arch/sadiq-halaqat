@@ -1,10 +1,6 @@
 name: Export Legendary Sadiq Source
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/export-latest-source.yml"
   workflow_dispatch:
 
 permissions:
@@ -17,20 +13,33 @@ jobs:
 
     steps:
       - name: Checkout latest main
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify production build
-        run: npm run build
+      - name: Verify security and production build
+        run: |
+          npm run security:scan
+          npm run lint
+          npm run build
+          npm run security:csp
+          npm run security:dist
 
       - name: Prepare clean verified source backup
         shell: bash
         run: |
           set -euo pipefail
 
+          VERSION="$(date -u +'%Y.%m.%d-%H%M')"
           ROOT="export/Sadiq-Halaqat-LEGENDARY"
+          ARCHIVE="Sadiq-Halaqat-LEGENDARY-${VERSION}.zip"
           mkdir -p "$ROOT"
 
           rsync -a ./ "$ROOT/" \
@@ -38,46 +47,41 @@ jobs:
             --exclude 'export/' \
             --exclude 'node_modules/' \
             --exclude 'dist/' \
+            --exclude 'security-artifacts/' \
             --exclude '*.keystore' \
             --exclude '*.jks' \
-            --exclude '.env.local' \
-            --exclude '.env.production' \
-            --exclude '.env.development.local' \
-            --exclude '.env.production.local'
+            --exclude '.env' \
+            --exclude '.env.*' \
+            --exclude '.vercel/'
 
-          cat > "$ROOT/BACKUP_INFO.txt" <<EOF
+          cat > "$ROOT/BACKUP_INFO.txt" <<INFO
           Project: الصديق - نظام إدارة الحلقات
           Repository: ${{ github.repository }}
           Branch: main
           Commit: ${{ github.sha }}
           Exported: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          Verification: npm ci + npm run build = SUCCESS
+          Verification: security scan + lint + build + CSP + dist scan = SUCCESS
 
-          Included:
-          - Latest production source from GitHub main
-          - Refined landing design and premium surfaces
-          - Per-student memorized revision scope and cyclic review logic
-          - PWA / background notifications / passkeys
-          - Supabase migrations and Edge Functions
-          - Android/TWA project configuration
-
-          Excluded intentionally:
-          - node_modules and dist
-          - local environment files
-          - Android signing keys
-          - private secrets
-          EOF
+          Security rules:
+          - No environment files
+          - No Android signing keys
+          - No Vercel local credentials
+          - No node_modules or dist
+          - Source maps remain disabled in production
+          INFO
 
           cd export
-          zip -r -9 Sadiq-Halaqat-LEGENDARY-v2026.09.29.zip Sadiq-Halaqat-LEGENDARY >/dev/null
-          sha256sum Sadiq-Halaqat-LEGENDARY-v2026.09.29.zip > SHA256SUMS.txt
+          zip -r -9 "$ARCHIVE" Sadiq-Halaqat-LEGENDARY >/dev/null
+          sha256sum "$ARCHIVE" > SHA256SUMS.txt
+          printf '%s\n' "$ARCHIVE" > ARCHIVE_NAME.txt
 
       - name: Upload verified source backup
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: Sadiq-Halaqat-LEGENDARY-v2026.09.29
+          name: Sadiq-Halaqat-LEGENDARY-${{ github.run_number }}
           path: |
-            export/Sadiq-Halaqat-LEGENDARY-v2026.09.29.zip
+            export/*.zip
             export/SHA256SUMS.txt
+            export/ARCHIVE_NAME.txt
           if-no-files-found: error
           retention-days: 30
