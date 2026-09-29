@@ -4699,7 +4699,7 @@ export default function Recitations() {
         type: "quran",
         payload,
         points: quranPoints,
-        reason: "تسميع القرآن الكريم",
+        reason: "تسميع القرآن",
         afterPersist:
           syncQuranEngineAfterSave,
       });
@@ -4894,7 +4894,7 @@ export default function Recitations() {
           nooraniaPoints,
 
         reason:
-          "تسميع القاعدة النورانية",
+          "تسميع القاعدة",
       });
 
     } finally {
@@ -6070,11 +6070,7 @@ export default function Recitations() {
                   size={14}
                 />
 
-                أنت تعدّل سجلًا
-                موجودًا. يمكنك تعديل
-                التاريخ والتسميع
-                والتقييم والمقادير ثم
-                حفظ التغييرات.
+                تعديل السجل الحالي
               </div>
             )}
 
@@ -6112,13 +6108,15 @@ export default function Recitations() {
                 </div>
               )}
               <FormSection
-                icon={
-                  <GraduationCap
-                    size={16}
-                  />
-                }
+                icon={<GraduationCap size={16} />}
                 title="بيانات الجلسة"
-                subtitle="الحلقة، الطالب والتاريخ"
+                collapsible
+                defaultOpen
+                summary={
+                  commonForm.student_id
+                    ? `${studentName(commonForm.student_id)} • ${formatGregorianDate(commonForm.recitation_date)}`
+                    : "الحلقة • الطالب • التاريخ"
+                }
               >
                 <div
                   className="form-grid three"
@@ -6290,14 +6288,9 @@ export default function Recitations() {
                         <div>
                           <strong>
                             {planSuggestion.interventionType === "pause"
-                              ? "الحفظ موقوف بقرار المعلم"
-                              : "لا يوجد حفظ جديد أثناء التثبيت الكامل"}
+                              ? "الحفظ موقوف"
+                              : "تثبيت بدون حفظ جديد"}
                           </strong>
-                          <span>
-                            {planSuggestion.interventionType === "pause"
-                              ? "لن يولّد النظام درسًا جديدًا حتى إنهاء التدخل."
-                              : "تركّز هذه المرحلة على تثبيت المحفوظ والمراجعة."}
-                          </span>
                         </div>
                       </div>
                     ) : planSuggestion?.generatedLesson && !editing ? (
@@ -6338,9 +6331,7 @@ export default function Recitations() {
                         {completionModes.lesson === "repeat" && (
                           <div className="completion-repeat-note">
                             <RefreshCw size={15} />
-                            <span>
-                              لن يتحرك مؤشر الحفظ؛ سيعاد نفس المطلوب في الجلسة القادمة.
-                            </span>
+                            <span>إعادة نفس المطلوب</span>
                           </div>
                         )}
                       </>
@@ -6401,12 +6392,7 @@ export default function Recitations() {
                       <div className="side-policy-none-state">
                         <ShieldCheck size={16} />
                         <div>
-                          <strong>جنب الدرس متوقف في هذه المرحلة</strong>
-                          <span>
-                            {planSuggestion.interventionType === "pause"
-                              ? "الإيقاف المؤقت يوقف جميع المطلوبات القرآنية."
-                              : "التثبيت الكامل يركّز على المراجعة ولا يولّد جنب درس جديدًا."}
-                          </span>
+                          <strong>جنب الدرس متوقف</strong>
                         </div>
                       </div>
                     ) : planSuggestion?.generatedSideLesson?.start_surah_name && !editing ? (
@@ -6447,7 +6433,7 @@ export default function Recitations() {
                         {completionModes.side1 === "repeat" && (
                           <div className="completion-repeat-note">
                             <RefreshCw size={15} />
-                            <span>سيبقى جنب الدرس نفسه مطلوبًا بحسب نتيجة هذه الجلسة.</span>
+                            <span>إعادة نفس المطلوب</span>
                           </div>
                         )}
                       </>
@@ -6455,8 +6441,7 @@ export default function Recitations() {
                       <div className="side-policy-none-state">
                         <ShieldCheck size={16} />
                         <div>
-                          <strong>لا يوجد جنب درس لهذا الطالب</strong>
-                          <span>يمكن تغييره من سياسة جنب الدرس في الخطة الشهرية.</span>
+                          <strong>لا يوجد جنب درس</strong>
                         </div>
                       </div>
                     ) : (
@@ -6555,8 +6540,7 @@ export default function Recitations() {
                       <div className="side-policy-none-state">
                         <ShieldCheck size={16} />
                         <div>
-                          <strong>المراجعة موقوفة مؤقتًا بقرار المعلم</strong>
-                          <span>عند إنهاء التدخل يعود النظام لتوليد المطلوب من آخر موضع فعلي آمن.</span>
+                          <strong>المراجعة موقوفة مؤقتًا</strong>
                         </div>
                       </div>
                     ) : planSuggestion?.generatedReview && !editing ? (
@@ -6601,9 +6585,7 @@ export default function Recitations() {
                         {completionModes.review === "repeat" && (
                           <div className="completion-repeat-note">
                             <RefreshCw size={15} />
-                            <span>
-                              ستبقى المراجعة نفسها مطلوبة في الجلسة القادمة.
-                            </span>
+                            <span>إعادة نفس المطلوب</span>
                           </div>
                         )}
                       </>
@@ -6653,191 +6635,103 @@ export default function Recitations() {
                   NOORANIA
               ========================================= */}
 
-              {formType ===
-                "noorania" && (
+              {formType === "noorania" && (
                 <>
-                  {/* LESSON */}
-
                   <FormSection
-                    icon={
-                      <LibraryBig
-                        size={16}
-                      />
-                    }
+                    icon={<LibraryBig size={16} />}
                     title="الدرس"
-                    subtitle="الدرس الأساسي في القاعدة النورانية"
+                    collapsible
+                    summary={
+                      nooraniaForm.lesson
+                        ? `${nooraniaForm.lesson}${nooraniaForm.lesson_evaluation ? ` • ${nooraniaForm.lesson_evaluation}` : ""}`
+                        : "اضغط للتسجيل"
+                    }
                   >
-                    <div
-                      className="form-grid two"
-                    >
+                    <div className="form-grid two compact-noorania-grid">
                       <TextField
                         label="الدرس"
                         required
-                        value={
-                          nooraniaForm
-                            .lesson
-                        }
-                        onChange={(
-                          value
-                        ) =>
-                          setNoorania(
-                            "lesson",
-                            value
-                          )
-                        }
+                        value={nooraniaForm.lesson}
+                        onChange={(value) => setNoorania("lesson", value)}
                         placeholder="مثال: الدرس العاشر"
                       />
 
                       <NumberField
-                        label="عدد أوجه التسميع"
+                        label="الأوجه"
                         required
-                        value={
-                          nooraniaForm
-                            .lesson_faces
-                        }
-                        onChange={(
-                          value
-                        ) =>
-                          setNoorania(
-                            "lesson_faces",
-                            value
-                          )
-                        }
+                        value={nooraniaForm.lesson_faces}
+                        onChange={(value) => setNoorania("lesson_faces", value)}
                         min="0"
                         step="0.5"
-                        placeholder="مثال: 2"
+                        placeholder="2"
                         suffix="وجه"
                       />
                     </div>
 
                     <EvaluationSelector
-                      label="تقييم الدرس"
-                      value={
-                        nooraniaForm
-                          .lesson_evaluation
-                      }
-                      onChange={(
-                        value
-                      ) =>
-                        setNoorania(
-                          "lesson_evaluation",
-                          value
-                        )
-                      }
+                      label="التقييم"
+                      value={nooraniaForm.lesson_evaluation}
+                      onChange={(value) => setNoorania("lesson_evaluation", value)}
                     />
                   </FormSection>
 
-                  {/* SIDE LESSON */}
-
                   <FormSection
-                    icon={
-                      <Target
-                        size={16}
-                      />
-                    }
+                    icon={<Target size={16} />}
                     title="جنب الدرس"
-                    subtitle="لا يتم احتساب أوجه لهذا الجزء"
+                    collapsible
+                    summary={
+                      nooraniaForm.side_lesson
+                        ? `${nooraniaForm.side_lesson}${nooraniaForm.side_lesson_evaluation ? ` • ${nooraniaForm.side_lesson_evaluation}` : ""}`
+                        : "بدون"
+                    }
                   >
                     <TextField
                       label="جنب الدرس"
-                      value={
-                        nooraniaForm
-                          .side_lesson
-                      }
-                      onChange={(
-                        value
-                      ) =>
-                        setNoorania(
-                          "side_lesson",
-                          value
-                        )
-                      }
+                      value={nooraniaForm.side_lesson}
+                      onChange={(value) => setNoorania("side_lesson", value)}
                       placeholder="مثال: الدرس التاسع"
                     />
 
                     <EvaluationSelector
-                      label="تقييم جنب الدرس"
-                      value={
-                        nooraniaForm
-                          .side_lesson_evaluation
-                      }
-                      onChange={(
-                        value
-                      ) =>
-                        setNoorania(
-                          "side_lesson_evaluation",
-                          value
-                        )
-                      }
+                      label="التقييم"
+                      value={nooraniaForm.side_lesson_evaluation}
+                      onChange={(value) => setNoorania("side_lesson_evaluation", value)}
                     />
                   </FormSection>
 
-                  {/* REVISION */}
-
                   <FormSection
-                    icon={
-                      <RefreshCw
-                        size={16}
-                      />
-                    }
+                    icon={<RefreshCw size={16} />}
                     title="المراجعة"
-                    subtitle="المادة السابقة التي تمت مراجعتها"
+                    collapsible
+                    summary={
+                      nooraniaForm.revision
+                        ? `${nooraniaForm.revision}${nooraniaForm.revision_evaluation ? ` • ${nooraniaForm.revision_evaluation}` : ""}`
+                        : "اضغط للتسجيل"
+                    }
                   >
-                    <div
-                      className="form-grid two"
-                    >
+                    <div className="form-grid two compact-noorania-grid">
                       <TextField
                         label="المراجعة"
-                        value={
-                          nooraniaForm
-                            .revision
-                        }
-                        onChange={(
-                          value
-                        ) =>
-                          setNoorania(
-                            "revision",
-                            value
-                          )
-                        }
-                        placeholder="مثال: من الدرس الأول إلى الخامس"
+                        value={nooraniaForm.revision}
+                        onChange={(value) => setNoorania("revision", value)}
+                        placeholder="مثال: الدرس الأول إلى الخامس"
                       />
 
                       <NumberField
-                        label="عدد أوجه المراجعة"
-                        value={
-                          nooraniaForm
-                            .revision_faces
-                        }
-                        onChange={(
-                          value
-                        ) =>
-                          setNoorania(
-                            "revision_faces",
-                            value
-                          )
-                        }
+                        label="الأوجه"
+                        value={nooraniaForm.revision_faces}
+                        onChange={(value) => setNoorania("revision_faces", value)}
                         min="0"
                         step="0.5"
-                        placeholder="مثال: 6"
+                        placeholder="6"
                         suffix="وجه"
                       />
                     </div>
 
                     <EvaluationSelector
-                      label="تقييم المراجعة"
-                      value={
-                        nooraniaForm
-                          .revision_evaluation
-                      }
-                      onChange={(
-                        value
-                      ) =>
-                        setNoorania(
-                          "revision_evaluation",
-                          value
-                        )
-                      }
+                      label="التقييم"
+                      value={nooraniaForm.revision_evaluation}
+                      onChange={(value) => setNoorania("revision_evaluation", value)}
                     />
                   </FormSection>
                 </>
@@ -6883,10 +6777,7 @@ export default function Recitations() {
                       : nooraniaPoints}
                   </strong>
 
-                  <small>
-                    تحسب تلقائيًا من
-                    التقييمات
-                  </small>
+                  <small>النقاط</small>
                 </div>
 
                 <details className="recitation-notes-details">
@@ -8109,11 +8000,7 @@ function EvaluationSelector({
                   }
                 </span>
 
-                <small>
-                  {points > 0
-                    ? `+${points}`
-                    : points}
-                </small>
+                <small aria-hidden="true">{points > 0 ? "•" : ""}</small>
               </button>
             );
           }
@@ -11460,6 +11347,238 @@ function PageStyles() {
           .plan-suggestion-icon {
             width: 36px;
             height: 36px;
+          }
+        }
+
+        /* ===== Quiet recitation modal v2 ===== */
+        .recitation-modal {
+          width: min(840px, 100%) !important;
+        }
+
+        .modal-body {
+          padding: calc(12px * var(--app-density,1)) !important;
+        }
+
+        .modal-header {
+          padding: calc(12px * var(--app-density,1)) calc(14px * var(--app-density,1)) !important;
+        }
+
+        .modal-icon {
+          width: 34px !important;
+          height: 34px !important;
+          flex-basis: 34px !important;
+        }
+
+        .modal-heading h2 {
+          font-size: calc(13px * var(--app-font-scale,1)) !important;
+        }
+
+        .form-section {
+          margin-bottom: 8px !important;
+        }
+
+        .compact-form-section-toggle {
+          min-height: 50px !important;
+          grid-template-columns: 30px minmax(0,1fr) auto !important;
+          padding: 8px 10px !important;
+        }
+
+        .compact-form-section .form-section-icon {
+          width: 30px !important;
+          height: 30px !important;
+          flex-basis: 30px !important;
+        }
+
+        .compact-form-section-copy strong {
+          font-size: 10.5px !important;
+        }
+
+        .compact-form-section-copy small {
+          margin-top: 2px !important;
+          font-size: 8px !important;
+        }
+
+        .compact-form-section-body {
+          gap: 8px !important;
+          padding: 9px 10px 10px !important;
+        }
+
+        .field input,
+        .field select {
+          height: 38px !important;
+        }
+
+        .field-label {
+          margin-bottom: 4px !important;
+          font-size: calc(7.5px * var(--app-font-scale,1)) !important;
+        }
+
+        .evaluation-area {
+          margin-top: 8px !important;
+        }
+
+        .evaluation-grid {
+          gap: 5px !important;
+        }
+
+        .evaluation-option {
+          min-height: 34px !important;
+          justify-content: center !important;
+          padding: 0 7px !important;
+          font-size: calc(7.5px * var(--app-font-scale,1)) !important;
+        }
+
+        .evaluation-option small {
+          display: none !important;
+        }
+
+        .planned-quran-task.compact {
+          padding: 8px 9px !important;
+        }
+
+        .planned-quran-task-head > div > span {
+          font-size: 8px !important;
+        }
+
+        .planned-quran-task-head > div > strong {
+          font-size: 10px !important;
+        }
+
+        .planned-quran-speed {
+          min-height: 28px !important;
+          padding: 4px 7px !important;
+          font-size: 8px !important;
+        }
+
+        .completion-status-options.compact .completion-status-btn {
+          min-height: 33px !important;
+        }
+
+        .side-policy-none-state {
+          align-items: center !important;
+          padding: 9px 10px !important;
+          border-radius: 11px !important;
+        }
+
+        .side-policy-none-state span {
+          display: none !important;
+        }
+
+        .side-policy-none-state strong {
+          font-size: 9px !important;
+        }
+
+        .side-policy-live-badge {
+          margin-bottom: 0 !important;
+          padding: 7px 9px !important;
+          font-size: 8.5px !important;
+        }
+
+        .side-policy-live-badge small {
+          display: none !important;
+        }
+
+        .completion-repeat-note {
+          padding: 7px 9px !important;
+          font-size: 8.5px !important;
+        }
+
+        .compact-noorania-grid {
+          gap: 8px !important;
+        }
+
+        .bottom-form-grid {
+          grid-template-columns: 128px minmax(0,1fr) !important;
+          gap: 8px !important;
+          margin-top: 8px !important;
+        }
+
+        .points-preview {
+          min-height: 62px !important;
+          padding: 7px 9px !important;
+          display: grid !important;
+          grid-template-columns: 28px 1fr auto !important;
+          grid-template-rows: auto auto !important;
+          align-items: center !important;
+          justify-content: initial !important;
+          column-gap: 7px !important;
+          border-radius: 12px !important;
+        }
+
+        .points-icon {
+          width: 28px !important;
+          height: 28px !important;
+          margin: 0 !important;
+          grid-row: 1 / 3 !important;
+        }
+
+        .points-preview > span {
+          font-size: 7px !important;
+        }
+
+        .points-preview > strong {
+          margin: 0 !important;
+          grid-row: 1 / 3 !important;
+          grid-column: 3 !important;
+          font-size: calc(17px * var(--app-font-scale,1)) !important;
+        }
+
+        .points-preview > small {
+          margin: 0 !important;
+          font-size: 6px !important;
+        }
+
+        .recitation-notes-details > summary {
+          min-height: 38px !important;
+        }
+
+        .modal-footer {
+          padding: calc(9px * var(--app-density,1)) calc(12px * var(--app-density,1)) !important;
+        }
+
+        .modal-save,
+        .modal-cancel {
+          min-height: 38px !important;
+        }
+
+        @media (max-width: 620px) {
+          .recitation-modal-overlay {
+            padding: 8px !important;
+          }
+
+          .recitation-modal {
+            max-height: calc(100dvh - 16px) !important;
+            border-radius: 18px !important;
+          }
+
+          .modal-body {
+            padding: 9px !important;
+          }
+
+          .form-grid.three {
+            grid-template-columns: 1fr 1fr !important;
+          }
+
+          .form-grid.three > :last-child {
+            grid-column: 1 / -1;
+          }
+
+          .form-grid.two,
+          .compact-noorania-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          .compact-form-section-toggle {
+            min-height: 48px !important;
+          }
+
+          .bottom-form-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          .points-preview {
+            grid-template-columns: 28px 1fr auto !important;
+            min-height: 54px !important;
           }
         }
 
