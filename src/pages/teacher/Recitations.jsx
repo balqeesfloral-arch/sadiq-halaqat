@@ -1,3 +1,5 @@
+import StudentLessonActivity from "../../components/StudentLessonActivity";
+import { learningPolicy } from "../../lib/effectiveLearning";
 // src/pages/teacher/Recitations.jsx
 
 import {
@@ -162,6 +164,8 @@ function nooraniaAmountToPages(value, unit) {
 ========================================================= */
 
 export default function Recitations() {
+  const [learningRevision, setLearningRevision] = useState(0);
+  const [currentLearningPolicy, setCurrentLearningPolicy] = useState(null);
   const {
     showToast,
   } = useToast();
@@ -1529,7 +1533,6 @@ export default function Recitations() {
         `)
         .eq("student_id", Number(commonForm.student_id))
         .eq("halaqa_id", Number(commonForm.halaqa_id))
-        .eq("active", true)
         .lte("effective_from", commonForm.recitation_date)
         .or(`effective_to.is.null,effective_to.gte.${commonForm.recitation_date}`)
         .order("effective_from", { ascending: false })
@@ -1664,13 +1667,17 @@ export default function Recitations() {
         if (error) throw error;
         if (!active) return;
 
+        const policy = await learningPolicy(commonForm.student_id, commonForm.halaqa_id, commonForm.recitation_date);
+        if (!active) return;
+        setCurrentLearningPolicy(policy);
+
         if (!plan) {
           setPlanSuggestion(null);
           return;
         }
 
         const {
-          data: activeIntervention,
+          data: interventionHistory,
           error: interventionError,
         } = await supabase
           .from("student_learning_interventions")
@@ -1689,12 +1696,13 @@ export default function Recitations() {
           `)
           .eq("student_id", Number(commonForm.student_id))
           .eq("halaqa_id", Number(commonForm.halaqa_id))
-          .eq("status", "active")
+          .in("status", ["active", "completed"])
           .lte("start_date", commonForm.recitation_date)
-          .or(`end_date.is.null,end_date.gte.${commonForm.recitation_date}`)
-          .maybeSingle();
+          .order("start_date", { ascending: false }).order("id", { ascending: false });
 
         if (interventionError) throw interventionError;
+        const activeIntervention = (interventionHistory || []).find((item) => !item.end_date ||
+          (item.status === "completed" ? item.end_date > commonForm.recitation_date : item.end_date >= commonForm.recitation_date)) || null;
 
         const student = profiles.find(
           (item) => Number(item.id) === Number(commonForm.student_id)
@@ -1725,10 +1733,10 @@ export default function Recitations() {
         );
 
         const baseMemorizationAmount =
-          plan.memorization_daily_amount ?? memFallback.amount;
+          policy?.lesson_daily_amount ?? plan.memorization_daily_amount ?? memFallback.amount;
 
         const baseMemorizationUnit =
-          plan.memorization_daily_unit || memFallback.unit || "lines";
+          policy?.lesson_daily_unit || plan.memorization_daily_unit || memFallback.unit || "lines";
 
         const baseRevisionAmount =
           plan.revision_daily_amount ?? revFallback.amount;
@@ -1740,6 +1748,7 @@ export default function Recitations() {
           activeIntervention?.intervention_type || null;
 
         const lessonSuppressed =
+          policy?.lesson_enabled === false || Number(baseMemorizationAmount || 0) <= 0 ||
           interventionType === "stabilization_full" ||
           interventionType === "pause";
 
@@ -1774,44 +1783,22 @@ export default function Recitations() {
             ? "stabilization_review"
             : "revision";
 
-        const { data: history, error: historyError } = await supabase
-          .from("recitations")
-          .select(`
-            id,
-            recitation_date,
-            from_surah,
-            from_ayah,
-            to_surah,
-            to_ayah,
-            lesson_evaluation,
-            review_surah,
-            review_from_ayah,
-            review_to_surah,
-            review_to_ayah,
-            review_evaluation
-          `)
-          .eq("student_id", Number(commonForm.student_id))
-          .eq("halaqa_id", Number(commonForm.halaqa_id))
-          .lte("recitation_date", commonForm.recitation_date)
-          .order("recitation_date", { ascending: false })
-          .order("id", { ascending: false })
-          .limit(30);
-
-        if (historyError) throw historyError;
-
-        const previousLesson = (history || []).find(
-          (item) =>
-            item.lesson_evaluation !== "إعادة" &&
-            item.to_surah &&
-            item.to_ayah
-        );
-
-        const previousReview = (history || []).find(
-          (item) =>
-            item.review_evaluation !== "إعادة" &&
-            item.review_to_surah &&
-            item.review_to_ayah
-        );
+        const [lessonHistory, reviewHistory] = await Promise.all([
+          supabase.from("recitations").select("to_surah,to_ayah,recitation_date")
+            .eq("student_id", Number(commonForm.student_id)).eq("halaqa_id", Number(commonForm.halaqa_id))
+            .lte("recitation_date", commonForm.recitation_date).not("to_surah", "is", null).not("to_ayah", "is", null)
+            .or("lesson_evaluation.is.null,lesson_evaluation.neq.إعادة")
+            .order("recitation_date", { ascending: false }).order("id", { ascending: false }).limit(1).maybeSingle(),
+          supabase.from("recitations").select("review_to_surah,review_to_ayah,recitation_date")
+            .eq("student_id", Number(commonForm.student_id)).eq("halaqa_id", Number(commonForm.halaqa_id))
+            .lte("recitation_date", commonForm.recitation_date).not("review_to_surah", "is", null).not("review_to_ayah", "is", null)
+            .or("review_evaluation.is.null,review_evaluation.neq.إعادة")
+            .order("recitation_date", { ascending: false }).order("id", { ascending: false }).limit(1).maybeSingle(),
+        ]);
+        if (lessonHistory.error) throw lessonHistory.error;
+        if (reviewHistory.error) throw reviewHistory.error;
+        const previousLesson = lessonHistory.data;
+        const previousReview = reviewHistory.data;
 
         let lessonStart = {
           surah: plan.memorization_from_surah,
@@ -1831,6 +1818,11 @@ export default function Recitations() {
               ayah: next.ayah,
             };
           }
+        }
+
+        if (policy?.lesson_start_surah && policy?.lesson_start_ayah &&
+          (!previousLesson || previousLesson.recitation_date < policy.lesson_start_date)) {
+          lessonStart = { surah: policy.lesson_start_surah, ayah: Number(policy.lesson_start_ayah) };
         }
 
         const revisionCycleBounds =
@@ -1900,20 +1892,17 @@ export default function Recitations() {
           });
         }
 
-        let generatedSideLesson = null;
-
-        if (generatedLesson) {
-          generatedSideLesson = await rpcOne(
-            "quran_generate_side_lesson_from_policy",
-            {
-              p_student_id: Number(commonForm.student_id),
-              p_halaqa_id: Number(commonForm.halaqa_id),
-              p_lesson_start_surah: generatedLesson.start_surah_name,
-              p_lesson_start_ayah: Number(generatedLesson.start_ayah),
-              p_on_date: commonForm.recitation_date,
-            }
-          );
-        }
+        let generatedSideLesson = interventionType === "pause" ? { side_lesson_mode: "none" } : await rpcOne(
+          "quran_generate_side_lesson_v2", {
+            p_student_id: Number(commonForm.student_id), p_halaqa_id: Number(commonForm.halaqa_id),
+            p_lesson_start_surah: generatedLesson?.start_surah_name || lessonStart.surah || null,
+            p_lesson_start_ayah: Number(generatedLesson?.start_ayah || lessonStart.ayah) || null,
+            p_on_date: commonForm.recitation_date, p_direction: plan.memorization_direction || "forward",
+            p_cycle_direction: plan.revision_direction || "forward", p_force_cycle: lessonSuppressed,
+            p_review_end_surah: generatedReview?.end_surah_name || null, p_review_end_ayah: generatedReview?.end_ayah || null,
+          }
+        );
+        if (generatedSideLesson?.cycle_bounds) generatedSideLesson = decorateCyclicAssignment(generatedSideLesson, generatedSideLesson.cycle_bounds);
 
         if (!active) return;
 
@@ -1950,7 +1939,7 @@ export default function Recitations() {
             next.lesson_amount_type = "";
           }
 
-          if (lessonSuppressed) {
+          if (!generatedSideLesson?.start_surah_name) {
             next.next_surah = "";
             next.next_from_ayah = "";
             next.next_to_surah = "";
@@ -2021,6 +2010,7 @@ export default function Recitations() {
     commonForm.halaqa_id,
     commonForm.recitation_date,
     profiles,
+    learningRevision,
   ]);
 
   /* =====================================================
@@ -2066,12 +2056,12 @@ export default function Recitations() {
             quranForm.to_surah,
             quranForm.to_ayah
           ),
-          metric(
-            quranForm.next_surah,
-            quranForm.next_from_ayah,
-            quranForm.next_to_surah,
-            quranForm.next_to_ayah
-          ),
+          planSuggestion?.generatedSideLesson?.cycle_bounds
+            ? cyclicActualMetrics(planSuggestion.generatedSideLesson, {
+                fromSurah: quranForm.next_surah, fromAyah: quranForm.next_from_ayah,
+                toSurah: quranForm.next_to_surah, toAyah: quranForm.next_to_ayah,
+              }, completionModes.side1)
+            : metric(quranForm.next_surah, quranForm.next_from_ayah, quranForm.next_to_surah, quranForm.next_to_ayah),
           metric(
             quranForm.next2_surah,
             quranForm.next2_from_ayah,
@@ -2130,6 +2120,8 @@ export default function Recitations() {
     quranForm.review_from_ayah,
     quranForm.review_to_surah,
     quranForm.review_to_ayah,
+    planSuggestion?.generatedSideLesson,
+    completionModes.side1,
   ]);
 
   /* =====================================================
@@ -2362,25 +2354,20 @@ export default function Recitations() {
     }
 
     try {
-      const direction = normalizeQuranPlanDirection(
-        planSuggestion?.memorization_direction
-      );
-
-      const rpcName =
-        direction === "backward"
-          ? "quran_generate_reverse_assignment"
-          : "quran_generate_assignment";
-
-      const { data, error } = await supabase.rpc(rpcName, {
-        p_start_surah: generated.start_surah_name,
-        p_start_ayah: Number(generated.start_ayah),
-        p_target_amount: numericAmount,
-        p_target_unit: unit,
-      });
-
-      if (error) throw error;
-
-      const range = Array.isArray(data) ? data[0] || null : data || null;
+      const direction = generated.direction || planSuggestion?.memorization_direction || "forward";
+      let range;
+      if (generated.cycle_bounds) {
+        range = await generateCyclicQuranAssignmentRange({ startSurah: generated.start_surah_name,
+          startAyah: generated.start_ayah, amount: numericAmount, unit, direction, cycleBounds: generated.cycle_bounds });
+      } else {
+        const { data, error } = await supabase.rpc(normalizeQuranPlanDirection(direction) === "backward"
+          ? "quran_generate_reverse_surah_assignment" : "quran_generate_assignment", {
+          p_start_surah: generated.start_surah_name, p_start_ayah: Number(generated.start_ayah),
+          p_target_amount: numericAmount, p_target_unit: unit,
+        });
+        if (error) throw error;
+        range = Array.isArray(data) ? data[0] || null : data || null;
+      }
 
       if (!range?.start_surah_name || !range?.end_surah_name) {
         throw new Error("تعذر حساب مقدار جنب الدرس");
@@ -3622,13 +3609,16 @@ export default function Recitations() {
     }
 
     const { data, error } = await supabase.rpc(
-      "quran_generate_side_lesson_from_policy",
+      "quran_generate_side_lesson_v2",
       {
         p_student_id: Number(studentId),
         p_halaqa_id: Number(halaqaId),
         p_lesson_start_surah: lessonStartSurah,
         p_lesson_start_ayah: Number(lessonStartAyah),
         p_on_date: onDate || getLocalDate(),
+        p_direction: planSuggestion?.memorization_direction || "forward",
+        p_cycle_direction: planSuggestion?.revision_direction || "forward",
+        p_force_cycle: Boolean(planSuggestion?.lessonSuppressed),
       }
     );
 
@@ -3793,7 +3783,7 @@ export default function Recitations() {
       : data || null;
 
     return decorateCyclicAssignment(
-      generated,
+      generated ? { ...generated, direction: normalizeQuranPlanDirection(direction) } : null,
       cycleBounds
     );
   }
@@ -3942,6 +3932,33 @@ export default function Recitations() {
     return derived;
   }
 
+  async function cyclicActualMetrics(generated, actualRange, completionStatus) {
+    if (completionStatus === "exact" && generated.start_surah_name === actualRange.fromSurah &&
+      Number(generated.start_ayah) === Number(actualRange.fromAyah) &&
+      generated.end_surah_name === actualRange.toSurah && Number(generated.end_ayah) === Number(actualRange.toAyah)) {
+      return { quran_lines: Number(generated.quran_lines || 0), faces: Number(generated.faces || 0) };
+    }
+    const bounds = generated.cycle_bounds;
+    const [from, to] = await Promise.all([
+      getQuranPositionInfo(actualRange.fromSurah, actualRange.fromAyah),
+      getQuranPositionInfo(actualRange.toSurah, actualRange.toAyah),
+    ]);
+    if (!from || !to) throw new Error("تعذر تحديد موضع الدورة");
+    const backward = generated.direction === "backward";
+    const before = backward
+      ? Number(to.surah_no) > Number(from.surah_no) || (Number(to.surah_no) === Number(from.surah_no) && Number(to.ayah) < Number(from.ayah))
+      : Number(to.source_id) < Number(from.source_id);
+    if (!before && !(completionStatus === "over" && Number(generated.wrap_count || 0) > 0)) {
+      return getQuranRangeMetrics(actualRange.fromSurah, actualRange.fromAyah, actualRange.toSurah, actualRange.toAyah);
+    }
+    const [tail, head] = await Promise.all([
+      getQuranRangeMetrics(actualRange.fromSurah, actualRange.fromAyah, bounds.endSurah, bounds.endAyah),
+      getQuranRangeMetrics(bounds.startSurah, bounds.startAyah, actualRange.toSurah, actualRange.toAyah),
+    ]);
+    return { quran_lines: Number(tail?.quran_lines || 0) + Number(head?.quran_lines || 0),
+      faces: Number(tail?.faces || 0) + Number(head?.faces || 0) };
+  }
+
   async function buildRecitationSegment({
     recitationRecord,
     segmentType,
@@ -3995,7 +4012,9 @@ export default function Recitations() {
         actualRange.toSurah,
         actualRange.toAyah
       ),
-      Number(effectivePlanned?.wrap_count || 0) > 0 &&
+      effectivePlanned?.cycle_bounds && segmentType === "side_lesson"
+        ? cyclicActualMetrics(effectivePlanned, actualRange, completionStatus)
+        : Number(effectivePlanned?.wrap_count || 0) > 0 &&
       completionStatus === "exact" &&
       String(actualRange.toSurah || "").trim() ===
         String(effectivePlanned.end_surah_name || "").trim() &&
@@ -4328,6 +4347,7 @@ export default function Recitations() {
             actualEndSurah: recitationRecord.next_to_surah,
             actualEndAyah: recitationRecord.next_to_ayah,
             evaluation: recitationRecord.next_evaluation,
+            direction: generatedSideLesson?.direction || planSuggestion?.memorization_direction,
           })
         : null;
 
@@ -4848,6 +4868,7 @@ export default function Recitations() {
           actualEndSurah: quranForm.next_to_surah,
           actualEndAyah: quranForm.next_to_ayah,
           evaluation: quranForm.next_evaluation,
+          direction: planSuggestion.generatedSideLesson?.direction || planSuggestion?.memorization_direction,
         });
       }
 
@@ -6529,6 +6550,11 @@ export default function Recitations() {
 
               {formType === "quran" && (
                 <>
+                  {!editing && planSuggestion && <StudentLessonActivity key={`${commonForm.student_id}-${commonForm.recitation_date}`}
+                    studentId={commonForm.student_id} halaqaId={commonForm.halaqa_id}
+                    policy={currentLearningPolicy} plan={planSuggestion} disabled={saving}
+                    effectiveDate={commonForm.recitation_date}
+                    onSaved={() => setLearningRevision((value) => value + 1)} />}
                   {planSuggestion &&
                     teacherPreferences.recitation_show_monthly_plan !== false && (
                     <div className={`recitation-plan-brief ${planSuggestion.scheduledToday ? "scheduled" : "extra-day"}`}>
@@ -6566,7 +6592,7 @@ export default function Recitations() {
                         <ShieldCheck size={16} />
                         <div>
                           <strong>
-                            {planSuggestion.interventionType === "pause"
+                            {planSuggestion.interventionType === "pause" || currentLearningPolicy?.lesson_enabled === false
                               ? "الحفظ موقوف"
                               : "تثبيت بدون حفظ جديد"}
                           </strong>
@@ -6679,7 +6705,7 @@ export default function Recitations() {
                         <div className="side-policy-live-badge">
                           <ShieldCheck size={15} />
                           <span>{formatSideLessonMode(planSuggestion.generatedSideLesson.side_lesson_mode)}</span>
-                          <small>مولد من سياسة الطالب</small>
+                          <small>{planSuggestion.generatedSideLesson.generated_reason || "مولد من سياسة الطالب"}</small>
                         </div>
 
                         <PlannedQuranTask
@@ -7937,6 +7963,10 @@ function formatInterventionType(type) {
 
 function formatSideLessonMode(mode) {
   switch (mode) {
+    case "adaptive_surah":
+      return "تلقائي حسب تقدم السورة";
+    case "memorized_cycle":
+      return "دورة على كامل المحفوظ";
     case "previous_amount":
       return "مقدار سابق قبل الدرس";
     case "previous_surah":
@@ -7986,7 +8016,7 @@ function PlannedQuranTask({
           <div className="planned-quran-cycle-route">
             <div className="planned-quran-cycle-title">
               <RefreshCw size={13} />
-              <span>المطلوب يلتف داخل دورة المراجعة</span>
+              <span>المطلوب يلتف داخل نطاق المحفوظ</span>
             </div>
 
             {assignment.route_segments.map((segment, index) => (

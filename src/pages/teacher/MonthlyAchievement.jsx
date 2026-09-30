@@ -1,3 +1,4 @@
+import { effectiveMonthlyPlans } from "../../lib/effectiveLearning";
 // src/pages/teacher/MonthlyAchievement.jsx
 
 import {
@@ -1573,7 +1574,8 @@ export default function MonthlyAchievement() {
       if (nooraniaResult.error) throw nooraniaResult.error;
       if (holidaysResult.error) throw holidaysResult.error;
 
-      const planMap = new Map((plansResult.data || []).map((item) => [Number(item.student_id), item]));
+      const effectivePlans = await effectiveMonthlyPlans(plansResult.data || [], selectedHalaqa, period);
+      const planMap = new Map(effectivePlans.map((item) => [Number(item.student_id), item]));
       const attendanceRows = attendanceResult.data || [];
       const nooraniaRows = nooraniaResult.data || [];
       const holidayDates = (holidaysResult.data || [])
@@ -1847,10 +1849,10 @@ export default function MonthlyAchievement() {
                   ? countScheduledSessions(period, recitationDays)
                   : Number(monthlyPlan?.planned_sessions || 0);
 
-              const effectiveScheduledSessions =
+              const effectiveScheduledSessions = monthlyPlan?.planned_sessions ?? (
                 recitationDays.length > 0
                   ? countScheduledSessions(period, recitationDays, holidayDateSet)
-                  : Number(monthlyPlan?.planned_sessions || 0);
+                  : Number(monthlyPlan?.planned_sessions || 0));
 
               const holidaySessions =
                 Math.max(

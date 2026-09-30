@@ -20,6 +20,7 @@ import { Link } from "react-router-dom";
 import StudentPage from "../../components/student/StudentPage";
 import { useStudentPortal } from "../../context/StudentPortalContext";
 import { supabase } from "../../lib/supabase";
+import { effectiveMonthlyPlans } from "../../lib/effectiveLearning";
 import {
   clampPercent,
   facesToPretty,
@@ -135,8 +136,9 @@ export default function StudentDashboard() {
         return sum + Number(row.review_faces || 0);
       }, 0);
 
+      const [effectivePlan] = await effectiveMonthlyPlans(planResult?.data ? [planResult.data] : [], halaqa?.id, period);
       setData({
-        plan: planResult?.data || null,
+        plan: effectivePlan || null,
         progress,
         recitations,
         attendance: attendanceResult?.data || [],

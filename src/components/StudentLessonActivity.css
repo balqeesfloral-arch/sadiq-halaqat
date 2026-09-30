@@ -1,0 +1,10 @@
+.student-lesson-activity{padding:13px 15px;margin:12px 0;background:#f2f7f3;border-radius:16px;color:#244b3d}
+.student-lesson-activity-main{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.student-lesson-activity-main>span{flex:1;min-width:140px}.student-lesson-activity-main strong,.student-lesson-activity-main small{display:block}
+.student-lesson-activity small{font-size:11px;line-height:1.7;color:#687c70}
+.student-lesson-activity button{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 13px;border:0;border-radius:10px;background:#276348;color:#fff;font:inherit;font-size:12px;cursor:pointer}
+.student-lesson-activity button:disabled{opacity:.55;cursor:default}.student-lesson-activity button.lesson-date-toggle{background:transparent;color:#426852;padding-inline:5px}
+.student-lesson-activity-details{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:end}.student-lesson-activity-details label{display:grid;gap:5px;font-size:11px;flex:1;min-width:110px}
+.student-lesson-activity-details input,.student-lesson-activity-details select{width:100%;box-sizing:border-box;min-height:39px;border:1px solid #d9e4dc;border-radius:9px;padding:7px;background:white;color:#244b3d;font:inherit}
+.student-lesson-activity-details>small{flex-basis:100%}
+@media(max-width:480px){.student-lesson-activity-main>span{flex-basis:100%}.student-lesson-activity-details label{min-width:100px}}

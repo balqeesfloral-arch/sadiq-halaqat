@@ -7,6 +7,9 @@ import {
   useState,
 } from "react";
 
+import StudentLessonActivity from "../../components/StudentLessonActivity";
+import { effectiveMonthlyPlans, learningDate, saveLearningPolicy } from "../../lib/effectiveLearning";
+
 import { BadgeCheck, BookOpen, CalendarDays, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Copy, Layers3, Loader2, MessageSquareText, RefreshCw, Save, Search, Send, ShieldCheck, Sparkles, Target, Undo2, UserRound, Users, X } from "lucide-react";
 
 import {
@@ -1185,7 +1188,7 @@ async function applyAutomaticRangeToSnapshot(row, prefix) {
         startAyah: row?.[fromAyahField],
         dailyAmount: row?.[amountField],
         dailyUnit: row?.[unitField],
-        sessions: row?.planned_sessions,
+        sessions: row?.revision_sessions ?? row?.planned_sessions,
       })
     : await generateAutomaticQuranRange({
         direction: row?.[directionField],
@@ -1193,7 +1196,7 @@ async function applyAutomaticRangeToSnapshot(row, prefix) {
         startAyah: row?.[fromAyahField],
         dailyAmount: row?.[amountField],
         dailyUnit: row?.[unitField],
-        sessions: row?.planned_sessions,
+        sessions: row?.memorization_sessions ?? row?.planned_sessions,
       });
 
   if (!generated) {
@@ -2958,7 +2961,8 @@ export default function MonthlyPlan() {
           revision_scope_start_surah, revision_scope_start_ayah,
           revision_scope_end_surah, revision_scope_end_ayah,
           revision_scope_updated_at,
-          effective_from, effective_to, active
+          effective_from, effective_to, active, lesson_enabled, lesson_start_surah, lesson_start_ayah,
+          lesson_daily_amount, lesson_daily_unit, side_lesson_switch_percent, side_lesson_when_paused
         `)
         .eq("halaqa_id", Number(selectedHalaqa))
         .in("student_id", studentIds)
@@ -2969,6 +2973,9 @@ export default function MonthlyPlan() {
       const policyMap = new Map(
         (policyRows || []).map((policy) => [Number(policy.student_id), policy])
       );
+
+      const effectivePlans = await effectiveMonthlyPlans([...planMap.values()], selectedHalaqa, period);
+      const effectiveMap = new Map(effectivePlans.map((plan) => [Number(plan.student_id), plan]));
 
       /* ===========================================
          إجازات الحلقة خلال الشهر
@@ -3241,10 +3248,8 @@ export default function MonthlyPlan() {
                   profile.id
                 );
 
-              const plan =
-                planMap.get(
-                  studentId
-                );
+              const plan = effectiveMap.get(studentId) || planMap.get(studentId);
+              const enrollment = (assignments || []).find((item) => Number(item.student_id) === studentId);
 
               const policy =
                 policyMap.get(studentId) || null;
@@ -3350,10 +3355,12 @@ export default function MonthlyPlan() {
                 الخطط القديمة التي لا تحتوي أيامًا واضحة تبقى على
                 planned_sessions المخزن حفاظًا على التوافق.
               */
-              const plannedSessions =
-                planDays.length > 0
-                  ? effectiveScheduledSessions
-                  : Number(plan?.planned_sessions || 0);
+              const plannedSessions = plan?.planned_sessions ?? (planDays.length > 0
+                ? countScheduledSessions({ start: [period.start, enrollment?.start_date || period.start].sort().at(-1),
+                    end: enrollment?.end_date && enrollment.end_date < period.end ? enrollment.end_date : period.end }, planDays, holidayDateSet)
+                : 0);
+              const memorizationSessions = plan?.memorization_sessions ?? (policy?.lesson_enabled === false ? 0 : plannedSessions);
+              const revisionSessions = plan?.revision_sessions ?? plannedSessions;
 
               const defaultMemTarget =
                 Number(
@@ -3388,12 +3395,10 @@ export default function MonthlyPlan() {
                 );
 
               const memDailyAmount =
-                plan?.memorization_daily_amount ??
-                inferredMem.amount;
+                policy?.lesson_daily_amount ?? plan?.memorization_daily_amount ?? inferredMem.amount;
 
               const memDailyUnit =
-                plan?.memorization_daily_unit ||
-                inferredMem.unit ||
+                policy?.lesson_daily_unit || plan?.memorization_daily_unit || inferredMem.unit ||
                 "lines";
 
               const revDailyAmount =
@@ -3409,14 +3414,14 @@ export default function MonthlyPlan() {
                 monthlyTargetFaces(
                   memDailyAmount,
                   memDailyUnit,
-                  plannedSessions
+                  memorizationSessions
                 );
 
               const calculatedRevTarget =
                 monthlyTargetFaces(
                   revDailyAmount,
                   revDailyUnit,
-                  plannedSessions
+                  revisionSessions
                 );
 
               const nooraniaLive =
@@ -3435,6 +3440,16 @@ export default function MonthlyPlan() {
 
                 student_id:
                   studentId,
+                halaqa_id: Number(selectedHalaqa),
+                learning_policy: policy,
+                lesson_enabled: policy?.lesson_enabled ?? (Number(memDailyAmount || 0) > 0),
+                memorization_sessions: memorizationSessions,
+                revision_sessions: revisionSessions,
+                memorization_expected_percent: plan?.memorization_expected_percent,
+                revision_expected_percent: plan?.revision_expected_percent,
+                side_lesson_switch_percent: policy?.side_lesson_switch_percent ?? 50,
+                side_lesson_when_paused: policy?.side_lesson_when_paused || "keep",
+                policy_effective_from: policy?.id ? learningDate() : [period.start, enrollment?.start_date || period.start].sort().at(-1),
 
                 student_name:
                   profile.full_name ||
@@ -3613,12 +3628,9 @@ export default function MonthlyPlan() {
 
                 memorization_target_faces:
                   Number(
-                    plan?.memorization_from_surah &&
-                    plan?.memorization_from_ayah &&
-                    plan?.memorization_to_surah &&
-                    plan?.memorization_to_ayah
-                      ? Number(plan?.memorization_target_faces || 0)
-                      : (baseMemTarget || calculatedMemTarget || 0)
+                    plan
+                      ? Number(plan.memorization_target_faces ?? 0)
+                      : (policy?.lesson_enabled === false ? 0 : baseMemTarget || calculatedMemTarget || 0)
                   ),
 
                 revision_from_surah:
@@ -3639,11 +3651,8 @@ export default function MonthlyPlan() {
 
                 revision_target_faces:
                   Number(
-                    plan?.revision_from_surah &&
-                    plan?.revision_from_ayah &&
-                    plan?.revision_to_surah &&
-                    plan?.revision_to_ayah
-                      ? Number(plan?.revision_target_faces || 0)
+                    plan
+                      ? Number(plan.revision_target_faces ?? 0)
                       : (baseRevTarget || calculatedRevTarget || 0)
                   ),
 
@@ -3757,7 +3766,7 @@ export default function MonthlyPlan() {
 
           if (currentPlan) {
             // مجرد فتح شهر تاريخي لا يجب أن يعيد حساب الخطة أو يحفظها تلقائيًا.
-            if (!selectedIsCurrentMonth) {
+            if (!selectedIsCurrentMonth || isLockedPlan(row)) {
               return row;
             }
             const sessionsChanged =
@@ -3805,6 +3814,11 @@ export default function MonthlyPlan() {
               next = regenerated;
             }
 
+            const effective = effectiveMap.get(Number(row.student_id));
+            if (effective) {
+              next.memorization_target_faces = effective.memorization_target_faces;
+              next.revision_target_faces = effective.revision_target_faces;
+            }
             return changed
               ? { ...next, dirty: true }
               : next;
@@ -4042,7 +4056,8 @@ export default function MonthlyPlan() {
 
     if (!currentRow) return;
 
-    if (isLockedPlan(currentRow)) {
+    const policyField = /^(side_lesson_|boundary_suggestion_mode$|revision_scope_|policy_effective_from$)/.test(field);
+    if (isLockedPlan(currentRow) && !policyField) {
       showToast(
         "الخطة مقفلة حاليًا ولا يمكن تعديلها",
         "info"
@@ -4066,6 +4081,7 @@ export default function MonthlyPlan() {
       [field]: value,
       dirty: true,
     };
+    if (revisionScopeField) nextSnapshot.revision_scope_updated_at = new Date().toISOString();
 
     if (prefix && ["to_surah", "to_ayah"].includes(part)) {
       nextSnapshot[`${prefix}_auto_range`] = false;
@@ -4089,7 +4105,7 @@ export default function MonthlyPlan() {
         return {
           ...nextSnapshot,
           plan_source:
-            ["notes", "customization_reason"].includes(field)
+            policyField || ["notes", "customization_reason"].includes(field)
               ? row.plan_source
               : "individual",
         };
@@ -4097,9 +4113,8 @@ export default function MonthlyPlan() {
     );
 
     if (revisionScopeField) {
-      nextSnapshot.revision_scope_updated_at = new Date().toISOString();
-
       if (
+        !isLockedPlan(currentRow) &&
         nextSnapshot.revision_auto_range &&
         hasPlanStart(
           nextSnapshot.revision_from_surah,
@@ -4546,86 +4561,43 @@ export default function MonthlyPlan() {
 
   async function saveQuranStudentPolicy(row) {
     if (!isQuranGoal(row.learning_goal)) return;
-
     const mode = row.side_lesson_mode || "none";
-    const needsAmount = mode === "previous_amount";
-
-    if (needsAmount && (Number(row.side_lesson_amount || 0) <= 0 ||
-        !["lines", "faces"].includes(row.side_lesson_unit))) {
+    const needsAmount = ["previous_amount", "memorized_cycle"].includes(mode) || row.side_lesson_when_paused === "memorized_cycle";
+    if (needsAmount && (Number(row.side_lesson_amount || 0) <= 0 || !["lines", "faces"].includes(row.side_lesson_unit))) {
       throw new Error(`حدد مقدار جنب الدرس ووحدته للطالب ${row.student_name}`);
     }
-
-    const payload = {
-      student_id: Number(row.student_id),
-      halaqa_id: Number(selectedHalaqa),
-      teacher_id: Number(teacher.id),
+    const manual = row.revision_scope_mode === "manual";
+    await saveLearningPolicy(row.student_id, selectedHalaqa, {
       side_lesson_mode: mode,
       side_lesson_amount: needsAmount ? Number(row.side_lesson_amount) : null,
-      side_lesson_unit: needsAmount ? (row.side_lesson_unit || "faces") : null,
+      side_lesson_unit: needsAmount ? row.side_lesson_unit : null,
+      side_lesson_switch_percent: Number(row.side_lesson_switch_percent || 50),
+      side_lesson_when_paused: row.side_lesson_when_paused || "keep",
       boundary_suggestion_mode: row.boundary_suggestion_mode || "ayah_and_surah",
-      revision_scope_mode:
-        row.revision_scope_mode === "manual"
-          ? "manual"
-          : "lesson_derived",
-      revision_scope_start_surah:
-        row.revision_scope_mode === "manual"
-          ? textOrNull(row.revision_scope_start_surah)
-          : null,
-      revision_scope_start_ayah:
-        row.revision_scope_mode === "manual"
-          ? numberOrNull(row.revision_scope_start_ayah)
-          : null,
-      revision_scope_end_surah:
-        row.revision_scope_mode === "manual"
-          ? textOrNull(row.revision_scope_end_surah)
-          : null,
-      revision_scope_end_ayah:
-        row.revision_scope_mode === "manual"
-          ? numberOrNull(row.revision_scope_end_ayah)
-          : null,
-      revision_scope_updated_at:
-        row.revision_scope_mode === "manual"
-          ? new Date().toISOString()
-          : null,
-      active: true,
-      effective_to: null,
-      updated_at: new Date().toISOString(),
-    };
+      revision_scope_mode: manual ? "manual" : "lesson_derived",
+      revision_scope_start_surah: manual ? textOrNull(row.revision_scope_start_surah) : null,
+      revision_scope_start_ayah: manual ? numberOrNull(row.revision_scope_start_ayah) : null,
+      revision_scope_end_surah: manual ? textOrNull(row.revision_scope_end_surah) : null,
+      revision_scope_end_ayah: manual ? numberOrNull(row.revision_scope_end_ayah) : null,
+      revision_scope_updated_at: manual ? row.revision_scope_updated_at || null : null,
+      lesson_enabled: row.lesson_enabled,
+      lesson_daily_amount: numberOrNull(row.memorization_daily_amount),
+      lesson_daily_unit: textOrNull(row.memorization_daily_unit),
+    }, row.policy_effective_from || learningDate());
+  }
 
-    if (row.side_lesson_policy_id) {
-      const { error } = await supabase
-        .from("quran_student_policies")
-        .update(payload)
-        .eq("id", Number(row.side_lesson_policy_id));
-      if (error) throw error;
-      return;
+  async function savePolicyRow(studentId) {
+    const row = rows.find((item) => Number(item.student_id) === Number(studentId));
+    if (!row) return;
+    try {
+      await saveQuranStudentPolicy(row);
+      showToast("تم حفظ قاعدة الطالب من التاريخ المحدد", "success");
+      await loadMonthlyPlan();
+    } catch (error) {
+      showToast(String(error?.message || "").includes("MEMORIZED_SCOPE")
+        ? "حدد نطاق المحفوظ لتشغيل الدورة" : error?.message || "تعذر حفظ قاعدة الطالب", "error");
+      throw error;
     }
-
-    const { data: existing, error: existingError } = await supabase
-      .from("quran_student_policies")
-      .select("id")
-      .eq("student_id", Number(row.student_id))
-      .eq("halaqa_id", Number(selectedHalaqa))
-      .eq("active", true)
-      .maybeSingle();
-    if (existingError) throw existingError;
-
-    if (existing?.id) {
-      const { error } = await supabase
-        .from("quran_student_policies")
-        .update(payload)
-        .eq("id", Number(existing.id));
-      if (error) throw error;
-      return;
-    }
-
-    const { error } = await supabase
-      .from("quran_student_policies")
-      .insert({
-        ...payload,
-        effective_from: period?.start || getLocalDate(),
-      });
-    if (error) throw error;
   }
 
   /* =====================================================
@@ -6307,6 +6279,8 @@ export default function MonthlyPlan() {
                 }
                 row={row}
                 period={period}
+                onActivitySaved={loadMonthlyPlan}
+                onPolicySaved={() => savePolicyRow(row.student_id)}
                 showPace={teacherPreferences.plan_show_pace !== false}
                 onChange={(
                   field,
@@ -6356,6 +6330,8 @@ export default function MonthlyPlan() {
 
 function StudentPlanCard({
   row,
+  onActivitySaved,
+  onPolicySaved,
   period,
   showPace = true,
   onChange,
@@ -6377,14 +6353,14 @@ function StudentPlanCard({
     achieved: row.achieved_memorization_faces,
     target: row.memorization_target_faces,
     period,
-    expectedPercent: scheduledExpected,
+    expectedPercent: row.memorization_expected_percent ?? scheduledExpected,
   });
 
   const revision = getPaceInfo({
     achieved: row.achieved_revision_faces,
     target: row.revision_target_faces,
     period,
-    expectedPercent: scheduledExpected,
+    expectedPercent: row.revision_expected_percent ?? scheduledExpected,
   });
 
   function dailyLabel(amount, unit) {
@@ -6579,7 +6555,7 @@ function StudentPlanCard({
                         fieldPrefix="memorization"
                         dailyAmount={row.memorization_daily_amount}
                         dailyUnit={row.memorization_daily_unit}
-                        plannedSessions={row.planned_sessions}
+                        plannedSessions={row.memorization_sessions ?? row.planned_sessions}
                         direction={row.memorization_direction}
                         autoRange={row.memorization_auto_range}
                         generating={row.memorization_generating}
@@ -6605,7 +6581,7 @@ function StudentPlanCard({
                         fieldPrefix="revision"
                         dailyAmount={row.revision_daily_amount}
                         dailyUnit={row.revision_daily_unit}
-                        plannedSessions={row.planned_sessions}
+                        plannedSessions={row.revision_sessions ?? row.planned_sessions}
                         direction={row.revision_direction}
                         autoRange={row.revision_auto_range}
                         generating={row.revision_generating}
@@ -6634,10 +6610,13 @@ function StudentPlanCard({
                       />
                     </div>
 
+                    <StudentLessonActivity studentId={row.student_id} halaqaId={row.halaqa_id}
+                      policy={row.learning_policy} plan={row} onSaved={onActivitySaved} disabled={!row.plan_id} />
                     <SideLessonPolicyEditor
                       row={row}
-                      locked={locked}
+                      locked={false}
                       onChange={onChange}
+                      onSave={onPolicySaved}
                     />
                   </section>
                 )}
@@ -6925,7 +6904,7 @@ function PlanSection({
             <ReviewMemoryScopeEditor
               scope={reviewScope}
               direction={direction}
-              locked={locked}
+              locked={false}
               onChange={onChange}
             />
           )}
@@ -7131,10 +7110,13 @@ function PlanSection({
   );
 }
 
-function SideLessonPolicyEditor({ row, locked, onChange }) {
+function SideLessonPolicyEditor({ row, locked, onChange, onSave }) {
+  const [savingRule, setSavingRule] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const modes = [
+    { value: "adaptive_surah", label: "تلقائي حسب تقدم السورة" },
+    { value: "memorized_cycle", label: "دورة على كامل المحفوظ" },
     { value: "none", label: "بدون" },
     { value: "previous_amount", label: "مقدار سابق" },
     { value: "previous_surah", label: "السورة السابقة" },
@@ -7177,7 +7159,23 @@ function SideLessonPolicyEditor({ row, locked, onChange }) {
             ))}
           </div>
 
-          {row.side_lesson_mode === "previous_amount" && (
+          {row.side_lesson_mode === "adaptive_surah" && (
+            <label className="side-policy-boundary">التبديل إلى بداية السورة عند بلوغ
+              <select value={row.side_lesson_switch_percent || 50} disabled={locked} onChange={(e) => onChange("side_lesson_switch_percent", Number(e.target.value))}>
+                <option value={25}>ربع السورة</option><option value={50}>نصف السورة</option><option value={75}>ثلاثة أرباع السورة</option>
+              </select>
+              <small>يتغير جنب الدرس تلقائيًا حسب الحفظ المعتمد، ثم تتكرر القاعدة مع السورة التالية.</small>
+            </label>
+          )}
+          {row.side_lesson_mode !== "none" && (
+            <label className="side-policy-boundary">عند إيقاف الدرس
+              <select value={row.side_lesson_when_paused || "keep"} disabled={locked} onChange={(e) => onChange("side_lesson_when_paused", e.target.value)}>
+                <option value="keep">استمرار قاعدة جنب الدرس</option><option value="memorized_cycle">دورة على المحفوظ المسجل</option><option value="none">إيقاف جنب الدرس</option>
+              </select>
+              {(row.side_lesson_mode === "memorized_cycle" || row.side_lesson_when_paused === "memorized_cycle") && <small>حدد نطاق المحفوظ في إعداد المراجعة. لكل مسار موضع مستقل.</small>}
+            </label>
+          )}
+          {(["previous_amount", "memorized_cycle"].includes(row.side_lesson_mode) || row.side_lesson_when_paused === "memorized_cycle") && (
             <div className="side-policy-amount compact">
               <div className="daily-amount-control">
                 <input
@@ -7216,6 +7214,14 @@ function SideLessonPolicyEditor({ row, locked, onChange }) {
             </div>
           )}
 
+          <label className="side-policy-boundary">تاريخ سريان القاعدة
+            <input type="date" value={row.policy_effective_from || learningDate()} max={learningDate()} min={row.learning_policy?.effective_from || undefined} disabled={locked} onChange={(e) => onChange("policy_effective_from", e.target.value)} />
+          </label>
+          <button type="button" className="hero-btn save" disabled={savingRule || locked} onClick={async () => {
+            setSavingRule(true);
+            try { await onSave?.(); } catch { /* Parent displays the actionable error. */ }
+            finally { setSavingRule(false); }
+          }}>{savingRule ? <Loader2 size={14} /> : <Save size={14} />} حفظ القاعدة</button>
           <div className="side-policy-boundary compact">
             <label>الحد</label>
             <select

@@ -1,9 +1,10 @@
+import { effectiveMonthlyPlans } from "../../lib/effectiveLearning";
 import { useEffect, useState } from "react";
 import { BookOpen, CalendarDays, CalendarRange, Layers3, RefreshCw, Route, Target } from "lucide-react";
 import StudentPage from "../../components/student/StudentPage";
 import { useStudentPortal } from "../../context/StudentPortalContext";
 import { supabase } from "../../lib/supabase";
-import { facesToPretty, formatDailyAmount, getHijriParts, recitationDaysLabel } from "../../lib/studentPortalUtils";
+import { facesToPretty, formatDailyAmount, getHijriParts, getHijriMonthRange, recitationDaysLabel } from "../../lib/studentPortalUtils";
 import "./StudentPortal.css";
 
 function quranRange(fromSurah, fromAyah, toSurah, toAyah) {
@@ -30,7 +31,8 @@ export default function StudentMonthlyPlan() {
         .eq("student_id", profile.id).eq("halaqa_id", halaqa.id)
         .eq("hijri_year", hijri.year).eq("hijri_month", hijri.month).maybeSingle();
       if (error) throw error;
-      setPlan(data || null);
+      const effective = await effectiveMonthlyPlans(data ? [data] : [], halaqa.id, getHijriMonthRange(hijri.year, hijri.month));
+      setPlan(effective[0] || null);
     } catch (error) {
       console.error("Student monthly plan:", error);
     } finally {

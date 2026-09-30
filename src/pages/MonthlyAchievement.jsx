@@ -1,3 +1,4 @@
+import { effectiveMonthlyPlans } from "../lib/effectiveLearning";
 // src/pages/MonthlyAchievement.jsx
 // Admin Monthly Achievement Intelligence Center
 
@@ -1164,7 +1165,8 @@ export default function MonthlyAchievement() {
       if (attendanceResult.error) throw attendanceResult.error;
       if (nooraniaResult.error) throw nooraniaResult.error;
 
-      const planMap = new Map((plansResult.data || []).map((item) => [Number(item.student_id), item]));
+      const effectivePlans = await effectiveMonthlyPlans(plansResult.data || [], selectedHalaqa, period);
+      const planMap = new Map(effectivePlans.map((item) => [Number(item.student_id), item]));
       const attendanceRows = attendanceResult.data || [];
       const nooraniaRows = nooraniaResult.data || [];
 

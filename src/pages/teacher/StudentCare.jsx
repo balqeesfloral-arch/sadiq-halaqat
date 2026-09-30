@@ -9,6 +9,7 @@ import { AlertTriangle, BadgeCheck, BellRing, BookOpen, CalendarCheck, CheckCirc
 import {
   supabase,
 } from "../../lib/supabase";
+import { effectiveMonthlyPlans } from "../../lib/effectiveLearning";
 
 import {
   useTeacherPreferences,
@@ -742,11 +743,14 @@ function buildAlerts({
 
     const totalTarget = memTarget + revTarget;
     const totalAchieved = achievedMem + achievedRev;
+    const memExpected = Number(plan.memorization_expected_percent ?? expectedPercent);
+    const revExpected = Number(plan.revision_expected_percent ?? expectedPercent);
+    const activeExpected = Math.max(memTarget > 0 ? memExpected : 0, revTarget > 0 ? revExpected : 0);
 
     if (
       totalTarget > 0 &&
       totalAchieved === 0 &&
-      expectedPercent >= 25
+      activeExpected >= 25
     ) {
       alerts.push(
         makeAlert({
@@ -763,7 +767,7 @@ function buildAlerts({
           metrics: [
             {
               label: "المتوقع حتى اليوم",
-              value: `${expectedPercent}%`,
+              value: `${activeExpected}%`,
             },
             {
               label: "المنجز",
@@ -771,7 +775,7 @@ function buildAlerts({
             },
           ],
           payload: {
-            expectedPercent,
+            expectedPercent: activeExpected,
             memTarget,
             revTarget,
             achievedMem,
@@ -784,7 +788,7 @@ function buildAlerts({
     }
 
     if (memTarget > 0) {
-      const memGap = expectedPercent - memPercent;
+      const memGap = memExpected - memPercent;
 
       if (memGap >= planWarningGap) {
         alerts.push(
@@ -808,7 +812,7 @@ function buildAlerts({
               memGap >= planSevereGap
                 ? "تأخر واضح في خطة الحفظ"
                 : "متأخر عن خطة الحفظ",
-            description: `حقق الطالب ${memPercent}% من خطة الحفظ، بينما المتوقع حتى اليوم يقارب ${expectedPercent}%.`,
+            description: `حقق الطالب ${memPercent}% من خطة الحفظ، بينما المتوقع حتى اليوم يقارب ${memExpected}%.`,
             recommendedAction:
               "مراجعة سبب التأخر ومساعدة الطالب على العودة للمسار.",
             metrics: [
@@ -829,7 +833,7 @@ function buildAlerts({
               target: memTarget,
               achieved: achievedMem,
               percent: memPercent,
-              expectedPercent,
+              expectedPercent: memExpected,
             },
           })
         );
@@ -837,7 +841,7 @@ function buildAlerts({
     }
 
     if (revTarget > 0) {
-      const revGap = expectedPercent - revPercent;
+      const revGap = revExpected - revPercent;
 
       if (revGap >= planWarningGap) {
         alerts.push(
@@ -861,7 +865,7 @@ function buildAlerts({
               revGap >= planSevereGap
                 ? "تأخر واضح في خطة المراجعة"
                 : "متأخر عن خطة المراجعة",
-            description: `حقق الطالب ${revPercent}% من خطة المراجعة، بينما المتوقع حتى اليوم يقارب ${expectedPercent}%.`,
+            description: `حقق الطالب ${revPercent}% من خطة المراجعة، بينما المتوقع حتى اليوم يقارب ${revExpected}%.`,
             recommendedAction:
               "مراجعة برنامج المراجعة مع الطالب وتقسيم المتبقي إلى أهداف أقرب.",
             metrics: [
@@ -882,7 +886,7 @@ function buildAlerts({
               target: revTarget,
               achieved: achievedRev,
               percent: revPercent,
-              expectedPercent,
+              expectedPercent: revExpected,
             },
           })
         );
@@ -1316,7 +1320,10 @@ export default function StudentCare() {
       setGuardians(guardianResult.data || []);
       setAttendance(attendanceResult.data || []);
       setRecitations(recitationResult.data || []);
-      setPlans(planResult.data || []);
+      const effectivePlans = await Promise.all(halaqaIds.map((id) => effectiveMonthlyPlans(
+        (planResult.data || []).filter((row) => Number(row.halaqa_id) === Number(id)), id, period
+      )));
+      setPlans(effectivePlans.flat());
       setProgressRows(progressResult.data || []);
       setCareActions(actionResult.data || []);
       setCommunications(communicationResult.data || []);

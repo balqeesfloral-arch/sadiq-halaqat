@@ -1,3 +1,4 @@
+import { effectiveMonthlyPlans } from "../../lib/effectiveLearning";
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, Flag, Layers3, Route, Sparkles, Target } from "lucide-react";
 import StudentPage from "../../components/student/StudentPage";
@@ -56,7 +57,8 @@ export default function StudentMonthlyAchievement() {
       if (progressResult.error) throw progressResult.error;
       if (recitationsResult.error) throw recitationsResult.error;
 
-      const plan = planResult.data || null;
+      const effective = await effectiveMonthlyPlans(planResult.data ? [planResult.data] : [], halaqa.id, period);
+      const plan = effective[0] || null;
       const progress = progressResult.data || null;
       const recitations = recitationsResult.data || [];
       const recitationIds = recitations.map((row) => row.id);
