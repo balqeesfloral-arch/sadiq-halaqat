@@ -48,6 +48,7 @@ import {
   updateReportFilters,
 } from "./reportEngine";
 import "./ReportsCenter.css";
+import { escapeHtml } from "../../utils/htmlSecurity";
 
 const REPORTS = [
   {
@@ -1212,15 +1213,6 @@ function ReportSkeleton() {
       <div className="sk-row" /><div className="sk-row" /><div className="sk-row" />
     </div>
   );
-}
-
-function escapeHtml(value) {
-  return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 const PRINT_CSS = `
