@@ -808,6 +808,71 @@ async function getRevisionCycleBounds({
   };
 }
 
+function buildRevisionCycleRouteSegments({
+  startSurah,
+  startAyah,
+  endSurah,
+  endAyah,
+  cycleBounds,
+  wrapCount = 0,
+}) {
+  if (
+    !hasPlanStart(startSurah, startAyah) ||
+    !hasPlanStart(endSurah, endAyah)
+  ) {
+    return [];
+  }
+
+  const wraps = Number(wrapCount || 0);
+
+  if (!cycleBounds || wraps <= 0) {
+    return [
+      {
+        kind: "single",
+        label: "المسار",
+        fromSurah: startSurah,
+        fromAyah: Number(startAyah),
+        toSurah: endSurah,
+        toAyah: Number(endAyah),
+      },
+    ];
+  }
+
+  const segments = [
+    {
+      kind: "finish_cycle",
+      label: "إكمال الدورة الحالية",
+      fromSurah: startSurah,
+      fromAyah: Number(startAyah),
+      toSurah: cycleBounds.endSurah,
+      toAyah: Number(cycleBounds.endAyah),
+    },
+  ];
+
+  if (wraps > 1) {
+    segments.push({
+      kind: "full_cycles",
+      label: `${wraps - 1} دورة كاملة إضافية`,
+      fromSurah: cycleBounds.startSurah,
+      fromAyah: Number(cycleBounds.startAyah),
+      toSurah: cycleBounds.endSurah,
+      toAyah: Number(cycleBounds.endAyah),
+      repeatCount: wraps - 1,
+    });
+  }
+
+  segments.push({
+    kind: "after_wrap",
+    label: "ثم بعد اللفة",
+    fromSurah: cycleBounds.startSurah,
+    fromAyah: Number(cycleBounds.startAyah),
+    toSurah: endSurah,
+    toAyah: Number(endAyah),
+  });
+
+  return segments;
+}
+
 async function generateAutomaticRevisionRange({
   row,
   direction,
@@ -894,6 +959,14 @@ async function generateAutomaticRevisionRange({
     completed_full_cycles: Number(generated.completed_full_cycles || 0),
     wrap_count: Number(generated.wrap_count || 0),
     cycle_equivalent: Number(generated.cycle_equivalent || 0),
+    route_segments: buildRevisionCycleRouteSegments({
+      startSurah: normalizedStartSurah,
+      startAyah: normalizedStartAyah,
+      endSurah: generated.end_surah_name,
+      endAyah: Number(generated.end_ayah),
+      cycleBounds,
+      wrapCount: Number(generated.wrap_count || 0),
+    }),
   };
 }
 
@@ -1144,6 +1217,7 @@ async function applyAutomaticRangeToSnapshot(row, prefix) {
             revision_cycle_full_count: 0,
             revision_cycle_wrap_count: 0,
             revision_cycle_equivalent: 0,
+            revision_route_segments: [],
           }
         : {}),
     };
@@ -1170,6 +1244,9 @@ async function applyAutomaticRangeToSnapshot(row, prefix) {
           revision_cycle_full_count: Number(generated.completed_full_cycles || 0),
           revision_cycle_wrap_count: Number(generated.wrap_count || 0),
           revision_cycle_equivalent: Number(generated.cycle_equivalent || 0),
+          revision_route_segments: Array.isArray(generated.route_segments)
+            ? generated.route_segments
+            : [],
         }
       : {}),
   };
@@ -3442,6 +3519,9 @@ export default function MonthlyPlan() {
 
                 revision_cycle_equivalent:
                   0,
+
+                revision_route_segments:
+                  [],
 
                 revision_scope_mode:
                   policy?.revision_scope_mode ||
@@ -6549,6 +6629,7 @@ function StudentPlanCard({
                           wrapCount: row.revision_cycle_wrap_count,
                           equivalent: row.revision_cycle_equivalent,
                         }}
+                        routeSegments={row.revision_route_segments}
                         showPace={showPace}
                       />
                     </div>
@@ -6771,6 +6852,7 @@ function PlanSection({
   routeError = "",
   reviewScope = null,
   cycleInfo = null,
+  routeSegments = [],
   showPace = true,
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -6787,15 +6869,31 @@ function PlanSection({
     String(cycleInfo?.endSurah || "").trim() &&
     Number(cycleInfo?.faces || 0) > 0;
 
+  const normalizedRouteSegments =
+    type === "revision" && Array.isArray(routeSegments)
+      ? routeSegments.filter(
+          (segment) =>
+            hasPlanStart(segment?.fromSurah, segment?.fromAyah) &&
+            hasPlanStart(segment?.toSurah, segment?.toAyah)
+        )
+      : [];
+
+  const hasWrappedRoute =
+    type === "revision" &&
+    normalizedRouteSegments.length > 1 &&
+    Number(cycleInfo?.wrapCount || 0) > 0;
+
   const dailyValue = Number(dailyAmount || 0);
   const dailyLabel = dailyValue
     ? `${formatFaces(dailyValue)} ${dailyUnit === "lines" ? "سطر" : "صفحة"}`
     : "غير محدد";
 
   const routeLabel = startComplete
-    ? routeComplete
-      ? `${fromSurah} ${fromAyah} ← ${toSurah} ${toAyah}`
-      : `${fromSurah} ${fromAyah}`
+    ? hasWrappedRoute
+      ? `من ${normalizedRouteSegments[0].fromSurah} ${normalizedRouteSegments[0].fromAyah} إلى ${normalizedRouteSegments[0].toSurah} ${normalizedRouteSegments[0].toAyah} • ثم يلتف`
+      : routeComplete
+        ? `${fromSurah} ${fromAyah} ← ${toSurah} ${toAyah}`
+        : `${fromSurah} ${fromAyah}`
     : "لم يبدأ";
 
   return (
@@ -6959,7 +7057,7 @@ function PlanSection({
             ) : routeComplete ? (
               <>
                 <CheckCircle2 size={14} />
-                <span>النهاية</span>
+                <span>{hasWrappedRoute ? "نقطة التوقف بعد اللفة" : "النهاية"}</span>
                 <strong>{toSurah} {toAyah}</strong>
                 <span className="compact-result-sep">•</span>
                 <strong>{formatPagesAndLines(targetNumber)}</strong>
@@ -6969,12 +7067,45 @@ function PlanSection({
             )}
           </div>
 
+          {hasWrappedRoute && (
+            <div className="compact-cycle-route" aria-label="مسار المراجعة الدوري">
+              <div className="compact-cycle-route-head">
+                <RefreshCw size={14} />
+                <strong>المسار الشهري يلتف تلقائيًا</strong>
+              </div>
+
+              <div className="compact-cycle-route-steps">
+                {normalizedRouteSegments.map((segment, index) => (
+                  <div className="compact-cycle-route-step" key={`${segment.kind || "segment"}-${index}`}>
+                    <span className="compact-cycle-route-index">{index + 1}</span>
+                    <div>
+                      <small>{segment.label}</small>
+                      <strong>
+                        من {segment.fromSurah} {segment.fromAyah}
+                        {" "}إلى{" "}
+                        {segment.toSurah} {segment.toAyah}
+                      </strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="compact-cycle-route-note">
+                عند الوصول إلى {cycleInfo.endSurah} {cycleInfo.endAyah} يبدأ تلقائيًا من {cycleInfo.startSurah} {cycleInfo.startAyah}.
+              </div>
+            </div>
+          )}
+
           {hasCycleInfo && (
             <div className="compact-cycle-line">
               <RefreshCw size={13} />
-              <span>الدورة: {cycleInfo.startSurah} ← {cycleInfo.endSurah}</span>
+              <span>
+                حدود الدورة: من {cycleInfo.startSurah} {cycleInfo.startAyah || 1}
+                {" "}إلى{" "}
+                {cycleInfo.endSurah} {cycleInfo.endAyah}
+              </span>
               {Number(cycleInfo.wrapCount || 0) > 0 && (
-                <strong>{formatReviewCycleCount(cycleInfo.equivalent)}</strong>
+                <strong>↻ {formatReviewCycleCount(cycleInfo.equivalent)}</strong>
               )}
             </div>
           )}
@@ -11587,6 +11718,81 @@ function MonthlyPlanStyles() {
 
         .compact-result-sep {
           opacity: .35;
+        }
+
+        .compact-cycle-route {
+          display: grid;
+          gap: 8px;
+          padding: 10px;
+          border: 1px solid rgba(28, 106, 80, .12);
+          border-radius: 13px;
+          background: linear-gradient(145deg, #f3fbf7, #ffffff);
+          color: #245e4d;
+        }
+
+        .compact-cycle-route-head {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 9px;
+          font-weight: 900;
+        }
+
+        .compact-cycle-route-steps {
+          display: grid;
+          gap: 6px;
+        }
+
+        .compact-cycle-route-step {
+          display: grid;
+          grid-template-columns: 22px minmax(0, 1fr);
+          align-items: center;
+          gap: 7px;
+          padding: 7px 8px;
+          border-radius: 10px;
+          background: rgba(255,255,255,.88);
+          border: 1px solid rgba(28,106,80,.08);
+        }
+
+        .compact-cycle-route-index {
+          width: 22px;
+          height: 22px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: #e6f5ee;
+          color: #17664e;
+          font-size: 9px;
+          font-weight: 950;
+        }
+
+        .compact-cycle-route-step small,
+        .compact-cycle-route-step strong {
+          display: block;
+        }
+
+        .compact-cycle-route-step small {
+          color: #7b8d86;
+          font-size: 8px;
+          font-weight: 800;
+          margin-bottom: 2px;
+        }
+
+        .compact-cycle-route-step strong {
+          color: #174f3f;
+          font-size: 9px;
+          font-weight: 950;
+          line-height: 1.6;
+        }
+
+        .compact-cycle-route-note {
+          padding: 7px 8px;
+          border-radius: 9px;
+          background: #fff9e9;
+          color: #735a1f;
+          font-size: 8px;
+          font-weight: 850;
+          line-height: 1.7;
         }
 
         .compact-cycle-line {
