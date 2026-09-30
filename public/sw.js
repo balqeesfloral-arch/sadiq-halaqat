@@ -1,4 +1,4 @@
-const CACHE_VERSION = "sadiq-pwa-v1-20260929";
+const CACHE_VERSION = "sadiq-pwa-v2-20260930";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -67,20 +67,59 @@ async function networkFirstNavigation(request) {
   }
 }
 
+function isJavaScriptRequest(request, requestUrl) {
+  return (
+    request.destination === "script" ||
+    /\.m?js$/i.test(requestUrl.pathname)
+  );
+}
+
+function hasJavaScriptMime(response) {
+  const contentType = response?.headers?.get("content-type") || "";
+  return /(?:javascript|ecmascript)/i.test(contentType);
+}
+
 async function staleWhileRevalidate(request) {
+  const requestUrl = new URL(request.url);
+  const expectsJavaScript = isJavaScriptRequest(request, requestUrl);
   const cached = await caches.match(request);
+
+  // Never serve an HTML SPA fallback as a JavaScript module. A stale hashed
+  // chunk can disappear after deployment and Vercel may answer with index.html;
+  // caching that response causes the browser MIME-type crash.
+  const safeCached =
+    cached && (!expectsJavaScript || hasJavaScriptMime(cached))
+      ? cached
+      : null;
+
+  if (cached && !safeCached) {
+    const cache = await caches.open(RUNTIME_CACHE);
+    cache.delete(request).catch(() => {});
+  }
 
   const networkPromise = fetch(request)
     .then(async (response) => {
-      if (response && response.ok) {
+      const safeResponse =
+        response &&
+        response.ok &&
+        (!expectsJavaScript || hasJavaScriptMime(response));
+
+      if (safeResponse) {
         const cache = await caches.open(RUNTIME_CACHE);
         cache.put(request, response.clone()).catch(() => {});
+        return response;
       }
+
+      // For scripts, an HTML response is not usable and must never enter cache.
+      if (expectsJavaScript) {
+        return Response.error();
+      }
+
       return response;
     })
     .catch(() => null);
 
-  return cached || networkPromise || Response.error();
+  return safeCached || networkPromise || Response.error();
 }
 
 self.addEventListener("fetch", (event) => {
