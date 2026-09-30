@@ -285,6 +285,18 @@ if (fs.existsSync(vercelPath)) {
       );
     }
 
+    if (/style-src[^;]*'unsafe-inline'/.test(csp)) {
+      add(
+        "low",
+        "CSP",
+        "CSP allows inline styles",
+        "style-src contains 'unsafe-inline'. This is weaker than nonce/hash-only styling, but it does not permit inline JavaScript.",
+        "Prefer CSS classes and bundled styles. Remove style-src 'unsafe-inline' when all runtime inline style attributes can be eliminated safely.",
+        "vercel.json",
+        1
+      );
+    }
+
     for (const directive of ["base-uri", "object-src", "frame-ancestors", "form-action"]) {
       if (!new RegExp(`(?:^|;)\\s*${directive}\\s+`).test(csp)) {
         add(
