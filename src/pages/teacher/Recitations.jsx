@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 
-import { BookOpen, CalendarDays, CheckCircle2, CircleAlert, ChevronDown, ChevronLeft, Clock3, Edit3, FileText, GraduationCap, Layers3, Loader2, MessageSquareText, Plus, Play, RefreshCw, Search, Sparkles, Target, Trash2, Trophy, UserX, X, BookMarked, Hash, Save, LibraryBig, History, ShieldCheck, Building2, Check } from "lucide-react";
+import { BookOpen, CalendarDays, CheckCircle2, CircleAlert, ChevronDown, ChevronLeft, Clock3, Edit3, FileText, GraduationCap, Layers3, Loader2, MessageSquareText, Plus, Play, RefreshCw, Search, Sparkles, Target, Trash2, Trophy, UserX, X, BookMarked, Hash, Save, LibraryBig, History, ShieldCheck, Building2 } from "lucide-react";
 
 import {
   supabase,
@@ -7866,7 +7866,7 @@ function SideLessonAmountOverride({
           onClick={apply}
           disabled={applying || Number(manualAmount || 0) <= 0}
         >
-          {applying ? <Loader2 size={14} className="spin" /> : <Check size={14} />}
+          {applying ? <Loader2 size={14} className="spin" /> : <CheckCircle2 size={14} />}
           <span>تطبيق</span>
         </button>
       </div>
