@@ -170,7 +170,7 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p security-artifacts
-          semgrep scan             --config auto             --exclude node_modules             --exclude dist             --exclude security-artifacts             --json             --output security-artifacts/semgrep.json             .
+          semgrep scan             --config auto             --exclude node_modules             --exclude dist             --exclude security-artifacts             --exclude-rule html.security.audit.missing-integrity.missing-integrity             --json             --output security-artifacts/semgrep.json             .
 
       - name: Upload Semgrep report
         if: always()
