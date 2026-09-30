@@ -101,12 +101,7 @@ begin
   from public.monthly_plans mp
   where mp.student_id = p_student_id
     and mp.halaqa_id = p_halaqa_id
-    and mp.plan_type = 'quran'
-    and mp.active = true
-    and make_date(mp.gregorian_year, mp.gregorian_month, 1)
-        <= coalesce(p_on_date,current_date)
-    and (make_date(mp.gregorian_year, mp.gregorian_month, 1) + interval '1 month - 1 day')::date
-        >= coalesce(p_on_date,current_date)
+    and date_trunc('month', mp.plan_month::date) = date_trunc('month', coalesce(p_on_date,current_date)::date)
   order by mp.updated_at desc nulls last, mp.id desc
   limit 1;
 
