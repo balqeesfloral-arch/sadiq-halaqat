@@ -17,6 +17,7 @@ import {
 } from "../../components/Toast";
 
 import * as XLSX from "xlsx";
+import { escapeHtml } from "../../utils/htmlSecurity";
 
 /* =========================================================
    الشهور الهجرية
@@ -640,34 +641,6 @@ function formatGregorianDate(
   } catch {
     return value;
   }
-}
-
-function escapeHtml(
-  value
-) {
-  return String(
-    value ?? ""
-  )
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
 }
 
 /* =========================================================
