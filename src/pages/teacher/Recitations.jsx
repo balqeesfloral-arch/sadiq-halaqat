@@ -2321,6 +2321,79 @@ export default function Recitations() {
     );
   }
 
+  async function customizeGeneratedSideLessonAmount(amount, unit) {
+    const generated = planSuggestion?.generatedSideLesson;
+
+    if (!generated?.start_surah_name || !generated?.start_ayah) {
+      return;
+    }
+
+    const numericAmount = Number(amount || 0);
+
+    if (numericAmount <= 0 || !["lines", "faces"].includes(unit)) {
+      return;
+    }
+
+    try {
+      const direction = normalizeQuranPlanDirection(
+        planSuggestion?.memorization_direction
+      );
+
+      const rpcName =
+        direction === "backward"
+          ? "quran_generate_reverse_assignment"
+          : "quran_generate_assignment";
+
+      const { data, error } = await supabase.rpc(rpcName, {
+        p_start_surah: generated.start_surah_name,
+        p_start_ayah: Number(generated.start_ayah),
+        p_target_amount: numericAmount,
+        p_target_unit: unit,
+      });
+
+      if (error) throw error;
+
+      const range = Array.isArray(data) ? data[0] || null : data || null;
+
+      if (!range?.start_surah_name || !range?.end_surah_name) {
+        throw new Error("تعذر حساب مقدار جنب الدرس");
+      }
+
+      const customized = {
+        ...generated,
+        ...range,
+        side_lesson_amount: numericAmount,
+        side_lesson_unit: unit,
+        manual_amount_override: true,
+      };
+
+      setPlanSuggestion((current) =>
+        current
+          ? {
+              ...current,
+              generatedSideLesson: customized,
+            }
+          : current
+      );
+
+      setQuranForm((current) => ({
+        ...current,
+        next_surah: customized.start_surah_name,
+        next_from_ayah: String(customized.start_ayah),
+        next_to_surah: customized.end_surah_name,
+        next_to_ayah: String(customized.end_ayah),
+      }));
+
+      setCompletionModes((current) => ({
+        ...current,
+        side1: "exact",
+      }));
+    } catch (error) {
+      console.error("CUSTOM SIDE LESSON AMOUNT:", error);
+      showToast(error?.message || "تعذر تعديل مقدار جنب الدرس", "error");
+    }
+  }
+
   function setTrackCompletion(
     track,
     mode
@@ -6459,6 +6532,19 @@ export default function Recitations() {
                           }
                         />
 
+                        <SideLessonAmountOverride
+                          amount={
+                            planSuggestion.generatedSideLesson.side_lesson_amount ??
+                            planSuggestion.generatedSideLesson.faces ??
+                            ""
+                          }
+                          unit={
+                            planSuggestion.generatedSideLesson.side_lesson_unit ||
+                            (planSuggestion.generatedSideLesson.faces ? "faces" : "lines")
+                          }
+                          onApply={customizeGeneratedSideLessonAmount}
+                        />
+
                         <CompletionStatusSelector
                           value={completionModes.side1}
                           onChange={(value) => setTrackCompletion("side1", value)}
@@ -7717,6 +7803,72 @@ function PlannedQuranTask({
             <span>{amountText}</span>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function SideLessonAmountOverride({
+  amount,
+  unit,
+  onApply,
+}) {
+  const [manualAmount, setManualAmount] = useState(String(amount ?? ""));
+  const [manualUnit, setManualUnit] = useState(unit || "lines");
+  const [applying, setApplying] = useState(false);
+
+  useEffect(() => {
+    setManualAmount(String(amount ?? ""));
+    setManualUnit(unit || "lines");
+  }, [amount, unit]);
+
+  async function apply() {
+    if (Number(manualAmount || 0) <= 0 || applying) return;
+
+    setApplying(true);
+    try {
+      await onApply(Number(manualAmount), manualUnit);
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  return (
+    <div className="side-lesson-manual-amount">
+      <div className="side-lesson-manual-title">
+        <Edit3 size={14} />
+        <span>تعديل المقدار يدويًا</span>
+      </div>
+
+      <div className="side-lesson-manual-controls">
+        <NumberField
+          label="المقدار"
+          value={manualAmount}
+          onChange={setManualAmount}
+          min="1"
+          step={manualUnit === "faces" ? "0.25" : "1"}
+          placeholder="المقدار"
+        />
+
+        <SelectField
+          label="الوحدة"
+          value={manualUnit}
+          onChange={setManualUnit}
+          options={[
+            { value: "lines", label: "أسطر" },
+            { value: "faces", label: "صفحات" },
+          ]}
+        />
+
+        <button
+          type="button"
+          className="side-lesson-manual-apply"
+          onClick={apply}
+          disabled={applying || Number(manualAmount || 0) <= 0}
+        >
+          {applying ? <Loader2 size={14} className="spin" /> : <Check size={14} />}
+          <span>تطبيق</span>
+        </button>
       </div>
     </div>
   );
@@ -11564,6 +11716,63 @@ function PageStyles() {
 
         .side-policy-none-state strong {
           font-size: 9px !important;
+        }
+
+        .side-lesson-manual-amount {
+          margin-top: 10px;
+          padding: 12px;
+          border: 1px solid rgba(24, 96, 78, .12);
+          border-radius: 18px;
+          background: linear-gradient(145deg, rgba(248,252,250,.96), rgba(255,255,255,.98));
+        }
+
+        .side-lesson-manual-title {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          margin-bottom: 10px;
+          color: #315e52;
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .side-lesson-manual-controls {
+          display: grid;
+          grid-template-columns: minmax(90px,.8fr) minmax(110px,1fr) auto;
+          gap: 8px;
+          align-items: end;
+        }
+
+        .side-lesson-manual-apply {
+          min-height: 44px;
+          padding: 0 14px;
+          border: 1px solid rgba(18,101,78,.14);
+          border-radius: 13px;
+          background: #edf7f3;
+          color: #17654f;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          font: inherit;
+          font-size: 11px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .side-lesson-manual-apply:disabled {
+          opacity: .55;
+          cursor: not-allowed;
+        }
+
+        @media (max-width: 620px) {
+          .side-lesson-manual-controls {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .side-lesson-manual-apply {
+            grid-column: 1 / -1;
+          }
         }
 
         .side-policy-live-badge {
