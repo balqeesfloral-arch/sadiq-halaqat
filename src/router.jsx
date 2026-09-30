@@ -24,7 +24,9 @@ function lazyWithRetry(importer) {
         /Failed to fetch dynamically imported module/i.test(message) ||
         /Importing a module script failed/i.test(message) ||
         /Loading chunk/i.test(message) ||
-        /dynamically imported module/i.test(message);
+        /dynamically imported module/i.test(message) ||
+        /MIME type/i.test(message) ||
+        /valid JavaScript MIME type/i.test(message);
 
       if (isChunkLoadError && typeof window !== "undefined") {
         const lastReload = Number(
