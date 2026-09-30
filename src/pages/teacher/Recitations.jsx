@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 
-import { BookOpen, CalendarDays, CheckCircle2, CircleAlert, ChevronDown, ChevronLeft, Clock3, Edit3, FileText, GraduationCap, Layers3, Loader2, MessageSquareText, Plus, Play, RefreshCw, Search, Sparkles, Target, Trash2, Trophy, UserX, X, BookMarked, Hash, Save, LibraryBig, History, ShieldCheck, Building2 } from "lucide-react";
+import { BookOpen, CalendarDays, CheckCircle2, CircleAlert, ChevronDown, ChevronLeft, Clock3, Edit3, FileText, GraduationCap, Layers3, Loader2, MessageSquareText, Plus, Play, RefreshCw, Search, Sparkles, Target, Trash2, Trophy, UserX, X, BookMarked, Hash, Save, LibraryBig, History, ShieldCheck, Building2, Check } from "lucide-react";
 
 import {
   supabase,
