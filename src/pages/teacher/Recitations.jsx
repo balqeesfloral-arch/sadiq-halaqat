@@ -1514,10 +1514,47 @@ export default function Recitations() {
     }
 
     async function getRevisionCycleBounds(plan) {
+      if (!plan?.revision_auto_range) {
+        return null;
+      }
+
+      const { data: policy, error: policyError } = await supabase
+        .from("quran_student_policies")
+        .select(`
+          revision_scope_mode,
+          revision_scope_start_surah,
+          revision_scope_start_ayah,
+          revision_scope_end_surah,
+          revision_scope_end_ayah
+        `)
+        .eq("student_id", Number(commonForm.student_id))
+        .eq("halaqa_id", Number(commonForm.halaqa_id))
+        .eq("active", true)
+        .lte("effective_from", commonForm.recitation_date)
+        .or(`effective_to.is.null,effective_to.gte.${commonForm.recitation_date}`)
+        .order("effective_from", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (policyError) throw policyError;
+
       if (
-        !plan?.revision_auto_range ||
-        !plan?.memorization_from_surah
+        policy?.revision_scope_mode === "manual" &&
+        policy.revision_scope_start_surah &&
+        Number(policy.revision_scope_start_ayah || 0) > 0 &&
+        policy.revision_scope_end_surah &&
+        Number(policy.revision_scope_end_ayah || 0) > 0
       ) {
+        return {
+          startSurah: policy.revision_scope_start_surah,
+          startAyah: Number(policy.revision_scope_start_ayah),
+          endSurah: policy.revision_scope_end_surah,
+          endAyah: Number(policy.revision_scope_end_ayah),
+          source: "manual",
+        };
+      }
+
+      if (!plan?.memorization_from_surah) {
         return null;
       }
 
@@ -1538,6 +1575,7 @@ export default function Recitations() {
         startAyah: Number(bounds.cycle_start_ayah),
         endSurah: bounds.cycle_end_surah_name,
         endAyah: Number(bounds.cycle_end_ayah),
+        source: "lesson_derived",
       };
     }
 
@@ -1558,24 +1596,13 @@ export default function Recitations() {
       }
 
       if (cycleBounds) {
-        const normalizedStart =
-          await normalizeQuranPositionToCycle({
-            surah: startSurah,
-            ayah: startAyah,
-            direction: plan?.revision_direction,
-            cycleBounds,
-          });
-
-        return generateRange({
-          startSurah:
-            normalizedStart?.surah || cycleBounds.startSurah,
-          startAyah:
-            normalizedStart?.ayah || cycleBounds.startAyah,
+        return generateCyclicQuranAssignmentRange({
+          startSurah,
+          startAyah,
           amount,
           unit,
-          limitSurah: cycleBounds.endSurah,
-          limitAyah: cycleBounds.endAyah,
           direction: plan?.revision_direction,
+          cycleBounds,
         });
       }
 
@@ -3679,6 +3706,98 @@ export default function Recitations() {
       : data || null;
   }
 
+  function decorateCyclicAssignment(generated, cycleBounds) {
+    if (!generated) return null;
+
+    const wraps = Number(generated.wrap_count || 0);
+    const segments = [];
+
+    if (wraps > 0) {
+      segments.push({
+        kind: "finish_cycle",
+        label: "إكمال الدورة الحالية",
+        fromSurah: generated.start_surah_name,
+        fromAyah: Number(generated.start_ayah),
+        toSurah: cycleBounds.endSurah,
+        toAyah: Number(cycleBounds.endAyah),
+      });
+
+      if (wraps > 1) {
+        segments.push({
+          kind: "full_cycles",
+          label: `${wraps - 1} دورة كاملة إضافية`,
+          fromSurah: cycleBounds.startSurah,
+          fromAyah: Number(cycleBounds.startAyah),
+          toSurah: cycleBounds.endSurah,
+          toAyah: Number(cycleBounds.endAyah),
+          repeatCount: wraps - 1,
+        });
+      }
+
+      segments.push({
+        kind: "after_wrap",
+        label: "ثم بعد اللفة",
+        fromSurah: cycleBounds.startSurah,
+        fromAyah: Number(cycleBounds.startAyah),
+        toSurah: generated.end_surah_name,
+        toAyah: Number(generated.end_ayah),
+      });
+    }
+
+    return {
+      ...generated,
+      route_segments: segments,
+      cycle_bounds: cycleBounds,
+    };
+  }
+
+  async function generateCyclicQuranAssignmentRange({
+    startSurah,
+    startAyah,
+    amount,
+    unit,
+    direction = "forward",
+    cycleBounds,
+  }) {
+    if (
+      !startSurah ||
+      !startAyah ||
+      Number(amount || 0) <= 0 ||
+      !cycleBounds?.startSurah ||
+      !cycleBounds?.startAyah ||
+      !cycleBounds?.endSurah ||
+      !cycleBounds?.endAyah
+    ) {
+      return null;
+    }
+
+    const { data, error } = await supabase.rpc(
+      "quran_generate_cyclic_assignment",
+      {
+        p_start_surah: startSurah,
+        p_start_ayah: Number(startAyah),
+        p_cycle_start_surah: cycleBounds.startSurah,
+        p_cycle_start_ayah: Number(cycleBounds.startAyah),
+        p_cycle_end_surah: cycleBounds.endSurah,
+        p_cycle_end_ayah: Number(cycleBounds.endAyah),
+        p_direction: normalizeQuranPlanDirection(direction),
+        p_target_amount: Number(amount),
+        p_target_unit: unit || "lines",
+      }
+    );
+
+    if (error) throw error;
+
+    const generated = Array.isArray(data)
+      ? data[0] || null
+      : data || null;
+
+    return decorateCyclicAssignment(
+      generated,
+      cycleBounds
+    );
+  }
+
   async function resolveGeneratedCompletion({
     track,
     generated,
@@ -3725,6 +3844,35 @@ export default function Recitations() {
     const normalizedDirection =
       normalizeQuranPlanDirection(direction);
 
+    const selected =
+      completionModes[track] || "exact";
+
+    const plannedEndMatchesActual =
+      Number(plannedEnd.source_id || 0) ===
+      Number(actualEnd.source_id || 0);
+
+    if (Number(generated?.wrap_count || 0) > 0) {
+      if (plannedEndMatchesActual) {
+        if (selected === "under" || selected === "over") {
+          throw new Error(
+            selected === "under"
+              ? "اختر نهاية فعلية قبل نهاية المطلوب لأنك حددت «أقل»"
+              : "اختر نهاية فعلية بعد نهاية المطلوب لأنك حددت «أكثر»"
+          );
+        }
+
+        return "exact";
+      }
+
+      if (selected === "under" || selected === "over") {
+        return selected;
+      }
+
+      throw new Error(
+        "في حالة «أتم» يجب أن تكون النهاية الفعلية هي نهاية المطلوب بعد إكمال اللفة"
+      );
+    }
+
     const compareRoute = (left, right) => {
       if (normalizedDirection === "backward") {
         const leftSurah = Number(left.surah_no || 0);
@@ -3763,9 +3911,6 @@ export default function Recitations() {
         : actualVsPlannedEnd < 0
           ? "under"
           : "over";
-
-    const selected =
-      completionModes[track] || "exact";
 
     if (
       selected === "under" &&
@@ -3850,12 +3995,22 @@ export default function Recitations() {
         actualRange.toSurah,
         actualRange.toAyah
       ),
-      getQuranRangeMetrics(
-        actualRange.fromSurah,
-        actualRange.fromAyah,
-        actualRange.toSurah,
-        actualRange.toAyah
-      ),
+      Number(effectivePlanned?.wrap_count || 0) > 0 &&
+      completionStatus === "exact" &&
+      String(actualRange.toSurah || "").trim() ===
+        String(effectivePlanned.end_surah_name || "").trim() &&
+      Number(actualRange.toAyah || 0) ===
+        Number(effectivePlanned.end_ayah || 0)
+        ? Promise.resolve({
+            quran_lines: Number(effectivePlanned.quran_lines || 0),
+            faces: Number(effectivePlanned.faces || 0),
+          })
+        : getQuranRangeMetrics(
+            actualRange.fromSurah,
+            actualRange.fromAyah,
+            actualRange.toSurah,
+            actualRange.toAyah
+          ),
     ]);
 
     if (
@@ -3986,17 +4141,24 @@ export default function Recitations() {
         };
       }
 
-      nextRange = await generateQuranAssignmentRange({
-        startSurah: nextStart.surah_name,
-        startAyah: nextStart.ayah,
-        amount,
-        unit,
-        limitSurah:
-          cycleBounds?.endSurah || planEndSurah,
-        limitAyah:
-          cycleBounds?.endAyah || planEndAyah,
-        direction,
-      });
+      nextRange = cycleBounds
+        ? await generateCyclicQuranAssignmentRange({
+            startSurah: nextStart.surah_name,
+            startAyah: nextStart.ayah,
+            amount,
+            unit,
+            direction,
+            cycleBounds,
+          })
+        : await generateQuranAssignmentRange({
+            startSurah: nextStart.surah_name,
+            startAyah: nextStart.ayah,
+            amount,
+            unit,
+            limitSurah: planEndSurah,
+            limitAyah: planEndAyah,
+            direction,
+          });
     }
 
     if (!nextRange) {
@@ -7818,6 +7980,27 @@ function PlannedQuranTask({
           </div>
         )}
       </div>
+
+      {Array.isArray(assignment.route_segments) &&
+        assignment.route_segments.length > 1 && (
+          <div className="planned-quran-cycle-route">
+            <div className="planned-quran-cycle-title">
+              <RefreshCw size={13} />
+              <span>المطلوب يلتف داخل دورة المراجعة</span>
+            </div>
+
+            {assignment.route_segments.map((segment, index) => (
+              <div className="planned-quran-cycle-step" key={`${segment.kind || "route"}-${index}`}>
+                <b>{index + 1}</b>
+                <span>
+                  {segment.label}: من {segment.fromSurah} {segment.fromAyah}
+                  {" "}إلى{" "}
+                  {segment.toSurah} {segment.toAyah}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
     </div>
   );
 }
@@ -11706,6 +11889,50 @@ function PageStyles() {
 
         .planned-quran-task-head > div > strong {
           font-size: 10px !important;
+        }
+
+        .planned-quran-cycle-route {
+          display: grid;
+          gap: 6px;
+          margin-top: 9px;
+          padding: 9px;
+          border-radius: 12px;
+          background: linear-gradient(145deg, rgba(235,248,242,.9), rgba(255,255,255,.96));
+          border: 1px solid rgba(20,122,94,.1);
+        }
+
+        .planned-quran-cycle-title {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: #1b6550;
+          font-size: 9px;
+          font-weight: 950;
+        }
+
+        .planned-quran-cycle-step {
+          display: grid;
+          grid-template-columns: 20px minmax(0,1fr);
+          align-items: center;
+          gap: 7px;
+          padding: 6px 7px;
+          border-radius: 9px;
+          background: rgba(255,255,255,.82);
+          color: #48675e;
+          font-size: 8.5px;
+          font-weight: 850;
+          line-height: 1.6;
+        }
+
+        .planned-quran-cycle-step b {
+          width: 20px;
+          height: 20px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: #e5f5ed;
+          color: #17664e;
+          font-size: 8px;
         }
 
         .planned-quran-speed {
