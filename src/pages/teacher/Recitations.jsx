@@ -6551,13 +6551,27 @@ export default function Recitations() {
                         />
 
                         {(completionModes.side1 === "under" || completionModes.side1 === "over") && (
-                          <QuranActualEndEditor
-                            label={completionModes.side1 === "under" ? "آخر موضع وصل إليه في جنب الدرس" : "آخر موضع زاد إليه في جنب الدرس"}
-                            toSurah={quranForm.next_to_surah}
-                            toAyah={quranForm.next_to_ayah}
-                            onToSurah={(value) => setQuran("next_to_surah", value)}
-                            onToAyah={(value) => setQuran("next_to_ayah", value)}
-                          />
+                          <div className="side-lesson-full-range-edit">
+                            <div className="side-lesson-manual-title">
+                              <Edit3 size={14} />
+                              <span>
+                                {completionModes.side1 === "under"
+                                  ? "تعديل نطاق جنب الدرس الفعلي"
+                                  : "تعديل نطاق جنب الدرس بعد الزيادة"}
+                              </span>
+                            </div>
+
+                            <QuranRangeEditor
+                              fromSurah={quranForm.next_surah}
+                              fromAyah={quranForm.next_from_ayah}
+                              toSurah={quranForm.next_to_surah}
+                              toAyah={quranForm.next_to_ayah}
+                              onFromSurah={(value) => setQuran("next_surah", value)}
+                              onFromAyah={(value) => setQuran("next_from_ayah", value)}
+                              onToSurah={(value) => setQuran("next_to_surah", value)}
+                              onToAyah={(value) => setQuran("next_to_ayah", value)}
+                            />
+                          </div>
                         )}
 
                         {completionModes.side1 === "repeat" && (
@@ -11716,6 +11730,14 @@ function PageStyles() {
 
         .side-policy-none-state strong {
           font-size: 9px !important;
+        }
+
+        .side-lesson-full-range-edit {
+          margin-top: 10px;
+          padding: 12px;
+          border: 1px solid rgba(24, 96, 78, .12);
+          border-radius: 18px;
+          background: rgba(250, 252, 251, .92);
         }
 
         .side-lesson-manual-amount {
