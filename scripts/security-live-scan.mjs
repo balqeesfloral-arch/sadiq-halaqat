@@ -99,6 +99,17 @@ if (root) {
     );
   }
 
+  if (/style-src[^;]*'unsafe-inline'/.test(csp)) {
+    add(
+      "low",
+      "CSP",
+      "Live CSP permits inline CSS styles",
+      "The deployed style-src includes the inline-style allowance; script-src remains evaluated separately.",
+      "Prefer bundled CSS classes and remove the inline-style allowance after runtime style attributes are eliminated safely.",
+      TARGET
+    );
+  }
+
   const rootHash = hashText(root.text);
   const sensitivePaths = [
     "/.env",
