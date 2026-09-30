@@ -5599,50 +5599,6 @@ export default function MonthlyPlan() {
             </span>
           </button>
 
-          <div className={`autosave-chip ${autoSaving ? "saving" : ""}`}>
-            {autoSaving ? (
-              <Loader2 size={14} className="spin" />
-            ) : (
-              <Save size={14} />
-            )}
-            <span>
-              {autoSaving
-                ? "حفظ تلقائي..."
-                : lastAutoSavedAt
-                  ? "تم الحفظ تلقائيًا"
-                  : "الحفظ التلقائي مفعّل"}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            className="hero-btn save"
-            onClick={() =>
-              saveAll()
-            }
-            disabled={
-              saving ||
-              autoSaving ||
-              loading ||
-              hasPendingRouteGeneration
-            }
-          >
-            {saving ? (
-              <Loader2
-                size={16}
-                className="spin"
-              />
-            ) : (
-              <Save
-                size={16}
-              />
-            )}
-
-            <span>
-              حفظ الآن
-            </span>
-          </button>
-
           <button
             type="button"
             className="hero-btn submit"
@@ -5701,6 +5657,25 @@ export default function MonthlyPlan() {
               </span>
             </button>
           )}
+        </div>
+
+        <div
+          className={`plan-autosave-note ${autoSaving ? "saving" : ""}`}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="plan-autosave-line" aria-hidden="true" />
+          <span className="plan-autosave-dot" aria-hidden="true">
+            {autoSaving ? <Loader2 size={12} className="spin" /> : <CheckCircle2 size={12} />}
+          </span>
+          <span>
+            {autoSaving
+              ? "يتم الحفظ تلقائيًا..."
+              : lastAutoSavedAt
+                ? "تم الحفظ تلقائيًا"
+                : "يتم الحفظ تلقائيًا"}
+          </span>
+          <span className="plan-autosave-line" aria-hidden="true" />
         </div>
       </section>
 
@@ -7801,7 +7776,8 @@ function MonthlyPlanStyles() {
           position: relative;
           overflow: hidden;
 
-          display: flex;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
           align-items: center;
           justify-content: space-between;
 
@@ -8008,7 +7984,56 @@ function MonthlyPlanStyles() {
           cursor: wait;
         }
 
-        /* ==========================================
+        .plan-autosave-note {
+          position: relative;
+          z-index: 2;
+          grid-column: 1 / -1;
+          justify-self: center;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          min-height: 24px;
+          margin-top: -2px;
+          color: #6f8b81;
+          font-size: calc(9px * var(--app-font-scale,1));
+          font-weight: 850;
+          letter-spacing: .01em;
+          white-space: nowrap;
+        }
+
+        .plan-autosave-line {
+          width: 34px;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(31,112,86,.22));
+        }
+
+        .plan-autosave-line:last-child {
+          background: linear-gradient(90deg, rgba(31,112,86,.22), transparent);
+        }
+
+        .plan-autosave-dot {
+          width: 22px;
+          height: 22px;
+          display: grid;
+          place-items: center;
+          border-radius: 999px;
+          color: #247158;
+          background: rgba(232,246,240,.92);
+          border: 1px solid rgba(36,113,88,.13);
+        }
+
+        .plan-autosave-note.saving {
+          color: #8a6a22;
+        }
+
+        .plan-autosave-note.saving .plan-autosave-dot {
+          color: #8a6a22;
+          background: #fff8e8;
+          border-color: rgba(176,137,47,.16);
+        }
+
+                /* ==========================================
            UNSAVED
         ========================================== */
 
@@ -9897,6 +9922,7 @@ function MonthlyPlanStyles() {
           max-width: 720px
         ) {
           .plan-hero {
+            grid-template-columns: minmax(0,1fr) auto;
             align-items:
               flex-start;
 
@@ -11351,30 +11377,15 @@ function MonthlyPlanStyles() {
           }
         }
 
-        .autosave-chip {
-          min-height: 38px;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 0 10px;
-          border: 1px solid rgba(25,103,79,.13);
-          border-radius: 12px;
-          background: rgba(236,247,242,.85);
-          color: #24634f;
-          font-size: 10px;
-          font-weight: 900;
-          white-space: nowrap;
-        }
-        .autosave-chip.saving {
-          border-color: rgba(176,137,47,.18);
-          background: #fff9e9;
-          color: #836720;
-        }
-
         @media (max-width: 700px) {
           .route-direction-panel { grid-template-columns: 1fr; }
           .route-direction-toggle { grid-template-columns: 1fr; }
-          .autosave-chip { width: 100%; justify-content: center; }
+          .plan-autosave-note {
+            margin-top: 0;
+            gap: 6px;
+            font-size: calc(8px * var(--app-font-scale,1));
+          }
+          .plan-autosave-line { width: 22px; }
         }
 
 
