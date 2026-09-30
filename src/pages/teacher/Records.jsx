@@ -398,7 +398,7 @@ export default function Records() {
     const { data, error } = await query;
 
     if (error) {
-      console.error(`LOAD ${type.table}:`, error);
+      console.error("LOAD record failed:", { table: type.table, error });
       return [];
     }
 
