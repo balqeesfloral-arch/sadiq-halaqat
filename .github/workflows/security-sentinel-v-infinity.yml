@@ -41,15 +41,19 @@ jobs:
         run: mkdir -p security-artifacts
 
       - name: Sadiq Sentinel static audit
-        continue-on-error: true
         run: npm run security:sentinel
 
       - name: Repository secret and source hygiene
         run: npm run security:scan
 
       - name: Dependency audit
-        continue-on-error: true
-        run: npm audit --omit=dev --json > security-artifacts/npm-audit.json
+        run: npm audit --omit=dev --audit-level=high --json > security-artifacts/npm-audit.json
+
+      - name: Edge security regression tests
+        run: npm run security:edge
+
+      - name: Login and credential sharing regression tests
+        run: npm run security:ui
 
       - name: Lint
         run: npm run lint
@@ -109,14 +113,14 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Block release on critical Sentinel findings
+      - name: Block release on high or critical Sentinel findings
         if: always() && hashFiles('security-artifacts/sentinel-report.json') != ''
         run: |
           node - <<'NODE'
           const fs = require('fs');
           const report = JSON.parse(fs.readFileSync('security-artifacts/sentinel-report.json','utf8'));
-          if ((report?.counts?.critical || 0) > 0) {
-            console.error('Critical security finding detected. Release gate closed.');
+          if ((report?.counts?.critical || 0) > 0 || (report?.counts?.high || 0) > 0) {
+            console.error('High or critical security finding detected. Release gate closed.');
             process.exit(1);
           }
           NODE
@@ -167,10 +171,9 @@ jobs:
         run: python -m pip install --disable-pip-version-check "semgrep==1.178.0"
 
       - name: Run Semgrep
-        continue-on-error: true
         run: |
           mkdir -p security-artifacts
-          semgrep scan             --config auto             --exclude node_modules             --exclude dist             --exclude security-artifacts             --exclude-rule html.security.audit.missing-integrity.missing-integrity             --json             --output security-artifacts/semgrep.json             .
+          semgrep scan             --error --severity ERROR --config auto             --exclude node_modules             --exclude dist             --exclude security-artifacts             --exclude-rule html.security.audit.missing-integrity.missing-integrity             --json             --output security-artifacts/semgrep.json             .
 
       - name: Upload Semgrep report
         if: always()
@@ -203,11 +206,11 @@ jobs:
           scan-type: fs
           scan-ref: .
           scanners: vuln,secret,misconfig
-          severity: CRITICAL,HIGH,MEDIUM
+          severity: CRITICAL,HIGH
           ignore-unfixed: true
           format: sarif
           output: security-artifacts/trivy.sarif
-          exit-code: "0"
+          exit-code: "1"
 
       - name: Upload Trivy SARIF to GitHub code scanning
         if: always() && hashFiles('security-artifacts/trivy.sarif') != ''

@@ -11,14 +11,16 @@
     "audit:prod": "npm audit --omit=dev",
     "preview": "vite preview",
     "security:scan": "node scripts/security-scan.mjs",
-    "security:check": "npm run security:scan && npm run lint && npm run build && npm run security:csp && npm run security:dist",
+    "security:check": "npm run security:scan && npm run security:edge && npm run security:ui && npm run lint && npm run build && npm run security:csp && npm run security:dist",
     "security:dist": "node scripts/security-dist-scan.mjs",
     "security:full": "npm run security:check && npm run audit:prod",
     "push:keys": "node scripts/generate-vapid.mjs",
     "security:sentinel": "node scripts/security-sentinel.mjs",
     "security:live": "node scripts/security-live-scan.mjs",
     "security:infinity": "npm run security:sentinel && npm run security:scan && npm run lint && npm run build && npm run security:csp && npm run security:dist && npm run audit:prod && npm run security:live",
-    "security:csp": "node scripts/security-csp-verify.mjs"
+    "security:csp": "node scripts/security-csp-verify.mjs",
+    "security:edge": "deno check --node-modules-dir=manual --no-lock --config supabase/functions/deno.json supabase/functions/*/index.ts supabase/functions/_shared/*_test.ts && deno test --allow-read=supabase/functions,node_modules --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,STUDENT_AUTH_SECRET --node-modules-dir=manual --no-lock --config supabase/functions/deno.json supabase/functions/_shared/*_test.ts",
+    "security:ui": "node scripts/verify-security-ui.mjs"
   },
   "dependencies": {
     "@mui/x-date-pickers": "^9.13.0",
@@ -43,8 +45,12 @@
   "devDependencies": {
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@types/web-push": "3.6.4",
     "@vitejs/plugin-react": "^6.0.4",
+    "deno": "2.9.6",
     "oxlint": "^1.75.0",
-    "vite": "^8.2.0"
+    "react-test-renderer": "19.2.8",
+    "vite": "^8.2.0",
+    "web-push": "3.6.7"
   }
 }

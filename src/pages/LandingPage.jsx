@@ -1,3 +1,4 @@
+import { functionErrorMessage } from "../lib/functionErrors";
 import Ornament, { OrnamentScene } from '../components/ornaments/Ornament';
 import {
   useEffect,
@@ -1473,17 +1474,20 @@ function LandingAssistant() {
     setSending(true);
 
     try {
-      const { error } = await supabase.rpc(
-        "submit_public_support_request",
+      const { data, error } = await supabase.functions.invoke(
+        "public-support",
         {
-          p_name: contact.name.trim() || null,
-          p_whatsapp: whatsapp,
-          p_message: message,
-          p_page_path: window.location.pathname || "/",
+          body: {
+            name: contact.name.trim() || null,
+            whatsapp,
+            message,
+            page_path: window.location.pathname || "/",
+          },
         }
       );
 
-      if (error) throw error;
+      if (error) throw new Error(await functionErrorMessage(error, "تعذر إرسال الرسالة الآن."));
+      if (!data?.ok) throw new Error(data?.message || "تعذر إرسال الرسالة.");
 
       setSent(true);
       setContact({
@@ -1498,6 +1502,8 @@ function LandingAssistant() {
         setContactError("تأكد من رقم الواتساب وأدخله بصيغة صحيحة.");
       } else if (messageText.includes("SUPPORT_RATE_LIMIT")) {
         setContactError("وصلتنا رسالة منك قبل قليل. انتظر دقيقة ثم حاول مرة أخرى.");
+      } else if (messageText.includes("محاولات كثيرة") || messageText.includes("وصلتنا رسالتك")) {
+        setContactError(messageText);
       } else if (messageText.includes("MESSAGE_TOO_SHORT")) {
         setContactError("اكتب تفاصيل أكثر حتى يستطيع الفريق خدمتك بشكل أفضل.");
       } else {

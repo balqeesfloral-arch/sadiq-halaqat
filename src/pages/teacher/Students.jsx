@@ -1,3 +1,5 @@
+import StudentAccessCard from "../../components/security/StudentAccessCard";
+import { functionErrorMessage } from "../../lib/functionErrors";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Archive, BookOpen, Building2, CalendarDays, Check, CheckCircle2, ChevronDown, ClipboardCopy, Edit3, Eye, GraduationCap, Loader2, Plus, RefreshCw, RotateCcw, Search, ShieldCheck, Sparkles, Trash2, UserCheck, UserRound, Users, UserX, X } from "lucide-react";
 
@@ -637,7 +639,7 @@ export default function Students() {
           }
         );
 
-        if (error) throw error;
+        if (error) throw new Error(await functionErrorMessage(error, "تعذر إنشاء الطالب. حاول بعد قليل."));
         if (!data?.ok) {
           throw new Error(data?.message || "تعذر إنشاء الطالب.");
         }
@@ -645,6 +647,7 @@ export default function Students() {
         setCreatedStudent({
           full_name: data.profile?.full_name || payload.full_name,
           user_number: data.profile?.user_number,
+          access_code: data.profile?.access_code,
         });
 
         setFormOpen(false);
@@ -1165,6 +1168,7 @@ function StudentDetailsModal({
         </header>
 
         <div className="student-details-body">
+          <StudentAccessCard key={student.id} studentId={student.id} />
           <section className="student-detail-highlight">
             <DetailMini
               icon={BookOpen}
@@ -1798,15 +1802,10 @@ function CreatedStudentModal({ student, onClose }) {
         <h3>{student.full_name}</h3>
 
         <p>
-          تم إنشاء رقم الطالب تلقائيًا. احتفظ به لأنه يستخدم مع اسم الطالب
-          لتسجيل الدخول.
+          احتفظ ببطاقة الدخول التالية للطالب أو ولي أمره.
         </p>
 
-        <div className="student-created-number">
-          <small>رقم الطالب</small>
-          <strong>{student.user_number}</strong>
-          <CopyButton value={student.user_number} large />
-        </div>
+        <StudentAccessCard initialCard={student} />
 
         <button
           type="button"

@@ -52,6 +52,7 @@ export default function Login() {
   const [loginMode, setLoginMode] = useState("staff");
   const [identifier, setIdentifier] = useState("");
   const [studentNumber, setStudentNumber] = useState("");
+  const [studentCode, setStudentCode] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -64,6 +65,15 @@ export default function Login() {
   );
 
   useEffect(() => {
+    const shared = new URLSearchParams(window.location.hash.slice(1));
+    if (shared.has("student") && /^\d{8}$/.test(shared.get("code") || "")) {
+      setLoginMode("student");
+      setIdentifier(shared.get("name") || "");
+      setStudentNumber(shared.get("student") || "");
+      setStudentCode(shared.get("code"));
+      window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+      return;
+    }
     try {
       const remembered = localStorage.getItem("sadiq_remember_login");
       if (remembered) {
@@ -148,7 +158,7 @@ export default function Login() {
     setErrorMessage(
       account.mode === "staff"
         ? "أدخل كلمة المرور لإكمال تسجيل الدخول بأمان."
-        : "أدخل رقم الطالب لإكمال تسجيل الدخول بأمان."
+        : "أدخل رقم الطالب ورمز الدخول السري لإكمال الدخول."
     );
   }
 
@@ -193,10 +203,14 @@ export default function Login() {
       password: loginPassword,
     });
 
-    if (error) throw new Error("بيانات الدخول غير صحيحة.");
+    if (error) throw new Error(error.code === "email_not_confirmed" ? "افتح رابط تأكيد البريد أولًا، ثم سجّل الدخول." : "بيانات الدخول غير صحيحة.");
 
     const authUser = data?.user;
     if (!authUser) throw new Error("تعذر التحقق من الحساب.");
+    if (!authUser.email_confirmed_at) {
+      await supabase.auth.signOut();
+      throw new Error("افتح رابط تأكيد البريد أولًا، ثم سجّل الدخول.");
+    }
 
     const profile = await loadProfile(authUser.id);
 
@@ -380,8 +394,8 @@ export default function Login() {
     const fullName = (nameOverride ?? identifier).trim();
     const userNumber = (studentNumberOverride ?? studentNumber).trim().toUpperCase();
 
-    if (!fullName) throw new Error("يرجى إدخال اسم الطالب.");
     if (!userNumber) throw new Error("يرجى إدخال رقم الطالب.");
+    if (!/^\d{8}$/.test(studentCode.replace(/[\s-]/g, ""))) throw new Error("أدخل رمز الدخول السري من بطاقة الطالب.");
 
     const { data, error } = await supabase.functions.invoke(
       "student-login",
@@ -389,6 +403,7 @@ export default function Login() {
         body: {
           full_name: fullName,
           user_number: userNumber,
+          access_code: studentCode,
         },
       }
     );
@@ -436,7 +451,7 @@ export default function Login() {
 
     if (!data?.ok || !data?.access_token || !data?.refresh_token) {
       throw new Error(
-        data?.message || "اسم الطالب أو رقم الطالب غير صحيح."
+        data?.message || "رقم الطالب أو رمز الدخول غير صحيح."
       );
     }
 
@@ -449,7 +464,7 @@ export default function Login() {
 
     rememberSuccessfulLogin({
       mode: "student",
-      identifier: fullName,
+      identifier: data?.profile?.full_name || fullName,
       label: data?.profile?.full_name || fullName,
       role: "student",
     });
@@ -614,14 +629,14 @@ export default function Login() {
           )}
 
           <form className="login-pro-form" onSubmit={handleLogin}>
-            <FormInput
-              label={loginMode === "staff" ? "البريد الإلكتروني" : "اسم الطالب"}
+            {loginMode === "staff" && <FormInput
+              label="البريد الإلكتروني"
               type={loginMode === "staff" ? "email" : "text"}
               value={identifier}
               onChange={setIdentifier}
               placeholder={loginMode === "staff" ? "name@example.com" : "أدخل اسم الطالب"}
-              icon={loginMode === "staff" ? Mail : UserRound}
-            />
+              icon={Mail}
+            />}
 
             {loginMode === "staff" ? (
               <div className="login-pro-field">
@@ -646,6 +661,7 @@ export default function Login() {
                 </div>
               </div>
             ) : (
+              <>
               <FormInput
                 label="رقم الطالب"
                 value={studentNumber}
@@ -654,6 +670,11 @@ export default function Login() {
                 icon={GraduationCap}
                 dir="ltr"
               />
+              <FormInput label="رمز الدخول السري" type="password" inputMode="numeric" value={studentCode}
+                onChange={(value) => setStudentCode(value.replace(/[٠-٩۰-۹]/g, char => String(char.charCodeAt(0) % 16)))}
+                placeholder="8 أرقام من بطاقة الطالب" icon={LockKeyhole} dir="ltr" />
+              <p className="login-pro-help">اطلب بطاقة الدخول من معلمك. رابط البطاقة يملأ البيانات تلقائيًا.</p>
+              </>
             )}
 
             <label className="login-remember-row">
@@ -733,7 +754,7 @@ export default function Login() {
 }
 
 
-function FormInput({ label, type = "text", value, onChange, placeholder, icon: Icon, dir = "rtl" }) {
+function FormInput({ label, type = "text", value, onChange, placeholder, icon: Icon, dir = "rtl", inputMode }) {
   return (
     <div className="login-pro-field">
       <label>{label}</label>
@@ -741,6 +762,7 @@ function FormInput({ label, type = "text", value, onChange, placeholder, icon: I
         <Icon className="login-pro-input-icon" />
         <input
           type={type}
+          inputMode={inputMode}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}

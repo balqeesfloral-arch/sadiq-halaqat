@@ -1,3 +1,4 @@
+import StudentAccessCard from "../components/security/StudentAccessCard";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { UsersRound, UserCheck, UserRound, GraduationCap, CircleHelp, Search, Pencil, Save, Loader2, Hash, Phone, CheckSquare, X } from "lucide-react";
@@ -18,6 +19,7 @@ export default function HalaqaStudents() {
   const [teacherId, setTeacherId] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [accessStudent, setAccessStudent] = useState(null);
   const selectAllRef = useRef(null);
   const students = data?.students || [];
   const teachers = data?.teachers || [];
@@ -63,10 +65,12 @@ export default function HalaqaStudents() {
         <div className="hm-student-identity"><span className="hm-avatar hm-avatar-small"><UserRound size={20} /></span><div><h3>{student.full_name || "اسم غير متاح"}</h3><span className="hm-subline"><Hash size={13} /><bdi>{student.user_number || "الرقم غير مسجل"}</bdi></span><PersonStatus person={student} /></div></div>
         <div className="hm-student-teacher"><small>المعلم المسؤول</small>{student.teacher_id && student.teacher_linked ? <strong><GraduationCap size={15} /> {student.teacher_name || "اسم المعلم غير متاح"}</strong> : <span className="hm-badge hm-badge-gold">{student.teacher_id ? "المعلم غير مرتبط بالحلقة" : "لم يُسند بعد"}</span>}</div>
         <div className="hm-student-contact"><JoinedDate date={student.start_date} /><span className="hm-subline"><Phone size={14} /><span>ولي الأمر: <bdi>{student.guardian_phone || "غير مسجل"}</bdi></span></span></div>
+        <button type="button" className="hm-button hm-button-quiet" onClick={() => setAccessStudent(student)}>بطاقة الدخول</button>
         <button type="button" className="hm-button hm-button-quiet hm-student-edit" disabled={saving || loading} onClick={() => openAssign([student.id])} aria-label={`تعديل معلم ${student.full_name || "الطالب"}`}><Pencil size={15} /> تعديل الإسناد</button>
       </article>)}</div> : <Empty icon={students.length ? Search : UsersRound} title={students.length ? "لا توجد نتائج مطابقة" : "لا يوجد طلاب حاليون"} description={students.length ? "عدّل البحث أو الفلاتر لإظهار الطلاب." : "يمكن ربط الطلاب بالحلقة من صفحة إدارة الطلاب."} />}
       <footer className="hm-panel-footer"><span>عرض {number(filtered.length)} من {number(students.length)} طالبًا</span><span>تظهر الارتباطات الحالية فقط</span></footer>
     </section>
     {modalIds && <HalaqaDialog title={modalIds.length === 1 ? "تعديل معلم الطالب" : "تعيين معلم للطلاب"} description={`الطلاب المحددون: ${number(modalIds.length)}`} busy={saving} onClose={() => setModalIds(null)}><form onSubmit={submit}><fieldset disabled={saving} className="hm-form-fields"><div className="hm-selected-names">{chosenStudents.slice(0, 5).map((student) => <span key={student.id}>{student.full_name || student.user_number}</span>)}{chosenStudents.length > 5 && <span>+{number(chosenStudents.length - 5)}</span>}</div><label className="hm-field"><span>المعلم المسؤول عن المتابعة</span><select data-autofocus required value={teacherId} onChange={(event) => setTeacherId(event.target.value)}><option value="">اختر المعلم</option>{teachers.filter(isActive).map((teacher) => <option key={teacher.teacher_id} value={teacher.teacher_id}>{teacher.full_name} — {roleLabel(teacher.role)}</option>)}<option value="unassigned">دون معلم محدد</option></select></label>{!teachers.some(isActive) && <Notice>لا يوجد معلم نشط مرتبط بهذه الحلقة. يمكنك ربطه من تبويب المعلمين.</Notice>}<p className="hm-help">يُحدّث معلم المتابعة للطلاب المحددين داخل هذه الحلقة.</p></fieldset>{formError && <div className="hm-form-error" role="alert">{formError}</div>}<footer className="hm-modal-footer"><button type="button" className="hm-button hm-button-quiet" disabled={saving} onClick={() => setModalIds(null)}>إلغاء</button><button type="submit" className="hm-button hm-button-primary" disabled={saving || !teacherId}>{saving ? <Loader2 className="hm-spin" size={17} /> : <Save size={17} />}{saving ? "جارٍ الحفظ…" : "حفظ الإسناد"}</button></footer></form></HalaqaDialog>}
+    {accessStudent && <HalaqaDialog title={`بطاقة دخول ${accessStudent.full_name}`} onClose={() => setAccessStudent(null)}><StudentAccessCard key={accessStudent.student_id} studentId={accessStudent.student_id} autoLoad /></HalaqaDialog>}
   </HalaqaFrame>;
 }

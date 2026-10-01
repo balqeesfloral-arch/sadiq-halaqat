@@ -90,13 +90,23 @@ export async function syncPushSubscription() {
     navigator.userAgentData?.platform || "",
   ].filter(Boolean)[0] || "جهاز موثوق";
 
-  const { error } = await supabase.rpc("save_my_push_subscription", {
-    p_endpoint: keys.endpoint,
-    p_p256dh: keys.p256dh,
-    p_auth: keys.auth,
+  const save = (values) => supabase.rpc("save_my_push_subscription", {
+    p_endpoint: values.endpoint,
+    p_p256dh: values.p256dh,
+    p_auth: values.auth,
     p_user_agent: navigator.userAgent || null,
     p_device_label: deviceLabel,
   });
+  let { error } = await save(keys);
+  if (error?.message?.includes("PUSH_ENDPOINT_OWNED_BY_ANOTHER_ACCOUNT")) {
+    // A shared device gets a new provider endpoint when its account changes.
+    await subscription.unsubscribe();
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
+    ({ error } = await save(subscriptionKeys(subscription)));
+  }
 
   if (error) throw error;
 

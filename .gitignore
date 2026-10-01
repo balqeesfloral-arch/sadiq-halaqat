@@ -57,3 +57,4 @@ android/
 # Generated security/export reports
 security-artifacts/
 export/
+supabase/.temp/

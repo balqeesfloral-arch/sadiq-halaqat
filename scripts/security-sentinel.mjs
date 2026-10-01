@@ -496,6 +496,6 @@ console.log(`Sadiq Security Sentinel V∞ finished: ${score}/100`);
 console.log(`Findings: critical=${counts.critical}, high=${counts.high}, medium=${counts.medium}, low=${counts.low}`);
 console.log(`Report: ${path.relative(ROOT, REPORT_MD)}`);
 
-if (counts.critical > 0) {
+if (counts.critical > 0 || counts.high > 0) {
   process.exitCode = 2;
 }

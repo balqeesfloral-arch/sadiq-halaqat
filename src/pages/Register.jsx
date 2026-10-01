@@ -1,3 +1,5 @@
+import StudentAccessCard from "../components/security/StudentAccessCard";
+import { functionErrorMessage } from "../lib/functionErrors";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -41,7 +43,7 @@ const ROLE_OPTIONS = [
     title: "طالب",
     description: "الحصول على رقم طالب ثم اختيار المسجد والحلقة.",
     icon: GraduationCap,
-    badge: "الاسم + رقم الطالب",
+    badge: "بطاقة دخول آمنة",
   },
 ];
 
@@ -104,8 +106,8 @@ export default function Register() {
         return false;
       }
 
-      if (password.length < 8) {
-        setErrorMessage("كلمة المرور يجب أن تكون 8 أحرف على الأقل.");
+      if (password.length < 12) {
+        setErrorMessage("كلمة المرور يجب أن تكون 12 حرفًا على الأقل.");
         return false;
       }
 
@@ -176,9 +178,7 @@ export default function Register() {
 
       if (error) {
         console.error("register-account invoke error:", error);
-        throw new Error(
-          "تعذر الوصول إلى خدمة إنشاء الحساب. تأكد من نشر Edge Function."
-        );
+        throw new Error(await functionErrorMessage(error, "تعذر الوصول إلى خدمة إنشاء الحساب. حاول بعد قليل."));
       }
 
       if (!data?.ok) {
@@ -245,11 +245,10 @@ export default function Register() {
           </div>
 
           {result.role === "student" && (
-            <div className="register-pro-success-note">
-              دخول الطالب سيكون بواسطة <b>الاسم + رقم الطالب</b> فقط.
-              لا تشارك رقم الطالب في صفحات عامة.
-            </div>
+            <StudentAccessCard initialCard={result} />
           )}
+
+          {result.confirmation_required && <div className="register-pro-success-note">افتح رابط تأكيد البريد المرسل إليك، ثم سجّل الدخول.</div>}
 
           {result.role === "teacher" && (
             <div className="register-pro-success-note">
@@ -499,7 +498,7 @@ export default function Register() {
                       </div>
 
                       <div className="register-pro-helper">
-                        استخدم 8 أحرف على الأقل واختر كلمة مرور قوية.
+                        استخدم 12 حرفًا على الأقل واختر كلمة مرور قوية.
                       </div>
                     </>
                   )}
@@ -551,7 +550,7 @@ export default function Register() {
                         <strong>لا يحتاج الطالب بريدًا أو كلمة مرور</strong>
                         <span>
                           سيولد النظام رقم طالب عشوائيًا. تسجيل الدخول
-                          سيكون بالاسم + رقم الطالب، ثم اختيار المسجد
+                          سيكون بواسطة بطاقة الدخول، ثم اختيار المسجد
                           والحلقة.
                         </span>
                       </div>

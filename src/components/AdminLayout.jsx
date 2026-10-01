@@ -1,3 +1,4 @@
+import { removeCurrentPushSubscription } from "../lib/pwa";
 import {
   useEffect,
   useMemo,
@@ -640,6 +641,7 @@ export default function AdminLayout() {
     setLoggingOut(true);
 
     try {
+      await removeCurrentPushSubscription().catch(() => {});
       const { error } =
         await supabase.auth.signOut({
           scope: "local",

@@ -1,3 +1,4 @@
+import StudentAccessCard from "../components/security/StudentAccessCard";
 import {
   useEffect,
   useMemo,
@@ -3281,6 +3282,7 @@ function StudentCard({
           حذف
         </button>
       </div>
+      <StudentAccessCard studentId={student.id} />
     </article>
   );
 }

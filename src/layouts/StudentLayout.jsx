@@ -1,3 +1,4 @@
+import { removeCurrentPushSubscription } from "../lib/pwa";
 import { useEffect, useMemo, useState } from "react";
 import {
   BellRing,
@@ -128,6 +129,7 @@ function StudentShell() {
   }, []);
 
   async function signOut() {
+    await removeCurrentPushSubscription().catch(() => {});
     await supabase.auth.signOut();
     navigate("/login", { replace: true });
   }

@@ -1,0 +1,6 @@
+.student-access-card { display: grid; gap: 10px; padding: 16px; border: 1px solid #d5e6df; border-radius: 16px; background: #f7fbf9; text-align: start; color: #183a2f; }
+.student-access-card.is-collapsed { padding: 0; border: 0; background: transparent; }
+.student-access-card button { min-height: 42px; border: 0; border-radius: 10px; padding: 10px 16px; background: #176f55; color: white; cursor: pointer; font: inherit; }
+.student-access-card button:disabled { opacity: .6; cursor: wait; }
+.student-access-card small, .student-access-card p { font-size: 13px; line-height: 1.7; margin: 0; }
+.student-access-code { font-size: 22px; font-weight: 700; letter-spacing: 2px; }

@@ -196,10 +196,11 @@ self.addEventListener("notificationclick", (event) => {
 
   if (event.action === "dismiss") return;
 
-  const targetUrl = new URL(
-    event.notification?.data?.url || "/",
-    self.location.origin
-  ).href;
+  let targetUrl = self.location.origin + "/";
+  try {
+    const candidate = new URL(event.notification?.data?.url || "/", self.location.origin);
+    if (candidate.origin === self.location.origin) targetUrl = candidate.href;
+  } catch { /* Malformed destinations fall back to the app. */ }
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {

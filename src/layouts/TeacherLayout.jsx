@@ -1,3 +1,4 @@
+import { removeCurrentPushSubscription } from "../lib/pwa";
 import { useEffect, useMemo, useState } from "react";
 import {
   Archive,
@@ -306,6 +307,7 @@ export default function TeacherLayout() {
   }
 
   async function handleSignOut() {
+    await removeCurrentPushSubscription().catch(() => {});
     await supabase.auth.signOut();
     navigate("/login", { replace: true });
   }
