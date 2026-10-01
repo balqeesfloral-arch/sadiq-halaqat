@@ -1,3 +1,4 @@
+import {monthlySideLessonTotals,withSideLessonMetrics,formatSideLessonTotal,formatMonthlySideLessons} from "../lib/sideLesson";
 import { effectiveMonthlyPlans } from "../lib/effectiveLearning";
 // src/pages/MonthlyAchievement.jsx
 // Admin Monthly Achievement Intelligence Center
@@ -1250,9 +1251,9 @@ export default function MonthlyAchievement() {
         throw recitationsError;
       }
 
-      setRawRecitations(
-        recitations || []
-      );
+      const measuredRecitations=await withSideLessonMetrics(supabase,recitations || []);
+      const sideTotals=await monthlySideLessonTotals(supabase,selectedHalaqa,studentIds,period);
+      setRawRecitations(measuredRecitations);
 
       /* -----------------------------------------
          Aggregate
@@ -1469,6 +1470,8 @@ export default function MonthlyAchievement() {
                 );
 
               return {
+                side_lesson_faces: Number(sideTotals.get(studentId) || 0),
+                side_lesson_lines_per_face: sideTotals.linesPerFace.get(studentId) ?? 15,
                 id:
                   studentId,
 
@@ -2457,7 +2460,7 @@ export default function MonthlyAchievement() {
             Number(
               row.final_revision_faces
             ) >
-              0
+              0 || Number(row.side_lesson_faces || 0) > 0
         ).length;
 
       const manualStudents =
@@ -2713,6 +2716,7 @@ export default function MonthlyAchievement() {
       "هدف الحفظ",
       "إنجاز الحفظ",
       "حالة الحفظ",
+      "جنب الدرس",
       "هدف المراجعة",
       "إنجاز المراجعة",
       "حالة المراجعة",
@@ -2739,6 +2743,7 @@ export default function MonthlyAchievement() {
           : row.memorization_completed
             ? "منجز"
             : "غير منجز",
+        formatSideLessonTotal(row.side_lesson_faces, row.side_lesson_lines_per_face),
         formatFaces(row.revision_target_faces),
         formatFaces(row.final_revision_faces),
         Number(row.revision_target_faces || 0) <= 0
@@ -2859,6 +2864,7 @@ export default function MonthlyAchievement() {
           <td>${escapeHtml(row.user_number || "-")}</td>
           <td>${formatFaces(row.final_memorization_faces)} / ${formatFaces(row.memorization_target_faces)}</td>
           <td><span class="status ${memStatus === "منجز" ? "ok" : memStatus === "غير منجز" ? "bad" : "muted"}">${memStatus}</span></td>
+          <td>${formatSideLessonTotal(row.side_lesson_faces, row.side_lesson_lines_per_face)}</td>
           <td>${formatFaces(row.final_revision_faces)} / ${formatFaces(row.revision_target_faces)}</td>
           <td><span class="status ${revStatus === "منجز" ? "ok" : revStatus === "غير منجز" ? "bad" : "muted"}">${revStatus}</span></td>
           <td><span class="status ${overall === true ? "ok" : overall === false ? "bad" : "muted"}">${overall === null ? "لا توجد خطة" : overall ? "منجز" : "غير منجز"}</span></td>
@@ -3004,7 +3010,7 @@ export default function MonthlyAchievement() {
               <thead>
                 <tr>
                   <th>م</th><th>الطالب</th><th>الرقم</th><th>الحفظ / الهدف</th><th>حالة الحفظ</th>
-                  <th>المراجعة / الهدف</th><th>حالة المراجعة</th><th>الشهر</th><th>سبب التعثر الذكي</th><th>الجلسات</th>
+                  <th>جنب الدرس</th><th>المراجعة / الهدف</th><th>حالة المراجعة</th><th>الشهر</th><th>سبب التعثر الذكي</th><th>الجلسات</th>
                 </tr>
               </thead>
               <tbody>${rowsHtml}</tbody>
@@ -3693,7 +3699,8 @@ export default function MonthlyAchievement() {
       <section
         className="monthly-stats"
       >
-        <MonthlyStat
+        <MonthlyStat icon={<Layers3 size={18}/>} title="جنب الدرس" value={formatMonthlySideLessons(rows)} tone="revision" />
+<MonthlyStat
           icon={Users}
           title="طلاب الشهر"
           value={
@@ -3946,7 +3953,7 @@ function StudentAchievementCard({
           target={row.revision_target_faces}
           percent={row.revision_percent}
         />
-      </div>
+      <div className="achievement-summary-item"><span>جنب الدرس</span><strong>{formatSideLessonTotal(row.side_lesson_faces,row.side_lesson_lines_per_face)}</strong><em>من التسميع تلقائيًا</em></div></div>
 
       <div className={`smart-delay-summary ${row.smart_delay?.hasDelay ? "has-delay" : "clear"}`}>
         {row.smart_delay?.hasDelay ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
@@ -4276,7 +4283,7 @@ function DetailsModal({
               )}
             </strong>
           </div>
-        </div>
+        <div><span>جنب الدرس</span><strong>{formatSideLessonTotal(student.side_lesson_faces,student.side_lesson_lines_per_face)}</strong></div></div>
 
         <div className="details-smart-analysis">
           <div className="details-analysis-head">

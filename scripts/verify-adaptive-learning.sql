@@ -27,13 +27,12 @@ do $$
 declare f record; definition text; relation_name text;
 begin
   for f in select p.oid from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='public' and p.proname in ('quran_save_learning_policy','quran_effective_monthly_targets',
-      'quran_generate_side_lesson_legacy_v2','quran_generate_side_lesson_v2')
+    where n.nspname='public' and p.proname in ('quran_save_learning_policy','quran_effective_monthly_targets')
   loop
     definition:=pg_get_functiondef(f.oid);
     foreach relation_name in array array['profiles','monthly_plans','student_halaqat','attendance_holidays',
       'student_learning_interventions','quran_student_policies','recitations','recitation_segments','quran_assignments',
-      'quran_save_learning_policy','quran_effective_monthly_targets','quran_generate_side_lesson_legacy_v2','quran_generate_side_lesson_v2']
+      'quran_save_learning_policy','quran_effective_monthly_targets']
     loop definition:=replace(definition,'public.'||relation_name,'pg_temp.'||relation_name); end loop;
     definition:=replace(definition,'public.current_profile_id()','pg_temp.actor_id()');
     definition:=replace(definition,'public.current_profile_role()','pg_temp.actor_role()');
@@ -57,7 +56,7 @@ insert into pg_temp.quran_student_policies(id,student_id,halaqa_id,effective_fro
 
 create temp table learning_test_results(name text primary key,passed boolean not null);
 do $$
-declare result record; generated jsonb; generated2 jsonb; new_id bigint;
+declare result record; new_id bigint;
   old_id bigint; day_today date:=(current_timestamp at time zone 'Asia/Riyadh')::date;
 begin
   select * into result from pg_temp.quran_effective_monthly_targets(10,'2026-09-01','2026-09-30');
@@ -89,50 +88,6 @@ begin
   insert into pg_temp.quran_student_policies(id,student_id,halaqa_id,effective_from,active,lesson_enabled,
     side_lesson_mode,side_lesson_switch_percent,side_lesson_when_paused,revision_scope_mode)
     values(3,1,10,'2026-09-01',true,true,'adaptive_surah',50,'keep','lesson_derived');
-  generated:=pg_temp.quran_generate_side_lesson_v2(1,10,'الملك',1,'2026-09-20','forward');
-  if generated->>'resolved_mode'<>'previous_surah' or public.quran_resolve_surah_no(generated->>'start_surah_name')<>66
-    then raise exception 'FAIL: previous forward: %',generated; end if;
-  insert into learning_test_results values('adaptive_previous_forward',true);
-  generated:=pg_temp.quran_generate_side_lesson_v2(1,10,'الملك',30,'2026-09-20','forward');
-  if generated->>'resolved_mode'<>'from_surah_start' or (generated->>'start_ayah')::integer<>1
-    or (generated->>'end_ayah')::integer<>29 then raise exception 'FAIL: adaptive threshold: %',generated; end if;
-  insert into learning_test_results values('adaptive_switch_at_threshold',true);
-  generated:=pg_temp.quran_generate_side_lesson_v2(1,10,'الملك',1,'2026-09-20','backward');
-  if public.quran_resolve_surah_no(generated->>'start_surah_name')<>68 then raise exception 'FAIL: previous backward'; end if;
-  insert into learning_test_results values('adaptive_previous_backward',true);
-  generated:=pg_temp.quran_generate_side_lesson_v2(1,10,'الناس',6,'2026-09-20','backward');
-  if (generated->>'start_ayah')::integer<>1 or (generated->>'end_ayah')::integer<>5 then raise exception 'FAIL: last surah'; end if;
-  insert into learning_test_results values('adaptive_at_mushaf_boundary',true);
-  update pg_temp.quran_student_policies set revision_scope_mode='manual',revision_scope_start_surah='التحريم',
-    revision_scope_start_ayah=2,revision_scope_end_surah='التحريم',revision_scope_end_ayah=12;
-  generated:=pg_temp.quran_generate_side_lesson_v2(1,10,'الملك',1,'2026-09-20','forward');
-  if generated->>'side_lesson_mode'<>'none' then raise exception 'FAIL: partial previous surah'; end if;
-  insert into learning_test_results values('adaptive_respects_memorized_scope',true);
-  update pg_temp.quran_student_policies set lesson_enabled=false,side_lesson_mode='adaptive_surah',
-    side_lesson_when_paused='memorized_cycle',side_lesson_amount=1,side_lesson_unit='faces',
-    revision_scope_mode='manual',revision_scope_start_surah='الإخلاص',revision_scope_start_ayah=1,
-    revision_scope_end_surah='الناس',revision_scope_end_ayah=6;
-  generated:=pg_temp.quran_generate_side_lesson_v2(1,10,null,null,'2026-09-20','forward','forward');
-  if generated->>'side_lesson_mode'<>'memorized_cycle' or generated->>'start_surah_name' is null
-    then raise exception 'FAIL: side cycle while paused: %',generated; end if;
-  insert into learning_test_results values('paused_lesson_keeps_side_cycle',true);
-  insert into pg_temp.recitations(id,student_id,halaqa_id,recitation_date,next_to_surah,next_to_ayah,next_evaluation)
-    values(1,1,10,'2026-09-19','الناس',5,'ممتاز');
-  generated:=pg_temp.quran_generate_side_lesson_v2(1,10,null,null,'2026-09-20','forward','forward');
-  if (generated->>'wrap_count')::integer<>1 then raise exception 'FAIL: wrap forward: %',generated; end if;
-  insert into learning_test_results values('side_cycle_wrap_forward',true);
-  insert into pg_temp.recitations(id,student_id,halaqa_id,recitation_date,next_to_surah,next_to_ayah,next_evaluation)
-    values(2,1,10,'2026-09-20','الإخلاص',4,'إعادة');
-  generated2:=pg_temp.quran_generate_side_lesson_v2(1,10,null,null,'2026-09-20','forward','forward');
-  if generated<>generated2 then raise exception 'FAIL: repeat advanced cursor'; end if;
-  insert into learning_test_results values('repeat_preserves_cursor',true);
-  delete from pg_temp.recitations;
-  update pg_temp.quran_student_policies set revision_scope_start_surah='الناس',revision_scope_end_surah='الإخلاص',revision_scope_end_ayah=4;
-  insert into pg_temp.recitations(id,student_id,halaqa_id,recitation_date,next_to_surah,next_to_ayah,next_evaluation)
-    values(1,1,10,'2026-09-19','الإخلاص',3,'ممتاز');
-  generated:=pg_temp.quran_generate_side_lesson_v2(1,10,null,null,'2026-09-20','backward','backward');
-  if (generated->>'wrap_count')::integer<>1 then raise exception 'FAIL: wrap backward: %',generated; end if;
-  insert into learning_test_results values('side_cycle_wrap_backward',true);
   perform set_config('test.learning_actor','teacher',true);
   select id into old_id from pg_temp.quran_student_policies where active;
   new_id:=pg_temp.quran_save_learning_policy(1,10,'{"lesson_enabled":true}',day_today);

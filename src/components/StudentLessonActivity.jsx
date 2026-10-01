@@ -65,7 +65,7 @@ export default function StudentLessonActivity({ studentId, halaqaId, policy, pla
           <label>المقدار اليومي<input type="number" min="0.25" step={unit === "lines" ? 1 : 0.25} value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
           <label>الوحدة<select value={unit} onChange={(e) => setUnit(e.target.value)}><option value="lines">سطر</option><option value="faces">وجه</option></select></label>
         </>}
-        <small>يُحفظ تاريخ التغيير وتستمر مواضع جنب الدرس والمراجعة.</small>
+        <small>يُحفظ تاريخ التغيير وتستمر المراجعة.</small>
       </div>}
     </div>
   );

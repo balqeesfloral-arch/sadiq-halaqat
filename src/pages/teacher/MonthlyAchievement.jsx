@@ -1,3 +1,4 @@
+import {monthlySideLessonTotals,withSideLessonMetrics,formatSideLessonTotal,formatMonthlySideLessons} from "../../lib/sideLesson";
 import { effectiveMonthlyPlans } from "../../lib/effectiveLearning";
 // src/pages/teacher/MonthlyAchievement.jsx
 
@@ -172,221 +173,11 @@ function getAcceptedReviewFaces(record) {
   return Number(record?.review_faces || 0);
 }
 
-function normalizeArabicNumberText(value) {
-  return String(value ?? "")
-    .trim()
-    .replace(/[٠١٢٣٤٥٦٧٨٩]/g, (digit) =>
-      "٠١٢٣٤٥٦٧٨٩".indexOf(digit)
-    )
-    .replace(/[۰۱۲۳۴۵۶۷۸۹]/g, (digit) =>
-      "۰۱۲۳۴۵۶۷۸۹".indexOf(digit)
-    )
-    .replace(/٫/g, ".")
-    .replace(/،/g, " ")
-    .replace(/[إأآٱ]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/ة/g, "ه")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
-}
 
-function parseSideLessonFaces(value) {
-  const text =
-    normalizeArabicNumberText(
-      value
-    );
 
-  if (!text) {
-    return 0;
-  }
 
-  /*
-    رقم فقط = عدد أوجه.
-    أمثلة: 1 ، 1.5 ، ٢.٩ ، 10
-  */
 
-  if (
-    /^\d+(?:\.\d+)?$/.test(
-      text
-    )
-  ) {
-    return roundFaces(
-      Number(text)
-    );
-  }
 
-  /*
-    الأسطر تتحول إلى أوجه
-    باعتبار 15 سطرًا = وجهًا واحدًا.
-  */
-
-  const numericLines =
-    text.match(
-      /(\d+(?:\.\d+)?)\s*(?:سطر|سطرين|سطران|اسطر|سطور)/
-    );
-
-  if (
-    numericLines
-  ) {
-    return roundFaces(
-      Number(
-        numericLines[1]
-      ) / 15
-    );
-  }
-
-  if (
-    /\b(?:سطران|سطرين)\b/.test(
-      text
-    )
-  ) {
-    return roundFaces(
-      2 / 15
-    );
-  }
-
-  if (
-    /\bسطر\b/.test(
-      text
-    )
-  ) {
-    return roundFaces(
-      1 / 15
-    );
-  }
-
-  /*
-    الكسور الشائعة.
-  */
-
-  if (
-    /(?:صفحه|وجه)\s+ونصف/.test(
-      text
-    )
-  ) {
-    return 1.5;
-  }
-
-  if (
-    /(?:صفحتان|صفحتين|وجهان|وجهين)\s+ونصف/.test(
-      text
-    )
-  ) {
-    return 2.5;
-  }
-
-  if (
-    /\bنصف\s+(?:صفحه|وجه)\b/.test(
-      text
-    )
-  ) {
-    return 0.5;
-  }
-
-  if (
-    /\bربع\s+(?:صفحه|وجه)\b/.test(
-      text
-    )
-  ) {
-    return 0.25;
-  }
-
-  if (
-    /\bثلاثه\s+ارباع\s+(?:صفحه|وجه)\b/.test(
-      text
-    )
-  ) {
-    return 0.75;
-  }
-
-  /*
-    رقم + وحدة أوجه / صفحات.
-  */
-
-  const numericFaces =
-    text.match(
-      /(\d+(?:\.\d+)?)\s*(?:وجه|اوجه|صفحه|صفحات)/
-    );
-
-  if (
-    numericFaces
-  ) {
-    return roundFaces(
-      Number(
-        numericFaces[1]
-      )
-    );
-  }
-
-  /*
-    الأعداد المكتوبة بالكلمات.
-  */
-
-  const wordNumbers = [
-    ["عشره", 10],
-    ["تسعه", 9],
-    ["ثمانيه", 8],
-    ["سبعه", 7],
-    ["سته", 6],
-    ["خمسه", 5],
-    ["اربعه", 4],
-    ["ثلاثه", 3],
-    ["اثنان", 2],
-    ["اثنين", 2],
-    ["اثنتان", 2],
-    ["اثنتين", 2],
-    ["واحد", 1],
-    ["واحده", 1],
-  ];
-
-  if (
-    /(?:وجهان|وجهين|صفحتان|صفحتين)/.test(
-      text
-    )
-  ) {
-    return 2;
-  }
-
-  for (
-    const [
-      word,
-      amount,
-    ] of wordNumbers
-  ) {
-    if (
-      text.includes(
-        word
-      ) &&
-      /(?:وجه|اوجه|صفحه|صفحات)/.test(
-        text
-      )
-    ) {
-      return amount;
-    }
-  }
-
-  if (
-    /(?:^|\s)(?:وجه|صفحه)(?:\s|$)/.test(
-      text
-    )
-  ) {
-    return 1;
-  }
-
-  return 0;
-}
-
-function getSideLessonFaces(
-  record,
-  second = false
-) {
-  return parseSideLessonFaces(
-    second
-      ? record?.next2_surah
-      : record?.next_surah
-  );
-}
 
 function getHijriParts(
   date = new Date()
@@ -1668,9 +1459,9 @@ export default function MonthlyAchievement() {
         throw recitationsError;
       }
 
-      setRawRecitations(
-        recitations || []
-      );
+      const measuredRecitations=await withSideLessonMetrics(supabase,recitations || []);
+      const sideTotals=await monthlySideLessonTotals(supabase,selectedHalaqa,studentIds,period);
+      setRawRecitations(measuredRecitations);
 
       /* -----------------------------------------
          Aggregate
@@ -1729,18 +1520,9 @@ export default function MonthlyAchievement() {
               1;
           }
 
-          const sideLessonFaces =
-            getSideLessonFaces(
-              record,
-              false
-            ) +
-            getSideLessonFaces(
-              record,
-              true
-            );
 
-          old.sideLessonFaces +=
-            sideLessonFaces;
+
+
 
           if (
             !old.lastDate ||
@@ -1997,11 +1779,8 @@ export default function MonthlyAchievement() {
                     auto.revisionSessions
                   ),
 
-                side_lesson_faces:
-                  roundFaces(
-                    auto.sideLessonFaces ||
-                      0
-                  ),
+                side_lesson_faces: Number(sideTotals.get(studentId) || 0),
+                side_lesson_lines_per_face: sideTotals.linesPerFace.get(studentId) ?? 15,
 
                 last_recitation_date:
                   auto.lastDate,
@@ -2937,7 +2716,7 @@ export default function MonthlyAchievement() {
             Number(
               row.final_revision_faces
             ) >
-              0
+              0 || Number(row.side_lesson_faces || 0) > 0
         ).length;
 
       const manualStudents =
@@ -3222,7 +3001,7 @@ export default function MonthlyAchievement() {
           : row.memorization_completed
             ? "منجز"
             : "غير منجز",
-        formatFaces(row.side_lesson_faces || 0),
+        formatSideLessonTotal(row.side_lesson_faces,row.side_lesson_lines_per_face),
         formatFaces(row.revision_target_faces),
         formatFaces(row.final_revision_faces),
         Number(row.revision_target_faces || 0) <= 0
@@ -3343,7 +3122,7 @@ export default function MonthlyAchievement() {
           <td>${escapeHtml(row.user_number || "-")}</td>
           <td>${formatFaces(row.final_memorization_faces)} / ${formatFaces(row.memorization_target_faces)}</td>
           <td><span class="status ${memStatus === "منجز" ? "ok" : memStatus === "غير منجز" ? "bad" : "muted"}">${memStatus}</span></td>
-          <td>${formatFaces(row.side_lesson_faces || 0)}</td>
+          <td>${formatSideLessonTotal(row.side_lesson_faces,row.side_lesson_lines_per_face)}</td>
           <td>${formatFaces(row.final_revision_faces)} / ${formatFaces(row.revision_target_faces)}</td>
           <td><span class="status ${revStatus === "منجز" ? "ok" : revStatus === "غير منجز" ? "bad" : "muted"}">${revStatus}</span></td>
           <td><span class="status ${overall === true ? "ok" : overall === false ? "bad" : "muted"}">${overall === null ? "لا توجد خطة" : overall ? "منجز" : "غير منجز"}</span></td>
@@ -4201,9 +3980,7 @@ export default function MonthlyAchievement() {
           icon={Target}
           title="جنب الدرس"
           value={
-            formatFaces(
-              stats.sideLessonFaces
-            )
+            formatMonthlySideLessons(rows)
           }
           subtitle="إجمالي الأوجه"
           tone="side-lessons"
@@ -4420,11 +4197,7 @@ function StudentAchievementCard({
           percent={row.revision_percent}
         />
 
-        <SideLessonSummaryItem
-          faces={
-            row.side_lesson_faces
-          }
-        />
+        <SideLessonSummaryItem faces={row.side_lesson_faces} linesPerFace={row.side_lesson_lines_per_face} />
       </div>
 
       <div className={`smart-delay-summary ${row.smart_delay?.hasDelay ? "has-delay" : "clear"}`}>
@@ -4474,26 +4247,9 @@ function AchievementSummaryItem({ title, status, done, target, percent }) {
 }
 
 
-function SideLessonSummaryItem({
-  faces,
-}) {
-  return (
-    <div className="achievement-summary-item side-lessons">
-      <span>
-        جنب الدرس
-      </span>
-
-      <strong>
-        {formatFaces(
-          faces
-        )}
-
-        <small>
-          {" "}وجه
-        </small>
-      </strong>
-    </div>
-  );
+function SideLessonSummaryItem({faces,linesPerFace}) {
+  return <div className="achievement-summary-item side-lessons"><span>جنب الدرس</span>
+    <strong>{formatSideLessonTotal(faces,linesPerFace)}</strong><em>من التسميع تلقائيًا</em></div>;
 }
 
 /* =========================================================
@@ -4793,10 +4549,7 @@ function DetailsModal({
             </span>
 
             <strong>
-              {formatFaces(
-                student.side_lesson_faces ||
-                  0
-              )}
+              {formatSideLessonTotal(student.side_lesson_faces,student.side_lesson_lines_per_face)}
             </strong>
           </div>
         </div>

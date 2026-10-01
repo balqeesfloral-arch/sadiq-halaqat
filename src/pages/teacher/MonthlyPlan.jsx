@@ -2023,17 +2023,13 @@ function createEmptyPlanData() {
     revision_target_faces:
       0,
 
-    side_lesson_policy_id:
-      null,
 
-    side_lesson_mode:
-      "none",
 
-    side_lesson_amount:
-      "",
 
-    side_lesson_unit:
-      "faces",
+
+
+
+
 
     boundary_suggestion_mode:
       "ayah_and_surah",
@@ -2948,21 +2944,21 @@ export default function MonthlyPlan() {
       });
 
       /* ===========================================
-         سياسة جنب الدرس
+         نطاق المراجعة
       =========================================== */
 
       const { data: policyRows, error: policyError } = await supabase
         .from("quran_student_policies")
         .select(`
           id, student_id, halaqa_id, teacher_id,
-          side_lesson_mode, side_lesson_amount, side_lesson_unit,
+
           boundary_suggestion_mode,
           revision_scope_mode,
           revision_scope_start_surah, revision_scope_start_ayah,
           revision_scope_end_surah, revision_scope_end_ayah,
           revision_scope_updated_at,
           effective_from, effective_to, active, lesson_enabled, lesson_start_surah, lesson_start_ayah,
-          lesson_daily_amount, lesson_daily_unit, side_lesson_switch_percent, side_lesson_when_paused
+          lesson_daily_amount, lesson_daily_unit
         `)
         .eq("halaqa_id", Number(selectedHalaqa))
         .in("student_id", studentIds)
@@ -3447,8 +3443,8 @@ export default function MonthlyPlan() {
                 revision_sessions: revisionSessions,
                 memorization_expected_percent: plan?.memorization_expected_percent,
                 revision_expected_percent: plan?.revision_expected_percent,
-                side_lesson_switch_percent: policy?.side_lesson_switch_percent ?? 50,
-                side_lesson_when_paused: policy?.side_lesson_when_paused || "keep",
+
+
                 policy_effective_from: policy?.id ? learningDate() : [period.start, enrollment?.start_date || period.start].sort().at(-1),
 
                 student_name:
@@ -3656,17 +3652,13 @@ export default function MonthlyPlan() {
                       : (baseRevTarget || calculatedRevTarget || 0)
                   ),
 
-                side_lesson_policy_id:
-                  policy?.id || null,
 
-                side_lesson_mode:
-                  policy?.side_lesson_mode || "none",
 
-                side_lesson_amount:
-                  policy?.side_lesson_amount ?? "",
 
-                side_lesson_unit:
-                  policy?.side_lesson_unit || "faces",
+
+
+
+
 
                 boundary_suggestion_mode:
                   policy?.boundary_suggestion_mode || "ayah_and_surah",
@@ -4056,7 +4048,7 @@ export default function MonthlyPlan() {
 
     if (!currentRow) return;
 
-    const policyField = /^(side_lesson_|boundary_suggestion_mode$|revision_scope_|policy_effective_from$)/.test(field);
+    const policyField = /^(boundary_suggestion_mode$|revision_scope_|policy_effective_from$)/.test(field);
     if (isLockedPlan(currentRow) && !policyField) {
       showToast(
         "الخطة مقفلة حاليًا ولا يمكن تعديلها",
@@ -4561,18 +4553,13 @@ export default function MonthlyPlan() {
 
   async function saveQuranStudentPolicy(row) {
     if (!isQuranGoal(row.learning_goal)) return;
-    const mode = row.side_lesson_mode || "none";
-    const needsAmount = ["previous_amount", "memorized_cycle"].includes(mode) || row.side_lesson_when_paused === "memorized_cycle";
-    if (needsAmount && (Number(row.side_lesson_amount || 0) <= 0 || !["lines", "faces"].includes(row.side_lesson_unit))) {
-      throw new Error(`حدد مقدار جنب الدرس ووحدته للطالب ${row.student_name}`);
-    }
     const manual = row.revision_scope_mode === "manual";
     await saveLearningPolicy(row.student_id, selectedHalaqa, {
-      side_lesson_mode: mode,
-      side_lesson_amount: needsAmount ? Number(row.side_lesson_amount) : null,
-      side_lesson_unit: needsAmount ? row.side_lesson_unit : null,
-      side_lesson_switch_percent: Number(row.side_lesson_switch_percent || 50),
-      side_lesson_when_paused: row.side_lesson_when_paused || "keep",
+
+
+
+
+
       boundary_suggestion_mode: row.boundary_suggestion_mode || "ayah_and_surah",
       revision_scope_mode: manual ? "manual" : "lesson_derived",
       revision_scope_start_surah: manual ? textOrNull(row.revision_scope_start_surah) : null,
@@ -4586,17 +4573,18 @@ export default function MonthlyPlan() {
     }, row.policy_effective_from || learningDate());
   }
 
-  async function savePolicyRow(studentId) {
-    const row = rows.find((item) => Number(item.student_id) === Number(studentId));
+
+
+  async function saveRevisionScopeRow(studentId) {
+    const row = rows.find(item => Number(item.student_id) === Number(studentId));
     if (!row) return;
     try {
       await saveQuranStudentPolicy(row);
-      showToast("تم حفظ قاعدة الطالب من التاريخ المحدد", "success");
+      showToast("تم حفظ نطاق محفوظ الطالب", "success");
       await loadMonthlyPlan();
     } catch (error) {
       showToast(String(error?.message || "").includes("MEMORIZED_SCOPE")
-        ? "حدد نطاق المحفوظ لتشغيل الدورة" : error?.message || "تعذر حفظ قاعدة الطالب", "error");
-      throw error;
+        ? "أكمل حدود محفوظ الطالب" : error?.message || "تعذر حفظ نطاق المحفوظ", "error");
     }
   }
 
@@ -6280,7 +6268,8 @@ export default function MonthlyPlan() {
                 row={row}
                 period={period}
                 onActivitySaved={loadMonthlyPlan}
-                onPolicySaved={() => savePolicyRow(row.student_id)}
+                onRevisionScopeSaved={() => saveRevisionScopeRow(row.student_id)}
+
                 showPace={teacherPreferences.plan_show_pace !== false}
                 onChange={(
                   field,
@@ -6331,7 +6320,8 @@ export default function MonthlyPlan() {
 function StudentPlanCard({
   row,
   onActivitySaved,
-  onPolicySaved,
+  onRevisionScopeSaved,
+
   period,
   showPace = true,
   onChange,
@@ -6437,7 +6427,7 @@ function StudentPlanCard({
               <SummaryItem
                 label="مراجعة القاعدة"
                 value={nooraniaLabel(row.noorania_revision_daily_amount, row.noorania_revision_daily_unit)}
-                sub="جنب الدرس مستقل"
+                sub="خطة المراجعة"
               />
             </>
           )}
@@ -6594,6 +6584,7 @@ function StudentPlanCard({
                           endAyah: row.revision_scope_end_ayah,
                           updatedAt: row.revision_scope_updated_at,
                         }}
+                        onRevisionScopeSaved={onRevisionScopeSaved}
                         cycleInfo={{
                           startSurah: row.revision_cycle_start_surah,
                           startAyah: row.revision_cycle_start_ayah,
@@ -6612,12 +6603,7 @@ function StudentPlanCard({
 
                     <StudentLessonActivity studentId={row.student_id} halaqaId={row.halaqa_id}
                       policy={row.learning_policy} plan={row} onSaved={onActivitySaved} disabled={!row.plan_id} />
-                    <SideLessonPolicyEditor
-                      row={row}
-                      locked={false}
-                      onChange={onChange}
-                      onSave={onPolicySaved}
-                    />
+
                   </section>
                 )}
 
@@ -6830,6 +6816,7 @@ function PlanSection({
   generating = false,
   routeError = "",
   reviewScope = null,
+  onRevisionScopeSaved,
   cycleInfo = null,
   routeSegments = [],
   showPace = true,
@@ -6901,12 +6888,15 @@ function PlanSection({
       {expanded && (
         <div className="compact-plan-body">
           {type === "revision" && (
-            <ReviewMemoryScopeEditor
+            <div><ReviewMemoryScopeEditor
               scope={reviewScope}
               direction={direction}
               locked={false}
               onChange={onChange}
             />
+            <button type="button" className="plan-view-button" onClick={onRevisionScopeSaved}>
+              <Save size={14} /> حفظ نطاق المحفوظ
+            </button></div>
           )}
 
           <div className="compact-plan-row">
@@ -7110,136 +7100,7 @@ function PlanSection({
   );
 }
 
-function SideLessonPolicyEditor({ row, locked, onChange, onSave }) {
-  const [savingRule, setSavingRule] = useState(false);
-  const [expanded, setExpanded] = useState(false);
 
-  const modes = [
-    { value: "adaptive_surah", label: "تلقائي حسب تقدم السورة" },
-    { value: "memorized_cycle", label: "دورة على كامل المحفوظ" },
-    { value: "none", label: "بدون" },
-    { value: "previous_amount", label: "مقدار سابق" },
-    { value: "previous_surah", label: "السورة السابقة" },
-    { value: "from_surah_start", label: "من بداية السورة" },
-  ];
-
-  const currentLabel =
-    modes.find((item) => item.value === (row.side_lesson_mode || "none"))?.label ||
-    "بدون";
-
-  return (
-    <section className={`side-policy-card compact-side-policy ${expanded ? "expanded" : ""}`}>
-      <button
-        type="button"
-        className="compact-side-toggle"
-        onClick={() => setExpanded((value) => !value)}
-        aria-expanded={expanded}
-      >
-        <Target size={16} />
-        <span>
-          <strong>جنب الدرس</strong>
-          <small>{currentLabel}</small>
-        </span>
-        <ChevronDown className={expanded ? "open" : ""} size={17} />
-      </button>
-
-      {expanded && (
-        <div className="compact-side-body">
-          <div className="side-policy-modes compact">
-            {modes.map((item) => (
-              <button
-                type="button"
-                key={item.value}
-                disabled={locked}
-                className={row.side_lesson_mode === item.value ? "active" : ""}
-                onClick={() => onChange("side_lesson_mode", item.value)}
-              >
-                <strong>{item.label}</strong>
-              </button>
-            ))}
-          </div>
-
-          {row.side_lesson_mode === "adaptive_surah" && (
-            <label className="side-policy-boundary">التبديل إلى بداية السورة عند بلوغ
-              <select value={row.side_lesson_switch_percent || 50} disabled={locked} onChange={(e) => onChange("side_lesson_switch_percent", Number(e.target.value))}>
-                <option value={25}>ربع السورة</option><option value={50}>نصف السورة</option><option value={75}>ثلاثة أرباع السورة</option>
-              </select>
-              <small>يتغير جنب الدرس تلقائيًا حسب الحفظ المعتمد، ثم تتكرر القاعدة مع السورة التالية.</small>
-            </label>
-          )}
-          {row.side_lesson_mode !== "none" && (
-            <label className="side-policy-boundary">عند إيقاف الدرس
-              <select value={row.side_lesson_when_paused || "keep"} disabled={locked} onChange={(e) => onChange("side_lesson_when_paused", e.target.value)}>
-                <option value="keep">استمرار قاعدة جنب الدرس</option><option value="memorized_cycle">دورة على المحفوظ المسجل</option><option value="none">إيقاف جنب الدرس</option>
-              </select>
-              {(row.side_lesson_mode === "memorized_cycle" || row.side_lesson_when_paused === "memorized_cycle") && <small>حدد نطاق المحفوظ في إعداد المراجعة. لكل مسار موضع مستقل.</small>}
-            </label>
-          )}
-          {(["previous_amount", "memorized_cycle"].includes(row.side_lesson_mode) || row.side_lesson_when_paused === "memorized_cycle") && (
-            <div className="side-policy-amount compact">
-              <div className="daily-amount-control">
-                <input
-                  type="number"
-                  min="0.25"
-                  step={row.side_lesson_unit === "lines" ? "1" : "0.25"}
-                  disabled={locked}
-                  value={row.side_lesson_amount ?? ""}
-                  onChange={(event) =>
-                    onChange(
-                      "side_lesson_amount",
-                      event.target.value === "" ? "" : Number(event.target.value)
-                    )
-                  }
-                  placeholder="المقدار"
-                />
-                <div className="daily-unit-toggle">
-                  <button
-                    type="button"
-                    disabled={locked}
-                    className={row.side_lesson_unit === "lines" ? "active" : ""}
-                    onClick={() => onChange("side_lesson_unit", "lines")}
-                  >
-                    أسطر
-                  </button>
-                  <button
-                    type="button"
-                    disabled={locked}
-                    className={row.side_lesson_unit === "faces" ? "active" : ""}
-                    onClick={() => onChange("side_lesson_unit", "faces")}
-                  >
-                    صفحات
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <label className="side-policy-boundary">تاريخ سريان القاعدة
-            <input type="date" value={row.policy_effective_from || learningDate()} max={learningDate()} min={row.learning_policy?.effective_from || undefined} disabled={locked} onChange={(e) => onChange("policy_effective_from", e.target.value)} />
-          </label>
-          <button type="button" className="hero-btn save" disabled={savingRule || locked} onClick={async () => {
-            setSavingRule(true);
-            try { await onSave?.(); } catch { /* Parent displays the actionable error. */ }
-            finally { setSavingRule(false); }
-          }}>{savingRule ? <Loader2 size={14} /> : <Save size={14} />} حفظ القاعدة</button>
-          <div className="side-policy-boundary compact">
-            <label>الحد</label>
-            <select
-              disabled={locked}
-              value={row.boundary_suggestion_mode || "ayah_and_surah"}
-              onChange={(event) => onChange("boundary_suggestion_mode", event.target.value)}
-            >
-              <option value="ayah_and_surah">آية أو سورة</option>
-              <option value="ayah">آية</option>
-              <option value="surah">سورة</option>
-              <option value="none">بدون</option>
-            </select>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
 
 function NooraniaPlanSection({ row, locked, onChange }) {
   const sessions = Number(row.planned_sessions || 0);
@@ -7311,7 +7172,7 @@ function NooraniaPlanSection({ row, locked, onChange }) {
       <div className="noorania-plan-note">
         <Sparkles size={14} />
         <span>
-          جنب الدرس يبقى في صفحة التسميع ولا يدخل في حساب الخطة الشهرية.
+          يُحدد درس القاعدة والمراجعة حسب أيام التسميع.
         </span>
       </div>
     </section>

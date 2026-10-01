@@ -1,3 +1,5 @@
+import SideLessonFields from "../components/SideLessonFields";
+import {storedSideLesson,formatSideLessonTotal,validateSideLesson,sideLessonPayload,withSideLessonMetrics} from "../lib/sideLesson";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -33,6 +35,9 @@ const [selectedDate, setSelectedDate] =
   const [lessonEvaluation, setLessonEvaluation] =
     useState("");
 
+  const [sideFaces,setSideFaces] = useState("");
+  const [sideLines,setSideLines] = useState("");
+  const [sideChanged,setSideChanged] = useState(false);
   const [nextSurah, setNextSurah] = useState("");
   const [nextFromAyah, setNextFromAyah] =
     useState("");
@@ -211,9 +216,8 @@ const [selectedDate, setSelectedDate] =
       studentsResult.data || []
     );
 
-    setRecords(
-      recordsResult.data || []
-    );
+    try { setRecords(await withSideLessonMetrics(supabase, recordsResult.data || [])); }
+    catch(error) { showToast(error.message || "تعذر تحميل مقادير جنب الدرس","error"); }
 
     setRecordsLoading(false);
   }
@@ -278,6 +282,7 @@ const [selectedDate, setSelectedDate] =
     setToAyah("");
     setLessonEvaluation("");
 
+    setSideFaces("");setSideLines("");setSideChanged(false);
     setNextSurah("");
     setNextFromAyah("");
     setNextToSurah("");
@@ -302,6 +307,8 @@ const [selectedDate, setSelectedDate] =
 
   function editRecord(record) {
     setEditingId(record.id);
+    const side=storedSideLesson(record);
+    setSideFaces(side.faces || "");setSideLines(side.lines || "");setSideChanged(false);
 
     const student = students.find(
       (item) =>
@@ -436,16 +443,13 @@ const [selectedDate, setSelectedDate] =
       return;
     }
 
-    if (
-      !fromSurah &&
-      !toSurah &&
-      !reviewSurah
-    ) {
-      showToast(
-        "أدخل مقدار التسميع أو المراجعة",
-        "error"
-      );
-      return;
+    const original=editingId?records.find(row=>Number(row.id)===Number(editingId)):null;
+    const preserveSide=original && !sideChanged && !storedSideLesson(original).manual;
+    let side;
+    try { side=preserveSide?storedSideLesson(original):validateSideLesson(sideFaces,sideLines,nextEvaluation); }
+    catch(error){showToast(error.message,"error");return;}
+    if (!fromSurah && !toSurah && !reviewSurah && !side.totalLines && !(preserveSide && (original.next_surah || original.next2_surah))) {
+      showToast("أدخل الدرس أو مقدار جنب الدرس أو المراجعة.","error");return;
     }
 
     setLoading(true);
@@ -537,7 +541,8 @@ const [selectedDate, setSelectedDate] =
           notes.trim() || null,
 
         points,
-      };
+      ...sideLessonPayload({original,changed:sideChanged,faces:sideFaces,lines:sideLines,evaluation:nextEvaluation}),
+};
 
       if (editingId) {
         await updateRecitation(
@@ -1222,85 +1227,16 @@ const [selectedDate, setSelectedDate] =
 
           {/* NEXT */}
 
-          <RecitationSection
-            icon={
-              <Target size={19} />
-            }
-            title="جنب الدرس الأول"
-            subtitle="المقدار المطلوب للجلسة القادمة"
-          >
-            <QuranRange
-              fromSurah={nextSurah}
-              setFromSurah={
-                setNextSurah
-              }
-              fromAyah={
-                nextFromAyah
-              }
-              setFromAyah={
-                setNextFromAyah
-              }
-              toSurah={
-                nextToSurah
-              }
-              setToSurah={
-                setNextToSurah
-              }
-              toAyah={
-                nextToAyah
-              }
-              setToAyah={
-                setNextToAyah
-              }
-            />
-
-            <EvaluationSelect
-              label="تقييم جنب الدرس"
-              value={
-                nextEvaluation
-              }
-              setValue={
-                setNextEvaluation
-              }
-            />
-          </RecitationSection>
+          <RecitationSection icon={<Target size={19}/>} title="جنب الدرس" subtitle="المقدار الذي سمعه الطالب">
+    <SideLessonFields faces={sideFaces} lines={sideLines} evaluation={nextEvaluation}
+      onFaces={value=>{setSideFaces(value);setSideChanged(true);}}
+      onLines={value=>{setSideLines(value);setSideChanged(true);}}
+      onEvaluation={value=>{setNextEvaluation(value);setSideChanged(true);}}/>
+  </RecitationSection>
 
           {/* NEXT 2 */}
 
-          <RecitationSection
-            icon={
-              <Plus size={19} />
-            }
-            title="جنب الدرس الثاني"
-            subtitle="مقدار إضافي إن وجد"
-          >
-            <QuranRange
-              fromSurah={
-                next2Surah
-              }
-              setFromSurah={
-                setNext2Surah
-              }
-              fromAyah={
-                next2FromAyah
-              }
-              setFromAyah={
-                setNext2FromAyah
-              }
-              toSurah={
-                next2ToSurah
-              }
-              setToSurah={
-                setNext2ToSurah
-              }
-              toAyah={
-                next2ToAyah
-              }
-              setToAyah={
-                setNext2ToAyah
-              }
-            />
-          </RecitationSection>
+
 
           {/* REVIEW */}
 
@@ -1624,20 +1560,7 @@ const [selectedDate, setSelectedDate] =
                           </td>
 
                           <td>
-                            <QuranText
-                              from={
-                                record.next_surah
-                              }
-                              fromAyah={
-                                record.next_from_ayah
-                              }
-                              to={
-                                record.next_to_surah
-                              }
-                              toAyah={
-                                record.next_to_ayah
-                              }
-                            />
+                            <div><strong>{formatSideLessonTotal(storedSideLesson(record).totalFaces)}</strong><EvaluationBadge value={record.next_evaluation}/></div>
                           </td>
 
                           <td>

@@ -1,3 +1,4 @@
+import {withSideLessonMetrics,formatSideLessonTotal} from "../../lib/sideLesson";
 import { supabase } from "../../lib/supabase";
 
 const HALAQA_PERIODS = {
@@ -574,8 +575,8 @@ async function buildRecitations(scope, filters, allowedHalaqaIds) {
   const [quranResult, nooraniaResult] = await Promise.all([quranQuery, nooraniaQuery]);
   if (quranResult.error) throw quranResult.error;
 
-  const quranRows = quranResult.data || [];
-  const nooraniaRows = nooraniaResult.error ? [] : nooraniaResult.data || [];
+  const quranRows = await withSideLessonMetrics(supabase,quranResult.data || []);
+  const nooraniaRows = nooraniaResult.error ? [] : await withSideLessonMetrics(supabase,nooraniaResult.data || [],"noorania");
   const groups = new Map();
 
   function ensure(studentId, halaqaId) {
@@ -587,6 +588,7 @@ async function buildRecitations(scope, filters, allowedHalaqaIds) {
         quranSessions: 0,
         nooraniaSessions: 0,
         lessonFaces: 0,
+        sideLessonFaces: 0,
         reviewFaces: 0,
         repeats: 0,
         lastDate: null,
@@ -597,15 +599,17 @@ async function buildRecitations(scope, filters, allowedHalaqaIds) {
 
   for (const row of quranRows) {
     const item = ensure(row.student_id, row.halaqa_id);
+    item.sideLessonFaces += Number(row._side_lesson_accepted_faces || 0);
     item.quranSessions += 1;
     item.lessonFaces += recitationLessonFaces(row);
     item.reviewFaces += Number(row.review_faces || 0);
-    if (isRepeat(row.lesson_evaluation) || isRepeat(row.review_evaluation)) item.repeats += 1;
+    if (isRepeat(row.lesson_evaluation) || isRepeat(row.review_evaluation) || isRepeat(row.next_evaluation) || isRepeat(row.next2_evaluation)) item.repeats += 1;
     if (!item.lastDate || row.recitation_date > item.lastDate) item.lastDate = row.recitation_date;
   }
 
   for (const row of nooraniaRows) {
     const item = ensure(row.student_id, row.halaqa_id);
+    item.sideLessonFaces += Number(row._side_lesson_accepted_faces || 0);
     item.nooraniaSessions += 1;
     item.lessonFaces += Number(row.lesson_faces || 0);
     item.reviewFaces += Number(row.revision_faces || 0);
@@ -634,6 +638,8 @@ async function buildRecitations(scope, filters, allowedHalaqaIds) {
       nooraniaSessions: group.nooraniaSessions,
       sessions: group.quranSessions + group.nooraniaSessions,
       lessonFaces: Math.round(group.lessonFaces * 100) / 100,
+      sideLessonFaces: group.sideLessonFaces,
+      sideLinesPerFace: group.quranSessions && group.nooraniaSessions ? 0 : group.nooraniaSessions ? 10 : 15,
       reviewFaces: Math.round(group.reviewFaces * 100) / 100,
       repeats: group.repeats,
       lastDate: group.lastDate,
@@ -963,6 +969,7 @@ export function getExcelRows(report) {
         "إجمالي الجلسات": row.sessions,
         "الحفظ - صفحات": row.lessonFaces,
         "المراجعة - صفحات": row.reviewFaces,
+        "جنب الدرس": formatSideLessonTotal(row.sideLessonFaces,row.sideLinesPerFace),
         "الإعادات": row.repeats,
         "آخر تسميع": row.lastDate || "—",
       }));

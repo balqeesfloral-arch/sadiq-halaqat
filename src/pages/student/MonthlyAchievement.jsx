@@ -1,3 +1,4 @@
+import {monthlySideLessonTotals,formatSideLessonTotal} from "../../lib/sideLesson";
 import { effectiveMonthlyPlans } from "../../lib/effectiveLearning";
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, Flag, Layers3, Route, Sparkles, Target } from "lucide-react";
@@ -25,6 +26,7 @@ export default function StudentMonthlyAchievement() {
     memDone: 0,
     revDone: 0,
     sideDone: 0,
+    sideLinesPerFace: 15,
     recitations: 0,
     segmentSessions: 0,
     period: null,
@@ -40,7 +42,7 @@ export default function StudentMonthlyAchievement() {
       const hijri = getHijriParts();
       const period = getHijriMonthRange(hijri.year, hijri.month);
 
-      const [planResult, progressResult, recitationsResult] = await Promise.all([
+      const [planResult, progressResult, recitationsResult, nooraniaResult] = await Promise.all([
         supabase.from("monthly_plans").select("*")
           .eq("student_id", profile.id).eq("halaqa_id", halaqa.id)
           .eq("hijri_year", hijri.year).eq("hijri_month", hijri.month).maybeSingle(),
@@ -51,11 +53,15 @@ export default function StudentMonthlyAchievement() {
           .select("id, recitation_date, lesson_faces_manual, lesson_faces, lesson_evaluation, review_faces, review_evaluation")
           .eq("student_id", profile.id).eq("halaqa_id", halaqa.id)
           .gte("recitation_date", period.start).lte("recitation_date", period.end),
+        supabase.from("noorania_recitations").select("id")
+          .eq("student_id", profile.id).eq("halaqa_id", halaqa.id)
+          .gte("recitation_date", period.start).lte("recitation_date", period.end),
       ]);
 
       if (planResult.error) throw planResult.error;
       if (progressResult.error) throw progressResult.error;
       if (recitationsResult.error) throw recitationsResult.error;
+      if (nooraniaResult.error) throw nooraniaResult.error;
 
       const effective = await effectiveMonthlyPlans(planResult.data ? [planResult.data] : [], halaqa.id, period);
       const plan = effective[0] || null;
@@ -88,9 +94,7 @@ export default function StudentMonthlyAchievement() {
         .filter((row) => row.segment_type === "revision" && acceptedSegment(row.completion_status))
         .reduce((sum, row) => sum + Number(row.actual_faces || 0), 0);
 
-      const engineSide = segments
-        .filter((row) => row.segment_type === "side_lesson" && acceptedSegment(row.completion_status))
-        .reduce((sum, row) => sum + Number(row.actual_faces || 0), 0);
+      const sideTotals=await monthlySideLessonTotals(supabase,halaqa.id,[profile.id],period);
 
       const legacyMem = recitations.reduce((sum, row) => {
         if (lessonSegmentIds.has(Number(row.id))) return sum;
@@ -115,8 +119,9 @@ export default function StudentMonthlyAchievement() {
         progress,
         memDone: engineMem + legacyMem + manualMem,
         revDone: engineRev + legacyRev + manualRev,
-        sideDone: engineSide,
-        recitations: recitations.length,
+        sideDone: Number(sideTotals.get(Number(profile.id)) || 0),
+        sideLinesPerFace: sideTotals.linesPerFace.get(Number(profile.id)) ?? 15,
+        recitations: recitations.length + (nooraniaResult.data || []).length,
         segmentSessions,
         period,
       });
@@ -166,21 +171,18 @@ export default function StudentMonthlyAchievement() {
     >
       {loading ? (
         <div className="student-loading">جارٍ بناء رحلة إنجازك…</div>
-      ) : !data.plan ? (
-        <section className="student-panel"><div className="student-empty"><Route size={30}/><strong>لا توجد خطة شهرية لقياس الإنجاز</strong><span>عندما يحدد المعلم الخطة ستبدأ رحلة الإنجاز تلقائيًا.</span></div></section>
-      ) : (
-        <>
+      ) : <>
           <section className="student-metrics">
-            <Metric icon={Target} label="الإنجاز العام" value={`${summary.overall}%`} note={summary.journeyMessage} />
-            <Metric icon={BookOpen} label="الحفظ المنجز" value={facesToPretty(data.memDone)} note={`من ${facesToPretty(summary.memTarget)}`} />
-            <Metric icon={Sparkles} label="المراجعة المنجزة" value={facesToPretty(data.revDone)} note={`من ${facesToPretty(summary.revTarget)}`} />
-            <Metric icon={Layers3} label="جنب الدرس" value={facesToPretty(data.sideDone)} note="مؤشر مستقل ولا يُحسب حفظًا جديدًا" />
+            <Metric icon={Target} label={data.plan ? "الإنجاز العام" : "جلسات التسميع"} value={data.plan ? `${summary.overall}%` : data.recitations} note={data.plan ? summary.journeyMessage : "من السجلات الفعلية لهذا الشهر"} />
+            <Metric icon={BookOpen} label="الحفظ المنجز" value={facesToPretty(data.memDone)} note={summary.memTarget ? `من ${facesToPretty(summary.memTarget)}` : "من التسميع الفعلي"} />
+            <Metric icon={Sparkles} label="المراجعة المنجزة" value={facesToPretty(data.revDone)} note={summary.revTarget ? `من ${facesToPretty(summary.revTarget)}` : "من التسميع الفعلي"} />
+            <Metric icon={Layers3} label="جنب الدرس" value={formatSideLessonTotal(data.sideDone,data.sideLinesPerFace)} note="مؤشر مستقل ولا يُحسب حفظًا جديدًا" />
           </section>
 
-          <section className="student-grid student-grid-2">
+          {data.plan && (<section className="student-grid student-grid-2">
             <ProgressCard title="رحلة الحفظ" done={data.memDone} target={summary.memTarget} percent={summary.memPercent} expected={summary.schedule.expectedPercent} />
             <ProgressCard title="رحلة المراجعة" done={data.revDone} target={summary.revTarget} percent={summary.revPercent} expected={summary.schedule.expectedPercent} />
-          </section>
+          </section>)}
 
           <section className="student-panel">
             <div className="student-panel-head">
@@ -188,15 +190,14 @@ export default function StudentMonthlyAchievement() {
                 <div className="student-panel-title-icon"><Flag size={19}/></div>
                 <div>
                   <span>حالتك الآن</span>
-                  <h3>{summary.completed ? "أحسنت! حققت الخطة" : summary.journeyMessage}</h3>
+                  <h3>{data.plan ? (summary.completed ? "أحسنت! حققت الخطة" : summary.journeyMessage) : "إنجازك مسجل تلقائيًا"}</h3>
                   <p>تم تسجيل {data.recitations} جلسة هذا الشهر.</p>
                 </div>
               </div>
               <span className="student-soft-badge">{summary.completed ? "منجز" : "مستمر"}</span>
             </div>
           </section>
-        </>
-      )}
+        </>}
     </StudentPage>
   );
 }

@@ -1,3 +1,4 @@
+import {storedSideLesson,formatSideLessonTotal} from "../../lib/sideLesson";
 import {
   FileText,
   BarChart3,
@@ -799,21 +800,13 @@ const excusedCount =
               تقييم الدرس
             </th>
 
-            <th style={thStyle}>
-              جنب الدرس الاول
-            </th>
+            <th style={thStyle}>جنب الدرس</th><th style={thStyle}>التقييم</th>
 
-<th style={thStyle}>
-             تقييم جنب الدرس الاول
-            </th>
 
-<th style={thStyle}>
-              جنب الدرس الثاني
-            </th>
 
-<th style={thStyle}>
-             تقييم جنب الدرس الثاني
-            </th>
+
+
+
 
             <th style={thStyle}>
               المراجعة
@@ -879,53 +872,17 @@ const excusedCount =
   />
 </td>
 
-{/* جنب الدرس الأول */}
 
-<td style={tdStyle}>
-  <div>
-    {row.next_surah || "-"}
-  </div>
 
-  <small
-    style={{
-      color:"#64748B",
-    }}
-  >
-    {row.next_from_ayah || "-"}
-    {" - "}
-    {row.next_to_ayah || "-"}
-  </small>
-</td>
+<td style={tdStyle}>{formatSideLessonTotal(storedSideLesson(row).totalFaces)}</td><td style={tdStyle}><EvaluationBadge value={row.next_evaluation}/></td>
 
-<td style={tdStyle}>
-  <EvaluationBadge
-    value={row.next_evaluation}
-  />
-</td>
 
-{/* جنب الدرس الثاني */}
 
-<td style={tdStyle}>
-  <div>
-    {row.next2_surah || "-"}
-  </div>
 
-  <small
-    style={{
-      color:"#64748B",
-    }}
-  >
-    {row.next2_from_ayah || "-"}
-    {" - "}
-    {row.next2_to_ayah || "-"}
-  </small>
-</td>
 
-<td style={tdStyle}>
-  <EvaluationBadge
-    value={row.next2_evaluation}
-  />
-</td>
+
+
+
 
 {/* المراجعة */}
 

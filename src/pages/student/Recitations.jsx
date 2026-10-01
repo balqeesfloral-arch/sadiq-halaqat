@@ -1,3 +1,4 @@
+import {withSideLessonMetrics,storedSideLesson,formatSideLessonTotal} from "../../lib/sideLesson";
 import { useEffect, useMemo, useState } from "react";
 import { BookOpen, CalendarClock, CalendarDays, Clock3, RefreshCw, Sparkles, Star, Target, UserRoundSearch } from "lucide-react";
 import StudentPage from "../../components/student/StudentPage";
@@ -71,7 +72,7 @@ export default function MyRecitations() {
       setLoading(true);
 
       let assignmentQuery = supabase
-        .from("quran_assignments")
+        .from("quran_assignments").neq("segment_type","side_lesson")
         .select("id, student_id, halaqa_id, assignment_date, segment_type, sequence_no, start_ayah_id, end_ayah_id, target_amount, target_unit, source, status, generated_reason")
         .eq("student_id", profile.id)
         .eq("status", "planned")
@@ -83,12 +84,12 @@ export default function MyRecitations() {
 
       const [quranResult, nooraniaResult, assignmentResult] = await Promise.all([
         supabase.from("recitations")
-          .select("id, student_id, halaqa_id, recitation_date, from_surah, from_ayah, to_surah, to_ayah, review_surah, review_from_ayah, review_to_surah, review_to_ayah, lesson_amount_value, lesson_amount_unit, lesson_faces_manual, lesson_faces, lesson_evaluation, review_faces, review_evaluation, next_surah, next_from_ayah, next_to_surah, next_to_ayah, next2_surah, next2_from_ayah, next2_to_surah, next2_to_ayah, points, notes")
+          .select("id, student_id, halaqa_id, recitation_date, from_surah, from_ayah, to_surah, to_ayah, review_surah, review_from_ayah, review_to_surah, review_to_ayah, lesson_amount_value, lesson_amount_unit, lesson_faces_manual, lesson_faces, lesson_evaluation, review_faces, review_evaluation, next_surah, next_from_ayah, next_to_surah, next_to_ayah, next2_surah, next2_from_ayah, next2_to_surah, next2_to_ayah, next_evaluation, side_lesson_faces, side_lesson_lines, points, notes")
           .eq("student_id", profile.id)
           .order("recitation_date", { ascending: false })
           .limit(80),
         supabase.from("noorania_recitations")
-          .select("id, student_id, recitation_date, lesson, lesson_evaluation, lesson_faces, side_lesson, side_lesson_evaluation, revision, revision_evaluation, revision_faces, points, notes")
+          .select("id, student_id, recitation_date, lesson, lesson_evaluation, lesson_faces, side_lesson, side_lesson_evaluation, side_lesson_faces, side_lesson_lines, revision, revision_evaluation, revision_faces, points, notes")
           .eq("student_id", profile.id)
           .order("recitation_date", { ascending: false })
           .limit(80),
@@ -99,7 +100,7 @@ export default function MyRecitations() {
       if (nooraniaResult.error) throw nooraniaResult.error;
       if (assignmentResult.error) throw assignmentResult.error;
 
-      const quranRows = quranResult.data || [];
+      const quranRows = await withSideLessonMetrics(supabase,quranResult.data || []);
       const quranIds = quranRows.map((row) => row.id);
 
       let segmentRows = [];
@@ -142,7 +143,7 @@ export default function MyRecitations() {
       });
 
       const quran = quranRows.map((row) => ({ ...row, kind: "quran" }));
-      const noorania = (nooraniaResult.data || []).map((row) => ({ ...row, kind: "noorania" }));
+      const noorania = (await withSideLessonMetrics(supabase,nooraniaResult.data || [],"noorania")).map((row) => ({ ...row, kind: "noorania" }));
 
       setRecords([...quran, ...noorania].sort((a, b) => new Date(b.recitation_date) - new Date(a.recitation_date)));
       setSegmentsByRecitation(byRecitation);
@@ -305,7 +306,7 @@ function RecitationItem({ record, segments, ayahMap }) {
 
         {hasEngineSegments ? (
           <div style={{ display: "grid", gap: 8 }}>
-            {segments.map((segment) => (
+            {segments.filter(segment=>segment.segment_type!=="side_lesson").map((segment) => (
               <div
                 key={segment.id}
                 style={{
@@ -341,10 +342,11 @@ function RecitationItem({ record, segments, ayahMap }) {
             {quran && record.review_surah && record.review_to_surah
               ? ` • المراجعة: ${rangeText(record.review_surah, record.review_from_ayah, record.review_to_surah, record.review_to_ayah)}`
               : ` • المراجعة: ${legacyReviewAmount || "—"}`}
-            {!quran && record.side_lesson ? ` • جنب الدرس: ${record.side_lesson}` : ""}
+            {!quran && record.side_lesson && !storedSideLesson(record,"noorania").totalLines ? ` • جنب الدرس: ${record.side_lesson}` : ""}
           </p>
         )}
 
+        {storedSideLesson(record,quran?"quran":"noorania").totalLines>0 && <p>جنب الدرس: <strong>{formatSideLessonTotal(storedSideLesson(record,quran?"quran":"noorania").totalFaces,quran?15:10)}</strong> • {quran?record.next_evaluation:record.side_lesson_evaluation}</p>}
         {record.points ? <p>نقاط الجلسة: <strong>{formatNumber(record.points)}</strong></p> : null}
       </div>
     </article>

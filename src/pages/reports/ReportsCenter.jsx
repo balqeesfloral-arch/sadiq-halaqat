@@ -1,3 +1,4 @@
+import {formatSideLessonTotal} from "../../lib/sideLesson";
 import { OrnamentScene } from '../../components/ornaments/Ornament';
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
@@ -1042,10 +1043,11 @@ function RecitationCards({ rows }) {
           {pair.map((row) => (
             <article className="report-simple-card" key={row.id}>
               <CardTitle name={row.name} meta={`${row.halaqa} • ${row.mosque}`} />
-              <div className="report-kpi-strip three">
+              <div className="report-kpi-strip">
                 <MiniKpi label="الجلسات" value={row.sessions} tone="green" />
                 <MiniKpi label="الحفظ" value={`${formatFaces(row.lessonFaces)} ص`} tone="blue" />
                 <MiniKpi label="المراجعة" value={`${formatFaces(row.reviewFaces)} ص`} tone="teal" />
+                <MiniKpi label="جنب الدرس" value={formatSideLessonTotal(row.sideLessonFaces,row.sideLinesPerFace)} tone="gold" />
               </div>
               <div className="report-inline-note">
                 <span><RefreshCw size={13} /> إعادات: <strong>{row.repeats}</strong></span>
