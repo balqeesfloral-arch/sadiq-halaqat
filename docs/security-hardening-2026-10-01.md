@@ -19,7 +19,9 @@ The security workflow now fails on high/critical Sentinel or dependency findings
 
 ## Deployment and operational controls
 
-Apply `20261001044751_enforce_security_boundaries.sql`, deploy the eight Edge handlers with `_shared/security.ts`, then publish the frontend. Authenticated handlers retain JWT verification; public signup/login/support and secret-authenticated push handlers retain their explicit authentication models. Never deploy test files as function entrypoints.
+Apply `20261001053723_enforce_security_boundaries.sql`, deploy the eight Edge handlers with `_shared/security.ts`, then publish the frontend. Authenticated handlers retain JWT verification; public signup/login/support and secret-authenticated push handlers retain their explicit authentication models. Never deploy test files as function entrypoints.
+
+The migration filename matches the version assigned by the production migration API. The migration and all eight handlers are applied, and Vercel has published the frontend. Seventeen database security checks and twenty-one learning checks passed against production with their fixture changes rolled back. Bounded HTTP checks confirmed authentication failures, support RPC restrictions and login throttling. GitHub's core audit, CodeQL, Semgrep and Trivy jobs passed.
 
 Keep the stricter database boundaries and login code requirement during incident recovery. Rolling the frontend back to a release without code entry prevents fresh student login; fix forward instead of restoring weak name/number authentication.
 
